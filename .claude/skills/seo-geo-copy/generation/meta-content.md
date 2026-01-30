@@ -19,10 +19,12 @@
 ## Title Tag Generation
 
 ### Rules
-- **Length**: 50-60 characters (Google truncates at ~60)
-- **Structure**: Primary keyword + modifier + brand (if fits)
+- **Length**: 30-55 characters target. Hard max: 60. NEVER exceed 60.
+- **Structure**: Primary keyword + modifier + brand (if fits within 55 chars)
 - **Front-load**: Put keyword as close to beginning as possible
 - **Unique**: No two pages should have identical titles
+- **No duplication**: Brand name must appear at most ONCE. Check for patterns like "Brand | X | Brand"
+- **Verify**: After writing, count every character including spaces and pipes. Count again.
 
 ### Formulas by Page Type
 
@@ -71,11 +73,13 @@ Buy [Product Name] - [Feature] | [Brand]
 ## Meta Description Generation
 
 ### Rules
-- **Length**: 150-160 characters
+- **Length**: 120-155 characters. Hard max: 158. NEVER exceed 158.
+- **Target**: 145-150 characters is the sweet spot
 - **Include**: Primary keyword naturally
 - **Include**: Clear value proposition
 - **Include**: Call to action or next step
 - **Tone**: Active voice, speaks to searcher
+- **Verify**: After writing, count every character. Off-by-one errors at 160 are the #1 meta description failure.
 
 ### Structure
 
@@ -164,19 +168,21 @@ For articles, add:
 
 ## Output Checklist
 
-### Title Tag (5 checks)
-- [ ] Under 60 characters
+### Title Tag (6 checks)
+- [ ] 30-55 characters (hard max 60)
 - [ ] Primary keyword within first 30 characters
 - [ ] Readable (not keyword-stuffed)
 - [ ] Unique to this page
 - [ ] Accurately describes page content
+- [ ] Brand name appears at most ONCE (no accidental duplication)
 
-### Meta Description (5 checks)
-- [ ] 150-160 characters
+### Meta Description (6 checks)
+- [ ] 120-155 characters (hard max 158)
 - [ ] Includes primary keyword
 - [ ] Contains value proposition
 - [ ] Has call to action
 - [ ] Matches page content (not deceptive)
+- [ ] Character count verified after final edit
 
 ### Technical (4 checks)
 - [ ] Canonical URL specified
@@ -193,11 +199,11 @@ For articles, add:
 
 ### Title Tag
 `[Title here]`
-Character count: [X]/60
+Character count: [X]/55 (max 60)
 
 ### Meta Description
 `[Description here]`
-Character count: [X]/160
+Character count: [X]/155 (max 158)
 
 ### Canonical
 `<link rel="canonical" href="[URL]" />`

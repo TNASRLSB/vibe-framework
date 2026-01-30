@@ -19,9 +19,10 @@ Apply relevant rules after generation. Report pass/fail for each.
 ## SEO Rules
 
 ### SEO-001: Title Tag Length
-- **Check**: Count characters in title tag
-- **Pass**: 30-60 characters
-- **Fail**: Truncate or expand to fit range
+- **Check**: Count characters in title tag (count EVERY character including spaces and pipes)
+- **Pass**: 30-55 characters (hard max: 60. NEVER exceed 60.)
+- **Fail**: Truncate or expand. If over 55, rewrite — do NOT just cut words
+- **Common mistake**: Brand name repeated (e.g. "Brand | Tagline | Brand"). Verify brand appears ONCE max
 
 ### SEO-002: Title Keyword Position
 - **Check**: Position of primary keyword in title
@@ -29,9 +30,10 @@ Apply relevant rules after generation. Report pass/fail for each.
 - **Fail**: Rewrite to front-load keyword
 
 ### SEO-003: Meta Description Length
-- **Check**: Count characters in meta description
-- **Pass**: 120-160 characters
-- **Fail**: Adjust length to range
+- **Check**: Count characters in meta description (count EVERY character including spaces and punctuation)
+- **Pass**: 120-155 characters (hard max: 158. NEVER exceed 158.)
+- **Fail**: Rewrite to fit. Count again AFTER rewriting — off-by-one errors are the #1 failure
+- **Common mistake**: Generating exactly 160 chars which after encoding/rendering becomes 161+. Use 155 as target.
 
 ### SEO-004: Meta Description Keyword
 - **Check**: Primary keyword present in meta description
@@ -60,13 +62,23 @@ Apply relevant rules after generation. Report pass/fail for each.
 
 ### SEO-009: Internal Links
 - **Check**: Content has internal links to related pages
-- **Pass**: At least 2 internal links per 1000 words
-- **Fail**: Add relevant internal links
+- **Pass**: Minimum 8 internal links for homepages/landing pages. At least 3 per 1000 words for articles.
+- **Fail**: Add relevant internal links. For landing pages, link to: about, pricing, features, blog, legal, contact at minimum
 
 ### SEO-010: URL Slug
 - **Check**: URL contains primary keyword, no stop words
 - **Pass**: Keyword present, lowercase, hyphens, under 60 chars
 - **Fail**: Suggest corrected slug
+
+### SEO-011: External Links
+- **Check**: Content has external links to authoritative sources
+- **Pass**: At least 1 external link for landing pages, at least 2 for articles
+- **Fail**: Add links to authoritative, relevant external resources (industry reports, standards, studies)
+
+### SEO-012: H2 Section Count
+- **Check**: Page has sufficient H2 headings for content structure
+- **Pass**: Minimum 4 H2s for landing pages/homepages, minimum 3 for articles over 500 words
+- **Fail**: Split content into more sections with descriptive H2 headings containing keywords
 
 ---
 
@@ -225,14 +237,34 @@ Apply relevant rules after generation. Report pass/fail for each.
 - **Fail**: Fix or remove broken links
 
 ### TECH-004: Canonical Tag
-- **Check**: Canonical tag present
-- **Pass**: Self-referencing canonical present
-- **Fail**: Add canonical tag
+- **Check**: Canonical tag present in `<head>`
+- **Pass**: Self-referencing canonical present with full absolute URL
+- **Fail**: Add `<link rel="canonical" href="https://..." />`. This is MANDATORY — never skip.
 
 ### TECH-005: Open Graph Tags
-- **Check**: OG tags present
-- **Pass**: og:title, og:description, og:image present
-- **Fail**: Add missing OG tags
+- **Check**: All required OG tags present
+- **Pass**: og:title, og:description, og:image, og:url, og:type, og:site_name ALL present
+- **Fail**: Add ALL missing OG tags. Partial OG is worse than none — social previews break with incomplete tags.
+
+### TECH-006: XML Sitemap
+- **Check**: XML sitemap exists and is accessible
+- **Pass**: sitemap.xml accessible at /sitemap.xml or declared in robots.txt
+- **Fail**: Generate sitemap.xml or configure framework to auto-generate. Submit to Google Search Console AND Bing Webmaster Tools.
+
+### TECH-007: Robots.txt
+- **Check**: robots.txt file exists and is properly configured
+- **Pass**: robots.txt accessible at /robots.txt with appropriate Allow/Disallow directives
+- **Fail**: Create robots.txt. At minimum: allow all search engine bots, reference sitemap URL.
+
+### TECH-008: WWW Canonicalization
+- **Check**: www and non-www versions redirect to same destination
+- **Pass**: One version (www or non-www) 301-redirects to the other
+- **Fail**: Configure DNS/hosting to redirect. Choose one canonical domain and redirect the other with 301.
+
+### TECH-009: Noindex Verification
+- **Check**: Pages intended for indexing do NOT have noindex meta tag or X-Robots-Tag header
+- **Pass**: No unintentional noindex directives present
+- **Fail**: Remove noindex tag/header. Common in staging deployments that go live without removing it.
 
 ---
 
@@ -243,14 +275,14 @@ Apply relevant rules after generation. Report pass/fail for each.
 - Fail: 0 points
 
 ### Category Scores
-- **SEO Score**: Points earned / 10
+- **SEO Score**: Points earned / 12
 - **GEO Score**: Points earned / 10
 - **Copy Score**: Points earned / 10
 - **Schema Score**: Points earned / 5
-- **Tech Score**: Points earned / 5
+- **Tech Score**: Points earned / 9
 
 ### Overall Score
-Total points / 40 × 100 = Percentage
+Total points / 46 × 100 = Percentage
 
 ### Quality Thresholds
 - **90-100%**: Production ready
@@ -273,12 +305,12 @@ Total points / 40 × 100 = Percentage
 
 | Category | Score | Max | % |
 |----------|-------|-----|---|
-| SEO | X | 10 | X% |
+| SEO | X | 12 | X% |
 | GEO | X | 10 | X% |
 | Copy | X | 10 | X% |
 | Schema | X | 5 | X% |
-| Tech | X | 5 | X% |
-| **Total** | **X** | **40** | **X%** |
+| Tech | X | 9 | X% |
+| **Total** | **X** | **46** | **X%** |
 
 ### Failed Rules
 

@@ -38,16 +38,18 @@ Complete this checklist before publishing any content optimized for SEO, GEO, an
 ### Title Tag
 - [ ] Contains primary keyword
 - [ ] Keyword positioned early (front-loaded)
-- [ ] ≤ 60 characters (will display fully in SERP)
+- [ ] 30-55 characters target (hard max 60 — count EVERY character including spaces and pipes)
 - [ ] Compelling and click-worthy
-- [ ] Brand name included (typically at end)
+- [ ] Brand name included ONCE (check for accidental duplication: "Brand | X | Brand")
+- [ ] Character count verified after final edit
 
 ### Meta Description
 - [ ] Contains primary keyword
-- [ ] ≤ 155 characters
+- [ ] 120-155 characters (hard max 158 — count EVERY character)
 - [ ] Includes value proposition
 - [ ] Has call-to-action or hook
 - [ ] Unique (not duplicated from other pages)
+- [ ] Character count verified after final edit (re-count, don't trust initial count)
 
 ### URL Structure
 - [ ] Contains primary keyword
@@ -58,9 +60,9 @@ Complete this checklist before publishing any content optimized for SEO, GEO, an
 
 ### Header Hierarchy
 - [ ] One H1 per page (contains keyword)
-- [ ] H2s for major sections
-- [ ] H3s for subsections
-- [ ] Logical hierarchy (no skipped levels)
+- [ ] Minimum 4 H2s for landing pages/homepages, 3+ for articles over 500 words
+- [ ] H3s for subsections under H2s
+- [ ] Logical hierarchy (no skipped levels: H1→H3 without H2)
 - [ ] Keywords distributed across headers
 
 ### Keyword Optimization
@@ -71,10 +73,10 @@ Complete this checklist before publishing any content optimized for SEO, GEO, an
 - [ ] No keyword stuffing
 
 ### Links
-- [ ] 3-5+ internal links to related content
-- [ ] 2-3 external links to authoritative sources
+- [ ] 8+ internal links for landing pages/homepages, 3+ per 1000 words for articles
+- [ ] At least 1 external link for landing pages, 2+ for articles (to authoritative sources)
 - [ ] All links functional (no 404s)
-- [ ] Link anchor text descriptive
+- [ ] Link anchor text descriptive (not "click here")
 - [ ] External links open in new tab
 
 ### Images
@@ -177,16 +179,25 @@ Complete this checklist before publishing any content optimized for SEO, GEO, an
 - [ ] Mobile preview checked
 
 ### Indexability
-- [ ] No unintentional noindex tag
-- [ ] Canonical tag points to correct URL
+- [ ] No unintentional noindex tag or X-Robots-Tag header
+- [ ] Canonical tag present with full absolute URL (`<link rel="canonical" href="https://..." />`)
+- [ ] WWW canonicalization configured (www→non-www or vice versa, 301 redirect)
 - [ ] Page accessible from internal links
-- [ ] Page included in sitemap
+- [ ] Page included in XML sitemap
+- [ ] XML sitemap exists and is accessible at /sitemap.xml
+- [ ] Sitemap submitted to Google Search Console AND Bing Webmaster Tools
 
 ### Bot Access
-- [ ] Not blocked by robots.txt
+- [ ] robots.txt exists and is accessible at /robots.txt
+- [ ] robots.txt references sitemap URL
 - [ ] Bingbot allowed (critical for ChatGPT)
 - [ ] OAI-SearchBot allowed
 - [ ] Content not behind JavaScript-only rendering
+
+### Open Graph & Social
+- [ ] ALL required OG tags present: og:title, og:description, og:image, og:url, og:type, og:site_name
+- [ ] Twitter Card tags present
+- [ ] Social sharing preview verified
 
 ---
 

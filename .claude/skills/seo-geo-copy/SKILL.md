@@ -72,6 +72,8 @@ GEO Optimization ─────────────────────
 5. **Citation Worthiness**: Include unique data, statistics, and insights
 6. **E-E-A-T Signals**: Demonstrate Experience, Expertise, Authoritativeness, Trust
 7. **Persuasion Without Manipulation**: Convert through value, not deception
+8. **Measure Twice, Cut Once**: Count characters in titles and meta descriptions AFTER writing them. Re-count after any edit. Off-by-one errors at boundaries are the #1 validation failure.
+9. **Technical Infrastructure is a Deliverable**: Every page needs canonical tags, Schema.org, OpenGraph, sitemap, robots.txt. Never assume the framework handles it — always verify and include in deliverables.
 
 ---
 
@@ -236,9 +238,9 @@ Google-Extended   - Gemini training (optional block)
 
 Generate optimized meta tags:
 
-1. Title tag (≤60 characters, keyword-first)
-2. Meta description (≤155 characters, CTA-oriented)
-3. Open Graph tags
+1. Title tag (30-55 characters target, hard max 60, keyword-first)
+2. Meta description (120-155 characters target, hard max 158, CTA-oriented)
+3. Open Graph tags (ALL 6 required: og:title, og:description, og:image, og:url, og:type, og:site_name)
 4. Twitter Card tags
 5. Canonical URL recommendation
 
@@ -413,9 +415,13 @@ Universal principles for all copy:
 
 ### Indexability
 
-- [ ] Canonical tags properly implemented
+- [ ] Canonical tags present on EVERY page (self-referencing, full absolute URL)
+- [ ] WWW canonicalization configured (301 redirect)
+- [ ] XML sitemap exists, accessible, submitted to search engines
+- [ ] robots.txt exists with sitemap reference
 - [ ] Hreflang for international content
 - [ ] No duplicate content issues
+- [ ] No unintentional noindex tags
 - [ ] Mobile-friendly (responsive design)
 - [ ] Core Web Vitals passing (LCP, FID, CLS)
 
@@ -572,17 +578,37 @@ Available generation prompts:
 - `generation/faq-content.md` - FAQ sections with schema
 - `generation/meta-content.md` - Title tags and meta descriptions
 
+### Technical Infrastructure Requirements
+
+**Every page/site MUST have these. If any are missing after generation, flag as BLOCKER before delivery.**
+
+| Requirement | What | Why it failed in audits |
+|-------------|------|------------------------|
+| Canonical tag | `<link rel="canonical" href="https://..." />` in `<head>` | Cumino: missing entirely |
+| Schema.org | JSON-LD in `<head>` matching content type | Cumino: missing entirely |
+| OpenGraph (ALL 6) | og:title, og:description, og:image, og:url, og:type, og:site_name | TNA: partial/missing |
+| XML Sitemap | /sitemap.xml accessible | TNA: missing entirely |
+| robots.txt | /robots.txt with sitemap reference | TNA: missing entirely |
+| WWW canonicalization | 301 redirect www↔non-www | TNA: not configured |
+| External links | ≥1 for landing pages, ≥2 for articles | TNA: 0, Hype: 0 |
+| Internal links | ≥8 for landing pages | Hype: only 5 |
+| H2 sections | ≥4 for landing pages/homepages | TNA: only 2, Hype: only 2 |
+| Title length | 30-55 chars (hard max 60) | TNA: 116 chars with brand duplication |
+| Meta description | 120-155 chars (hard max 158) | TNA: 163, Hype: 161 |
+
+**Enforcement rule**: When generating content for a site, ALWAYS include a "Technical Infrastructure" section in the deliverable listing what the site needs. Do not assume the framework handles it.
+
 ### Validation System
 
-Every piece of generated content is validated against 40 measurable rules:
+Every piece of generated content is validated against 46 measurable rules:
 
 | Category | Rules | File |
 |----------|-------|------|
-| SEO | 10 rules | `validation/rules.md` |
+| SEO | 12 rules | `validation/rules.md` |
 | GEO | 10 rules | `validation/rules.md` |
 | Copywriting | 10 rules | `validation/rules.md` |
 | Schema | 5 rules | `validation/rules.md` |
-| Technical | 5 rules | `validation/rules.md` |
+| Technical | 9 rules | `validation/rules.md` |
 
 **Scoring thresholds:**
 - 90-100%: Production ready

@@ -113,9 +113,9 @@ Choose based on awareness level:
 
 ### SEO (4 checks)
 - [ ] Primary keyword in H1 and first paragraph
-- [ ] Meta title and description optimized
+- [ ] Meta title ≤55 chars, meta description 120-155 chars (count characters precisely)
 - [ ] Page has sufficient content for ranking (500+ words)
-- [ ] Schema.org markup appropriate (Product, Service, or Organization)
+- [ ] Minimum 4 H2 sections for content structure
 
 ### GEO (4 checks)
 - [ ] Opening paragraph is extractable as product summary
@@ -151,8 +151,8 @@ Choose based on awareness level:
 
 ## SEO Metadata
 
-**Title tag:** [60 chars max]
-**Meta description:** [160 chars max]
+**Title tag:** [≤55 chars] — Character count: [X]/55
+**Meta description:** [120-155 chars] — Character count: [X]/155
 **Target keyword:** [keyword]
 
 ---
@@ -160,6 +160,22 @@ Choose based on awareness level:
 ## Schema.org JSON-LD
 
 [Appropriate schema - Product, Service, or Organization]
+
+---
+
+## Technical Infrastructure Checklist
+
+The following MUST be present on the deployed site. If any are missing, flag as blockers:
+
+- [ ] `<link rel="canonical" href="https://..." />` in `<head>`
+- [ ] Schema.org JSON-LD in `<head>`
+- [ ] Complete OpenGraph tags (og:title, og:description, og:image, og:url, og:type, og:site_name)
+- [ ] Twitter Card tags
+- [ ] XML sitemap at /sitemap.xml
+- [ ] robots.txt at /robots.txt (with sitemap reference)
+- [ ] WWW canonicalization (301 redirect www↔non-www)
+- [ ] At least 1 external link to authoritative source
+- [ ] At least 8 internal links
 
 ---
 
