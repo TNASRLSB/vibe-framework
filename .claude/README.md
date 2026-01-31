@@ -15,6 +15,7 @@ Due componenti che lavorano insieme:
    - **dev-patterns** — Development: principi SOLID, API design, testing, security (agnostico + stack-specific)
    - **security-guardian** — Sicurezza AI-specific: OWASP, credential detection, BaaS audit
    - **seo-geo-copy** — SEO tradizionale + GEO (AI search) + copywriting persuasivo
+   - **video-craft** — Generazione video programmatica da design system + contenuti (CSS animations + Playwright + FFmpeg)
 
 Il framework definisce *come* Claude lavora. Le skill definiscono *cosa* sa fare in ambiti specifici.
 
@@ -72,7 +73,11 @@ progetto/
         │   └── stacks/       # Pattern stack-specific (generati)
         │       └── typescript-react-nextjs/  # Esempio pre-generato
         ├── security-guardian/# Skill sicurezza AI-specific
-        └── seo-geo-copy/     # Skill SEO + GEO + Copywriting
+        ├── seo-geo-copy/     # Skill SEO + GEO + Copywriting
+        │   └── ...
+        └── video-craft/      # Skill generazione video
+            ├── SKILL.md      # Definizione skill e comandi
+            └── engine/       # Engine TypeScript (auto-setup)
             ├── SKILL.md      # Definizione skill e comandi
             ├── seo/          # Fondamenti SEO tradizionale
             ├── geo/          # GEO per AI search
@@ -379,6 +384,40 @@ Skill per contenuti ottimizzati sia per search engine tradizionali (Google, Bing
 - Citation-worthiness per essere citati da LLM
 
 **Attivazione:** content creation, SEO, copywriting, landing page, article, blog post, product description
+
+#### Video-Craft
+
+Generazione video programmatica. Genera pagine HTML con CSS animations, cattura frame-by-frame via Web Animations API, e codifica in MP4 con FFmpeg.
+
+| Comando | Cosa fa |
+|---------|---------|
+| `/video-craft create` | **Flusso guidato** — crea un video interattivamente da cartella, URL o input manuale |
+| `/video-craft render <config.yaml>` | Renderizza video da config YAML |
+| `/video-craft storyboard <config.yaml>` | Preview testuale dello storyboard |
+| `/video-craft validate <config.yaml>` | Controlla errori nella config |
+| `/video-craft formats` | Lista formati disponibili |
+| `/video-craft entrances` | Lista animazioni entrance disponibili |
+
+**Flusso guidato (`/video-craft create`):**
+1. **Source** — Analizza cartella progetto, URL, o input manuale
+2. **Design System** — Rileva/crea design system via ux-craft
+3. **Intent** — Tipo di video (promo, social, explainer, portfolio)
+4. **Format** — Vertical 9:16, 4:5, Horizontal 16:9, Square 1:1
+5. **Style** — Safe (corporate), Chaos (experimental), Hybrid
+6. **Speed** — Slow, Normal, Fast
+7. **Generate & Review** — Genera YAML con testi originali (via seo-geo-copy), l'utente revisiona prima del render
+
+**Caratteristiche:**
+- **107 animazioni** — 40 entrance, 28 exit, 23 transition, 9 emphasis, 7 looping
+- **3 modi** — Safe, Chaos, Hybrid (come ux-craft)
+- **Timing automatico** — Durata calcolata da word count
+- **Integrazione ux-craft** — Legge design tokens dal design system
+- **Integrazione seo-geo-copy** — Testi persuasivi, non copy-paste dal sorgente
+- **Auto-setup** — Installa dipendenze automaticamente al primo uso
+
+**Requisiti di sistema:** FFmpeg installato (`ffmpeg` nel PATH)
+
+**Attivazione:** video generation, promo video, social media video, product video
 
 ---
 
