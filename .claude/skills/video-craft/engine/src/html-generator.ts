@@ -396,7 +396,9 @@ ${getBgAnimationKeyframes()}
 ${scenesHtml}
 <script>
 // Scene preview controller — shows one scene at a time
+// Skipped during video render (capture.ts sets __VIDEO_RENDER__ via addInitScript)
 (function() {
+  if (window.__VIDEO_RENDER__) return;
   const scenes = document.querySelectorAll('.scene');
   if (scenes.length === 0) return;
   let current = 0;

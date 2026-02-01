@@ -1,0 +1,116 @@
+:root {
+  /* ═══════ Y2K + Broken Grid + Neon ═══════
+     Chaos Mode Generation
+     Style: Y2K (chrome, excess, millennium futurism)
+     Grid: Broken (elements escape, overlap, rotate)
+     Palette: Neon (saturated, glow, dark bg)
+     Density: Dense (information-packed)
+     Curves: Angular (sharp cuts, diagonals)
+  ═══════════════════════════════════════════ */
+
+  /* ─── Core Colors ─── */
+  --color-bg: hsl(265 35% 6%);
+  --color-surface: hsl(265 28% 11%);
+  --color-surface-raised: hsl(265 25% 16%);
+  --color-text: hsl(60 10% 95%);
+  --color-text-muted: hsl(265 18% 62%);
+  --color-primary: hsl(180 100% 50%);
+  --color-accent: hsl(320 100% 58%);
+  --color-on-primary: hsl(265 35% 6%);
+  --color-on-accent: hsl(0 0% 100%);
+  --color-border: hsl(265 20% 20%);
+
+  /* ─── Neon Palette ─── */
+  --neon-cyan: hsl(180 100% 50%);
+  --neon-pink: hsl(320 100% 58%);
+  --neon-lime: hsl(88 100% 52%);
+  --neon-purple: hsl(275 100% 62%);
+  --neon-orange: hsl(28 100% 55%);
+
+  /* ─── Glow Effects ─── */
+  --glow-cyan: 0 0 20px hsl(180 100% 50% / 0.5), 0 0 60px hsl(180 100% 50% / 0.15);
+  --glow-pink: 0 0 20px hsl(320 100% 58% / 0.5), 0 0 60px hsl(320 100% 58% / 0.15);
+  --glow-lime: 0 0 20px hsl(88 100% 52% / 0.4);
+  --glow-multi: 0 0 12px hsl(320 100% 58% / 0.4), 0 0 24px hsl(180 100% 50% / 0.25), 0 0 36px hsl(88 100% 52% / 0.12);
+
+  /* ─── Chrome / Holographic ─── */
+  --chrome-gradient: linear-gradient(145deg,
+    hsl(0 0% 92%) 0%,
+    hsl(220 12% 68%) 25%,
+    hsl(0 0% 94%) 50%,
+    hsl(220 12% 58%) 75%,
+    hsl(0 0% 88%) 100%);
+  --holo-gradient: linear-gradient(135deg,
+    hsl(300 100% 68%) 0%,
+    hsl(180 100% 65%) 25%,
+    hsl(60 100% 68%) 50%,
+    hsl(300 100% 68%) 75%,
+    hsl(180 100% 65%) 100%);
+  --neon-divider: linear-gradient(90deg,
+    transparent 0%,
+    var(--neon-cyan) 15%,
+    var(--neon-pink) 50%,
+    var(--neon-lime) 85%,
+    transparent 100%);
+
+  /* ─── Typography ─── */
+  --font-display: "Orbitron", "Audiowide", "Arial Black", sans-serif;
+  --font-body: "Share Tech", "Rajdhani", "Segoe UI", sans-serif;
+  --font-mono: "Fira Code", "JetBrains Mono", "Courier New", monospace;
+  --font-pixel: "VT323", "Press Start 2P", monospace;
+  --line-height: 1.5;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 2rem;
+  --text-3xl: 3rem;
+  --text-4xl: 4rem;
+  --text-display: clamp(3rem, 8vw, 7rem);
+
+  /* ─── Spacing (8px base) ─── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+  --space-10: 128px;
+  --space-base: 8px;
+
+  /* ─── Radius ─── */
+  --radius-none: 0;
+  --radius-sm: 4px;
+  --radius: 8px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+
+  /* ─── Shadows ─── */
+  --shadow-neon: 4px 4px 0 hsl(320 100% 58% / 0.3), 8px 8px 0 hsl(180 100% 50% / 0.15);
+  --shadow-chrome: inset 0 1px 0 rgba(255,255,255,0.7), inset 0 -1px 0 rgba(0,0,0,0.2), 0 2px 6px rgba(0,0,0,0.4);
+
+  /* ─── Borders ─── */
+  --border-neon: 2px solid var(--neon-cyan);
+  --border-pink: 2px solid var(--neon-pink);
+  --border-subtle: 1px solid hsl(265 20% 18%);
+
+  /* ─── Motion ─── */
+  --duration-fast: 120ms;
+  --duration-base: 220ms;
+  --duration-slow: 400ms;
+  --duration-dramatic: 800ms;
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-entrance: cubic-bezier(0, 0, 0.2, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ─── Broken Grid ─── */
+  --rotation-slight: 1.5deg;
+  --rotation-medium: 3deg;
+  --rotation-heavy: -5deg;
+  --overflow-bleed: 60px;
+  --overlap-shift: -40px;
+}

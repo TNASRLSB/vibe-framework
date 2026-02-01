@@ -26,6 +26,12 @@ export async function initCapture(opts: CaptureOptions): Promise<CaptureSession>
   });
   const page = await context.newPage();
 
+  // Set render flag BEFORE page loads — this prevents the preview controller
+  // from executing (it checks window.__VIDEO_RENDER__ and skips if true)
+  await page.addInitScript(() => {
+    (window as any).__VIDEO_RENDER__ = true;
+  });
+
   // Load the generated HTML
   await page.goto(`file://${opts.htmlPath}`, { waitUntil: 'load' });
 

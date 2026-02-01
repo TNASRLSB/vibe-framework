@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Design System — Y2K + Broken + Neon</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech&family=VT323&family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--color-bg);
+    color: var(--color-text);
+    line-height: var(--line-height);
+    overflow-x: hidden;
+  }
+
+  .ds-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 48px 32px;
+  }
+
+  /* ─── Header (broken) ─── */
+  .ds-header {
+    margin-bottom: 80px;
+    padding-bottom: 40px;
+    position: relative;
+  }
+
+  .ds-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: -30px;
+    right: -30px;
+    height: 2px;
+    background: var(--neon-divider);
+    box-shadow: var(--glow-multi);
+  }
+
+  .ds-header h1 {
+    font-family: var(--font-display);
+    font-size: var(--text-4xl);
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: var(--chrome-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(2px 2px 0 hsl(320 100% 58%));
+    transform: rotate(var(--rotation-slight));
+  }
+
+  .ds-header p {
+    color: var(--color-text-muted);
+    font-size: var(--text-lg);
+    font-family: var(--font-pixel);
+    margin-top: 12px;
+    text-shadow: var(--glow-cyan);
+    color: var(--neon-cyan);
+  }
+
+  .ds-header .mode-badge {
+    display: inline-block;
+    padding: 4px 16px;
+    background: var(--chrome-gradient);
+    border: 1px solid hsl(0 0% 65%);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-pixel);
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    color: hsl(260 30% 15%);
+    margin-top: 12px;
+    box-shadow: var(--shadow-chrome);
+  }
+
+  /* ─── Section ─── */
+  .ds-section {
+    margin-bottom: 80px;
+  }
+
+  .ds-section h2 {
+    font-family: var(--font-display);
+    font-size: var(--text-2xl);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 32px;
+    padding-bottom: 16px;
+    border-bottom: var(--border-neon);
+    text-shadow: var(--glow-cyan);
+    color: var(--neon-cyan);
+  }
+
+  .ds-section h3 {
+    font-size: var(--text-lg);
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: var(--neon-pink);
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: var(--text-sm);
+  }
+
+  /* ─── Colors ─── */
+  .ds-grid { display: grid; gap: 16px; }
+  .ds-colors { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+
+  .ds-color-swatch {
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: var(--border-subtle);
+    transition: transform var(--duration-base) var(--ease-bounce), box-shadow var(--duration-base);
+  }
+  .ds-color-swatch:hover {
+    transform: scale(1.05) rotate(-1deg);
+    box-shadow: var(--glow-pink);
+  }
+
+  .ds-color-swatch .swatch {
+    height: 90px;
+    display: flex;
+    align-items: flex-end;
+    padding: 8px 12px;
+  }
+  .ds-color-swatch .swatch span {
+    font-size: 11px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+  }
+  .ds-color-swatch .swatch-info {
+    padding: 10px 12px;
+    font-size: 12px;
+    background: var(--color-surface);
+  }
+  .ds-color-swatch .swatch-name { font-weight: 700; margin-bottom: 2px; }
+  .ds-color-swatch .swatch-value { opacity: 0.5; font-family: var(--font-mono); font-size: 11px; }
+
+  /* ─── Typography ─── */
+  .ds-type-sample { margin-bottom: 28px; }
+  .ds-type-sample .label {
+    font-size: 11px;
+    color: var(--neon-pink);
+    font-family: var(--font-pixel);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+
+  /* ─── Spacing ─── */
+  .ds-spacing-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 8px;
+  }
+  .ds-spacing-block {
+    background: var(--neon-pink);
+    height: 20px;
+    border-radius: 2px;
+    box-shadow: var(--glow-pink);
+  }
+  .ds-spacing-label {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--color-text-muted);
+    min-width: 140px;
+  }
+
+  /* ─── Radius ─── */
+  .ds-radius-samples { display: flex; gap: 20px; flex-wrap: wrap; }
+  .ds-radius-box {
+    width: 90px;
+    height: 90px;
+    background: var(--color-surface);
+    border: var(--border-neon);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--neon-cyan);
+    box-shadow: var(--glow-cyan);
+    transition: transform var(--duration-base) var(--ease-bounce);
+  }
+  .ds-radius-box:hover {
+    transform: rotate(5deg) scale(1.1);
+  }
+
+  /* ─── Buttons ─── */
+  .ds-button-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .ds-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 32px;
+    font-size: 14px;
+    font-weight: 700;
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    min-height: 44px;
+    transition: all var(--duration-base) var(--ease-bounce);
+    border: 2px solid transparent;
+  }
+
+  .ds-btn-chrome {
+    background: var(--chrome-gradient);
+    color: hsl(260 30% 15%);
+    border-color: hsl(0 0% 75%);
+    box-shadow: var(--shadow-chrome);
+  }
+  .ds-btn-chrome:hover {
+    transform: scale(1.05);
+    box-shadow: var(--shadow-chrome), var(--glow-multi);
+  }
+
+  .ds-btn-neon {
+    background: transparent;
+    color: var(--neon-cyan);
+    border: var(--border-neon);
+    text-shadow: var(--glow-cyan);
+    box-shadow: var(--glow-cyan);
+  }
+  .ds-btn-neon:hover {
+    background: var(--neon-cyan);
+    color: var(--color-bg);
+    text-shadow: none;
+  }
+
+  .ds-btn-pink {
+    background: transparent;
+    color: var(--neon-pink);
+    border: var(--border-pink);
+    text-shadow: var(--glow-pink);
+    box-shadow: var(--glow-pink);
+  }
+  .ds-btn-pink:hover {
+    background: var(--neon-pink);
+    color: var(--color-bg);
+    text-shadow: none;
+  }
+
+  .ds-btn-ghost {
+    background: transparent;
+    color: var(--color-text);
+    border-color: var(--color-border);
+  }
+  .ds-btn-ghost:hover {
+    border-color: var(--neon-cyan);
+    box-shadow: var(--glow-cyan);
+  }
+
+  .ds-btn-disabled {
+    background: var(--color-surface);
+    color: var(--color-text-muted);
+    opacity: 0.4;
+    cursor: not-allowed;
+    border-color: var(--color-border);
+  }
+
+  /* Focus states */
+  .ds-btn:focus-visible {
+    outline: 2px solid var(--neon-lime);
+    outline-offset: 3px;
+  }
+
+  /* ─── Cards (broken grid) ─── */
+  .ds-cards { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+
+  .ds-card {
+    background: var(--color-surface);
+    border-radius: var(--radius);
+    padding: 28px;
+    border: var(--border-subtle);
+    position: relative;
+    transition: all var(--duration-base) var(--ease-bounce);
+  }
+  .ds-card:nth-child(1) { transform: rotate(1deg); }
+  .ds-card:nth-child(2) { transform: rotate(-0.8deg); margin-top: 12px; }
+  .ds-card:nth-child(3) { transform: rotate(1.5deg); margin-top: -8px; }
+  .ds-card:hover {
+    box-shadow: var(--glow-multi);
+    transform: rotate(0deg) scale(1.02);
+  }
+
+  .ds-card h4 {
+    font-family: var(--font-display);
+    font-size: var(--text-lg);
+    font-weight: 700;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .ds-card p {
+    color: var(--color-text-muted);
+    font-size: var(--text-sm);
+  }
+  .ds-card::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 20px;
+    right: 20px;
+    height: 2px;
+    background: var(--neon-divider);
+    border-radius: 1px;
+  }
+
+  /* ─── Form Elements ─── */
+  .ds-form-group {
+    margin-bottom: 24px;
+    max-width: 420px;
+  }
+  .ds-form-group label {
+    display: block;
+    font-size: var(--text-xs);
+    font-weight: 700;
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 8px;
+    color: var(--neon-cyan);
+  }
+  .ds-input {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: var(--text-base);
+    font-family: var(--font-body);
+    background: var(--color-surface);
+    color: var(--color-text);
+    border: var(--border-subtle);
+    border-radius: var(--radius-sm);
+    outline: none;
+    min-height: 44px;
+    transition: border-color var(--duration-base), box-shadow var(--duration-base);
+  }
+  .ds-input:focus {
+    border-color: var(--neon-cyan);
+    box-shadow: var(--glow-cyan);
+  }
+  .ds-input-error { border-color: var(--neon-pink); }
+  .ds-error-text {
+    color: var(--neon-pink);
+    font-size: var(--text-xs);
+    font-family: var(--font-pixel);
+    margin-top: 6px;
+  }
+
+  /* ─── States ─── */
+  .ds-states { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+  .ds-state-box {
+    padding: 20px;
+    border-radius: var(--radius);
+    text-align: center;
+    font-size: var(--text-sm);
+    font-weight: 700;
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* ─── Motion ─── */
+  .ds-motion-demos { display: flex; gap: 24px; flex-wrap: wrap; }
+  .ds-motion-box {
+    width: 120px;
+    height: 120px;
+    background: var(--color-surface);
+    border: var(--border-neon);
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    color: var(--neon-cyan);
+    cursor: pointer;
+    box-shadow: var(--glow-cyan);
+    transition: transform var(--duration-base) var(--ease-bounce), box-shadow var(--duration-base);
+  }
+  .ds-motion-box:hover {
+    transform: scale(1.12) rotate(-3deg);
+    box-shadow: var(--glow-multi);
+  }
+  .ds-motion-box.entrance {
+    animation: y2k-entrance var(--duration-slow) var(--ease-entrance) both;
+  }
+  @keyframes y2k-entrance {
+    from { opacity: 0; transform: translateY(30px) rotate(5deg) scale(0.8); }
+    to { opacity: 1; transform: translateY(0) rotate(0) scale(1); }
+  }
+
+  /* ─── Token Table ─── */
+  .ds-token-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .ds-token-table th, .ds-token-table td {
+    text-align: left;
+    padding: 8px 16px;
+    border-bottom: 1px solid hsl(265 20% 14%);
+  }
+  .ds-token-table th {
+    font-weight: 700;
+    color: var(--neon-pink);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-family: var(--font-display);
+  }
+  .ds-token-table code {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    background: var(--color-surface);
+    padding: 2px 8px;
+    border-radius: 3px;
+    color: var(--neon-cyan);
+  }
+</style>
+</head>
+<body>
+<div class="ds-page">
+
+  <header class="ds-header">
+    <h1>Design System</h1>
+    <p>Y2K // Broken Grid // Neon</p>
+    <span class="mode-badge">CHAOS MODE</span>
+  </header>
+
+  <!-- ═══════ COLORS ═══════ -->
+  <section class="ds-section" id="colors">
+    <h2>Color Palette</h2>
+    <h3>Core</h3>
+    <div class="ds-grid ds-colors" id="core-colors"></div>
+    <h3 style="margin-top:24px">Neon Palette</h3>
+    <div class="ds-grid ds-colors" id="named-colors"></div>
+  </section>
+
+  <!-- ═══════ TYPOGRAPHY ═══════ -->
+  <section class="ds-section" id="typography">
+    <h2>Typography</h2>
+    <div class="ds-type-sample">
+      <div class="label">Display — Orbitron</div>
+      <div style="font-family:var(--font-display);font-size:48px;font-weight:900;text-transform:uppercase;letter-spacing:0.05em;background:var(--chrome-gradient);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(2px 2px 0 hsl(320 100% 58%));">The quick brown fox</div>
+    </div>
+    <div class="ds-type-sample">
+      <div class="label">H1</div>
+      <div style="font-family:var(--font-display);font-size:36px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--neon-cyan);text-shadow:var(--glow-cyan);">Heading Level One</div>
+    </div>
+    <div class="ds-type-sample">
+      <div class="label">H2</div>
+      <div style="font-family:var(--font-display);font-size:28px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;">Heading Level Two</div>
+    </div>
+    <div class="ds-type-sample">
+      <div class="label">H3</div>
+      <div style="font-family:var(--font-display);font-size:22px;font-weight:600;text-transform:uppercase;">Heading Level Three</div>
+    </div>
+    <div class="ds-type-sample">
+      <div class="label">Body — Share Tech</div>
+      <div style="font-family:var(--font-body);font-size:16px;">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.</div>
+    </div>
+    <div class="ds-type-sample">
+      <div class="label">Pixel — VT323</div>
+      <div style="font-family:var(--font-pixel);font-size:18px;color:var(--neon-lime);text-shadow:var(--glow-lime);">SYSTEM ONLINE > LOADING DESIGN TOKENS...</div>
+    </div>
+    <div class="ds-type-sample">
+      <div class="label">Mono — Fira Code</div>
+      <div style="font-family:var(--font-mono);font-size:14px;color:var(--color-text-muted);">const tokens = readDesignTokens('./tokens.css');</div>
+    </div>
+  </section>
+
+  <!-- ═══════ SPACING ═══════ -->
+  <section class="ds-section" id="spacing">
+    <h2>Spacing Scale</h2>
+    <div id="spacing-scale"></div>
+  </section>
+
+  <!-- ═══════ RADIUS ═══════ -->
+  <section class="ds-section" id="radius">
+    <h2>Radius &amp; Borders</h2>
+    <div class="ds-radius-samples" id="radius-samples"></div>
+  </section>
+
+  <!-- ═══════ BUTTONS ═══════ -->
+  <section class="ds-section" id="buttons">
+    <h2>Buttons</h2>
+    <div class="ds-button-row">
+      <button class="ds-btn ds-btn-chrome">Chrome</button>
+      <button class="ds-btn ds-btn-neon">Neon Cyan</button>
+      <button class="ds-btn ds-btn-pink">Neon Pink</button>
+      <button class="ds-btn ds-btn-ghost">Ghost</button>
+      <button class="ds-btn ds-btn-disabled" disabled>Disabled</button>
+    </div>
+  </section>
+
+  <!-- ═══════ CARDS (BROKEN) ═══════ -->
+  <section class="ds-section" id="cards">
+    <h2>Cards (Broken Grid)</h2>
+    <div class="ds-grid ds-cards">
+      <div class="ds-card">
+        <h4>Chrome Card</h4>
+        <p>Cards tilt at slight angles. Hover straightens them. Neon divider on top. The grid is meant to be broken.</p>
+      </div>
+      <div class="ds-card">
+        <h4>Holographic</h4>
+        <p>Surface tokens with subtle glow effects. Each card lives at a different rotation, creating visual tension.</p>
+      </div>
+      <div class="ds-card">
+        <h4>Pixel Data</h4>
+        <p>Y2K excess meets functional design. Dense information, bright accents, chrome gradients.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════ FORMS ═══════ -->
+  <section class="ds-section" id="forms">
+    <h2>Form Elements</h2>
+    <div class="ds-form-group">
+      <label for="demo-input">Text Input</label>
+      <input class="ds-input" id="demo-input" type="text" placeholder="Type something...">
+    </div>
+    <div class="ds-form-group">
+      <label for="demo-focus">Focused Input</label>
+      <input class="ds-input" id="demo-focus" type="text" value="Neon glow on focus">
+    </div>
+    <div class="ds-form-group">
+      <label for="demo-error">Error State</label>
+      <input class="ds-input ds-input-error" id="demo-error" type="text" value="Invalid value">
+      <div class="ds-error-text">> ERROR: INVALID INPUT DETECTED</div>
+    </div>
+  </section>
+
+  <!-- ═══════ STATES ═══════ -->
+  <section class="ds-section" id="states">
+    <h2>States</h2>
+    <div class="ds-grid ds-states">
+      <div class="ds-state-box" style="background:hsl(180 100% 50% / 0.12);color:var(--neon-cyan);border:1px solid hsl(180 100% 50% / 0.3);">Info</div>
+      <div class="ds-state-box" style="background:hsl(88 100% 52% / 0.12);color:var(--neon-lime);border:1px solid hsl(88 100% 52% / 0.3);">Success</div>
+      <div class="ds-state-box" style="background:hsl(28 100% 55% / 0.12);color:var(--neon-orange);border:1px solid hsl(28 100% 55% / 0.3);">Warning</div>
+      <div class="ds-state-box" style="background:hsl(320 100% 58% / 0.12);color:var(--neon-pink);border:1px solid hsl(320 100% 58% / 0.3);">Error</div>
+    </div>
+  </section>
+
+  <!-- ═══════ MOTION ═══════ -->
+  <section class="ds-section" id="motion">
+    <h2>Motion</h2>
+    <p style="margin-bottom:16px;color:var(--color-text-muted);font-family:var(--font-pixel);">HOVER = SCALE+ROTATE // CLICK = REPLAY ENTRANCE</p>
+    <div class="ds-motion-demos">
+      <div class="ds-motion-box entrance" onclick="this.classList.remove('entrance');void this.offsetWidth;this.classList.add('entrance');">Enter</div>
+      <div class="ds-motion-box" style="border-color:var(--neon-pink);color:var(--neon-pink);box-shadow:var(--glow-pink);">Hover</div>
+      <div class="ds-motion-box" style="border-color:var(--neon-lime);color:var(--neon-lime);box-shadow:var(--glow-lime);">Bounce</div>
+    </div>
+  </section>
+
+  <!-- ═══════ TOKEN TABLE ═══════ -->
+  <section class="ds-section" id="tokens">
+    <h2>All Tokens</h2>
+    <table class="ds-token-table" id="token-table">
+      <thead><tr><th>Token</th><th>Value</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+</div>
+
+<script>
+(function() {
+  const tokens = {};
+  for (const sheet of document.styleSheets) {
+    try {
+      for (const rule of sheet.cssRules) {
+        if (rule.selectorText === ':root') {
+          for (const prop of rule.style) {
+            if (prop.startsWith('--')) {
+              tokens[prop] = rule.style.getPropertyValue(prop).trim();
+            }
+          }
+        }
+      }
+    } catch (e) {}
+  }
+
+  const coreColorNames = [
+    'color-bg','color-surface','color-surface-raised','color-text','color-text-muted',
+    'color-primary','color-accent','color-on-primary','color-on-accent','color-border'
+  ];
+  const coreC = document.getElementById('core-colors');
+  const namedC = document.getElementById('named-colors');
+
+  for (const [prop, value] of Object.entries(tokens)) {
+    const name = prop.replace('--','');
+    if (!name.startsWith('color-') && !name.startsWith('neon-')) continue;
+    if (name.includes('glow') || name.includes('gradient') || name.includes('divider')) continue;
+
+    const swatch = document.createElement('div');
+    swatch.className = 'ds-color-swatch';
+    const textColor = isLightColor(value) ? '#000' : '#fff';
+    swatch.innerHTML = `
+      <div class="swatch" style="background:${value};color:${textColor};">
+        <span>${name}</span>
+      </div>
+      <div class="swatch-info">
+        <div class="swatch-name">${name}</div>
+        <div class="swatch-value">${value}</div>
+      </div>`;
+
+    if (coreColorNames.includes(name)) coreC.appendChild(swatch);
+    else namedC.appendChild(swatch);
+  }
+
+  // Spacing
+  const spacingC = document.getElementById('spacing-scale');
+  const spaceTokens = Object.entries(tokens)
+    .filter(([k]) => k.match(/^--space-\d+$/))
+    .sort((a, b) => parseInt(a[1]) - parseInt(b[1]));
+  for (const [prop, value] of spaceTokens) {
+    const px = parseInt(value);
+    const row = document.createElement('div');
+    row.className = 'ds-spacing-row';
+    row.innerHTML = `
+      <span class="ds-spacing-label"><code>${prop.replace('--','')}</code> ${value}</span>
+      <div class="ds-spacing-block" style="width:${Math.max(px, 4)}px;"></div>`;
+    spacingC.appendChild(row);
+  }
+
+  // Radius
+  const radiusC = document.getElementById('radius-samples');
+  for (const r of [0, 4, 8, 16, 999]) {
+    const box = document.createElement('div');
+    box.className = 'ds-radius-box';
+    box.style.borderRadius = r + 'px';
+    box.textContent = r === 999 ? 'pill' : r + 'px';
+    radiusC.appendChild(box);
+  }
+
+  // Token table
+  const tbody = document.querySelector('#token-table tbody');
+  for (const [prop, value] of Object.entries(tokens).sort()) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td><code>${prop}</code></td><td style="max-width:400px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${value}</td>`;
+    tbody.appendChild(tr);
+  }
+
+  function isLightColor(color) {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 1;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = color;
+    ctx.fillRect(0, 0, 1, 1);
+    const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+    return (r * 0.299 + g * 0.587 + b * 0.114) > 150;
+  }
+})();
+</script>
+</body>
+</html>
