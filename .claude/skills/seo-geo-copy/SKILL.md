@@ -659,7 +659,7 @@ reference/
 
 | Skill | Integration |
 |-------|-------------|
-| ux-craft | UI copy, microcopy, button text |
+| ui-craft | UI copy, microcopy, button text |
 | dev-patterns | Technical documentation SEO |
 | security-guardian | Security content accuracy |
 

@@ -11,7 +11,7 @@ Visual decision flows for the Claude Operating System framework. Reference these
    - [Registry Verification](#registry-verification)
    - [Spec Lifecycle](#spec-lifecycle)
    - [Large File Handling](#large-file-handling)
-2. [UX-Craft](#ux-craft)
+2. [UX-Craft](#ui-craft)
    - [Pre-Generation Validation](#pre-generation-validation)
    - [Design Direction Selection](#design-direction-selection)
    - [5-Phase Workflow](#5-phase-workflow)
@@ -133,7 +133,7 @@ Validation chain before generating UI code. Gates are ordered by severity.
 ```mermaid
 flowchart TD
     A[UI/UX Task] --> B{system.md exists?}
-    B -->|No| BLOCK1[BLOCK: Run /ux-craft establish first]
+    B -->|No| BLOCK1[BLOCK: Run /ui-craft establish first]
     B -->|Yes| C{Direction defined?}
     C -->|No| BLOCK2[BLOCK: Choose direction in system.md]
     C -->|Yes| D{Generic fonts used?<br/>Inter/Roboto/Arial/Helvetica}
@@ -164,7 +164,7 @@ Choosing the right design direction based on app type.
 
 ```mermaid
 flowchart TD
-    A["/ux-craft establish"] --> B{What type of app?}
+    A["/ui-craft establish"] --> B{What type of app?}
     B -->|Dashboard/Admin| C[1: Precision & Density]
     B -->|Consumer/Social| D[2: Warmth & Approachability]
     B -->|Finance/Enterprise| E[3: Sophistication & Trust]

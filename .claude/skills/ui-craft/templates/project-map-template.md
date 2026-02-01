@@ -34,12 +34,12 @@ Mappa delle pagine del progetto ai 6 archetipi della tassonomia.
 
 | Archetype | Purpose | Reference |
 |-----------|---------|-----------|
-| Entry | Landing, value proposition | [pages.md#entry](/.claude/skills/ux-craft/taxonomy/pages.md) |
-| Discovery | Browse, filter, search | [pages.md#discovery](/.claude/skills/ux-craft/taxonomy/pages.md) |
-| Detail | Single item deep dive | [pages.md#detail](/.claude/skills/ux-craft/taxonomy/pages.md) |
-| Action | Forms, edits, tasks | [pages.md#action](/.claude/skills/ux-craft/taxonomy/pages.md) |
-| Management | Bulk operations, admin | [pages.md#management](/.claude/skills/ux-craft/taxonomy/pages.md) |
-| System | Errors, confirmations | [pages.md#system](/.claude/skills/ux-craft/taxonomy/pages.md) |
+| Entry | Landing, value proposition | [pages.md#entry](/.claude/skills/ui-craft/taxonomy/pages.md) |
+| Discovery | Browse, filter, search | [pages.md#discovery](/.claude/skills/ui-craft/taxonomy/pages.md) |
+| Detail | Single item deep dive | [pages.md#detail](/.claude/skills/ui-craft/taxonomy/pages.md) |
+| Action | Forms, edits, tasks | [pages.md#action](/.claude/skills/ui-craft/taxonomy/pages.md) |
+| Management | Bulk operations, admin | [pages.md#management](/.claude/skills/ui-craft/taxonomy/pages.md) |
+| System | Errors, confirmations | [pages.md#system](/.claude/skills/ui-craft/taxonomy/pages.md) |
 
 ---
 
@@ -160,6 +160,6 @@ Ordine suggerito per la migrazione al design system.
 
 ## How to Update This File
 
-1. Run `/ux-craft analyze-project` to regenerate
+1. Run `/ui-craft analyze-project` to regenerate
 2. Or manually update after significant UI changes
 3. Keep `Last analyzed` date current

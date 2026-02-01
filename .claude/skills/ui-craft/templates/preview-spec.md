@@ -10,9 +10,9 @@ Permettere all'utente di **vedere e valutare** il design system generato in un b
 
 **Workflow:**
 ```
-/ux-craft generate  → Scelta stile
-/ux-craft establish → Creazione system.md
-/ux-craft preview   → Generazione HTML preview ← NUOVO
+/ui-craft generate  → Scelta stile
+/ui-craft establish → Creazione system.md
+/ui-craft preview   → Generazione HTML preview ← NUOVO
                       ↓
                     Utente apre nel browser
                       ↓
@@ -26,7 +26,7 @@ Permettere all'utente di **vedere e valutare** il design system generato in un b
 ## Output Structure
 
 ```
-.ux-craft/preview/
+.ui-craft/preview/
 ├── index.html          # Dashboard principale design system
 ├── tokens.css          # CSS custom properties da system.md
 ├── preview.css         # Stili per la preview stessa
@@ -614,9 +614,9 @@ Stili per la preview stessa, **separati** dai token del design system.
 
 ## Generazione da system.md
 
-Quando si esegue `/ux-craft preview`, Claude deve:
+Quando si esegue `/ui-craft preview`, Claude deve:
 
-1. **Leggere `.ux-craft/system.md`**
+1. **Leggere `.ui-craft/system.md`**
 2. **Estrarre tutti i token** (colors, typography, spacing, shadows, etc.)
 3. **Generare `tokens.css`** con le CSS custom properties
 4. **Generare `index.html`** popolato con i valori reali
@@ -641,30 +641,30 @@ Quando si esegue `/ux-craft preview`, Claude deve:
 Aggiungere a SKILL.md:
 
 ```markdown
-### `/ux-craft preview`
+### `/ui-craft preview`
 
 Genera pagine HTML statiche per visualizzare il design system nel browser.
 
 1. **Verifica prerequisiti:**
-   - `.ux-craft/system.md` deve esistere
-   - Se manca → suggerire `/ux-craft establish`
+   - `.ui-craft/system.md` deve esistere
+   - Se manca → suggerire `/ui-craft establish`
 
 2. **Genera file:**
-   - `.ux-craft/preview/index.html` - Dashboard design system
-   - `.ux-craft/preview/tokens.css` - Token CSS da system.md
-   - `.ux-craft/preview/preview.css` - Stili preview
-   - `.ux-craft/preview/preview.js` - Interattività
-   - `.ux-craft/preview/pages/*.html` - Pagine archetype
+   - `.ui-craft/preview/index.html` - Dashboard design system
+   - `.ui-craft/preview/tokens.css` - Token CSS da system.md
+   - `.ui-craft/preview/preview.css` - Stili preview
+   - `.ui-craft/preview/preview.js` - Interattività
+   - `.ui-craft/preview/pages/*.html` - Pagine archetype
 
 3. **Istruzioni all'utente:**
-   - Aprire `.ux-craft/preview/index.html` nel browser
-   - Oppure: `python -m http.server 8080 -d .ux-craft/preview`
+   - Aprire `.ui-craft/preview/index.html` nel browser
+   - Oppure: `python -m http.server 8080 -d .ui-craft/preview`
 
-**Output:** `.ux-craft/preview/` con tutti i file HTML/CSS/JS
+**Output:** `.ui-craft/preview/` con tutti i file HTML/CSS/JS
 
 **Usage:**
 ```
-/ux-craft preview
+/ui-craft preview
 ```
 ```
 

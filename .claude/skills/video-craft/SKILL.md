@@ -60,13 +60,13 @@ Ask: "Does this look right? Anything to add or change?"
 
 ### Step 1b: Design System
 
-After analyzing the source, check for an existing ux-craft design system:
+After analyzing the source, check for an existing ui-craft design system:
 
-1. Look for `<project-folder>/.claude/skills/ux-craft/system.md`
+1. Look for `<project-folder>/.ui-craft/tokens.css` (or legacy `system.md`)
 2. **If found** → read it, inform the user: "Found an existing design system — the video will use your brand colors, fonts, and tokens."
-3. **If NOT found** → invoke `/ux-craft establish` on the project folder so ux-craft analyzes the project and creates a design system. Then inform the user: "Created a design system from your project — the video will match your brand."
+3. **If NOT found** → invoke `/ui-craft extract` on the project folder so ui-craft analyzes the project and creates a design system. Then inform the user: "Created a design system from your project — the video will match your brand."
 
-The design system ensures the video is visually coherent with the project's brand identity (colors, typography, spacing). The YAML config should reference it via the `design-system` field pointing to the generated `system.md`.
+The design system ensures the video is visually coherent with the project's brand identity (colors, typography, spacing). Pass `--design-system=` pointing to the `.ui-craft/` directory or directly to `tokens.css`.
 
 ### Step 2: Video Intent
 
@@ -91,6 +91,7 @@ Ask mode preference:
 - **safe** — Clean, corporate, professional animations
 - **chaos** — Dynamic, experimental, random animation picks
 - **hybrid** — Clean base with one surprise element per scene
+- **cocomelon** — Hyper-engaging neuro-optimized mode. Uses pattern interrupts, dopamine micro-loops, high contrast, aggressive pacing, and arousal arc (arrest→escalate→climax→descend→convert). Best for ads, promos, social media hooks
 
 ### Step 5: Speed
 
@@ -111,7 +112,9 @@ Generate the YAML config. **IMPORTANT: Do NOT copy-paste text from the source.**
 
 The source project/site content is never modified — the YAML is a separate document with its own copy.
 
-Generate the YAML directly using your knowledge of the config schema, the extracted content, and seo-geo-copy principles (preferred — you write better copy than the algorithm). You can also use the CLI as a scaffold: save the extracted content JSON to a temp file, run `npx tsx .claude/skills/video-craft/engine/src/index.ts autogen <json> --format=X --mode=X --speed=X --intent=X`, then **rewrite all texts** applying seo-geo-copy.
+Generate the YAML directly using your knowledge of the config schema, the extracted content, and seo-geo-copy principles (preferred — you write better copy than the algorithm). You can also use the CLI as a scaffold: save the extracted content JSON to a temp file, run `npx tsx .claude/skills/video-craft/engine/src/index.ts autogen <json> --format=<chosen-format> --mode=X --speed=X --intent=X --design-system=<path-to-tokens.css>`, then **rewrite all texts** applying seo-geo-copy.
+
+**CRITICAL:** Always pass `--format=` with the exact format the user chose (e.g. `horizontal-16x9`). If omitted, the default is `vertical-9x16` and the video will be portrait. Also pass `--design-system=` pointing to the ui-craft `tokens.css` (or the `.ui-craft/` directory) if one exists. When writing YAML manually, ensure `video.format` matches the user's choice exactly.
 
 **Show the full YAML to the user.** Explain each scene briefly. The user reviews and can adjust any text before rendering.
 
@@ -129,7 +132,7 @@ On approval:
 ## How It Works
 
 1. Read YAML config defining scenes and content
-2. Read design system tokens (optional ux-craft integration)
+2. Read design system tokens (optional ui-craft integration)
 3. Compute timing from text word count + speed preset
 4. Generate self-contained HTML with CSS @keyframes animations
 5. Launch Playwright headless, pause all animations
@@ -141,8 +144,8 @@ On approval:
 - **NOT a screen recorder** — generates original video content
 - **Web Animations API** — deterministic frame capture (NOT frozen clock — `page.clock.fastForward()` does not advance CSS animation time)
 - **Content-driven timing** — duration computed from word count
-- **Three modes**: safe (corporate), chaos (experimental), hybrid (safe + one breaker)
-- **Design system integration** — reads tokens from ux-craft
+- **Four modes**: safe (corporate), chaos (experimental), hybrid (safe + one breaker), cocomelon (neuro-hijack)
+- **Design system integration** — reads tokens from ui-craft
 - **Format-aware layout** — CSS Grid per scene, card-column fills frame in vertical, hero/centered/stacked modes
 - **Source analysis** — can auto-extract content from project folders or URLs
 - **107 animations**: 40 entrances, 28 exits, 23 transitions, 9 emphasis, 7 looping

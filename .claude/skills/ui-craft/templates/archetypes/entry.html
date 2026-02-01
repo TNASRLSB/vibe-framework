@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><!-- SLOT: page-title → "ProductName — Tagline" --></title>
+  <link rel="stylesheet" href="../preview/tokens.css">
+  <style>
+    /* ========================================
+       ENTRY PAGE — Hero-Centric Variant
+       Wireframe: wireframes/entry.md
+       ======================================== */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body, system-ui, sans-serif);
+      color: var(--color-text, #1a1a1a);
+      background: var(--color-bg, #ffffff);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* --- NAV --- */
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-inline: var(--space-4, 32px);
+      background: color-mix(in srgb, var(--color-bg, #fff) 85%, transparent);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--color-border, #e5e5e5);
+    }
+    .nav-logo {
+      font-family: var(--font-display, var(--font-body, system-ui));
+      font-weight: 700;
+      font-size: var(--text-lg, 1.125rem);
+      color: var(--color-text, #1a1a1a);
+      text-decoration: none;
+    }
+    .nav-links {
+      display: flex;
+      gap: var(--space-4, 32px);
+      list-style: none;
+    }
+    .nav-links a {
+      color: var(--color-text-muted, #666);
+      text-decoration: none;
+      font-size: var(--text-sm, 0.875rem);
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--color-text, #1a1a1a); }
+    .nav-cta {
+      background: var(--color-primary, #2563eb);
+      color: var(--color-on-primary, #fff);
+      padding: var(--space-1, 8px) var(--space-3, 24px);
+      border-radius: var(--radius-sm, 6px);
+      text-decoration: none;
+      font-size: var(--text-sm, 0.875rem);
+      font-weight: 600;
+      transition: opacity 0.2s;
+    }
+    .nav-cta:hover { opacity: 0.9; }
+
+    /* --- HERO (SPLIT) --- */
+    .hero {
+      min-height: 80vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-6, 64px);
+      align-items: center;
+      max-width: 1200px;
+      margin-inline: auto;
+      padding: var(--space-6, 64px) var(--space-4, 32px);
+    }
+    .hero-eyebrow {
+      display: inline-block;
+      font-size: var(--text-sm, 0.875rem);
+      font-weight: 600;
+      color: var(--color-primary, #2563eb);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: var(--space-2, 16px);
+    }
+    .hero-title {
+      font-family: var(--font-display, var(--font-body, system-ui));
+      font-size: var(--text-4xl, 2.25rem);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      color: var(--color-text, #1a1a1a);
+      margin-bottom: var(--space-3, 24px);
+    }
+    .hero-subtitle {
+      font-size: var(--text-lg, 1.125rem);
+      color: var(--color-text-muted, #666);
+      line-height: 1.6;
+      margin-bottom: var(--space-4, 32px);
+      max-width: 540px;
+    }
+    .hero-actions {
+      display: flex;
+      gap: var(--space-2, 16px);
+      flex-wrap: wrap;
+    }
+    .hero-visual {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .hero-visual-placeholder {
+      width: 100%;
+      aspect-ratio: 4/3;
+      background: var(--color-surface, #f5f5f5);
+      border-radius: var(--radius-lg, 16px);
+      display: grid;
+      place-items: center;
+      color: var(--color-text-muted, #666);
+      font-size: var(--text-sm, 0.875rem);
+      border: 2px dashed var(--color-border, #e5e5e5);
+    }
+
+    /* --- BUTTONS --- */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 48px;
+      padding-inline: var(--space-4, 32px);
+      border-radius: var(--radius-sm, 6px);
+      font-weight: 600;
+      font-size: var(--text-base, 1rem);
+      text-decoration: none;
+      transition: all 0.2s;
+      border: none;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: var(--color-primary, #2563eb);
+      color: var(--color-on-primary, #fff);
+    }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-secondary {
+      background: transparent;
+      color: var(--color-text, #1a1a1a);
+      border: 1px solid var(--color-border, #e5e5e5);
+    }
+    .btn-secondary:hover { background: var(--color-surface, #f5f5f5); }
+
+    /* --- SECTION SHARED --- */
+    .section {
+      padding: var(--space-8, 128px) var(--space-4, 32px);
+    }
+    .section-inner {
+      max-width: 1200px;
+      margin-inline: auto;
+    }
+    .section-header {
+      text-align: center;
+      margin-bottom: var(--space-6, 64px);
+    }
+    .section-eyebrow {
+      font-size: var(--text-sm, 0.875rem);
+      font-weight: 600;
+      color: var(--color-primary, #2563eb);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: var(--space-1, 8px);
+    }
+    .section-title {
+      font-family: var(--font-display, var(--font-body, system-ui));
+      font-size: var(--text-3xl, 1.875rem);
+      font-weight: 700;
+      color: var(--color-text, #1a1a1a);
+      margin-bottom: var(--space-2, 16px);
+    }
+    .section-subtitle {
+      font-size: var(--text-lg, 1.125rem);
+      color: var(--color-text-muted, #666);
+      max-width: 600px;
+      margin-inline: auto;
+    }
+
+    /* --- SOCIAL PROOF --- */
+    .social-proof {
+      padding: var(--space-6, 64px) var(--space-4, 32px);
+      border-top: 1px solid var(--color-border, #e5e5e5);
+      border-bottom: 1px solid var(--color-border, #e5e5e5);
+    }
+    .social-proof-inner {
+      max-width: 1200px;
+      margin-inline: auto;
+      text-align: center;
+    }
+    .social-proof-label {
+      font-size: var(--text-sm, 0.875rem);
+      color: var(--color-text-muted, #666);
+      margin-bottom: var(--space-4, 32px);
+    }
+    .logo-bar {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: var(--space-6, 64px);
+      flex-wrap: wrap;
+    }
+    .logo-placeholder {
+      width: 120px;
+      height: 40px;
+      background: var(--color-surface, #f5f5f5);
+      border-radius: var(--radius-sm, 6px);
+      display: grid;
+      place-items: center;
+      font-size: var(--text-xs, 0.75rem);
+      color: var(--color-text-muted, #666);
+    }
+
+    /* --- FEATURES GRID --- */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-5, 48px);
+    }
+    .feature-card {
+      text-align: center;
+    }
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      margin-inline: auto;
+      margin-bottom: var(--space-3, 24px);
+      background: color-mix(in srgb, var(--color-primary, #2563eb) 10%, transparent);
+      border-radius: var(--radius-md, 12px);
+      display: grid;
+      place-items: center;
+      font-size: 1.5rem;
+    }
+    .feature-title {
+      font-weight: 600;
+      font-size: var(--text-lg, 1.125rem);
+      margin-bottom: var(--space-1, 8px);
+    }
+    .feature-desc {
+      font-size: var(--text-sm, 0.875rem);
+      color: var(--color-text-muted, #666);
+      line-height: 1.6;
+    }
+
+    /* --- HOW IT WORKS --- */
+    .how-step {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-6, 64px);
+      align-items: center;
+      margin-bottom: var(--space-8, 128px);
+    }
+    .how-step:nth-child(even) .how-step-visual { order: -1; }
+    .how-step-number {
+      font-size: var(--text-sm, 0.875rem);
+      font-weight: 700;
+      color: var(--color-primary, #2563eb);
+      margin-bottom: var(--space-2, 16px);
+    }
+    .how-step-title {
+      font-family: var(--font-display, var(--font-body, system-ui));
+      font-size: var(--text-2xl, 1.5rem);
+      font-weight: 700;
+      margin-bottom: var(--space-2, 16px);
+    }
+    .how-step-desc {
+      color: var(--color-text-muted, #666);
+      line-height: 1.6;
+    }
+    .how-step-visual-placeholder {
+      width: 100%;
+      aspect-ratio: 4/3;
+      background: var(--color-surface, #f5f5f5);
+      border-radius: var(--radius-lg, 16px);
+      display: grid;
+      place-items: center;
+      color: var(--color-text-muted, #666);
+      font-size: var(--text-sm, 0.875rem);
+      border: 2px dashed var(--color-border, #e5e5e5);
+    }
+
+    /* --- FINAL CTA --- */
+    .cta-section {
+      text-align: center;
+      padding: var(--space-8, 128px) var(--space-4, 32px);
+      background: var(--color-surface, #f5f5f5);
+    }
+    .cta-inner {
+      max-width: 600px;
+      margin-inline: auto;
+    }
+    .cta-title {
+      font-family: var(--font-display, var(--font-body, system-ui));
+      font-size: var(--text-3xl, 1.875rem);
+      font-weight: 700;
+      margin-bottom: var(--space-2, 16px);
+    }
+    .cta-desc {
+      color: var(--color-text-muted, #666);
+      margin-bottom: var(--space-4, 32px);
+    }
+
+    /* --- FOOTER --- */
+    .footer {
+      padding: var(--space-6, 64px) var(--space-4, 32px);
+      border-top: 1px solid var(--color-border, #e5e5e5);
+    }
+    .footer-inner {
+      max-width: 1200px;
+      margin-inline: auto;
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: var(--space-5, 48px);
+    }
+    .footer-brand-desc {
+      font-size: var(--text-sm, 0.875rem);
+      color: var(--color-text-muted, #666);
+      margin-top: var(--space-2, 16px);
+      line-height: 1.6;
+    }
+    .footer-heading {
+      font-weight: 600;
+      font-size: var(--text-sm, 0.875rem);
+      margin-bottom: var(--space-3, 24px);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .footer-links {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2, 16px);
+    }
+    .footer-links a {
+      font-size: var(--text-sm, 0.875rem);
+      color: var(--color-text-muted, #666);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .footer-links a:hover { color: var(--color-text, #1a1a1a); }
+    .footer-bottom {
+      max-width: 1200px;
+      margin-inline: auto;
+      padding-top: var(--space-4, 32px);
+      margin-top: var(--space-4, 32px);
+      border-top: 1px solid var(--color-border, #e5e5e5);
+      font-size: var(--text-xs, 0.75rem);
+      color: var(--color-text-muted, #666);
+    }
+
+    /* --- RESPONSIVE --- */
+    @media (max-width: 1024px) {
+      .hero { grid-template-columns: 1fr; min-height: 60vh; gap: var(--space-4, 32px); }
+      .hero-visual { order: -1; }
+      .features-grid { grid-template-columns: repeat(2, 1fr); }
+      .how-step { grid-template-columns: 1fr; }
+      .how-step:nth-child(even) .how-step-visual { order: 0; }
+      .how-step-visual { order: -1; }
+      .footer-inner { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 768px) {
+      .hero { min-height: auto; padding: var(--space-5, 48px) var(--space-3, 24px); text-align: center; }
+      .hero-subtitle { max-width: none; }
+      .hero-actions { justify-content: center; }
+      .btn { width: 100%; }
+      .features-grid { grid-template-columns: 1fr; }
+      .section { padding: var(--space-6, 64px) var(--space-3, 24px); }
+      .footer-inner { grid-template-columns: 1fr; }
+      .nav-links { display: none; }
+    }
+
+    /* --- FOCUS STATES --- */
+    :focus-visible {
+      outline: 2px solid var(--color-primary, #2563eb);
+      outline-offset: 2px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <a href="#" class="nav-logo"><!-- SLOT: brand-name -->Acme</a>
+    <ul class="nav-links">
+      <li><a href="#">Features</a></li>
+      <li><a href="#">Pricing</a></li>
+      <li><a href="#">About</a></li>
+      <li><a href="#">Blog</a></li>
+    </ul>
+    <a href="#" class="nav-cta">Get started</a>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-content">
+      <span class="hero-eyebrow"><!-- SLOT: eyebrow -->Now in public beta</span>
+      <h1 class="hero-title"><!-- SLOT: title -->Ship products faster with less friction</h1>
+      <p class="hero-subtitle"><!-- SLOT: subtitle -->The modern platform that helps teams collaborate, iterate, and deliver exceptional products without the overhead.</p>
+      <div class="hero-actions">
+        <a href="#" class="btn btn-primary"><!-- SLOT: cta-primary -->Start free trial</a>
+        <a href="#" class="btn btn-secondary"><!-- SLOT: cta-secondary -->Watch demo</a>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <!-- SLOT: hero-visual → image, video, or illustration -->
+      <div class="hero-visual-placeholder">Product screenshot or illustration</div>
+    </div>
+  </section>
+
+  <!-- SOCIAL PROOF -->
+  <section class="social-proof">
+    <div class="social-proof-inner">
+      <p class="social-proof-label"><!-- SLOT: social-label -->Trusted by 2,000+ teams worldwide</p>
+      <div class="logo-bar">
+        <!-- SLOT: logos → 4-6 company logos -->
+        <div class="logo-placeholder">Logo 1</div>
+        <div class="logo-placeholder">Logo 2</div>
+        <div class="logo-placeholder">Logo 3</div>
+        <div class="logo-placeholder">Logo 4</div>
+        <div class="logo-placeholder">Logo 5</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="section">
+    <div class="section-inner">
+      <div class="section-header">
+        <p class="section-eyebrow"><!-- SLOT: features-eyebrow -->Features</p>
+        <h2 class="section-title"><!-- SLOT: features-title -->Everything you need to build better</h2>
+        <p class="section-subtitle"><!-- SLOT: features-subtitle -->A complete toolkit designed for modern teams who want to move fast without breaking things.</p>
+      </div>
+      <div class="features-grid">
+        <!-- SLOT: features → 3, 4, or 6 feature cards -->
+        <div class="feature-card">
+          <div class="feature-icon">&#9889;</div>
+          <h3 class="feature-title">Lightning fast</h3>
+          <p class="feature-desc">Built on edge infrastructure for sub-100ms response times globally.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">&#128274;</div>
+          <h3 class="feature-title">Secure by default</h3>
+          <p class="feature-desc">End-to-end encryption, SOC 2 compliant, and automatic vulnerability scanning.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">&#128640;</div>
+          <h3 class="feature-title">Deploy anywhere</h3>
+          <p class="feature-desc">One-click deployment to any cloud provider with automatic scaling.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="section">
+    <div class="section-inner">
+      <div class="section-header">
+        <p class="section-eyebrow"><!-- SLOT: how-eyebrow -->How it works</p>
+        <h2 class="section-title"><!-- SLOT: how-title -->Three steps to launch</h2>
+      </div>
+
+      <!-- SLOT: how-steps → 2-4 alternating steps -->
+      <div class="how-step">
+        <div class="how-step-content">
+          <p class="how-step-number">Step 01</p>
+          <h3 class="how-step-title">Connect your repository</h3>
+          <p class="how-step-desc">Link your GitHub, GitLab, or Bitbucket repository in seconds. We auto-detect your framework and configure the build pipeline.</p>
+        </div>
+        <div class="how-step-visual">
+          <div class="how-step-visual-placeholder">Step 1 illustration</div>
+        </div>
+      </div>
+
+      <div class="how-step">
+        <div class="how-step-content">
+          <p class="how-step-number">Step 02</p>
+          <h3 class="how-step-title">Configure your environment</h3>
+          <p class="how-step-desc">Set environment variables, choose your region, and customize your deployment pipeline with our visual editor.</p>
+        </div>
+        <div class="how-step-visual">
+          <div class="how-step-visual-placeholder">Step 2 illustration</div>
+        </div>
+      </div>
+
+      <div class="how-step">
+        <div class="how-step-content">
+          <p class="how-step-number">Step 03</p>
+          <h3 class="how-step-title">Deploy and monitor</h3>
+          <p class="how-step-desc">Push to production with confidence. Real-time monitoring, automatic rollbacks, and instant alerts keep you in control.</p>
+        </div>
+        <div class="how-step-visual">
+          <div class="how-step-visual-placeholder">Step 3 illustration</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="cta-section">
+    <div class="cta-inner">
+      <h2 class="cta-title"><!-- SLOT: cta-title -->Ready to get started?</h2>
+      <p class="cta-desc"><!-- SLOT: cta-desc -->Join thousands of teams already shipping faster. Free for up to 3 projects.</p>
+      <a href="#" class="btn btn-primary"><!-- SLOT: cta-button -->Start your free trial</a>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div>
+        <a href="#" class="nav-logo"><!-- SLOT: brand-name -->Acme</a>
+        <p class="footer-brand-desc"><!-- SLOT: footer-desc -->Modern deployment platform for teams who ship fast.</p>
+      </div>
+      <div>
+        <h4 class="footer-heading">Product</h4>
+        <ul class="footer-links">
+          <li><a href="#">Features</a></li>
+          <li><a href="#">Pricing</a></li>
+          <li><a href="#">Changelog</a></li>
+          <li><a href="#">Documentation</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="footer-heading">Company</h4>
+        <ul class="footer-links">
+          <li><a href="#">About</a></li>
+          <li><a href="#">Blog</a></li>
+          <li><a href="#">Careers</a></li>
+          <li><a href="#">Contact</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="footer-heading">Legal</h4>
+        <ul class="footer-links">
+          <li><a href="#">Privacy</a></li>
+          <li><a href="#">Terms</a></li>
+          <li><a href="#">Security</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 Acme Inc. All rights reserved.</p>
+    </div>
+  </footer>
+
+</body>
+</html>

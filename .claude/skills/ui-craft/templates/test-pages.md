@@ -1,6 +1,6 @@
 # Test Pages Templates
 
-Templates for `/ux-craft test-system` command. When generating test pages, use these structures with tokens from `system.md`.
+Templates for `/ui-craft test-system` command. When generating test pages, use these structures with tokens from `system.md`.
 
 ---
 
@@ -1062,7 +1062,7 @@ Error/System state components demo.
 
 ## Usage Notes
 
-When running `/ux-craft test-system`:
+When running `/ui-craft test-system`:
 
 1. **Read `system.md`** to get actual token values
 2. **Generate `tokens.css`** from those values

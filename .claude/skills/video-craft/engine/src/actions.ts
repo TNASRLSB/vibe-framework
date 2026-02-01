@@ -10,6 +10,7 @@ export interface AnimationDef {
   keyframes: string;               // CSS @keyframes body
   initialStyle: string;            // CSS applied before animation starts (e.g., opacity: 0)
   fillMode: string;                // usually 'forwards'
+  continuous?: boolean;            // if true, animation loops infinitely (no fill-mode)
 }
 
 // ─── ENTRANCES ───────────────────────────────────────────────
@@ -295,6 +296,131 @@ export const ENTRANCES: Record<string, AnimationDef> = {
     initialStyle: 'opacity: 0; transform: scale(4) rotate(-10deg);',
     fillMode: 'forwards',
   },
+
+  // ─── SPRING VARIANTS (overshoot + settle) ─────────────────
+  'spring-up': {
+    id: 'spring-up', name: 'Spring Up', energy: 'medium',
+    durationRange: [500, 900],
+    keyframes: `0% { opacity: 0; transform: translateY(40px); } 60% { opacity: 1; transform: translateY(-8px); } 75% { transform: translateY(3px); } 90% { transform: translateY(-1px); } 100% { opacity: 1; transform: translateY(0); }`,
+    initialStyle: 'opacity: 0; transform: translateY(40px);',
+    fillMode: 'forwards',
+  },
+  'spring-scale': {
+    id: 'spring-scale', name: 'Spring Scale', energy: 'medium',
+    durationRange: [500, 900],
+    keyframes: `0% { opacity: 0; transform: scale(0.5); } 55% { opacity: 1; transform: scale(1.08); } 70% { transform: scale(0.96); } 85% { transform: scale(1.02); } 100% { opacity: 1; transform: scale(1); }`,
+    initialStyle: 'opacity: 0; transform: scale(0.5);',
+    fillMode: 'forwards',
+  },
+  'spring-left': {
+    id: 'spring-left', name: 'Spring Left', energy: 'medium',
+    durationRange: [500, 900],
+    keyframes: `0% { opacity: 0; transform: translateX(60px); } 55% { opacity: 1; transform: translateX(-10px); } 70% { transform: translateX(4px); } 85% { transform: translateX(-2px); } 100% { opacity: 1; transform: translateX(0); }`,
+    initialStyle: 'opacity: 0; transform: translateX(60px);',
+    fillMode: 'forwards',
+  },
+
+  // ─── KINETIC TYPOGRAPHY ───────────────────────────────────
+  'word-by-word': {
+    id: 'word-by-word', name: 'Word by Word', energy: 'special',
+    durationRange: [800, 2000],
+    keyframes: `from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); }`,
+    initialStyle: 'opacity: 0; transform: translateY(15px);',
+    fillMode: 'forwards',
+  },
+  'char-stagger': {
+    id: 'char-stagger', name: 'Char Stagger', energy: 'special',
+    durationRange: [1000, 3000],
+    keyframes: `from { opacity: 0; transform: translateY(10px) scale(0.8); } to { opacity: 1; transform: translateY(0) scale(1); }`,
+    initialStyle: 'opacity: 0; transform: translateY(10px) scale(0.8);',
+    fillMode: 'forwards',
+  },
+  'kinetic-push': {
+    id: 'kinetic-push', name: 'Kinetic Push', energy: 'high',
+    durationRange: [300, 600],
+    keyframes: `0% { opacity: 0; transform: translateX(-100%) scaleX(1.3) scaleY(0.8); } 60% { opacity: 1; transform: translateX(5%) scaleX(0.95) scaleY(1.02); } 100% { opacity: 1; transform: translateX(0) scaleX(1) scaleY(1); }`,
+    initialStyle: 'opacity: 0; transform: translateX(-100%) scaleX(1.3) scaleY(0.8);',
+    fillMode: 'forwards',
+  },
+  'text-reveal-mask': {
+    id: 'text-reveal-mask', name: 'Text Reveal Mask', energy: 'special',
+    durationRange: [500, 1000],
+    keyframes: `from { clip-path: polygon(0 0, 0 0, 0 100%, 0 100%); } to { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); }`,
+    initialStyle: 'clip-path: polygon(0 0, 0 0, 0 100%, 0 100%);',
+    fillMode: 'forwards',
+  },
+  'scale-word': {
+    id: 'scale-word', name: 'Scale Word', energy: 'high',
+    durationRange: [300, 600],
+    keyframes: `0% { opacity: 0; transform: scale(3); filter: blur(8px); } 70% { opacity: 1; transform: scale(0.95); filter: blur(0); } 100% { opacity: 1; transform: scale(1); filter: blur(0); }`,
+    initialStyle: 'opacity: 0; transform: scale(3); filter: blur(8px);',
+    fillMode: 'forwards',
+  },
+
+  // ─── MORPH / CLIP-PATH ────────────────────────────────────
+  'morph-circle-in': {
+    id: 'morph-circle-in', name: 'Morph Circle In', energy: 'medium',
+    durationRange: [500, 900],
+    keyframes: `from { clip-path: circle(0% at 50% 50%); opacity: 0; } to { clip-path: circle(75% at 50% 50%); opacity: 1; }`,
+    initialStyle: 'clip-path: circle(0% at 50% 50%); opacity: 0;',
+    fillMode: 'forwards',
+  },
+  'morph-diamond-in': {
+    id: 'morph-diamond-in', name: 'Morph Diamond In', energy: 'medium',
+    durationRange: [500, 900],
+    keyframes: `from { clip-path: polygon(50% 50%, 50% 50%, 50% 50%, 50% 50%); opacity: 0; } to { clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); opacity: 1; }`,
+    initialStyle: 'clip-path: polygon(50% 50%, 50% 50%, 50% 50%, 50% 50%); opacity: 0;',
+    fillMode: 'forwards',
+  },
+  'morph-hexagon-in': {
+    id: 'morph-hexagon-in', name: 'Morph Hexagon In', energy: 'medium',
+    durationRange: [500, 900],
+    keyframes: `from { clip-path: polygon(50% 50%, 50% 50%, 50% 50%, 50% 50%, 50% 50%, 50% 50%); opacity: 0; } to { clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); opacity: 1; }`,
+    initialStyle: 'clip-path: polygon(50% 50%, 50% 50%, 50% 50%, 50% 50%, 50% 50%, 50% 50%); opacity: 0;',
+    fillMode: 'forwards',
+  },
+
+  // ─── ANTICIPATION (Disney-style) ──────────────────────────
+  'anticipate-up': {
+    id: 'anticipate-up', name: 'Anticipate Up', energy: 'medium',
+    durationRange: [600, 1000],
+    keyframes: `0% { opacity: 0; transform: translateY(30px); } 15% { opacity: 0.5; transform: translateY(35px); } 40% { opacity: 1; transform: translateY(-5px); } 65% { transform: translateY(2px); } 100% { opacity: 1; transform: translateY(0); }`,
+    initialStyle: 'opacity: 0; transform: translateY(30px);',
+    fillMode: 'forwards',
+  },
+  'anticipate-scale': {
+    id: 'anticipate-scale', name: 'Anticipate Scale', energy: 'medium',
+    durationRange: [600, 1000],
+    keyframes: `0% { opacity: 0; transform: scale(0.7); } 15% { opacity: 0.3; transform: scale(0.65); } 50% { opacity: 1; transform: scale(1.06); } 75% { transform: scale(0.98); } 100% { opacity: 1; transform: scale(1); }`,
+    initialStyle: 'opacity: 0; transform: scale(0.7);',
+    fillMode: 'forwards',
+  },
+
+  // ─── CONTINUOUS (loop infinitely, no settle) ───────────────
+  'traverse': {
+    id: 'traverse', name: 'Traverse', energy: 'medium',
+    durationRange: [4000, 8000],
+    keyframes: `0% { opacity: 1; transform: translateX(-110%); } 100% { opacity: 1; transform: translateX(110%); }`,
+    initialStyle: 'opacity: 1;',
+    fillMode: 'none',
+    continuous: true,
+  },
+  'marquee': {
+    id: 'marquee', name: 'Marquee', energy: 'low',
+    durationRange: [6000, 12000],
+    keyframes: `0% { transform: translateX(100%); } 100% { transform: translateX(-100%); }`,
+    initialStyle: 'white-space: nowrap; overflow: visible;',
+    fillMode: 'none',
+    continuous: true,
+  },
+  'float-drift': {
+    id: 'float-drift', name: 'Float Drift', energy: 'minimal',
+    durationRange: [3000, 6000],
+    keyframes: `0% { opacity: 1; transform: translateY(0) translateX(0); } 25% { transform: translateY(-8px) translateX(4px); } 50% { transform: translateY(-4px) translateX(-3px); } 75% { transform: translateY(-10px) translateX(2px); } 100% { opacity: 1; transform: translateY(0) translateX(0); }`,
+    initialStyle: 'opacity: 1;',
+    fillMode: 'none',
+    continuous: true,
+  },
 };
 
 // ─── EXITS ───────────────────────────────────────────────────
@@ -482,6 +608,20 @@ export const EXITS: Record<string, AnimationDef> = {
     initialStyle: '',
     fillMode: 'forwards',
   },
+  'morph-circle-out': {
+    id: 'morph-circle-out', name: 'Morph Circle Out', energy: 'medium',
+    durationRange: [500, 900],
+    keyframes: `from { clip-path: circle(75% at 50% 50%); opacity: 1; } to { clip-path: circle(0% at 50% 50%); opacity: 0; }`,
+    initialStyle: '',
+    fillMode: 'forwards',
+  },
+  'spring-out-down': {
+    id: 'spring-out-down', name: 'Spring Out Down', energy: 'medium',
+    durationRange: [400, 700],
+    keyframes: `0% { opacity: 1; transform: translateY(0); } 20% { transform: translateY(-8px); } 100% { opacity: 0; transform: translateY(50px); }`,
+    initialStyle: '',
+    fillMode: 'forwards',
+  },
   'highlight-text-out': {
     id: 'highlight-text-out', name: 'Highlight Text Out', energy: 'special',
     durationRange: [400, 800],
@@ -650,6 +790,25 @@ export const TRANSITIONS: Record<string, TransitionDef> = {
     sceneAKeyframes: `from { clip-path: circle(150% at 50% 50%); } to { clip-path: circle(0% at 50% 50%); }`,
     sceneBKeyframes: `from { opacity: 0; } to { opacity: 1; }`,
   },
+  // ─── MORPH TRANSITIONS ──────────────────────────────────
+  'morph-reveal': {
+    id: 'morph-reveal', name: 'Morph Reveal', energy: 'medium',
+    durationRange: [500, 900],
+    sceneAKeyframes: `from { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); } to { clip-path: polygon(0 0, 0 0, 0 100%, 0 100%); }`,
+    sceneBKeyframes: `from { clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%); } to { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); }`,
+  },
+  'diagonal-wipe': {
+    id: 'diagonal-wipe', name: 'Diagonal Wipe', energy: 'medium',
+    durationRange: [400, 800],
+    sceneAKeyframes: `from { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); } to { clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%); }`,
+    sceneBKeyframes: `from { clip-path: polygon(0 0, 0 0, 0 100%, 0 100%); } to { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); }`,
+  },
+  'scale-reveal': {
+    id: 'scale-reveal', name: 'Scale Reveal', energy: 'medium',
+    durationRange: [500, 900],
+    sceneAKeyframes: `from { transform: scale(1); opacity: 1; } to { transform: scale(0.8); opacity: 0; filter: blur(5px); }`,
+    sceneBKeyframes: `from { transform: scale(1.2); opacity: 0; filter: blur(5px); } to { transform: scale(1); opacity: 1; filter: blur(0); }`,
+  },
 };
 
 // ─── EMPHASIS (attention-getters for already-visible elements) ──
@@ -772,6 +931,34 @@ export const LOOPING: Record<string, AnimationDef> = {
     initialStyle: '',
     fillMode: 'none',
   },
+  'drift-horizontal': {
+    id: 'drift-horizontal', name: 'Drift Horizontal', energy: 'minimal',
+    durationRange: [3000, 6000],
+    keyframes: `0%, 100% { transform: translateX(0); } 50% { transform: translateX(6px); }`,
+    initialStyle: '',
+    fillMode: 'none',
+  },
+  'rotate-breathe': {
+    id: 'rotate-breathe', name: 'Rotate Breathe', energy: 'low',
+    durationRange: [4000, 8000],
+    keyframes: `0%, 100% { transform: rotate(0) scale(1); } 50% { transform: rotate(1deg) scale(1.01); }`,
+    initialStyle: '',
+    fillMode: 'none',
+  },
+  'color-shift': {
+    id: 'color-shift', name: 'Color Shift', energy: 'low',
+    durationRange: [3000, 6000],
+    keyframes: `0%, 100% { filter: hue-rotate(0deg); } 50% { filter: hue-rotate(15deg); }`,
+    initialStyle: '',
+    fillMode: 'none',
+  },
+  'shadow-breathe': {
+    id: 'shadow-breathe', name: 'Shadow Breathe', energy: 'minimal',
+    durationRange: [3000, 5000],
+    keyframes: `0%, 100% { box-shadow: 0 4px 12px rgba(0,0,0,0.2); } 50% { box-shadow: 0 8px 24px rgba(0,0,0,0.35); }`,
+    initialStyle: '',
+    fillMode: 'none',
+  },
 };
 
 // ─── MODE POOLS ──────────────────────────────────────────────
@@ -782,6 +969,9 @@ const SAFE_ENTRANCE_IDS = [
   'clip-reveal-up', 'clip-reveal-down', 'clip-reveal-left', 'clip-reveal-right',
   'zoom-in', 'blur-in', 'highlight-text', 'underline-draw',
   'rise-and-fade', 'typewriter', 'letter-spacing-in',
+  'spring-up', 'spring-scale', 'spring-left',
+  'text-reveal-mask', 'morph-circle-in',
+  'anticipate-up', 'anticipate-scale',
 ];
 
 const SAFE_EXIT_IDS = [
@@ -789,45 +979,95 @@ const SAFE_EXIT_IDS = [
   'slide-out-up', 'slide-out-down', 'slide-out-left', 'slide-out-right', 'shrink',
   'clip-hide-up', 'clip-hide-down', 'clip-hide-left', 'clip-hide-right',
   'blur-out', 'highlight-text-out', 'underline-undraw',
+  'morph-circle-out', 'spring-out-down',
 ];
 
 const SAFE_TRANSITION_IDS = [
   'cut', 'fade', 'crossfade',
   'slide-left', 'slide-right', 'slide-up', 'slide-down',
   'blur', 'push-left', 'push-right', 'push-up', 'push-down',
+  'morph-reveal', 'scale-reveal', 'wipe-left', 'wipe-right',
 ];
 
-const SAFE_EMPHASIS_IDS = ['pulse', 'color-pop'];
-const SAFE_LOOPING_IDS = ['float', 'breathe', 'shimmer', 'bob'];
+const SAFE_EMPHASIS_IDS = ['pulse', 'color-pop', 'heartbeat'];
+const SAFE_LOOPING_IDS = ['float', 'breathe', 'shimmer', 'bob', 'drift-horizontal', 'shadow-breathe'];
 
 export function getEntrancePool(mode: string): AnimationDef[] {
-  if (mode === 'chaos') return Object.values(ENTRANCES);
+  if (mode === 'chaos' || mode === 'cocomelon') return Object.values(ENTRANCES);
   // safe and hybrid base pool
   return SAFE_ENTRANCE_IDS.map(id => ENTRANCES[id]).filter(Boolean);
 }
 
 export function getExitPool(mode: string): AnimationDef[] {
-  if (mode === 'chaos') return Object.values(EXITS);
+  if (mode === 'chaos' || mode === 'cocomelon') return Object.values(EXITS);
   return SAFE_EXIT_IDS.map(id => EXITS[id]).filter(Boolean);
 }
 
 export function getTransitionPool(mode: string): TransitionDef[] {
-  if (mode === 'chaos') return Object.values(TRANSITIONS);
+  if (mode === 'chaos' || mode === 'cocomelon') return Object.values(TRANSITIONS);
   return SAFE_TRANSITION_IDS.map(id => TRANSITIONS[id]).filter(Boolean);
 }
 
 export function getEmphasisPool(mode: string): AnimationDef[] {
-  if (mode === 'chaos') return Object.values(EMPHASIS);
+  if (mode === 'chaos' || mode === 'cocomelon') return Object.values(EMPHASIS);
   return SAFE_EMPHASIS_IDS.map(id => EMPHASIS[id]).filter(Boolean);
 }
 
 export function getLoopingPool(mode: string): AnimationDef[] {
-  if (mode === 'chaos') return Object.values(LOOPING);
+  if (mode === 'chaos' || mode === 'cocomelon') return Object.values(LOOPING);
   return SAFE_LOOPING_IDS.map(id => LOOPING[id]).filter(Boolean);
 }
 
 export function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
+}
+
+/**
+ * Get entrance pool filtered by industry profile preferences.
+ * Returns preferred entrances that exist in the base pool, with fallback to full pool.
+ */
+export function getEntrancePoolForProfile(
+  mode: string,
+  preferredIds: string[],
+  allowedEnergy: EnergyLevel[],
+): AnimationDef[] {
+  const basePool = getEntrancePool(mode);
+  // Filter by preferred IDs first
+  const preferred = preferredIds
+    .map(id => ENTRANCES[id])
+    .filter((d): d is AnimationDef => !!d && allowedEnergy.includes(d.energy));
+  if (preferred.length >= 3) return preferred;
+  // Fallback: filter base pool by energy level
+  const filtered = basePool.filter(d => allowedEnergy.includes(d.energy));
+  return filtered.length > 0 ? filtered : basePool;
+}
+
+/**
+ * Get exit pool filtered by industry profile preferences.
+ */
+export function getExitPoolForProfile(
+  mode: string,
+  preferredIds: string[],
+): AnimationDef[] {
+  const basePool = getExitPool(mode);
+  const preferred = preferredIds
+    .map(id => EXITS[id])
+    .filter((d): d is AnimationDef => !!d);
+  return preferred.length >= 2 ? preferred : basePool;
+}
+
+/**
+ * Get transition pool filtered by industry profile preferences.
+ */
+export function getTransitionPoolForProfile(
+  mode: string,
+  preferredIds: string[],
+): TransitionDef[] {
+  const basePool = getTransitionPool(mode);
+  const preferred = preferredIds
+    .map(id => TRANSITIONS[id])
+    .filter((d): d is TransitionDef => !!d);
+  return preferred.length >= 2 ? preferred : basePool;
 }
 
 export function defaultEntranceDuration(def: AnimationDef): number {

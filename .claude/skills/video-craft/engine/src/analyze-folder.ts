@@ -93,11 +93,11 @@ export function analyzeFolder(folderPath: string): ExtractedContent {
   }
 
   // --- Design tokens ---
-  // ux-craft system.md
-  const uxSystem = join(folderPath, '.claude', 'skills', 'ux-craft', 'system.md');
+  // ui-craft system.md
+  const uxSystem = join(folderPath, '.claude', 'skills', 'ui-craft', 'system.md');
   if (existsSync(uxSystem)) {
     const content = readFileSync(uxSystem, 'utf-8');
-    result.raw['ux-craft-system.md'] = content.slice(0, 3000);
+    result.raw['ui-craft-system.md'] = content.slice(0, 3000);
     extractDesignTokens(content, result);
   }
 

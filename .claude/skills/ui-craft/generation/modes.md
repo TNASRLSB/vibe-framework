@@ -112,7 +112,7 @@ Tre modalità per generare UI, dal prevedibile all'imprevedibile.
 ### Reproducibility
 Se user vuole riprodurre un risultato Chaos:
 ```
-/ux-craft generate hero --seed=42
+/ui-craft generate hero --seed=42
 ```
 Lo stesso seed produce la stessa estrazione random.
 
@@ -181,7 +181,7 @@ Lo stesso seed produce la stessa estrazione random.
 ## Mode Selection Flow
 
 ```
-/ux-craft generate [component]
+/ui-craft generate [component]
 
 ┌─────────────────────────────────────────────────────────────┐
 │                                                             │

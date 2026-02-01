@@ -189,7 +189,7 @@ Pattern disponibili in .claude/skills/dev-patterns/stacks/typescript-react-nextj
 | Skill | Integrazione |
 |-------|--------------|
 | security-guardian | Usa security.md core + pattern stack-specific |
-| ux-craft | Usa pattern frontend se React/Vue/etc |
+| ui-craft | Usa pattern frontend se React/Vue/etc |
 
 ---
 

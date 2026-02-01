@@ -301,9 +301,11 @@ ACCENT ELEMENTS
 ✗ Navigation (confonde)
 ✗ Form fields (breaks flow)
 ✗ CTA buttons (hard to click)
-✗ Text content (hard to read)
+✗ Text content (hard to read) — INCLUDES headings, titles, paragraphs
 ✗ Data tables (information architecture)
 ```
+
+**REGOLA CRITICA:** Mai applicare `margin-left` o `margin-right` negativi a elementi di testo (headings, titles, paragraphs, labels). Il testo NON deve mai uscire dal viewport o dal container padding. Layout breaks su testo = contenuto tagliato = bug visivo. Usare layout breaks solo su elementi decorativi, immagini, cards, dividers.
 
 ---
 

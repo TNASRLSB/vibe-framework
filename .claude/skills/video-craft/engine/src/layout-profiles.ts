@@ -66,7 +66,7 @@ const VERTICAL_9x16: LayoutProfile = {
   cardMaxWidth: 9999, // full width
   cardPadding: 52,
   cardRadius: 24,
-  cardIconSize: 72,
+  cardIconSize: 96,
   cardTitleSize: 44,
   cardTextSize: 34,
   cardGap: 28,
@@ -235,7 +235,7 @@ export function getLayoutProfile(format: string): LayoutProfile {
 
 // ─── Auto-layout selection ───────────────────────────────────
 
-export type LayoutMode = 'hero' | 'centered' | 'stacked' | 'split' | 'card-column' | 'card-row' | 'card-grid';
+export type LayoutMode = 'hero' | 'centered' | 'stacked' | 'split' | 'card-column' | 'card-row' | 'card-grid' | 'fullscreen-text';
 
 export interface ElementInfo {
   type: string;
@@ -259,6 +259,7 @@ export function autoSelectLayout(
       'stacked': 'stacked',
       'split': 'split',
       'grid': profile.orientation === 'vertical' ? 'card-column' : 'card-row',
+      'fullscreen-text': 'fullscreen-text',
     };
     return map[explicitLayout] ?? 'centered';
   }

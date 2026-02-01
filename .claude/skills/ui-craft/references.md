@@ -34,9 +34,9 @@ Instead of searching online, Claude consults your curated screenshots. This ensu
 ### Invoking References
 
 ```
-/ux-craft reference hero
-/ux-craft reference navigation mobile
-/ux-craft reference card product
+/ui-craft reference hero
+/ui-craft reference navigation mobile
+/ui-craft reference card product
 ```
 
 Claude will:
@@ -84,7 +84,7 @@ IMG_1234.png            # Camera default
 ## Folder Structure
 
 ```
-.claude/skills/ux-craft/
+.claude/skills/ui-craft/
 ├── references.md           # This file
 ├── taxonomy/
 │   ├── pages.md            # Page types → sections
@@ -129,16 +129,16 @@ From a screenshot, Claude can identify:
 ## Integration with Workflow
 
 ```
-1. /ux-craft establish
+1. /ui-craft establish
    └── Checks references/ folder
    └── If references exist → analyzes for direction
    └── If empty → asks project type, decides autonomously
    └── Creates system.md with exact tokens
 
-2. /ux-craft reference [pattern]
+2. /ui-craft reference [pattern]
    └── Shows visual inspiration from taxonomy
 
-3. /ux-craft test-system
+3. /ui-craft test-system
    └── Generates static HTML test pages
    └── Review in browser before adoption
 
@@ -148,7 +148,7 @@ From a screenshot, Claude can identify:
        • Visual style from references
        • Page archetype from taxonomy
 
-5. /ux-craft audit
+5. /ui-craft audit
    └── Verifies consistency
 ```
 
@@ -156,7 +156,7 @@ From a screenshot, Claude can identify:
 
 ## No References? No Problem
 
-If the `references/` folder is empty, `/ux-craft establish` uses intelligent fallback:
+If the `references/` folder is empty, `/ui-craft establish` uses intelligent fallback:
 
 1. Asks for project type (SaaS, e-commerce, docs, etc.)
 2. Infers best design direction based on industry best practices
@@ -209,7 +209,7 @@ Claude combines both: applies the spacing value in the visual style.
 2. Name them properly
 3. Drop in `references/`
 4. Add links in `taxonomy/elements.md`
-5. Try `/ux-craft reference [element]`
+5. Try `/ui-craft reference [element]`
 
 ---
 

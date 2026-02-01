@@ -12,7 +12,7 @@ Three-stage validation: Pre-Generation → During → Post-Generation.
 
 | Check | Condition | Action |
 |-------|-----------|--------|
-| system.md exists | `.ux-craft/system.md` present | If missing → run `/ux-craft establish` |
+| system.md exists | `.ui-craft/system.md` present | If missing → run `/ui-craft establish` |
 | Direction defined | `Personality:` field populated | If missing → BLOCK |
 | Tokens complete | Spacing, colors, typography defined | If incomplete → WARN |
 
@@ -40,6 +40,8 @@ Three-stage validation: Pre-Generation → During → Post-Generation.
 | Off-grid value | Not divisible by base (4 or 8) | WARN |
 | Inconsistent scale | Mixed px values | WARN |
 | Magic numbers | Arbitrary values like 13px, 47px | WARN |
+| Negative margin on text | `margin-left` or `margin-right` negative on headings, titles, or text elements → content bleeds outside viewport | **BLOCK** |
+| Content outside viewport | Any element with negative margin that pushes readable text past the left/right edge of the container | **BLOCK** |
 
 ### Security Check (Supply Chain)
 
@@ -252,7 +254,7 @@ p {
 ## Validation Report Format
 
 ```markdown
-# UX Craft Validation Report
+# UI Craft Validation Report
 
 ## Summary
 - **BLOCK violations**: 2
@@ -324,14 +326,14 @@ background: linear-gradient(135deg, hsl(220 20% 98%), hsl(220 15% 96%));
 
 ```bash
 #!/bin/bash
-# .ux-craft/scripts/validate.sh
+# .ui-craft/scripts/validate.sh
 
-echo "UX Craft Validation"
+echo "UI Craft Validation"
 echo "==================="
 
 # Check system.md exists
-if [ ! -f ".ux-craft/system.md" ]; then
-  echo "BLOCK: system.md not found. Run /ux-craft establish"
+if [ ! -f ".ui-craft/system.md" ]; then
+  echo "BLOCK: system.md not found. Run /ui-craft establish"
   exit 1
 fi
 

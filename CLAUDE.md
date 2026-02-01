@@ -20,6 +20,7 @@ Read these files before doing anything else:
 
 - @.claude/docs/registry.md
 - @.claude/docs/decisions.md
+- @.claude/docs/glossary.md
 
 Check for work in progress:
 ```bash
@@ -50,12 +51,23 @@ ls .claude/docs/specs/
 
 **Non-trivial changes:**
 
-1. Create `.claude/docs/specs/[feature-name].md` with:
+1. **Search for existing solutions first:**
+   - `grep "keyword" .claude/docs/registry.md`
+   - Search codebase for similar functions before creating new ones
+   - If something reusable exists, extend it — don't duplicate
+2. Create `.claude/docs/specs/[feature-name].md` with:
    - What am I building? (1-2 sentences)
    - What files will I touch?
+   - What existing code can I reuse?
    - How will I verify it works?
-2. Wait for **"PROCEED"**
-3. Implement
+3. Wait for **"PROCEED"**
+4. Implement
+
+**When implementation derails** (2+ failed attempts):
+1. STOP. Do not keep pushing the same approach.
+2. Create a new spec analyzing what went wrong.
+3. Re-plan from scratch.
+4. Wait for **"PROCEED"** again.
 
 ---
 
@@ -106,6 +118,8 @@ Create `.claude/docs/specs/migration-[name].md` with:
 | Add unnecessary error handling | Only validate at system boundaries. Trust internal code |
 | Create helpers for one-time operations | Three similar lines > premature abstraction |
 | Leave backwards-compat shims | If unused, delete completely. No `_vars`, no `// removed` comments |
+| Reimplemento codice che esiste già | In plan mode, cercare funzioni simili nel registry e nel codebase (grep) PRIMA di scrivere codice nuovo |
+| Insisto su un approccio fallimentare | Dopo 2 tentativi falliti, FERMARMI. Creare nuova spec, ripianificare da zero |
 
 ---
 
@@ -131,7 +145,42 @@ When the registry sections are blank, this is a new project. Populate it:
 
 Skip sections that don't apply. Then run `/adapt-framework` to generate stack-specific patterns.
 
-For projects with existing UI, also run `/ux-craft establish` then `/ux-craft analyze-project`.
+For projects with existing UI, also run `/ui-craft establish` then `/ui-craft analyze-project`.
+
+---
+
+## Session Notes (Post-Mortem)
+
+**Location:** `.claude/docs/session-notes/`
+
+At the end of complex sessions (multi-file changes, debugging, refactoring), create a note:
+
+**File:** `.claude/docs/session-notes/[YYYY-MM-DD]-[topic].md`
+
+```markdown
+# Session: [topic]
+**Date:** YYYY-MM-DD
+
+## What was done
+- [1-2 sentences]
+
+## What went wrong
+- [Approaches that failed and why]
+
+## What I learned
+- [Patterns, gotchas, or insights to remember]
+
+## CLAUDE.md updates needed
+- [New failure modes or rules to add — then actually add them]
+```
+
+**When to write one:**
+- Session involved 3+ failed attempts at something
+- Discovered a non-obvious codebase behavior
+- Found a pattern that should become a rule
+
+**When NOT to write one:**
+- Straightforward session, nothing surprising happened
 
 ---
 
@@ -147,6 +196,8 @@ For projects with existing UI, also run `/ux-craft establish` then `/ux-craft an
 | Record why I chose X over Y | Add to `.claude/docs/decisions.md` |
 | Verify before commit | Run through `.claude/docs/checklist.md` |
 | Fix bugs | Read `.claude/docs/bugs/bugs.md` → fix → add `**Sistemato:**` |
+| Audit tech debt | Run `/techdebt` → review report |
+| Record session learnings | Create `.claude/docs/session-notes/[date]-[topic].md` |
 
 ---
 

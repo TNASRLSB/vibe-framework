@@ -20,7 +20,7 @@ When I make a choice that affects future work, I record it here. This prevents m
 
 ## Decisions
 
-<!-- New entries go here, newest first -->
+*No decisions recorded yet. Add them as architectural choices are made.*
 
 ---
 

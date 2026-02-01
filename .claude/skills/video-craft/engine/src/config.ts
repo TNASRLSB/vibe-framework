@@ -1,9 +1,6 @@
-// YAML config parser + Zod schema validation
+// Config types + Zod schema validation (no YAML dependency)
 
-import { readFileSync } from 'fs';
-import { parse as parseYaml } from 'yaml';
 import { z } from 'zod';
-import type { CodecId, ModeId, SpeedPreset } from './presets.js';
 
 // ─── Schema ──────────────────────────────────────────────────
 
@@ -27,6 +24,14 @@ const ElementSchema = z.object({
   hold: z.union([DurationStr, z.number()]).optional(),
   delay: z.union([DurationStr, z.number()]).optional(),
   easing: z.string().optional(),
+  // Multi-phase support (director Phase 2)
+  phases: z.array(z.object({
+    entrance: z.string().optional(),
+    delay: z.union([DurationStr, z.number()]).optional(),
+    duration: z.union([DurationStr, z.number()]).optional(),
+    text: z.string().optional(),
+    size: z.enum(['sm', 'md', 'lg', 'xl', '2xl']).optional(),
+  })).optional(),
   // card-group specific
   'stagger-delay': z.union([DurationStr, z.number()]).optional(),
   'child-entrance': z.string().optional(),
@@ -44,7 +49,7 @@ const SceneSchema = z.object({
   duration: z.union([DurationStr, z.number()]).optional(),
   'transition-out': z.string().optional(),
   'transition-duration': z.union([DurationStr, z.number()]).optional(),
-  layout: z.enum(['centered', 'split', 'grid', 'stacked']).optional(),
+  layout: z.enum(['centered', 'split', 'grid', 'stacked', 'fullscreen-text']).optional(),
   columns: z.number().optional(),
   elements: z.array(ElementSchema),
 });
@@ -53,13 +58,13 @@ const VideoSchema = z.object({
   format: z.string().default('vertical-9x16'),
   fps: z.number().default(60),
   codec: z.enum(['h264', 'h265', 'av1']).default('h265'),
-  mode: z.enum(['safe', 'chaos', 'hybrid']).default('safe'),
+  mode: z.enum(['safe', 'chaos', 'hybrid', 'cocomelon']).default('safe'),
   speed: z.enum(['slowest', 'slow', 'normal', 'fast', 'fastest', 'instant']).default('normal'),
   'entrance-speed': z.enum(['slowest', 'slow', 'normal', 'fast', 'fastest', 'instant']).optional(),
   output: z.string().default('./output/video.mp4'),
 });
 
-const ConfigSchema = z.object({
+export const ConfigSchema = z.object({
   video: VideoSchema,
   'design-system': z.string().optional(),
   scenes: z.array(SceneSchema).min(1, 'At least one scene is required'),
@@ -71,23 +76,6 @@ export type ElementConfig = z.infer<typeof ElementSchema>;
 export type SceneConfig = z.infer<typeof SceneSchema>;
 export type VideoConfig = z.infer<typeof VideoSchema>;
 export type Config = z.infer<typeof ConfigSchema>;
-
-// ─── Parser ──────────────────────────────────────────────────
-
-export function parseConfigFile(path: string): Config {
-  const raw = readFileSync(path, 'utf-8');
-  return parseConfigString(raw);
-}
-
-export function parseConfigString(yamlStr: string): Config {
-  const data = parseYaml(yamlStr);
-  const result = ConfigSchema.safeParse(data);
-  if (!result.success) {
-    const errors = result.error.issues.map(i => `  ${i.path.join('.')}: ${i.message}`).join('\n');
-    throw new Error(`Config validation failed:\n${errors}`);
-  }
-  return result.data;
-}
 
 // ─── Helpers ─────────────────────────────────────────────────
 

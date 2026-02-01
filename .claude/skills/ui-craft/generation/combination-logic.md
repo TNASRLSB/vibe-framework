@@ -376,6 +376,40 @@ factor_x:
 
 ---
 
+## Wireframe Variant Selection
+
+Dopo la selezione dello stile e dei modifiers, i combined weights selezionano anche la variante wireframe per ogni archetipo.
+
+### Algorithm
+
+Identico allo style selection: ogni variante wireframe ha ideal weights, il fit score determina la selezione.
+
+```python
+def select_variant(archetype, combined_weights, mode):
+    variants = load_variants(archetype)  # from wireframes/[archetype].md
+    scores = {}
+    for variant in variants:
+        scores[variant.name] = variant_fit(variant.ideal_weights, combined_weights)
+
+    if mode == "safe":
+        return argmax(scores)
+    elif mode == "chaos":
+        return random.choices(list(scores.keys()), weights=scores.values())
+    elif mode == "hybrid":
+        selected = argmax(scores)
+        if factor_x == "layout-break":
+            # Force upgrade to most innovative variant
+            innovation_scores = {v.name: v.ideal_weights["innovation"] for v in variants}
+            return argmax(innovation_scores)
+        return selected
+```
+
+### Reference
+
+Full variant profiles and quick reference table: [wireframes/variant-selection.md](../wireframes/variant-selection.md)
+
+---
+
 ## Edge Cases
 
 ### No Clear Winner

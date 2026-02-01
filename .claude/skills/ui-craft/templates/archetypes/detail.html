@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><!-- SLOT: product-name → "Product Name — BrandName" --></title>
+  <link rel="stylesheet" href="../preview/tokens.css">
+  <style>
+    /* ========================================
+       DETAIL PAGE — Media + Info Variant
+       Wireframe: wireframes/detail.md
+       ======================================== */
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body, system-ui, sans-serif);
+      color: var(--color-text, #1a1a1a);
+      background: var(--color-bg, #ffffff);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* --- NAV --- */
+    .nav {
+      position: sticky; top: 0; z-index: 100; height: 64px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding-inline: var(--space-4, 32px);
+      background: color-mix(in srgb, var(--color-bg, #fff) 85%, transparent);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--color-border, #e5e5e5);
+    }
+    .nav-logo {
+      font-family: var(--font-display, var(--font-body, system-ui));
+      font-weight: 700; font-size: var(--text-lg, 1.125rem);
+      color: var(--color-text, #1a1a1a); text-decoration: none;
+    }
+
+    /* --- BREADCRUMBS --- */
+    .breadcrumbs-bar {
+      max-width: 1200px; margin-inline: auto;
+      padding: var(--space-3, 24px) var(--space-4, 32px);
+    }
+    .breadcrumbs {
+      font-size: var(--text-sm, 0.875rem); color: var(--color-text-muted, #666);
+    }
+    .breadcrumbs a { color: var(--color-text-muted, #666); text-decoration: none; }
+    .breadcrumbs a:hover { color: var(--color-primary, #2563eb); }
+    .breadcrumbs span { margin-inline: var(--space-1, 8px); }
+
+    /* --- PRODUCT LAYOUT (SPLIT) --- */
+    .product-layout {
+      max-width: 1200px; margin-inline: auto;
+      padding-inline: var(--space-4, 32px);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-6, 64px);
+      align-items: start;
+    }
+
+    /* --- GALLERY --- */
+    .gallery { display: flex; flex-direction: column; gap: var(--space-3, 24px); }
+    .gallery-main {
+      width: 100%; aspect-ratio: 1/1;
+      background: var(--color-surface, #f5f5f5);
+      border-radius: var(--radius-lg, 16px);
+      display: grid; place-items: center;
+      font-size: var(--text-sm, 0.875rem); color: var(--color-text-muted, #666);
+      overflow: hidden;
+    }
+    .gallery-thumbnails {
+      display: flex; gap: var(--space-2, 16px); overflow-x: auto;
+    }
+    .gallery-thumb {
+      width: 72px; height: 72px; flex-shrink: 0;
+      background: var(--color-surface, #f5f5f5);
+      border-radius: var(--radius-sm, 6px);
+      border: 2px solid transparent;
+      cursor: pointer; display: grid; place-items: center;
+      font-size: var(--text-xs, 0.75rem); color: var(--color-text-muted, #666);
+      transition: border-color 0.2s;
+    }
+    .gallery-thumb:hover,
+    .gallery-thumb.active { border-color: var(--color-primary, #2563eb); }
+
+    /* --- PRODUCT INFO --- */
+    .product-info { display: flex; flex-direction: column; gap: var(--space-4, 32px); }
+
+    .product-title {
+      font-family: var(--font-display, var(--font-body, system-ui));
+      font-size: var(--text-2xl, 1.5rem); font-weight: 700;
+    }
+    .product-rating {
+      display: flex; align-items: center; gap: var(--space-1, 8px);
+      font-size: var(--text-sm, 0.875rem);
+    }
+    .product-rating-stars { color: #f59e0b; }
+    .product-rating-count { color: var(--color-text-muted, #666); }
+    .product-rating-count a { color: var(--color-primary, #2563eb); text-decoration: none; }
+
+    .product-price {
+      font-size: var(--text-3xl, 1.875rem); font-weight: 700;
+      color: var(--color-text, #1a1a1a);
+    }
+    .product-price-original {
+      font-size: var(--text-lg, 1.125rem); color: var(--color-text-muted, #666);
+      text-decoration: line-through; margin-left: var(--space-2, 16px);
+      font-weight: 400;
+    }
+
+    /* --- VARIANTS --- */
+    .variant-group { display: flex; flex-direction: column; gap: var(--space-2, 16px); }
+    .variant-label {
+      font-weight: 600; font-size: var(--text-sm, 0.875rem);
+    }
+    .variant-options { display: flex; gap: var(--space-2, 16px); flex-wrap: wrap; }
+    .variant-option {
+      height: 40px; min-width: 40px; padding-inline: var(--space-3, 24px);
+      border: 1px solid var(--color-border, #e5e5e5);
+      border-radius: var(--radius-sm, 6px);
+      background: var(--color-bg, #fff);
+      font-size: var(--text-sm, 0.875rem); cursor: pointer;
+      transition: all 0.2s;
+    }
+    .variant-option:hover { border-color: var(--color-text, #1a1a1a); }
+    .variant-option.selected {
+      border-color: var(--color-primary, #2563eb);
+      background: color-mix(in srgb, var(--color-primary, #2563eb) 5%, transparent);
+      color: var(--color-primary, #2563eb); font-weight: 600;
+    }
+    .variant-swatch {
+      width: 32px; height: 32px; border-radius: 50%;
+      border: 2px solid var(--color-border, #e5e5e5);
+      cursor: pointer; padding: 0; min-width: 0;
+    }
+    .variant-swatch.selected { border-color: var(--color-primary, #2563eb); box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-primary, #2563eb); }
+
+    /* --- ACTIONS --- */
+    .product-actions { display: flex; flex-direction: column; gap: var(--space-2, 16px); }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      height: 48px; padding-inline: var(--space-4, 32px);
+      border-radius: var(--radius-sm, 6px); font-weight: 600;
+      font-size: var(--text-base, 1rem); text-decoration: none;
+      transition: all 0.2s; border: none; cursor: pointer;
+    }
+    .btn-primary { background: var(--color-primary, #2563eb); color: var(--color-on-primary, #fff); }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-secondary { background: transparent; color: var(--color-text, #1a1a1a); border: 1px solid var(--color-border, #e5e5e5); }
+    .btn-secondary:hover { background: var(--color-surface, #f5f5f5); }
+    .secondary-actions { display: flex; gap: var(--space-3, 24px); }
+    .secondary-actions a {
+      font-size: var(--text-sm, 0.875rem); color: var(--color-text-muted, #666);
+      text-decoration: none; display: flex; align-items: center; gap: 4px;
+    }
+    .secondary-actions a:hover { color: var(--color-primary, #2563eb); }
+
+    /* --- SHIPPING INFO --- */
+    .shipping-info {
+      display: flex; flex-direction: column; gap: var(--space-2, 16px);
+      padding: var(--space-3, 24px); background: var(--color-surface, #f5f5f5);
+      border-radius: var(--radius-sm, 6px); font-size: var(--text-sm, 0.875rem);
+    }
+    .shipping-item { display: flex; align-items: center; gap: var(--space-2, 16px); }
+
+    /* --- TABS --- */
+    .tabs-section {
+      max-width: 1200px; margin-inline: auto;
+      padding: var(--space-8, 128px) var(--space-4, 32px);
+    }
+    .tabs-nav {
+      display: flex; gap: 0; border-bottom: 2px solid var(--color-border, #e5e5e5);
+      margin-bottom: var(--space-5, 48px);
+    }
+    .tab-btn {
+      padding: var(--space-3, 24px) var(--space-4, 32px);
+      font-weight: 600; font-size: var(--text-sm, 0.875rem);
+      color: var(--color-text-muted, #666); border: none; background: none;
+      cursor: pointer; position: relative; transition: color 0.2s;
+    }
+    .tab-btn:hover { color: var(--color-text, #1a1a1a); }
+    .tab-btn.active {
+      color: var(--color-primary, #2563eb);
+    }
+    .tab-btn.active::after {
+      content: ''; position: absolute; bottom: -2px; left: 0; right: 0;
+      height: 2px; background: var(--color-primary, #2563eb);
+    }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    .tab-panel h3 { font-size: var(--text-lg, 1.125rem); font-weight: 600; margin-bottom: var(--space-3, 24px); }
+    .tab-panel p { color: var(--color-text-muted, #666); margin-bottom: var(--space-3, 24px); line-height: 1.8; }
+    .specs-table { width: 100%; border-collapse: collapse; }
+    .specs-table tr { border-bottom: 1px solid var(--color-border, #e5e5e5); }
+    .specs-table th {
+      text-align: left; padding: var(--space-2, 16px) var(--space-3, 24px);
+      font-weight: 600; font-size: var(--text-sm, 0.875rem); width: 200px;
+      color: var(--color-text-muted, #666);
+    }
+    .specs-table td { padding: var(--space-2, 16px) var(--space-3, 24px); font-size: var(--text-sm, 0.875rem); }
+
+    /* --- RELATED --- */
+    .related-section {
+      max-width: 1200px; margin-inline: auto;
+      padding: var(--space-6, 64px) var(--space-4, 32px);
+      border-top: 1px solid var(--color-border, #e5e5e5);
+    }
+    .related-title {
+      font-family: var(--font-display, var(--font-body, system-ui));
+      font-size: var(--text-xl, 1.25rem); font-weight: 700;
+      margin-bottom: var(--space-4, 32px);
+    }
+    .related-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4, 32px);
+    }
+    .related-card {
+      border: 1px solid var(--color-border, #e5e5e5); border-radius: var(--radius-md, 12px);
+      overflow: hidden; transition: box-shadow 0.2s;
+    }
+    .related-card:hover { box-shadow: var(--shadow-md, 0 4px 12px rgba(0,0,0,0.1)); }
+    .related-card-image {
+      width: 100%; aspect-ratio: 1/1; background: var(--color-surface, #f5f5f5);
+      display: grid; place-items: center; font-size: var(--text-xs, 0.75rem);
+      color: var(--color-text-muted, #666);
+    }
+    .related-card-body { padding: var(--space-2, 16px); }
+    .related-card-title { font-weight: 600; font-size: var(--text-sm, 0.875rem); margin-bottom: 4px; }
+    .related-card-title a { color: var(--color-text, #1a1a1a); text-decoration: none; }
+    .related-card-price { font-weight: 700; font-size: var(--text-base, 1rem); }
+
+    /* --- RESPONSIVE --- */
+    @media (max-width: 1024px) {
+      .product-layout { grid-template-columns: 1fr; gap: var(--space-4, 32px); }
+      .related-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 768px) {
+      .gallery-main { aspect-ratio: 4/3; }
+      .related-grid { grid-template-columns: 1fr 1fr; gap: var(--space-3, 24px); }
+      .tabs-nav { overflow-x: auto; }
+      .product-actions .btn { width: 100%; }
+      .specs-table th { width: 120px; }
+    }
+
+    :focus-visible { outline: 2px solid var(--color-primary, #2563eb); outline-offset: 2px; }
+  </style>
+</head>
+<body>
+
+  <nav class="nav">
+    <a href="#" class="nav-logo"><!-- SLOT: brand-name -->Acme</a>
+  </nav>
+
+  <div class="breadcrumbs-bar">
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+      <a href="#">Home</a> <span>/</span>
+      <a href="#"><!-- SLOT: category -->Electronics</a> <span>/</span>
+      <span aria-current="page"><!-- SLOT: product-name -->Wireless Headphones</span>
+    </nav>
+  </div>
+
+  <!-- PRODUCT SPLIT -->
+  <div class="product-layout">
+
+    <!-- GALLERY -->
+    <div class="gallery">
+      <div class="gallery-main"><!-- SLOT: main-image -->Main product image</div>
+      <div class="gallery-thumbnails">
+        <!-- SLOT: thumbnails -->
+        <button class="gallery-thumb active">Img 1</button>
+        <button class="gallery-thumb">Img 2</button>
+        <button class="gallery-thumb">Img 3</button>
+        <button class="gallery-thumb">Img 4</button>
+      </div>
+    </div>
+
+    <!-- PRODUCT INFO -->
+    <div class="product-info">
+      <div>
+        <h1 class="product-title"><!-- SLOT: title -->Wireless Noise-Cancelling Headphones Pro</h1>
+        <div class="product-rating">
+          <span class="product-rating-stars">&#9733;&#9733;&#9733;&#9733;&#9734;</span>
+          <span class="product-rating-count"><a href="#reviews">128 reviews</a></span>
+        </div>
+      </div>
+
+      <div>
+        <span class="product-price"><!-- SLOT: price -->$79.99</span>
+        <span class="product-price-original"><!-- SLOT: original-price -->$99.99</span>
+      </div>
+
+      <!-- VARIANTS -->
+      <!-- SLOT: variants -->
+      <div class="variant-group">
+        <span class="variant-label">Color</span>
+        <div class="variant-options">
+          <button class="variant-swatch selected" style="background: #1a1a1a" aria-label="Black"></button>
+          <button class="variant-swatch" style="background: #f5f5f4" aria-label="White"></button>
+          <button class="variant-swatch" style="background: #1e40af" aria-label="Navy"></button>
+        </div>
+      </div>
+
+      <div class="variant-group">
+        <span class="variant-label">Size</span>
+        <div class="variant-options">
+          <button class="variant-option">Standard</button>
+          <button class="variant-option selected">Large</button>
+        </div>
+      </div>
+
+      <!-- ACTIONS -->
+      <div class="product-actions">
+        <button class="btn btn-primary"><!-- SLOT: primary-action -->Add to cart</button>
+        <div class="secondary-actions">
+          <a href="#">&#9825; Save to wishlist</a>
+          <a href="#">&#8618; Share</a>
+        </div>
+      </div>
+
+      <!-- SHIPPING -->
+      <div class="shipping-info">
+        <div class="shipping-item">&#10003; Free shipping on orders over $50</div>
+        <div class="shipping-item">&#10003; 30-day return policy</div>
+        <div class="shipping-item">&#10003; 2-year warranty included</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs-section">
+    <div class="tabs-nav" role="tablist">
+      <button class="tab-btn active" role="tab" aria-selected="true">Description</button>
+      <button class="tab-btn" role="tab" aria-selected="false">Specifications</button>
+      <button class="tab-btn" role="tab" aria-selected="false" id="reviews">Reviews (128)</button>
+    </div>
+
+    <div class="tab-panel active" role="tabpanel">
+      <!-- SLOT: description -->
+      <h3>Premium sound, everywhere</h3>
+      <p>Experience studio-quality audio with our flagship wireless headphones. Featuring active noise cancellation, 40mm custom drivers, and up to 30 hours of battery life, these headphones are designed for audiophiles and commuters alike.</p>
+      <p>The adaptive EQ automatically tunes the audio to the shape of your ear, while the transparency mode lets you hear the world around you when needed. Seamlessly switch between devices with multipoint Bluetooth 5.3 connectivity.</p>
+    </div>
+
+    <div class="tab-panel" role="tabpanel">
+      <!-- SLOT: specifications -->
+      <table class="specs-table">
+        <tr><th>Driver Size</th><td>40mm</td></tr>
+        <tr><th>Frequency Response</th><td>20Hz - 20kHz</td></tr>
+        <tr><th>Battery Life</th><td>30 hours (ANC on), 40 hours (ANC off)</td></tr>
+        <tr><th>Charging</th><td>USB-C, 10 min = 3 hours playback</td></tr>
+        <tr><th>Weight</th><td>250g</td></tr>
+        <tr><th>Bluetooth</th><td>5.3 with multipoint</td></tr>
+        <tr><th>Noise Cancellation</th><td>Adaptive ANC with transparency mode</td></tr>
+      </table>
+    </div>
+
+    <div class="tab-panel" role="tabpanel">
+      <!-- SLOT: reviews -->
+      <h3>Customer Reviews</h3>
+      <p>Review content goes here with ratings, user comments, and helpful votes.</p>
+    </div>
+  </div>
+
+  <!-- RELATED PRODUCTS -->
+  <section class="related-section">
+    <h2 class="related-title"><!-- SLOT: related-title -->You might also like</h2>
+    <div class="related-grid">
+      <!-- SLOT: related-items -->
+      <article class="related-card">
+        <div class="related-card-image">Image</div>
+        <div class="related-card-body">
+          <h3 class="related-card-title"><a href="#">Wireless Earbuds</a></h3>
+          <p class="related-card-price">$49.99</p>
+        </div>
+      </article>
+      <article class="related-card">
+        <div class="related-card-image">Image</div>
+        <div class="related-card-body">
+          <h3 class="related-card-title"><a href="#">Headphone Stand</a></h3>
+          <p class="related-card-price">$24.99</p>
+        </div>
+      </article>
+      <article class="related-card">
+        <div class="related-card-image">Image</div>
+        <div class="related-card-body">
+          <h3 class="related-card-title"><a href="#">Audio Cable</a></h3>
+          <p class="related-card-price">$14.99</p>
+        </div>
+      </article>
+      <article class="related-card">
+        <div class="related-card-image">Image</div>
+        <div class="related-card-body">
+          <h3 class="related-card-title"><a href="#">Carrying Case</a></h3>
+          <p class="related-card-price">$29.99</p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+</body>
+</html>
