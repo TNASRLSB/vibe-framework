@@ -723,9 +723,6 @@ reference/
 
 ### Templates
 - **Article Template**: [templates/article.md](templates/article.md)
-- **Landing Page Template**: [templates/landing.md](templates/landing.md)
-- **Product Page Template**: [templates/product.md](templates/product.md)
-- **FAQ Template**: [templates/faq.md](templates/faq.md)
 
 ### Checklists
 - **Pre-Publish Checklist**: [checklists/pre-publish.md](checklists/pre-publish.md)

@@ -1,0 +1,257 @@
+{
+  "style": "orchestral",
+  "description": "Full symphonic texture with wide dynamics, layered strings, brass swells, and cinematic percussion.",
+  "family": "tonal",
+  "temporal": {
+    "bpm": 90,
+    "range": [70, 110],
+    "swing": 0,
+    "timeSignature": [4, 4],
+    "endingBehavior": {
+      "type": "cadential_insert",
+      "cadenceBars": 2,
+      "forceTonicLastBar": true,
+      "maxTempoDeviationPercent": 5
+    }
+  },
+  "key": "D",
+  "instruments": {
+    "strings": {
+      "type": "PolySynth",
+      "config": {
+        "voice": "FMSynth",
+        "maxPolyphony": 8,
+        "options": {
+          "harmonicity": 3.01,
+          "modulationIndex": 2.5,
+          "oscillator": { "type": "sine" },
+          "modulation": { "type": "triangle" },
+          "envelope": { "attack": 0.8, "decay": 0.3, "sustain": 0.9, "release": 2.5 },
+          "modulationEnvelope": { "attack": 0.5, "decay": 0.2, "sustain": 0.8, "release": 2.0 }
+        }
+      },
+      "volume": -20,
+      "range": ["G3", "E6"],
+      "optimal_range": ["G3", "D6"],
+      "effects": [
+        { "type": "Reverb", "config": { "decay": 4.5, "wet": 0.45, "preDelay": 0.03 } },
+        { "type": "Chorus", "config": { "frequency": 0.8, "delayTime": 3.5, "depth": 0.5, "wet": 0.3 } }
+      ]
+    },
+    "brass": {
+      "type": "PolySynth",
+      "config": {
+        "voice": "FMSynth",
+        "maxPolyphony": 4,
+        "options": {
+          "harmonicity": 1.5,
+          "modulationIndex": 8,
+          "oscillator": { "type": "sawtooth" },
+          "modulation": { "type": "square" },
+          "envelope": { "attack": 0.3, "decay": 0.2, "sustain": 0.85, "release": 1.5 },
+          "modulationEnvelope": { "attack": 0.2, "decay": 0.1, "sustain": 0.7, "release": 1.0 }
+        }
+      },
+      "volume": -18,
+      "range": ["Bb2", "Bb5"],
+      "optimal_range": ["F3", "F5"],
+      "effects": [
+        { "type": "Reverb", "config": { "decay": 3.0, "wet": 0.3, "preDelay": 0.02 } },
+        { "type": "Filter", "config": { "frequency": 2500, "type": "lowpass", "rolloff": -12 } }
+      ]
+    },
+    "woodwind": {
+      "type": "MonoSynth",
+      "config": {
+        "oscillator": { "type": "sine" },
+        "filter": { "Q": 2, "type": "lowpass", "rolloff": -24 },
+        "envelope": { "attack": 0.4, "decay": 0.3, "sustain": 0.8, "release": 1.8 },
+        "filterEnvelope": { "attack": 0.3, "decay": 0.2, "sustain": 0.6, "release": 1.5, "baseFrequency": 800, "octaves": 2 }
+      },
+      "volume": -14,
+      "range": ["C4", "C7"],
+      "optimal_range": ["D4", "A6"],
+      "effects": [
+        { "type": "Reverb", "config": { "decay": 3.5, "wet": 0.4 } },
+        { "type": "Vibrato", "config": { "frequency": 5, "depth": 0.15, "wet": 0.6 } }
+      ]
+    },
+    "timpani": {
+      "type": "MembraneSynth",
+      "config": {
+        "pitchDecay": 0.08,
+        "octaves": 4,
+        "oscillator": { "type": "sine" },
+        "envelope": { "attack": 0.01, "decay": 1.2, "sustain": 0.0, "release": 1.5 }
+      },
+      "volume": -16,
+      "effects": [
+        { "type": "Reverb", "config": { "decay": 2.5, "wet": 0.35 } }
+      ]
+    },
+    "cymbals": {
+      "type": "MetalSynth",
+      "config": {
+        "frequency": 300,
+        "envelope": { "attack": 0.001, "decay": 2.0, "release": 1.5 },
+        "harmonicity": 5.1,
+        "modulationIndex": 32,
+        "resonance": 4000,
+        "octaves": 1.5
+      },
+      "volume": -20,
+      "effects": [
+        { "type": "Reverb", "config": { "decay": 5.0, "wet": 0.5 } }
+      ]
+    }
+  },
+  "master": {
+    "effects": [
+      { "type": "EQ3", "config": { "low": 2, "mid": 0, "high": -2, "lowFrequency": 250, "highFrequency": 5000 } },
+      { "type": "Compressor", "config": { "threshold": -16, "ratio": 3, "attack": 0.05, "release": 0.25 } },
+      { "type": "Filter", "config": { "frequency": 16000, "type": "lowpass", "rolloff": -12 } },
+        { "type": "Limiter", "config": { "threshold": -3 } }
+    ]
+  },
+  "progression": {
+    "chords": ["I", "V", "vi", "IV", "I", "iii", "IV", "V"],
+    "scale": "major",
+    "bars_per_chord": 2
+  },
+  "harmonic_system": {
+    "type": "functional_tonal",
+    "functions": {
+      "I": "T",
+      "V": "D",
+      "vi": "T(relative)",
+      "IV": "SD",
+      "iii": "T(mediant)"
+    },
+    "cadences": {
+      "primary": "half",
+      "reasoning": "Last two chords IV→V = half cadence"
+    }
+  },
+  "arc": {
+    "intro": { "layers": ["strings", "woodwind"], "velocity": 0.3 },
+    "build": { "layers": ["strings", "woodwind", "brass"], "velocity": 0.55 },
+    "climax": { "layers": ["strings", "brass", "woodwind", "timpani", "cymbals"], "velocity": 0.9 },
+    "resolve": { "layers": ["strings", "woodwind"], "velocity": 0.35 }
+  },
+  "orchestration_limits": {
+    "intro": { "max_simultaneous_voices": 2 },
+    "build": { "max_simultaneous_voices": 3 },
+    "climax": { "max_simultaneous_voices": 5 },
+    "resolve": { "max_simultaneous_voices": 2 },
+    "hard_limit": 6,
+    "spectral_rule": "If 4+ active voices, at least one must be 'light' (high freq, little low content)"
+  },
+  "form": {
+    "type": "periodo_tematico",
+    "phrases": [
+      { "role": "antecedent", "cadence": "half" },
+      { "role": "consequent", "cadence": "authentic" }
+    ],
+    "development": {
+      "climax": "augmentation_with_orchestral_swell",
+      "resolve": "inversion_of_antecedent"
+    }
+  },
+  "rhythmGrid": {
+    "_note": "16-step velocity arrays (16th notes per 4/4 bar). 0 = silence, 0.1-1.0 = hit velocity. Orchestral: no steady backbeat, timpani on downbeats, cymbal swells.",
+    "intro": {},
+    "build": {
+      "timpani": [0.6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    },
+    "climax": {
+      "timpani": [1.0, 0, 0, 0, 0.5, 0, 0, 0, 0.8, 0, 0, 0, 0.6, 0, 0.7, 0.8],
+      "cymbals": [0.9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.4]
+    },
+    "resolve": {}
+  },
+  "voiceLeading": {
+    "_key": "D major",
+    "chords": {
+      "I": {
+        "root":   ["D3", "F#3", "A3", "D4"],
+        "drop2":  ["F#2", "D3", "A3", "D4"],
+        "spread": ["D2", "A3", "F#4", "D5"]
+      },
+      "V": {
+        "root":   ["A3", "C#4", "E4"],
+        "drop2":  ["C#3", "A3", "E4"],
+        "spread": ["A2", "E4", "C#5"]
+      },
+      "vi": {
+        "root":   ["B3", "D4", "F#4"],
+        "drop2":  ["D3", "B3", "F#4"],
+        "spread": ["B2", "F#4", "D5"]
+      },
+      "IV": {
+        "root":   ["G3", "B3", "D4"],
+        "drop2":  ["B2", "G3", "D4"],
+        "spread": ["G2", "D4", "B4"]
+      },
+      "iii": {
+        "root":   ["F#3", "A3", "C#4"],
+        "drop2":  ["A2", "F#3", "C#4"],
+        "spread": ["F#2", "C#4", "A4"]
+      }
+    },
+    "transitions": {
+      "I_to_V":   { "motion": "D4→E4 (step up), F#3→E4 (step), A3→A3 (common)", "parallel_motion_check": "no parallel P5 or P8" },
+      "V_to_vi":  { "motion": "A3→B3 (step up), C#4→D4 (step up), E4→F#4 (step up)", "parallel_motion_check": "no parallel P5 or P8" },
+      "vi_to_IV": { "motion": "B3→B3 (common), D4→D4 (common), F#4→G4 (step up)", "parallel_motion_check": "no parallel P5 or P8" },
+      "IV_to_I":  { "motion": "G3→F#3 (step down), B3→A3 (step down), D4→D4 (common)", "parallel_motion_check": "no parallel P5 or P8" },
+      "I_to_iii": { "motion": "D3→C#4 (step down), F#3→F#3 (common), A3→A3 (common)", "parallel_motion_check": "no parallel P5 or P8" },
+      "iii_to_IV": { "motion": "F#3→G3 (step up), A3→B3 (step up), C#4→D4 (step up)", "parallel_motion_check": "no parallel P5 or P8" },
+      "IV_to_V":  { "motion": "G3→A3 (step up), B3→C#4 (step up), D4→E4 (step up)", "parallel_motion_check": "no parallel P5 or P8" }
+    },
+    "arc_voicing": {
+      "intro": "spread",
+      "build": "drop2",
+      "climax": "root",
+      "resolve": "spread"
+    }
+  },
+  "melodicPatterns": {
+    "woodwind": {
+      "intro": "sustained_long_tones",
+      "build": "stepwise_ascending_phrases",
+      "climax": "wide_interval_leaps",
+      "resolve": "descending_to_tonic"
+    },
+    "brass": {
+      "climax_only": false,
+      "build": "sustained_fifths",
+      "climax": "fanfare_motif",
+      "phrases": [
+        { "notes": ["D5", "A4", "F#4", "D4"], "rhythm": ["4n", "4n", "4n", "2n."], "role": "antecedent", "cadence": "half" },
+        { "notes": ["A4", "D5", "F#5", "E5", "D5"], "rhythm": ["8n", "8n", "4n", "4n", "1n"], "role": "consequent", "cadence": "authentic" }
+      ]
+    },
+    "strings": {
+      "intro": "whole_notes",
+      "build": "quarter_note_arco",
+      "climax": "tremolo_sustain",
+      "resolve": "whole_notes"
+    }
+  },
+  "transitions": {
+    "intro_to_build": {
+      "type": "riser",
+      "bars_before": 1,
+      "implementation": "Strings crescendo from pp to mf over 1 bar with ascending scale passage. Brass enters on final beat with sustained fifth."
+    },
+    "build_to_climax": {
+      "type": "riser",
+      "bars_before": 1,
+      "implementation": "Timpani roll (rapid 32nd note triggers with velocity ramp 0.3→1.0). Cymbal swell via MetalSynth with long attack envelope (attack: 2.0). All instruments hit fortissimo on downbeat."
+    },
+    "climax_to_resolve": {
+      "type": "fadeout",
+      "bars_before": 1,
+      "implementation": "Brass and timpani drop out on beat 1. Strings decrescendo over 1 bar (volume ramp -8dB to -20dB). Woodwind holds final note with slow vibrato increase (depth 0.15→0.4)."
+    }
+  }
+}

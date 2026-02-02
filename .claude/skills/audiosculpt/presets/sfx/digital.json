@@ -1,0 +1,75 @@
+{
+  "family": "digital",
+  "description": "Blip, glitch, byte sound, keystroke. Mid-high spectrum, minimal noise, mechanical precision.",
+  "characteristics": {
+    "attack_ms": [0, 10],
+    "decay_ms": [30, 200],
+    "frequency_range_hz": [1000, 8000]
+  },
+  "sounds": {
+    "element-appear": {
+      "label": "Blip / data tick",
+      "synth": { "type": "FMSynth", "config": { "modulationIndex": 8, "harmonicity": 3, "envelope": { "attack": 0.001, "decay": 0.06, "sustain": 0, "release": 0.03 } } },
+      "effects": [],
+      "note": "E6",
+      "duration": "64n",
+      "velocity": 0.35
+    },
+    "text-typing": {
+      "label": "Digital keystroke",
+      "synth": { "type": "FMSynth", "config": { "modulationIndex": 12, "harmonicity": 5, "envelope": { "attack": 0.001, "decay": 0.02, "sustain": 0, "release": 0.01 } } },
+      "effects": [{ "type": "BitCrusher", "config": { "bits": 6 } }],
+      "note": "A6",
+      "duration": "64n",
+      "velocity": 0.15
+    },
+    "number-count": {
+      "label": "Digital counter",
+      "synth": { "type": "Synth", "config": { "oscillator": { "type": "square" }, "envelope": { "attack": 0.001, "decay": 0.04, "sustain": 0, "release": 0.02 } } },
+      "effects": [{ "type": "BitCrusher", "config": { "bits": 8 } }],
+      "note": "D6",
+      "duration": "64n",
+      "velocity": 0.25
+    },
+    "card-flip": {
+      "label": "Synthetic swoosh",
+      "synth": { "type": "NoiseSynth", "config": { "noise": { "type": "pink" }, "envelope": { "attack": 0.005, "decay": 0.1, "sustain": 0, "release": 0.05 } } },
+      "effects": [{ "type": "AutoFilter", "config": { "frequency": 6, "baseFrequency": 2000, "octaves": 3 } }],
+      "note": null,
+      "duration": "16n",
+      "velocity": 0.3
+    },
+    "scene-transition": {
+      "label": "Synth riser",
+      "synth": { "type": "FMSynth", "config": { "modulationIndex": 4, "harmonicity": 2, "envelope": { "attack": 0.8, "decay": 0.3, "sustain": 0.1, "release": 0.5 } } },
+      "effects": [{ "type": "Reverb", "config": { "decay": 1.5, "wet": 0.3 } }],
+      "note": "C4",
+      "duration": "2n",
+      "velocity": 0.35
+    },
+    "cta-final": {
+      "label": "Electronic stinger",
+      "synth": { "type": "FMSynth", "config": { "modulationIndex": 10, "harmonicity": 4, "envelope": { "attack": 0.001, "decay": 0.3, "sustain": 0, "release": 0.4 } } },
+      "effects": [{ "type": "Distortion", "config": { "distortion": 0.15 } }, { "type": "Reverb", "config": { "decay": 1.0, "wet": 0.25 } }],
+      "note": "G5",
+      "duration": "8n",
+      "velocity": 0.6
+    },
+    "logo-reveal": {
+      "label": "Subtle laser",
+      "synth": { "type": "FMSynth", "config": { "modulationIndex": 15, "harmonicity": 6, "envelope": { "attack": 0.001, "decay": 0.4, "sustain": 0, "release": 0.3 } } },
+      "effects": [{ "type": "Reverb", "config": { "decay": 1.8, "wet": 0.3 } }],
+      "note": "A5",
+      "duration": "8n",
+      "velocity": 0.45
+    },
+    "stat-progress": {
+      "label": "Ascending blip",
+      "synth": { "type": "FMSynth", "config": { "modulationIndex": 6, "harmonicity": 3, "envelope": { "attack": 0.001, "decay": 0.04, "sustain": 0, "release": 0.02 } } },
+      "effects": [],
+      "note": "C6",
+      "duration": "64n",
+      "velocity": 0.25
+    }
+  }
+}

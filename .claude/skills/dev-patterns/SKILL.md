@@ -39,7 +39,7 @@ Analizza il progetto e configura il framework per lo stack rilevato.
 
 ### `/dev-patterns [area]`
 
-Consulta pattern. Aree: `principles`, `api`, `testing`, `security`, `stack`.
+Consulta pattern. Aree: `principles`, `api`, `testing`, `security`, `caching`, `error-handling`, `stack`.
 
 **Esempi:**
 ```
@@ -47,6 +47,8 @@ Consulta pattern. Aree: `principles`, `api`, `testing`, `security`, `stack`.
 /dev-patterns api            -> REST/GraphQL design
 /dev-patterns testing        -> TDD, coverage
 /dev-patterns security       -> Checklist sicurezza
+/dev-patterns caching        -> Strategie di caching
+/dev-patterns error-handling -> Gestione errori
 /dev-patterns stack          -> Pattern specifici del tuo stack
 ```
 
@@ -56,7 +58,7 @@ Applica code review checklist al `git diff HEAD`.
 
 ### `/dev-patterns checklist [type]`
 
-Carica checklist. Types: `pre-deploy`, `refactoring`, `security`.
+Carica checklist. Types: `pre-deploy`, `refactoring`, `code-review`, `security`.
 
 ---
 
@@ -122,9 +124,6 @@ go build, go test, go vet
 
 ### `stacks/[stack-name]/gotchas.md`
 Errori comuni e soluzioni per quello stack.
-
-### `stacks/[stack-name]/examples.md`
-Esempi di codice idiomatico.
 
 ---
 
@@ -227,7 +226,6 @@ Quando invocato, eseguo questa logica:
    |-- Generate patterns.md with idioms
    |-- Generate commands.md with CLI
    |-- Generate gotchas.md with common errors
-   |-- Generate examples.md
 
 4. UPDATE CONFIGURATION
    |-- Create/update .claude/project-config.json

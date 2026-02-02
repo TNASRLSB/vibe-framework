@@ -1,0 +1,75 @@
+{
+  "family": "hyper",
+  "description": "Massive impacts, laser, aggressive stingers, reverse cymbal. Maximum transients, violent.",
+  "characteristics": {
+    "attack_ms": [0, 5],
+    "decay_ms": [50, 800],
+    "frequency_range_hz": [40, 12000]
+  },
+  "sounds": {
+    "element-appear": {
+      "label": "Aggressive pop/snap",
+      "synth": { "type": "MembraneSynth", "config": { "pitchDecay": 0.005, "octaves": 6, "envelope": { "attack": 0.001, "decay": 0.05, "sustain": 0, "release": 0.03 } } },
+      "effects": [{ "type": "Distortion", "config": { "distortion": 0.4 } }],
+      "note": "C3",
+      "duration": "32n",
+      "velocity": 0.8
+    },
+    "text-typing": {
+      "label": "Rapid rhythmic click",
+      "synth": { "type": "MetalSynth", "config": { "frequency": 800, "envelope": { "attack": 0.001, "decay": 0.015, "release": 0.01 }, "harmonicity": 8, "modulationIndex": 20, "resonance": 5000, "octaves": 1 } },
+      "effects": [],
+      "note": null,
+      "duration": "64n",
+      "velocity": 0.4
+    },
+    "number-count": {
+      "label": "Arcade coin",
+      "synth": { "type": "FMSynth", "config": { "modulationIndex": 12, "harmonicity": 7, "envelope": { "attack": 0.001, "decay": 0.1, "sustain": 0, "release": 0.08 } } },
+      "effects": [{ "type": "BitCrusher", "config": { "bits": 6 } }],
+      "note": "B6",
+      "duration": "16n",
+      "velocity": 0.55
+    },
+    "card-flip": {
+      "label": "Aggressive whoosh",
+      "synth": { "type": "NoiseSynth", "config": { "noise": { "type": "white" }, "envelope": { "attack": 0.001, "decay": 0.08, "sustain": 0, "release": 0.04 } } },
+      "effects": [{ "type": "AutoFilter", "config": { "frequency": 12, "baseFrequency": 3000, "octaves": 4 } }, { "type": "Distortion", "config": { "distortion": 0.3 } }],
+      "note": null,
+      "duration": "16n",
+      "velocity": 0.7
+    },
+    "scene-transition": {
+      "label": "Impact + reverse",
+      "synth": { "type": "MembraneSynth", "config": { "pitchDecay": 0.08, "octaves": 8, "envelope": { "attack": 0.001, "decay": 0.6, "sustain": 0, "release": 0.5 } } },
+      "effects": [{ "type": "Distortion", "config": { "distortion": 0.5 } }, { "type": "Reverb", "config": { "decay": 3.0, "wet": 0.5 } }],
+      "note": "C1",
+      "duration": "4n",
+      "velocity": 0.9
+    },
+    "cta-final": {
+      "label": "Power chord + clap",
+      "synth": { "type": "FMSynth", "config": { "modulationIndex": 8, "harmonicity": 1.5, "envelope": { "attack": 0.001, "decay": 0.5, "sustain": 0.1, "release": 0.8 } } },
+      "effects": [{ "type": "Distortion", "config": { "distortion": 0.6 } }, { "type": "Reverb", "config": { "decay": 2.5, "wet": 0.4 } }],
+      "note": "E3",
+      "duration": "4n",
+      "velocity": 0.95
+    },
+    "logo-reveal": {
+      "label": "Massive stinger",
+      "synth": { "type": "FMSynth", "config": { "modulationIndex": 14, "harmonicity": 2, "envelope": { "attack": 0.001, "decay": 0.8, "sustain": 0.05, "release": 1.0 } } },
+      "effects": [{ "type": "Distortion", "config": { "distortion": 0.45 } }, { "type": "Reverb", "config": { "decay": 4.0, "wet": 0.5 } }],
+      "note": "C3",
+      "duration": "2n",
+      "velocity": 1.0
+    },
+    "stat-progress": {
+      "label": "Rapid bell chain",
+      "synth": { "type": "MetalSynth", "config": { "frequency": 600, "envelope": { "attack": 0.001, "decay": 0.06, "release": 0.04 }, "harmonicity": 10, "modulationIndex": 24, "resonance": 6000, "octaves": 2 } },
+      "effects": [],
+      "note": null,
+      "duration": "32n",
+      "velocity": 0.5
+    }
+  }
+}

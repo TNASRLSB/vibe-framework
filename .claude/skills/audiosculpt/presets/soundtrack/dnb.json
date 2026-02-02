@@ -1,0 +1,245 @@
+{
+  "style": "dnb",
+  "description": "High-energy breakbeat percussion with deep rolling basslines, atmospheric pads, and sharp transients at 174 BPM.",
+  "family": "loop",
+  "temporal": {
+    "bpm": 174,
+    "range": [170, 180],
+    "swing": 0,
+    "timeSignature": [4, 4],
+    "endingBehavior": {
+      "type": "hard_cut",
+      "cadenceBars": 0,
+      "forceTonicLastBar": false,
+      "maxTempoDeviationPercent": 5
+    }
+  },
+  "key": "Fm",
+  "instruments": {
+    "kick": {
+      "type": "MembraneSynth",
+      "config": {
+        "pitchDecay": 0.04,
+        "octaves": 7,
+        "oscillator": { "type": "sine" },
+        "envelope": { "attack": 0.002, "decay": 0.3, "sustain": 0.0, "release": 0.25 }
+      },
+      "volume": -15,
+      "effects": [
+        { "type": "Compressor", "config": { "threshold": -8, "ratio": 8, "attack": 0.002, "release": 0.08 } }
+      ]
+    },
+    "snare": {
+      "type": "NoiseSynth",
+      "config": {
+        "noise": { "type": "white" },
+        "envelope": { "attack": 0.001, "decay": 0.12, "sustain": 0.0, "release": 0.08 }
+      },
+      "volume": -16,
+      "effects": [
+        { "type": "Filter", "config": { "frequency": 3500, "type": "bandpass", "Q": 1.5 } },
+        { "type": "Compressor", "config": { "threshold": -6, "ratio": 6, "attack": 0.001, "release": 0.05 } },
+        { "type": "Reverb", "config": { "decay": 0.5, "wet": 0.15 } }
+      ]
+    },
+    "hihat": {
+      "type": "MetalSynth",
+      "config": {
+        "frequency": 500,
+        "envelope": { "attack": 0.001, "decay": 0.05, "release": 0.03 },
+        "harmonicity": 5.1,
+        "modulationIndex": 40,
+        "resonance": 9000,
+        "octaves": 1.5
+      },
+      "volume": -16,
+      "effects": [
+        { "type": "Filter", "config": { "frequency": 9000, "type": "highpass", "rolloff": -12 } }
+      ]
+    },
+    "bass": {
+      "type": "MonoSynth",
+      "config": {
+        "oscillator": { "type": "sawtooth" },
+        "filter": { "Q": 8, "type": "lowpass", "rolloff": -24 },
+        "envelope": { "attack": 0.005, "decay": 0.15, "sustain": 0.6, "release": 0.1 },
+        "filterEnvelope": { "attack": 0.01, "decay": 0.2, "sustain": 0.3, "release": 0.15, "baseFrequency": 80, "octaves": 3 }
+      },
+      "volume": -15,
+      "range": ["E1", "G2"],
+      "optimal_range": ["E1", "E2"],
+      "effects": [
+        { "type": "Distortion", "config": { "distortion": 0.25, "wet": 0.4 } },
+        { "type": "Filter", "config": { "frequency": 400, "type": "lowpass", "rolloff": -24 } },
+        { "type": "Compressor", "config": { "threshold": -10, "ratio": 6, "attack": 0.005, "release": 0.1 } }
+      ]
+    },
+    "pad": {
+      "type": "PolySynth",
+      "config": {
+        "voice": "FMSynth",
+        "maxPolyphony": 4,
+        "options": {
+          "harmonicity": 2,
+          "modulationIndex": 1,
+          "oscillator": { "type": "sine" },
+          "modulation": { "type": "triangle" },
+          "envelope": { "attack": 1.5, "decay": 0.5, "sustain": 0.7, "release": 3.0 },
+          "modulationEnvelope": { "attack": 1.0, "decay": 0.3, "sustain": 0.5, "release": 2.0 }
+        }
+      },
+      "volume": -18,
+      "range": ["C2", "C5"],
+      "optimal_range": ["C3", "C5"],
+      "effects": [
+        { "type": "Reverb", "config": { "decay": 5.0, "wet": 0.55 } },
+        { "type": "Chorus", "config": { "frequency": 0.3, "delayTime": 5, "depth": 0.5, "wet": 0.3 } }
+      ]
+    },
+    "stab": {
+      "type": "PolySynth",
+      "config": {
+        "voice": "AMSynth",
+        "maxPolyphony": 4,
+        "options": {
+          "harmonicity": 2,
+          "oscillator": { "type": "square" },
+          "modulation": { "type": "sawtooth" },
+          "envelope": { "attack": 0.002, "decay": 0.15, "sustain": 0.0, "release": 0.1 },
+          "modulationEnvelope": { "attack": 0.001, "decay": 0.1, "sustain": 0.0, "release": 0.08 }
+        }
+      },
+      "volume": -14,
+      "range": ["C3", "C6"],
+      "optimal_range": ["C3", "C5"],
+      "effects": [
+        { "type": "PingPongDelay", "config": { "delayTime": "8n.", "feedback": 0.3, "wet": 0.25 } },
+        { "type": "Reverb", "config": { "decay": 1.5, "wet": 0.25 } }
+      ]
+    }
+  },
+  "master": {
+    "effects": [
+      { "type": "EQ3", "config": { "low": 3, "mid": -1, "high": 1, "lowFrequency": 150, "highFrequency": 6000 } },
+      { "type": "Compressor", "config": { "threshold": -18, "ratio": 4, "attack": 0.003, "release": 0.08 } },
+      { "type": "Filter", "config": { "frequency": 16000, "type": "lowpass", "rolloff": -12 } },
+        { "type": "Limiter", "config": { "threshold": -3 } }
+    ]
+  },
+  "progression": {
+    "chords": ["i", "VI", "VII", "i"],
+    "scale": "natural_minor",
+    "bars_per_chord": 2
+  },
+  "harmonic_system": {
+    "type": "timbral_vector",
+    "field": "Fm",
+    "cadences": "none"
+  },
+  "arc": {
+    "intro": { "layers": ["pad", "hihat"], "velocity": 0.4 },
+    "build": { "layers": ["kick", "hihat", "snare", "bass", "pad"], "velocity": 0.7 },
+    "climax": { "layers": ["kick", "hihat", "snare", "bass", "pad", "stab"], "velocity": 0.95 },
+    "resolve": { "layers": ["pad", "bass", "hihat"], "velocity": 0.45 }
+  },
+  "orchestration_limits": {
+    "intro": { "max_simultaneous_voices": 2 },
+    "build": { "max_simultaneous_voices": 5 },
+    "climax": { "max_simultaneous_voices": 6 },
+    "resolve": { "max_simultaneous_voices": 3 },
+    "hard_limit": 7,
+    "spectral_rule": "If 4+ active voices, at least one must be 'light' (high freq, little low content)"
+  },
+  "form": {
+    "type": "drop_structure",
+    "tension_point": "build_to_climax",
+    "release": "rhythmic"
+  },
+  "rhythmGrid": {
+    "intro": {
+      "hihat": [0.3, 0, 0.3, 0, 0.3, 0, 0.3, 0, 0.3, 0, 0.3, 0, 0.3, 0, 0.3, 0]
+    },
+    "build": {
+      "kick":  [0.9, 0, 0, 0, 0, 0, 0.7, 0, 0, 0, 0, 0, 0, 0.6, 0, 0],
+      "snare": [0, 0, 0, 0, 0.9, 0, 0, 0, 0, 0, 0.8, 0, 0, 0, 0, 0.6],
+      "hihat": [0.5, 0.3, 0.5, 0.3, 0.5, 0.3, 0.5, 0.3, 0.5, 0.3, 0.5, 0.3, 0.5, 0.3, 0.5, 0.3],
+      "bass":  [0.8, 0, 0, 0, 0, 0, 0.6, 0, 0, 0, 0, 0, 0, 0.5, 0, 0]
+    },
+    "climax": {
+      "kick":  [0.95, 0, 0, 0, 0, 0, 0.8, 0, 0, 0.6, 0, 0, 0, 0.7, 0, 0],
+      "snare": [0, 0, 0, 0, 1.0, 0, 0, 0.5, 0, 0, 0.9, 0, 0, 0, 0.6, 0.4],
+      "hihat": [0.7, 0.5, 0.7, 0.5, 0.7, 0.5, 0.7, 0.5, 0.8, 0.6, 0.8, 0.6, 0.8, 0.6, 0.8, 0.6],
+      "bass":  [0.9, 0, 0, 0, 0, 0.5, 0.7, 0, 0, 0.5, 0, 0, 0.6, 0.7, 0, 0],
+      "stab":  [0, 0, 0, 0, 0.8, 0, 0, 0, 0, 0, 0, 0, 0.8, 0, 0, 0]
+    },
+    "resolve": {
+      "hihat": [0.3, 0, 0.3, 0, 0.3, 0, 0.3, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "bass":  [0.4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    }
+  },
+  "voiceLeading": {
+    "chords": {
+      "i": {
+        "root":   ["F2", "C3", "F3", "Ab3", "C4"],
+        "drop2":  ["F2", "Ab2", "C3", "F3", "C4"],
+        "spread": ["F2", "C3", "Ab3", "F4", "C5"]
+      },
+      "VI": {
+        "root":   ["Db2", "Ab2", "Db3", "F3", "Ab3"],
+        "drop2":  ["Db2", "F2", "Ab2", "Db3", "Ab3"],
+        "spread": ["Db2", "Ab2", "F3", "Db4", "Ab4"]
+      },
+      "VII": {
+        "root":   ["Eb2", "Bb2", "Eb3", "G3", "Bb3"],
+        "drop2":  ["Eb2", "G2", "Bb2", "Eb3", "Bb3"],
+        "spread": ["Eb2", "Bb2", "G3", "Eb4", "Bb4"]
+      }
+    },
+    "transitions": {
+      "i_to_VI":   { "motion": "descending major third, F→Db, C holds as common tone with Ab" },
+      "VI_to_VII": { "motion": "ascending whole step, Db→Eb, Ab→Bb, F→G stepwise" },
+      "VII_to_i":  { "motion": "ascending half step, Eb→F, Bb→C, dominant-to-tonic energy" }
+    },
+    "arc_voicing": {
+      "intro": "spread",
+      "build": "drop2",
+      "climax": "root",
+      "resolve": "spread"
+    }
+  },
+  "melodicPatterns": {
+    "bass": {
+      "intro": null,
+      "build":  { "pattern": "root_fifth", "notes": ["F1", "C2", "Db1", "Ab1", "Eb1", "Bb1", "F1", "C2"] },
+      "climax": { "pattern": "syncopated", "notes": ["F1", "F1", "C2", "Ab1", "Db1", "Ab1", "Eb1", "Bb1", "Eb1", "F1", "C2", "F1"] },
+      "resolve": { "pattern": "whole_notes", "notes": ["F1", "Db1", "Eb1", "F1"] }
+    },
+    "stab": {
+      "climax_only": true,
+      "phrases": [
+        { "notes": [["F4","Ab4","C5"], ["Db4","F4","Ab4"], ["Eb4","G4","Bb4"], ["F4","Ab4","C5"]], "rhythm": ["2n", "2n", "2n", "2n"] }
+      ]
+    },
+    "pad": {
+      "all_phases": true,
+      "note": "Follows voiceLeading chords per arc phase, sustained pads"
+    }
+  },
+  "transitions": {
+    "intro_to_build": {
+      "type": "riser",
+      "bars_before": 1,
+      "implementation": "Snare roll building from 8th notes to 32nd notes over 2 bars, rising filter on pad from 500Hz to 5000Hz, sub-bass F1 swell from -30dB to -4dB"
+    },
+    "build_to_climax": {
+      "type": "drop",
+      "bars_before": 0.5,
+      "implementation": "Half-bar snare fill at max velocity, one beat silence, then full breakbeat pattern hits with stab chord on beat 1, bass enters with syncopated pattern"
+    },
+    "climax_to_resolve": {
+      "type": "fadeout",
+      "bars_before": 1,
+      "implementation": "Kick and snare velocity halved over 2 bars, stab drops out, bass simplifies to whole notes, pad reverb wet increases to 0.8, hihat reduces to sparse 8ths"
+    }
+  }
+}

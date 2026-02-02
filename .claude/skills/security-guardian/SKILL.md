@@ -146,7 +146,7 @@ Focused credential scan.
 
 BaaS configuration audit.
 
-**Providers**: `supabase` (default), `firebase`
+**Providers**: `supabase` (default), `firebase`, `amplify`, `pocketbase`
 
 **Checks for Supabase**:
 - RLS (Row Level Security) status
@@ -174,7 +174,7 @@ Show security status for tracked files.
 
 Generate security report.
 
-**Formats**: `sarif` (default), `markdown`, `json`
+**Formats**: `text` (default), `json`, `sarif`
 
 **Use cases**:
 - GitHub Security integration (SARIF)
@@ -208,6 +208,7 @@ Configure skill settings.
 | A08: Data Integrity | 4 | Insecure deserialization |
 | A09: Logging Failures | 3 | Missing audit logs |
 | A10: SSRF | 4 | Unvalidated redirects |
+| XSS (cross-category) | 6 | innerHTML, dangerouslySetInnerHTML, document.write |
 
 ### AI-Specific Patterns
 
@@ -222,13 +223,13 @@ Configure skill settings.
 
 | Provider | Pattern Count | Examples |
 |----------|---------------|----------|
-| Generic API Keys | 5 | `api_key`, `apiKey`, `API_KEY` |
-| Stripe | 2 | `sk_live_*`, `pk_live_*` |
-| GitHub | 2 | `ghp_*`, `github_pat_*` |
+| Generic API Keys | 5 | `api_key`, `apiKey`, `secret_key`, `access_token`, `password` |
+| Stripe | 3 | `sk_live_*`, `sk_test_*`, `rk_live_*` |
+| GitHub | 4 | `ghp_*`, `gho_*`, `ghu_*/ghs_*`, `ghr_*` |
 | Supabase | 4 | `service_role`, `SUPABASE_*` |
 | Firebase | 3 | `private_key`, `FIREBASE_*` |
-| AWS | 3 | `AKIA*`, `aws_secret_*` |
-| JWT | 1 | `eyJ*.*.*` structure |
+| AWS | 3 | `AKIA*`, `aws_secret_*`, `aws_session_token` |
+| JWT | 2 | `eyJ*.*.*` structure, `jwt_secret` |
 
 ---
 
@@ -239,13 +240,13 @@ Configure skill settings.
 | Level | Action | Examples |
 |-------|--------|----------|
 | CRITICAL | **BLOCK** operation | Hardcoded credentials, SQLi, RCE |
-| HIGH | **BLOCK** operation | XSS, broken auth, weak crypto |
+| HIGH | **WARN** (default) / **BLOCK** (`--strict`) | XSS, broken auth, weak crypto |
 | MEDIUM | **WARN** (require acknowledgment) | Missing validation, verbose errors |
 | LOW | **INFO** (log only) | Code style, minor issues |
 
 ### Blocking Behavior
 
-When a CRITICAL or HIGH issue is detected:
+When a CRITICAL issue is detected (or HIGH in `--strict` mode):
 
 1. Operation is blocked (exit code 2)
 2. Error message shown with:
@@ -386,7 +387,6 @@ Keep in version control:
 
 - **OWASP Patterns**: [reference/owasp-guide.md](reference/owasp-guide.md)
 - **Secure Coding**: [reference/secure-patterns.md](reference/secure-patterns.md)
-- **CWE Mapping**: [reference/cwe-mapping.md](reference/cwe-mapping.md)
 
 ---
 
@@ -432,7 +432,7 @@ if (user.active === false && user.role === 'admin') {
 
 **Output**:
 ```
-HIGH [BAC-003] Potential logic inversion - deactivated user granted admin access
+CRITICAL [BAC-003] Potential logic inversion - deactivated user granted admin access
 
 Location: src/auth/permissions.ts:45
 CWE: CWE-284 (Improper Access Control)
@@ -446,6 +446,9 @@ Did you mean?
 Reference: arXiv:2506.11022 - Logic inversions are a common AI code pattern
 
 Operation BLOCKED. Verify the logic is intentional.
+
+Note: In default mode, HIGH findings show a warning but allow the operation.
+Use `--strict` to also block on HIGH severity.
 ```
 
 ### Example 3: Iteration Warning

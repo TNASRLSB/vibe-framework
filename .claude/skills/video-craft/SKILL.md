@@ -148,7 +148,7 @@ On approval:
 - **Design system integration** — reads tokens from ui-craft
 - **Format-aware layout** — CSS Grid per scene, card-column fills frame in vertical, hero/centered/stacked modes
 - **Source analysis** — can auto-extract content from project folders or URLs
-- **107 animations**: 40 entrances, 28 exits, 23 transitions, 9 emphasis, 7 looping
+- **131 animations**: 55 entrances, 30 exits, 26 transitions, 9 emphasis, 11 looping
 
 ## Running
 
@@ -165,9 +165,25 @@ npx tsx .claude/skills/video-craft/engine/src/index.ts analyze-url https://examp
 
 ## Reference
 
-- Engine source: `.claude/skills/video-craft/engine/src/`
+- Engine source: `.claude/skills/video-craft/engine/src/` (23 files)
 - Animation database: `.claude/skills/video-craft/engine/src/actions.ts`
+- Choreography (animation selection & sequencing): `.claude/skills/video-craft/engine/src/choreography.ts`
+- Composition (scene layout & visual structure): `.claude/skills/video-craft/engine/src/composition.ts`
+- Director (high-level video orchestration): `.claude/skills/video-craft/engine/src/director.ts`
+- HTML generation: `.claude/skills/video-craft/engine/src/html-generator.ts`
+- HTML parsing: `.claude/skills/video-craft/engine/src/html-parser.ts`
+- Scene templates: `.claude/skills/video-craft/engine/src/scene-templates.ts`
+- Industry profiles: `.claude/skills/video-craft/engine/src/industry-profiles.ts`
+- Layout profiles: `.claude/skills/video-craft/engine/src/layout-profiles.ts`
+- UX bridge: `.claude/skills/video-craft/engine/src/ux-bridge.ts`
+- Timeline: `.claude/skills/video-craft/engine/src/timeline.ts`
 - Timing algorithm: `.claude/skills/video-craft/engine/src/timing.ts`
+- Presets: `.claude/skills/video-craft/engine/src/presets.ts`
+- Config schema: `.claude/skills/video-craft/engine/src/config.ts`
+- Capture (Playwright frame capture): `.claude/skills/video-craft/engine/src/capture.ts`
+- Encode (FFmpeg): `.claude/skills/video-craft/engine/src/encode.ts`
+- Storyboard: `.claude/skills/video-craft/engine/src/storyboard.ts`
 - Folder analysis: `.claude/skills/video-craft/engine/src/analyze-folder.ts`
 - URL analysis: `.claude/skills/video-craft/engine/src/analyze-url.ts`
 - Config generation: `.claude/skills/video-craft/engine/src/autogen.ts`
+- Composition patterns doc: `.claude/skills/video-craft/engine/composition-patterns.md`

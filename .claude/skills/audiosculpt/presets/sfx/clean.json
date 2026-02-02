@@ -1,0 +1,75 @@
+{
+  "family": "clean",
+  "description": "Click puliti, chime cristallini, whoosh morbidi. Fast attack, short decay, consonant harmonic spectrum.",
+  "characteristics": {
+    "attack_ms": [1, 20],
+    "decay_ms": [50, 300],
+    "frequency_range_hz": [800, 6000]
+  },
+  "sounds": {
+    "element-appear": {
+      "label": "Soft click with subtle whoosh",
+      "synth": { "type": "Synth", "config": { "oscillator": { "type": "triangle" }, "envelope": { "attack": 0.005, "decay": 0.1, "sustain": 0, "release": 0.15 } } },
+      "effects": [{ "type": "Reverb", "config": { "decay": 0.6, "wet": 0.2 } }],
+      "note": "C6",
+      "duration": "32n",
+      "velocity": 0.3
+    },
+    "text-typing": {
+      "label": "Light tick",
+      "synth": { "type": "Synth", "config": { "oscillator": { "type": "square" }, "envelope": { "attack": 0.001, "decay": 0.03, "sustain": 0, "release": 0.02 } } },
+      "effects": [{ "type": "Filter", "config": { "frequency": 4000, "type": "lowpass" } }],
+      "note": "G6",
+      "duration": "64n",
+      "velocity": 0.15
+    },
+    "number-count": {
+      "label": "Discrete tick",
+      "synth": { "type": "Synth", "config": { "oscillator": { "type": "sine" }, "envelope": { "attack": 0.001, "decay": 0.05, "sustain": 0, "release": 0.05 } } },
+      "effects": [],
+      "note": "E6",
+      "duration": "64n",
+      "velocity": 0.25
+    },
+    "card-flip": {
+      "label": "Soft page turn",
+      "synth": { "type": "NoiseSynth", "config": { "noise": { "type": "white" }, "envelope": { "attack": 0.01, "decay": 0.12, "sustain": 0, "release": 0.08 } } },
+      "effects": [{ "type": "Filter", "config": { "frequency": 3000, "type": "bandpass", "Q": 1.5 } }],
+      "note": null,
+      "duration": "16n",
+      "velocity": 0.2
+    },
+    "scene-transition": {
+      "label": "Fade pad",
+      "synth": { "type": "Synth", "config": { "oscillator": { "type": "sine" }, "envelope": { "attack": 0.3, "decay": 0.5, "sustain": 0.2, "release": 0.8 } } },
+      "effects": [{ "type": "Reverb", "config": { "decay": 2.0, "wet": 0.5 } }],
+      "note": "C5",
+      "duration": "2n",
+      "velocity": 0.25
+    },
+    "cta-final": {
+      "label": "Resolving chime",
+      "synth": { "type": "Synth", "config": { "oscillator": { "type": "sine" }, "envelope": { "attack": 0.005, "decay": 0.8, "sustain": 0, "release": 1.0 } } },
+      "effects": [{ "type": "Reverb", "config": { "decay": 2.5, "wet": 0.4 } }],
+      "note": "G5",
+      "duration": "4n",
+      "velocity": 0.45
+    },
+    "logo-reveal": {
+      "label": "Single piano note",
+      "synth": { "type": "Synth", "config": { "oscillator": { "type": "triangle" }, "envelope": { "attack": 0.005, "decay": 1.2, "sustain": 0, "release": 1.5 } } },
+      "effects": [{ "type": "Reverb", "config": { "decay": 3.0, "wet": 0.35 } }],
+      "note": "C5",
+      "duration": "2n",
+      "velocity": 0.5
+    },
+    "stat-progress": {
+      "label": "Ascending tick",
+      "synth": { "type": "Synth", "config": { "oscillator": { "type": "triangle" }, "envelope": { "attack": 0.001, "decay": 0.06, "sustain": 0, "release": 0.04 } } },
+      "effects": [],
+      "note": "C6",
+      "duration": "64n",
+      "velocity": 0.2
+    }
+  }
+}

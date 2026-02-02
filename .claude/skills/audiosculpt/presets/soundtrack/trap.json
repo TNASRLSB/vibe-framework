@@ -1,0 +1,257 @@
+{
+  "style": "trap",
+  "description": "Hard-hitting 808 bass, rapid hi-hat rolls, dark atmospheric pads, and aggressive minimalism for modern urban production.",
+  "family": "loop",
+  "temporal": {
+    "bpm": 140,
+    "range": [130, 160],
+    "swing": 0,
+    "timeSignature": [4, 4],
+    "endingBehavior": {
+      "type": "hard_cut",
+      "cadenceBars": 0,
+      "forceTonicLastBar": false,
+      "maxTempoDeviationPercent": 5
+    }
+  },
+  "key": "F# minor",
+  "instruments": {
+    "808_bass": {
+      "type": "MonoSynth",
+      "config": {
+        "oscillator": { "type": "sine" },
+        "envelope": { "attack": 0.001, "decay": 0.8, "sustain": 0.4, "release": 1.5 },
+        "filterEnvelope": { "attack": 0.001, "decay": 0.5, "sustain": 0.2, "release": 1.0, "baseFrequency": 40, "octaves": 2 }
+      },
+      "volume": -14,
+      "range": ["E1", "G2"],
+      "optimal_range": ["E1", "E2"],
+      "effects": [
+        { "type": "Distortion", "config": { "distortion": 0.25, "wet": 0.4 } }
+      ]
+    },
+    "dark_pad": {
+      "type": "PolySynth",
+      "config": {
+        "voice": "FMSynth",
+        "maxPolyphony": 4,
+        "options": {
+          "harmonicity": 0.5,
+          "modulationIndex": 4,
+          "oscillator": { "type": "sine" },
+          "modulation": { "type": "sawtooth" },
+          "envelope": { "attack": 1.5, "decay": 1.0, "sustain": 0.6, "release": 3.0 },
+          "modulationEnvelope": { "attack": 2.0, "decay": 1.0, "sustain": 0.4, "release": 3.0 }
+        }
+      },
+      "volume": -14,
+      "range": ["C2", "C5"],
+      "optimal_range": ["C3", "C5"],
+      "effects": [
+        { "type": "Reverb", "config": { "decay": 5.0, "wet": 0.5 } },
+        { "type": "Filter", "config": { "frequency": 1500, "type": "lowpass", "rolloff": -24 } }
+      ]
+    },
+    "lead": {
+      "type": "MonoSynth",
+      "config": {
+        "oscillator": { "type": "square" },
+        "envelope": { "attack": 0.005, "decay": 0.2, "sustain": 0.3, "release": 0.2 },
+        "filterEnvelope": { "attack": 0.01, "decay": 0.15, "sustain": 0.2, "release": 0.2, "baseFrequency": 300, "octaves": 3.5 }
+      },
+      "volume": -18,
+      "range": ["C3", "C6"],
+      "optimal_range": ["C3", "C5"],
+      "effects": [
+        { "type": "Distortion", "config": { "distortion": 0.15, "wet": 0.25 } },
+        { "type": "PingPongDelay", "config": { "delayTime": "8n", "feedback": 0.2, "wet": 0.2 } },
+        { "type": "Reverb", "config": { "decay": 2.0, "wet": 0.25 } }
+      ]
+    },
+    "kick": {
+      "type": "MembraneSynth",
+      "config": {
+        "pitchDecay": 0.05,
+        "octaves": 8,
+        "oscillator": { "type": "sine" },
+        "envelope": { "attack": 0.001, "decay": 0.25, "sustain": 0, "release": 0.25 }
+      },
+      "volume": -15,
+      "effects": []
+    },
+    "hihat": {
+      "type": "MetalSynth",
+      "config": {
+        "frequency": 450,
+        "envelope": { "attack": 0.001, "decay": 0.04, "release": 0.02 },
+        "harmonicity": 5.1,
+        "modulationIndex": 40,
+        "resonance": 5000,
+        "octaves": 1.5
+      },
+      "volume": -12,
+      "effects": [
+        { "type": "Filter", "config": { "frequency": 10000, "type": "highpass" } }
+      ]
+    },
+    "open_hat": {
+      "type": "MetalSynth",
+      "config": {
+        "frequency": 400,
+        "envelope": { "attack": 0.001, "decay": 0.3, "release": 0.15 },
+        "harmonicity": 5.1,
+        "modulationIndex": 36,
+        "resonance": 4500,
+        "octaves": 1.5
+      },
+      "volume": -14,
+      "effects": [
+        { "type": "Filter", "config": { "frequency": 8000, "type": "highpass" } },
+        { "type": "Reverb", "config": { "decay": 1.0, "wet": 0.2 } }
+      ]
+    },
+    "clap": {
+      "type": "NoiseSynth",
+      "config": {
+        "noise": { "type": "white" },
+        "envelope": { "attack": 0.001, "decay": 0.1, "sustain": 0, "release": 0.06 }
+      },
+      "volume": -16,
+      "effects": [
+        { "type": "Filter", "config": { "frequency": 2500, "type": "bandpass", "Q": 3 } },
+        { "type": "Reverb", "config": { "decay": 1.2, "wet": 0.35 } }
+      ]
+    }
+  },
+  "master": {
+    "effects": [
+      { "type": "EQ3", "config": { "low": 4, "mid": -1, "high": 1 } },
+      { "type": "Compressor", "config": { "threshold": -18, "ratio": 4, "attack": 0.003, "release": 0.08 } },
+      { "type": "Filter", "config": { "frequency": 16000, "type": "lowpass", "rolloff": -12 } },
+        { "type": "Limiter", "config": { "threshold": -3 } }
+    ]
+  },
+  "progression": {
+    "chords": ["i", "bVI", "bVII", "v"],
+    "scale": "natural_minor",
+    "bars_per_chord": 2
+  },
+  "harmonic_system": {
+    "type": "timbral_vector",
+    "field": "F# minor",
+    "cadences": "none"
+  },
+  "arc": {
+    "intro": { "layers": ["dark_pad", "hihat"], "velocity": 0.4 },
+    "build": { "layers": ["dark_pad", "808_bass", "kick", "hihat", "clap"], "velocity": 0.7 },
+    "climax": { "layers": ["dark_pad", "808_bass", "kick", "hihat", "open_hat", "clap", "lead"], "velocity": 0.9 },
+    "resolve": { "layers": ["dark_pad", "808_bass"], "velocity": 0.35 }
+  },
+  "orchestration_limits": {
+    "intro": { "max_simultaneous_voices": 2 },
+    "build": { "max_simultaneous_voices": 5 },
+    "climax": { "max_simultaneous_voices": 7 },
+    "resolve": { "max_simultaneous_voices": 2 },
+    "hard_limit": 7,
+    "spectral_rule": "If 4+ active voices, at least one must be 'light' (high freq, little low content)"
+  },
+  "form": {
+    "type": "drop_structure",
+    "tension_point": "build_to_climax",
+    "release": "rhythmic"
+  },
+  "rhythmGrid": {
+    "intro": {
+      "hihat": [0.3, 0, 0.2, 0, 0.3, 0, 0.2, 0, 0.3, 0, 0.2, 0, 0.3, 0, 0.2, 0]
+    },
+    "build": {
+      "kick":     [0.9, 0, 0, 0, 0, 0, 0, 0.7, 0, 0, 0.8, 0, 0, 0, 0, 0],
+      "clap":     [0, 0, 0, 0, 0.9, 0, 0, 0, 0, 0, 0, 0, 0.9, 0, 0, 0],
+      "hihat":    [0.4, 0.3, 0.4, 0.3, 0.4, 0.3, 0.4, 0.3, 0.5, 0.4, 0.5, 0.4, 0.6, 0.5, 0.6, 0.5],
+      "808_bass": [0.8, 0, 0, 0, 0, 0, 0, 0.6, 0, 0, 0.7, 0, 0, 0, 0, 0]
+    },
+    "climax": {
+      "kick":     [0.9, 0, 0, 0, 0, 0, 0.6, 0, 0, 0, 0.85, 0, 0, 0, 0.5, 0],
+      "clap":     [0, 0, 0, 0, 1.0, 0, 0, 0, 0, 0, 0, 0, 1.0, 0, 0, 0],
+      "hihat":    [0.6, 0.5, 0.6, 0.5, 0.7, 0.6, 0.7, 0.6, 0.8, 0.7, 0.8, 0.7, 0.9, 0.8, 0.9, 0.8],
+      "open_hat": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.6, 0],
+      "808_bass": [0.9, 0, 0, 0, 0, 0, 0.5, 0, 0, 0, 0.8, 0, 0, 0, 0.4, 0],
+      "lead":     [0, 0, 0, 0, 0, 0, 0, 0, 0.8, 0, 0, 0.7, 0, 0.6, 0, 0]
+    },
+    "resolve": {
+      "808_bass": [0.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    }
+  },
+  "voiceLeading": {
+    "chords": {
+      "i": {
+        "root":   ["F#2", "C#3", "F#3", "A3", "C#4"],
+        "drop2":  ["F#2", "A2", "C#3", "F#3", "C#4"],
+        "spread": ["F#2", "C#3", "A3", "F#4", "C#5"]
+      },
+      "bVI": {
+        "root":   ["D2", "A2", "D3", "F#3", "A3"],
+        "drop2":  ["D2", "F#2", "A2", "D3", "A3"],
+        "spread": ["D2", "A2", "F#3", "D4", "A4"]
+      },
+      "bVII": {
+        "root":   ["E2", "B2", "E3", "G#3", "B3"],
+        "drop2":  ["E2", "G#2", "B2", "E3", "B3"],
+        "spread": ["E2", "B2", "G#3", "E4", "B4"]
+      },
+      "v": {
+        "root":   ["C#2", "G#2", "C#3", "E3", "G#3"],
+        "drop2":  ["C#2", "E2", "G#2", "C#3", "G#3"],
+        "spread": ["C#2", "G#2", "E3", "C#4", "G#4"]
+      }
+    },
+    "transitions": {
+      "i_to_bVI":   { "motion": "descending thirds, A3→F#3 holds, C#4→A3" },
+      "bVI_to_bVII": { "motion": "stepwise ascending, D→E root, F#3→G#3" },
+      "bVII_to_v":  { "motion": "descending fourth, E→C#, G#3→G#3 holds" },
+      "v_to_i":     { "motion": "ascending fourth, C#→F#, E3→F#3 resolution" }
+    },
+    "arc_voicing": {
+      "intro": "spread",
+      "build": "drop2",
+      "climax": "root",
+      "resolve": "spread"
+    }
+  },
+  "melodicPatterns": {
+    "808_bass": {
+      "intro": null,
+      "build":  { "pattern": "root_fifth", "notes": ["F#1", "C#2", "D1", "A1", "E1", "B1", "C#1", "G#1"] },
+      "climax": { "pattern": "syncopated", "notes": ["F#1", "F#1", "C#2", "D1", "D1", "A1", "E1", "B1", "C#1", "G#1"] },
+      "resolve": { "pattern": "whole_notes", "notes": ["F#1", "D1", "E1", "C#1"] }
+    },
+    "lead": {
+      "climax_only": true,
+      "phrases": [
+        { "notes": ["C#5", "A4", "F#4", "G#4", "A4", "C#5"], "rhythm": ["8n", "8n", "8n", "8n", "4n", "4n"] },
+        { "notes": ["E5", "C#5", "B4", "A4", "G#4", "F#4"], "rhythm": ["16n", "16n", "8n", "8n", "4n", "2n"] }
+      ]
+    },
+    "dark_pad": {
+      "all_phases": true,
+      "note": "Follows voiceLeading chords per arc phase"
+    }
+  },
+  "transitions": {
+    "intro_to_build": {
+      "type": "riser",
+      "bars_before": 1,
+      "implementation": "Use Tone.js Noise with rising AutoFilter from 200Hz to 8000Hz over 2 bars, add sub-bass sweep from F#1 to F#2 with increasing volume"
+    },
+    "build_to_climax": {
+      "type": "drop",
+      "bars_before": 0.5,
+      "implementation": "Half-bar silence (kill all layers), white noise downriser with BitCrusher bits decreasing from 16 to 4, then hard 808 kick hit on beat 1 of climax"
+    },
+    "climax_to_resolve": {
+      "type": "fadeout",
+      "bars_before": 1,
+      "implementation": "Gradual velocity reduction over 2 bars from 0.9 to 0.35, hi-hats drop first, then kick/clap, leave only dark_pad and 808_bass with increasing reverb wet to 0.7"
+    }
+  }
+}

@@ -1,0 +1,215 @@
+{
+  "style": "lo-fi",
+  "description": "Warm, nostalgic lo-fi hip-hop with filtered piano, dusty vinyl texture, jazzy chords, and a head-nodding swing beat.",
+  "family": "modal",
+  "temporal": {
+    "bpm": 78,
+    "range": [70, 85],
+    "swing": 0.6,
+    "timeSignature": [4, 4],
+    "endingBehavior": {
+      "type": "loop_and_fade",
+      "cadenceBars": 2,
+      "forceTonicLastBar": false,
+      "maxTempoDeviationPercent": 5
+    }
+  },
+  "key": "Eb major",
+  "instruments": {
+    "piano": {
+      "type": "PolySynth",
+      "config": {
+        "voice": "Synth",
+        "maxPolyphony": 6,
+        "options": {
+          "oscillator": { "type": "triangle4" },
+          "envelope": { "attack": 0.01, "decay": 0.6, "sustain": 0.15, "release": 1.0 }
+        }
+      },
+      "volume": -18,
+      "range": ["C2", "C6"],
+      "optimal_range": ["C3", "C5"],
+      "effects": [
+        { "type": "Filter", "config": { "frequency": 1800, "type": "lowpass", "rolloff": -24, "Q": 1.5 } },
+        { "type": "Chorus", "config": { "frequency": 0.3, "delayTime": 3.0, "depth": 0.4, "wet": 0.2 } },
+        { "type": "Reverb", "config": { "decay": 2.5, "wet": 0.35 } },
+        { "type": "BitCrusher", "config": { "bits": 12, "wet": 0.1 } }
+      ]
+    },
+    "bass": {
+      "type": "MonoSynth",
+      "config": {
+        "oscillator": { "type": "triangle" },
+        "envelope": { "attack": 0.05, "decay": 0.3, "sustain": 0.5, "release": 0.6 },
+        "filterEnvelope": { "attack": 0.06, "decay": 0.2, "sustain": 0.4, "release": 0.5, "baseFrequency": 150, "octaves": 1.5 }
+      },
+      "volume": -15,
+      "range": ["C1", "C3"],
+      "optimal_range": ["C1", "G2"],
+      "effects": [
+        { "type": "Filter", "config": { "frequency": 600, "type": "lowpass", "rolloff": -12 } }
+      ]
+    },
+    "vinyl_noise": {
+      "type": "NoiseSynth",
+      "config": {
+        "noise": { "type": "brown" },
+        "envelope": { "attack": 2.0, "decay": 0, "sustain": 1, "release": 3.0 }
+      },
+      "volume": -28,
+      "effects": [
+        { "type": "Filter", "config": { "frequency": 3000, "type": "lowpass", "rolloff": -24 } },
+        { "type": "AutoFilter", "config": { "frequency": 0.08, "baseFrequency": 800, "octaves": 2, "wet": 0.5 } }
+      ]
+    },
+    "kick": {
+      "type": "MembraneSynth",
+      "config": {
+        "pitchDecay": 0.06,
+        "octaves": 4,
+        "oscillator": { "type": "sine" },
+        "envelope": { "attack": 0.001, "decay": 0.25, "sustain": 0, "release": 0.25 }
+      },
+      "volume": -16,
+      "effects": [
+        { "type": "Filter", "config": { "frequency": 2500, "type": "lowpass" } }
+      ]
+    },
+    "hihat": {
+      "type": "MetalSynth",
+      "config": {
+        "frequency": 300,
+        "envelope": { "attack": 0.001, "decay": 0.06, "release": 0.04 },
+        "harmonicity": 5.1,
+        "modulationIndex": 28,
+        "resonance": 3500,
+        "octaves": 1.2
+      },
+      "volume": -20,
+      "effects": [
+        { "type": "Filter", "config": { "frequency": 6000, "type": "highpass" } },
+        { "type": "Filter", "config": { "frequency": 2500, "type": "lowpass" } }
+      ]
+    }
+  },
+  "master": {
+    "effects": [
+      { "type": "EQ3", "config": { "low": 1, "mid": -1, "high": -4 } },
+      { "type": "Compressor", "config": { "threshold": -16, "ratio": 3, "attack": 0.05, "release": 0.2 } },
+      { "type": "Filter", "config": { "frequency": 16000, "type": "lowpass", "rolloff": -12 } },
+        { "type": "Limiter", "config": { "threshold": -3 } }
+    ]
+  },
+  "progression": {
+    "chords": ["ii7", "V7", "Imaj7", "vi7"],
+    "scale": "major",
+    "bars_per_chord": 2
+  },
+  "harmonic_system": {
+    "type": "modal_static",
+    "field": "Major on Eb",
+    "cadences": "none"
+  },
+  "arc": {
+    "intro": { "layers": ["vinyl_noise", "piano"], "velocity": 0.35 },
+    "build": { "layers": ["vinyl_noise", "piano", "bass", "kick", "hihat"], "velocity": 0.5 },
+    "climax": { "layers": ["vinyl_noise", "piano", "bass", "kick", "hihat"], "velocity": 0.6 },
+    "resolve": { "layers": ["vinyl_noise", "piano"], "velocity": 0.3 }
+  },
+  "orchestration_limits": {
+    "intro": { "max_simultaneous_voices": 2 },
+    "build": { "max_simultaneous_voices": 5 },
+    "climax": { "max_simultaneous_voices": 5 },
+    "resolve": { "max_simultaneous_voices": 2 },
+    "hard_limit": 4,
+    "spectral_rule": "If 4+ active voices, at least one must be 'light' (high freq, little low content)"
+  },
+  "form": {
+    "type": "processuale",
+    "evolution_params": ["cutoff", "wet", "depth"]
+  },
+  "rhythmGrid": {
+    "_doc": "16-step velocity arrays. Lo-fi uses laid-back swing feel. Ghost notes (0.1-0.2) give human imperfection. Swing is handled by tempo.swing=0.6.",
+    "intro": {},
+    "build": {
+      "kick":  [0.7, 0, 0, 0, 0, 0, 0.4, 0, 0, 0, 0.6, 0, 0, 0, 0, 0],
+      "hihat": [0, 0, 0.4, 0, 0, 0, 0.3, 0, 0, 0, 0.4, 0, 0, 0, 0.2, 0]
+    },
+    "climax": {
+      "kick":  [0.8, 0, 0, 0.1, 0, 0, 0.5, 0, 0, 0, 0.7, 0, 0, 0, 0.15, 0],
+      "hihat": [0.3, 0, 0.5, 0, 0.2, 0, 0.4, 0, 0.3, 0, 0.5, 0, 0.2, 0, 0.3, 0]
+    },
+    "resolve": {
+      "kick":  [0.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.3, 0, 0, 0, 0, 0],
+      "hihat": [0, 0, 0.2, 0, 0, 0, 0.15, 0, 0, 0, 0.2, 0, 0, 0, 0, 0]
+    }
+  },
+  "voiceLeading": {
+    "_doc": "Concrete voicings for Eb major jazz chords: ii7=Fm7, V7=Bb7, Imaj7=Ebmaj7, vi7=Cm7",
+    "chords": {
+      "Fm7": {
+        "root":   ["F2", "C3", "Eb3", "Ab3", "C4"],
+        "drop2":  ["F2", "C3", "Ab3", "C4", "Eb4"],
+        "spread": ["F2", "Eb3", "C4", "Ab4"]
+      },
+      "Bb7": {
+        "root":   ["Bb2", "F3", "Ab3", "D4"],
+        "drop2":  ["Bb2", "Ab3", "D4", "F4"],
+        "spread": ["Bb1", "Ab3", "D4", "F4"]
+      },
+      "Ebmaj7": {
+        "root":   ["Eb2", "Bb2", "D3", "G3", "Bb3"],
+        "drop2":  ["Eb2", "Bb2", "G3", "Bb3", "D4"],
+        "spread": ["Eb2", "D3", "Bb3", "G4"]
+      },
+      "Cm7": {
+        "root":   ["C2", "G2", "Bb2", "Eb3", "G3"],
+        "drop2":  ["C2", "G2", "Eb3", "G3", "Bb3"],
+        "spread": ["C2", "Bb2", "G3", "Eb4"]
+      }
+    },
+    "transitions": {
+      "Fm7_to_Bb7":    { "motion": "ii-V: bass descends fourth F→Bb, Eb3→D4 guides to 3rd, Ab3 holds" },
+      "Bb7_to_Ebmaj7": { "motion": "V-I: bass descends fifth Bb→Eb, Ab3→G3 resolves tritone, D4→D3" },
+      "Ebmaj7_to_Cm7": { "motion": "I-vi: bass descends third Eb→C, D3→Eb3, G3 common tone, Bb3→Bb2" },
+      "Cm7_to_Fm7":    { "motion": "vi-ii: bass ascends fourth C→F, Eb3→Eb3 common, G3→Ab3, Bb3→C4" }
+    },
+    "arc_voicing": {
+      "intro": "spread",
+      "build": "drop2",
+      "climax": "root",
+      "resolve": "spread"
+    }
+  },
+  "melodicPatterns": {
+    "piano": {
+      "intro":  { "pattern": "whole_note_chords", "voicing": "spread", "octave": 3 },
+      "build":  { "pattern": "jazz_comp", "voicing": "drop2", "octave": 3, "notes_per_bar": 2 },
+      "climax": { "pattern": "jazz_comp", "voicing": "root", "octave": 3, "notes_per_bar": 3 },
+      "resolve":{ "pattern": "whole_note_chords", "voicing": "spread", "octave": 3 }
+    },
+    "bass": {
+      "intro":  { "pattern": "silent" },
+      "build":  { "pattern": "root_fifth", "notes": ["F1-C2", "Bb1-F2", "Eb1-Bb1", "C1-G1"] },
+      "climax": { "pattern": "syncopated", "notes": ["F1-C2-Ab1", "Bb1-F2-D2", "Eb1-Bb1-G1", "C1-G1-Eb1"] },
+      "resolve":{ "pattern": "whole_notes", "notes": ["F1", "Bb1"] }
+    }
+  },
+  "transitions": {
+    "intro_to_build": {
+      "type": "fadeout",
+      "bars_before": 0.5,
+      "implementation": "Vinyl noise crackle volume rises -28dB→-22dB. Kick enters with ghost hit (vel 0.2) on beat 4, full pattern starts next bar. Piano transitions from whole notes to comping."
+    },
+    "build_to_climax": {
+      "type": "riser",
+      "bars_before": 0.5,
+      "implementation": "Hihat pattern fills in 16th ghost notes last 2 beats (vel 0.1→0.3). Bass shifts from root-fifth to syncopated. Piano comping density increases."
+    },
+    "climax_to_resolve": {
+      "type": "fadeout",
+      "bars_before": 1,
+      "implementation": "Kick and hihat fade out over 1 bar (velocity 0.6→0.1→0). Bass releases to silence. Piano returns to whole-note chords. Vinyl noise volume returns to -28dB."
+    }
+  }
+}

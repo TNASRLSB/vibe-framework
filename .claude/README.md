@@ -16,6 +16,7 @@ Due componenti che lavorano insieme:
    - **security-guardian** — Sicurezza AI-specific: OWASP, credential detection, BaaS audit
    - **seo-geo-copy** — SEO tradizionale + GEO (AI search) + copywriting persuasivo
    - **video-craft** — Generazione video programmatica da design system + contenuti (CSS animations + Playwright + FFmpeg)
+   - **audiosculpt** — Generazione audio programmatica (soundtrack + SFX) con Tone.js, integrazione video-craft
    - **techdebt** — Audit duplicazioni, export orfani, import inutilizzati, pattern estraibili
 
 Il framework definisce *come* Claude lavora. Le skill definiscono *cosa* sa fare in ambiti specifici.
@@ -70,6 +71,9 @@ progetto/
         ├── video-craft/      # Skill generazione video
         │   ├── SKILL.md      # Definizione skill e comandi
         │   └── engine/       # Engine TypeScript (auto-setup)
+        ├── audiosculpt/      # Skill generazione audio
+        │   ├── SKILL.md      # Definizione skill e comandi
+        │   └── presets/      # Stili, patch FM, sample map, coherence matrix
         └── techdebt/         # Skill audit tech debt
             └── SKILL.md      # Definizione skill e comandi
 ```
@@ -381,11 +385,27 @@ Generazione video programmatica. Genera pagine HTML con CSS animations, cattura 
 | `/video-craft formats` | Lista formati disponibili |
 | `/video-craft entrances` | Lista animazioni entrance disponibili |
 
-**Caratteristiche:** 107+ animazioni, 4 modi (safe/chaos/hybrid/cocomelon), timing automatico, integrazione ui-craft + seo-geo-copy, director system (content-aware animation), scene templates, choreography system
+**Caratteristiche:** 131 animazioni, 4 modi (safe/chaos/hybrid/cocomelon), timing automatico, integrazione ui-craft + seo-geo-copy, director system (content-aware animation), scene templates, choreography system
 
 **Requisiti di sistema:** FFmpeg installato (`ffmpeg` nel PATH)
 
 **Attivazione:** video generation, promo video, social media video, product video
+
+#### AudioSculpt
+
+Generazione audio programmatica (soundtrack + SFX) con Tone.js. Due engine: Text2midi (AI-generated MIDI → Tone.js rendering) o sintesi Tone.js diretta. Output: blocco `<script>` self-contained.
+
+| Comando | Cosa fa |
+|---------|---------|
+| `/audiosculpt create` | Flusso guidato — crea audio per webvideo o standalone |
+| `/audiosculpt add-to-video <html>` | Inietta audio in un webvideo video-craft esistente |
+| `/audiosculpt preview <style>` | Genera pagina HTML con demo 15s di uno stile |
+| `/audiosculpt styles` | Lista i 20 stili soundtrack disponibili |
+| `/audiosculpt setup` | Installa engine Text2midi (opzionale, richiede Python + GPU) |
+
+**Caratteristiche:** 20 stili in 4 famiglie (tonal/modal/loop/experimental + horror hybrid), 6 famiglie SFX, 31 strumenti campionati con fallback FM, 45 patch FM, regole per-famiglia (contrappunto, armonia funzionale, orchestrazione, forma tematica, densità orchestrale, quantizzazione temporale video→musica). Integrazione video-craft.
+
+**Attivazione:** audio generation, soundtrack, sound effects, music, audio for video
 
 #### Techdebt
 
@@ -398,6 +418,52 @@ Audit rapido del codebase per debito tecnico strutturale.
 **Output:** Report in `.claude/docs/techdebt-report.md`
 
 **Quando usarlo:** Fine sessione, prima di PR, periodicamente come igiene del codice
+
+---
+
+## Glossario del Framework
+
+Terminologia condivisa tra le skill. Il file `glossary.md` nel progetto utente è per termini specifici del progetto.
+
+### Prodotti / Output
+
+| Termine | Definizione |
+|---------|------------|
+| **website** | Sito internet completo generato da ui-craft (HTML + CSS + assets). Il prodotto finale per il web. |
+| **webvideo** | Pagina .html generata da video-craft, destinata a diventare video. Non è un sito — è un file self-contained con scene animate, che il capture engine trasforma in .mp4. |
+
+### Design System
+
+| Termine | Definizione |
+|---------|------------|
+| **design system** | L'intera identità visiva di un progetto: `tokens.css` + `style.css`. Entrambi vivono in `.ui-craft/` o nella cartella assets del website. |
+| **tokens** (`tokens.css`) | Variabili CSS primitive: colori, font, spacing, motion, radius, border. I valori grezzi, senza contesto d'uso. |
+| **styles** (`style.css`) | Regole CSS che applicano i token ai componenti: nav, hero, cards, buttons, layout grid, responsive. L'identità visiva concreta. |
+| **design-system.html** | Preview vivente del design system. Importa tokens.css e mostra tutti gli elementi visivamente. |
+
+### Architettura
+
+| Termine | Definizione |
+|---------|------------|
+| **archetype** (ui-craft) | Tipo di pagina web: Entry, Discovery, Detail, Action, Management, System. Ogni archetype ha wireframe e layout predefiniti. |
+| **scene-type** (video-craft) | Tipo di scena nel webvideo: stat-callout, feature-showcase, cta-outro, ecc. Definisce layout, densità, background e animazioni della scena. |
+
+### Modalità
+
+| Termine | Definizione |
+|---------|------------|
+| **mode** | Direzione creativa che Claude segue nella generazione. Condiviso tra ui-craft e video-craft. |
+| **safe** | Pulito, corporate, professionale. Basso rischio. |
+| **chaos** | Dinamico, sperimentale, scelte random. Alto rischio. |
+| **hybrid** | Base safe con un elemento sorpresa per scena/pagina. Rischio medio. |
+| **cocomelon** | Hyper-engaging, neuro-ottimizzato. Arco di arousal (arrest→escalate→climax→descend→convert). Solo video-craft. |
+
+### Pipeline Video
+
+| Termine | Definizione |
+|---------|------------|
+| **capture engine** | Il componente che trasforma il webvideo (.html) in video (.mp4). Non va confuso con la generazione del webvideo. |
+| **narrative pattern** | Sequenza predefinita di scene-type che struttura il webvideo (es. problem-solution, hook-parade, neuro-hijack). |
 
 ---
 

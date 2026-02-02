@@ -1,0 +1,75 @@
+{
+  "family": "organic",
+  "description": "Wood percussion, page turn, spring, tap. Natural noise component, warmth.",
+  "characteristics": {
+    "attack_ms": [5, 30],
+    "decay_ms": [80, 500],
+    "frequency_range_hz": [200, 4000]
+  },
+  "sounds": {
+    "element-appear": {
+      "label": "Wood tap / finger snap",
+      "synth": { "type": "MembraneSynth", "config": { "pitchDecay": 0.01, "octaves": 2, "envelope": { "attack": 0.001, "decay": 0.08, "sustain": 0, "release": 0.05 } } },
+      "effects": [{ "type": "Filter", "config": { "frequency": 3000, "type": "lowpass" } }],
+      "note": "G4",
+      "duration": "32n",
+      "velocity": 0.35
+    },
+    "text-typing": {
+      "label": "Pencil scratch",
+      "synth": { "type": "NoiseSynth", "config": { "noise": { "type": "brown" }, "envelope": { "attack": 0.002, "decay": 0.025, "sustain": 0, "release": 0.015 } } },
+      "effects": [{ "type": "Filter", "config": { "frequency": 2500, "type": "bandpass", "Q": 2 } }],
+      "note": null,
+      "duration": "64n",
+      "velocity": 0.12
+    },
+    "number-count": {
+      "label": "Marimba note",
+      "synth": { "type": "FMSynth", "config": { "modulationIndex": 1.2, "harmonicity": 4, "envelope": { "attack": 0.001, "decay": 0.3, "sustain": 0, "release": 0.2 } } },
+      "effects": [{ "type": "Filter", "config": { "frequency": 3500, "type": "lowpass" } }],
+      "note": "C5",
+      "duration": "16n",
+      "velocity": 0.35
+    },
+    "card-flip": {
+      "label": "Paper slide",
+      "synth": { "type": "NoiseSynth", "config": { "noise": { "type": "white" }, "envelope": { "attack": 0.01, "decay": 0.15, "sustain": 0, "release": 0.1 } } },
+      "effects": [{ "type": "Filter", "config": { "frequency": 2000, "type": "bandpass", "Q": 1 } }],
+      "note": null,
+      "duration": "16n",
+      "velocity": 0.2
+    },
+    "scene-transition": {
+      "label": "Brush sweep",
+      "synth": { "type": "NoiseSynth", "config": { "noise": { "type": "pink" }, "envelope": { "attack": 0.2, "decay": 0.6, "sustain": 0.05, "release": 0.4 } } },
+      "effects": [{ "type": "Filter", "config": { "frequency": 1500, "type": "lowpass" } }, { "type": "Reverb", "config": { "decay": 2.0, "wet": 0.4 } }],
+      "note": null,
+      "duration": "2n",
+      "velocity": 0.25
+    },
+    "cta-final": {
+      "label": "Acoustic chord",
+      "synth": { "type": "PluckSynth", "config": { "attackNoise": 2, "dampening": 3000, "resonance": 0.95 } },
+      "effects": [{ "type": "Reverb", "config": { "decay": 2.5, "wet": 0.35 } }],
+      "note": "C4",
+      "duration": "4n",
+      "velocity": 0.55
+    },
+    "logo-reveal": {
+      "label": "Wood bell",
+      "synth": { "type": "FMSynth", "config": { "modulationIndex": 1.5, "harmonicity": 5.07, "envelope": { "attack": 0.003, "decay": 1.0, "sustain": 0, "release": 0.8 } } },
+      "effects": [{ "type": "Reverb", "config": { "decay": 2.5, "wet": 0.3 } }],
+      "note": "E5",
+      "duration": "4n",
+      "velocity": 0.45
+    },
+    "stat-progress": {
+      "label": "Marimba scale",
+      "synth": { "type": "FMSynth", "config": { "modulationIndex": 1.2, "harmonicity": 4, "envelope": { "attack": 0.001, "decay": 0.2, "sustain": 0, "release": 0.15 } } },
+      "effects": [],
+      "note": "C5",
+      "duration": "16n",
+      "velocity": 0.3
+    }
+  }
+}

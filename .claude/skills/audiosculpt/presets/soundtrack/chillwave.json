@@ -1,0 +1,259 @@
+{
+  "style": "chillwave",
+  "description": "Dreamy lo-fi synths with deep reverb washes, soft pulsing rhythms, and hazy suspended chord voicings.",
+  "family": "modal",
+  "temporal": {
+    "bpm": 98,
+    "range": [90, 110],
+    "swing": 0.1,
+    "timeSignature": [4, 4],
+    "endingBehavior": {
+      "type": "loop_and_fade",
+      "cadenceBars": 2,
+      "forceTonicLastBar": false,
+      "maxTempoDeviationPercent": 5
+    }
+  },
+  "key": "D",
+  "instruments": {
+    "shimmer-pad": {
+      "type": "PolySynth",
+      "config": {
+        "voice": "FMSynth",
+        "maxPolyphony": 6,
+        "options": {
+          "harmonicity": 3.5,
+          "modulationIndex": 0.4,
+          "oscillator": { "type": "sine" },
+          "modulation": { "type": "sine" },
+          "envelope": { "attack": 2.5, "decay": 1.0, "sustain": 0.8, "release": 5.0 },
+          "modulationEnvelope": { "attack": 2.0, "decay": 0.8, "sustain": 0.3, "release": 4.0 }
+        }
+      },
+      "volume": -22,
+      "range": ["C2", "C6"],
+      "optimal_range": ["C3", "C5"],
+      "effects": [
+        { "type": "Chorus", "config": { "frequency": 0.4, "delayTime": 5, "depth": 0.7, "wet": 0.5 } },
+        { "type": "Reverb", "config": { "decay": 8.0, "wet": 0.6, "preDelay": 0.05 } }
+      ]
+    },
+    "vocoder-pad": {
+      "type": "AMSynth",
+      "config": {
+        "harmonicity": 1.5,
+        "oscillator": { "type": "triangle" },
+        "modulation": { "type": "sine" },
+        "envelope": { "attack": 1.5, "decay": 0.8, "sustain": 0.7, "release": 4.0 },
+        "modulationEnvelope": { "attack": 1.0, "decay": 0.3, "sustain": 0.5, "release": 3.0 }
+      },
+      "volume": -16,
+      "range": ["C2", "C6"],
+      "optimal_range": ["C3", "C5"],
+      "effects": [
+        { "type": "AutoFilter", "config": { "frequency": 0.15, "baseFrequency": 300, "octaves": 3, "wet": 0.6 } },
+        { "type": "Reverb", "config": { "decay": 6.0, "wet": 0.55 } },
+        { "type": "FeedbackDelay", "config": { "delayTime": "4n.", "feedback": 0.3, "wet": 0.25 } }
+      ]
+    },
+    "bass": {
+      "type": "MonoSynth",
+      "config": {
+        "oscillator": { "type": "triangle" },
+        "filter": { "Q": 1, "type": "lowpass", "rolloff": -12 },
+        "envelope": { "attack": 0.08, "decay": 0.4, "sustain": 0.5, "release": 0.6 },
+        "filterEnvelope": { "attack": 0.05, "decay": 0.3, "sustain": 0.3, "release": 0.5, "baseFrequency": 200, "octaves": 1.5 }
+      },
+      "volume": -16,
+      "range": ["C1", "C3"],
+      "optimal_range": ["C1", "G2"],
+      "effects": [
+        { "type": "Chorus", "config": { "frequency": 0.3, "delayTime": 3, "depth": 0.3, "wet": 0.2 } },
+        { "type": "Reverb", "config": { "decay": 2.0, "wet": 0.2 } }
+      ]
+    },
+    "kick": {
+      "type": "MembraneSynth",
+      "config": {
+        "pitchDecay": 0.06,
+        "octaves": 5,
+        "oscillator": { "type": "sine" },
+        "envelope": { "attack": 0.005, "decay": 0.35, "sustain": 0.0, "release": 0.3 }
+      },
+      "volume": -16,
+      "effects": [
+        { "type": "Reverb", "config": { "decay": 0.8, "wet": 0.1 } }
+      ]
+    },
+    "hat": {
+      "type": "NoiseSynth",
+      "config": {
+        "noise": { "type": "pink" },
+        "envelope": { "attack": 0.005, "decay": 0.06, "sustain": 0.0, "release": 0.04 }
+      },
+      "volume": -22,
+      "effects": [
+        { "type": "Filter", "config": { "frequency": 7000, "type": "highpass", "rolloff": -12 } },
+        { "type": "Reverb", "config": { "decay": 1.5, "wet": 0.3 } }
+      ]
+    },
+    "arp": {
+      "type": "PluckSynth",
+      "config": {
+        "attackNoise": 1,
+        "dampening": 2500,
+        "resonance": 0.9,
+        "release": 1.5
+      },
+      "volume": -18,
+      "range": ["C4", "C7"],
+      "optimal_range": ["C5", "C7"],
+      "effects": [
+        { "type": "PingPongDelay", "config": { "delayTime": "8n.", "feedback": 0.35, "wet": 0.4 } },
+        { "type": "Reverb", "config": { "decay": 4.0, "wet": 0.45 } }
+      ]
+    }
+  },
+  "master": {
+    "effects": [
+      { "type": "EQ3", "config": { "low": 1, "mid": -1, "high": 2, "lowFrequency": 200, "highFrequency": 5000 } },
+      { "type": "Compressor", "config": { "threshold": -16, "ratio": 2.5, "attack": 0.04, "release": 0.25 } },
+      { "type": "Filter", "config": { "frequency": 16000, "type": "lowpass", "rolloff": -12 } },
+        { "type": "Limiter", "config": { "threshold": -3 } }
+    ]
+  },
+  "progression": {
+    "chords": ["I", "IVsus2", "vi", "Vsus4", "I", "IVsus2", "iii", "Vsus4"],
+    "scale": "lydian",
+    "bars_per_chord": 2
+  },
+  "harmonic_system": {
+    "type": "modal_static",
+    "field": "Lydian on D",
+    "cadences": "none"
+  },
+  "arc": {
+    "intro": { "layers": ["shimmer-pad", "hat"], "velocity": 0.2 },
+    "build": { "layers": ["shimmer-pad", "vocoder-pad", "bass", "kick", "hat"], "velocity": 0.4 },
+    "climax": { "layers": ["shimmer-pad", "vocoder-pad", "bass", "kick", "hat", "arp"], "velocity": 0.55 },
+    "resolve": { "layers": ["shimmer-pad", "arp"], "velocity": 0.2 }
+  },
+  "orchestration_limits": {
+    "intro": { "max_simultaneous_voices": 2 },
+    "build": { "max_simultaneous_voices": 5 },
+    "climax": { "max_simultaneous_voices": 6 },
+    "resolve": { "max_simultaneous_voices": 2 },
+    "hard_limit": 4,
+    "spectral_rule": "If 4+ active voices, at least one must be 'light' (high freq, little low content)"
+  },
+  "form": {
+    "type": "processuale",
+    "evolution_params": ["cutoff", "wet", "depth"]
+  },
+  "rhythmGrid": {
+    "_doc": "16-step velocity arrays (16th notes, 4/4 bar). 0 = silence, 0.1-1.0 = hit velocity. Chillwave: sidechain pump feel, offbeat hihats, relaxed groove.",
+    "intro": {
+      "shimmer-pad": [0.2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "hat":         [0, 0, 0.15, 0, 0, 0, 0.15, 0, 0, 0, 0.15, 0, 0, 0, 0.15, 0]
+    },
+    "build": {
+      "shimmer-pad": [0.35, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "vocoder-pad": [0.3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "bass":        [0.5, 0, 0, 0, 0, 0, 0.3, 0, 0, 0, 0.4, 0, 0, 0, 0.25, 0],
+      "kick":        [0.6, 0, 0, 0, 0.5, 0, 0, 0, 0.6, 0, 0, 0, 0.5, 0, 0, 0],
+      "hat":         [0, 0, 0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, 0]
+    },
+    "climax": {
+      "shimmer-pad": [0.45, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "vocoder-pad": [0.4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "bass":        [0.55, 0, 0, 0.2, 0, 0, 0.35, 0, 0.5, 0, 0, 0.2, 0, 0, 0.3, 0],
+      "kick":        [0.65, 0, 0, 0, 0.55, 0, 0, 0, 0.65, 0, 0, 0, 0.55, 0, 0, 0],
+      "hat":         [0, 0, 0.25, 0.1, 0, 0, 0.25, 0.1, 0, 0, 0.25, 0.1, 0, 0, 0.25, 0.1],
+      "arp":         [0.4, 0, 0, 0.3, 0, 0.35, 0, 0, 0.4, 0, 0, 0.3, 0, 0.35, 0, 0]
+    },
+    "resolve": {
+      "shimmer-pad": [0.2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "arp":         [0.2, 0, 0, 0.15, 0, 0, 0, 0, 0.18, 0, 0, 0.12, 0, 0, 0, 0]
+    }
+  },
+  "voiceLeading": {
+    "_doc": "Key: D lydian. I=D, IVsus2=Gsus2, vi=Bm, Vsus4=Asus4, iii=F#m",
+    "chords": {
+      "I": {
+        "root":   ["D4", "F#4", "A4", "D5"],
+        "drop2":  ["D3", "A3", "D4", "F#4"],
+        "spread": ["D3", "A4", "F#5"]
+      },
+      "IVsus2": {
+        "root":   ["G3", "A3", "D4", "G4"],
+        "drop2":  ["G3", "D4", "G4", "A4"],
+        "spread": ["G3", "D5", "A5"]
+      },
+      "vi": {
+        "root":   ["B3", "D4", "F#4", "B4"],
+        "drop2":  ["B3", "F#4", "B4", "D5"],
+        "spread": ["B3", "F#5", "D6"]
+      },
+      "Vsus4": {
+        "root":   ["A3", "D4", "E4", "A4"],
+        "drop2":  ["A3", "E4", "A4", "D5"],
+        "spread": ["A3", "E5", "D6"]
+      },
+      "iii": {
+        "root":   ["F#3", "A3", "C#4", "F#4"],
+        "drop2":  ["F#3", "C#4", "F#4", "A4"],
+        "spread": ["F#3", "C#5", "A5"]
+      }
+    },
+    "transitions": {
+      "I_to_IVsus2":    { "motion": "F#→G (half-step up), A stays as sus2, D stays" },
+      "IVsus2_to_vi":   { "motion": "G→F# (half-step down), A→B (step up), D stays" },
+      "vi_to_Vsus4":    { "motion": "B→A (step down), D stays as sus4, F#→E (step down)" },
+      "Vsus4_to_I":     { "motion": "A→A (pedal), D stays, E→F# (step up)" },
+      "I_to_IVsus2_2":  { "motion": "same as I_to_IVsus2" },
+      "IVsus2_to_iii":  { "motion": "G→F# (half-step down), A stays, D→C# (half-step down)" },
+      "iii_to_Vsus4":   { "motion": "F#→E (step down), A stays, C#→D (half-step up)" }
+    },
+    "arc_voicing": {
+      "intro": "spread",
+      "build": "drop2",
+      "climax": "root",
+      "resolve": "spread"
+    }
+  },
+  "melodicPatterns": {
+    "arp": {
+      "intro": null,
+      "build": null,
+      "climax": "slow_dotted_eighth_arpeggios_ascending",
+      "resolve": "sparse_dotted_quarter_arpeggios_descending"
+    },
+    "bass": {
+      "build": "sidechain_pump_quarter_notes_root",
+      "climax": "syncopated_root_fifth_with_ghost_octave"
+    },
+    "shimmer-pad": {
+      "intro": "sustained_whole_notes_wide_voicing",
+      "build": "sustained_with_slow_filter_sweep",
+      "climax": "sustained_with_chorus_depth_increase",
+      "resolve": "sustained_fadeout_wide_voicing"
+    }
+  },
+  "transitions": {
+    "intro_to_build": {
+      "type": "riser",
+      "bars_before": 0.5,
+      "implementation": "Hat pattern continues unbroken. Kick enters on beat 1 with sidechain ducking shimmer-pad (compressor sidechain, ratio 6, attack 0.005, release 0.15). Bass slides in with portamento from D2. Vocoder-pad fades in over 2 beats."
+    },
+    "build_to_climax": {
+      "type": "riser",
+      "bars_before": 1,
+      "implementation": "White noise sweep via NoiseSynth with bandpass filter sweeping 200→8000Hz over 4 beats, velocity 0→0.3→0. Arp enters on beat 1 of climax with PingPongDelay. Hat adds ghost notes on offbeat sixteenths. Bass adds syncopated ghost notes."
+    },
+    "climax_to_resolve": {
+      "type": "fadeout",
+      "bars_before": 1,
+      "implementation": "Kick, hat, vocoder-pad, and bass volume ramp to -Infinity over 4 beats. Arp delay feedback increases from 0.45 to 0.7 creating wash. Shimmer-pad reverb wet increases to 0.8. Arp thins to sparse notes over final 2 beats."
+    }
+  }
+}
