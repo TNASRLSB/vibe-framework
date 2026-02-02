@@ -1,0 +1,246 @@
+{
+  "style": "cinematic",
+  "description": "Sweeping orchestral-style synthesis with wide dynamics, deep sub bass, and evolving textures for trailers and emotional narratives.",
+  "family": "tonal",
+  "temporal": {
+    "bpm": 72,
+    "range": [60, 90],
+    "swing": 0,
+    "timeSignature": [4, 4],
+    "endingBehavior": {
+      "type": "cadential_insert",
+      "cadenceBars": 2,
+      "forceTonicLastBar": true,
+      "maxTempoDeviationPercent": 5
+    }
+  },
+  "key": "D minor",
+  "instruments": {
+    "strings": {
+      "type": "PolySynth",
+      "config": {
+        "voice": "AMSynth",
+        "maxPolyphony": 6,
+        "options": {
+          "harmonicity": 3,
+          "oscillator": { "type": "sawtooth8" },
+          "modulation": { "type": "sine" },
+          "envelope": { "attack": 1.8, "decay": 0.6, "sustain": 0.8, "release": 4.0 },
+          "modulationEnvelope": { "attack": 2.0, "decay": 0.5, "sustain": 0.7, "release": 3.5 }
+        }
+      },
+      "volume": -18,
+      "range": ["G3", "E6"],
+      "optimal_range": ["G3", "D6"],
+      "effects": [
+        { "type": "Chorus", "config": { "frequency": 0.3, "delayTime": 4.0, "depth": 0.7, "wet": 0.35 } },
+        { "type": "Reverb", "config": { "decay": 6.0, "wet": 0.55 } }
+      ]
+    },
+    "piano": {
+      "type": "PolySynth",
+      "config": {
+        "voice": "Synth",
+        "maxPolyphony": 6,
+        "options": {
+          "oscillator": { "type": "triangle8" },
+          "envelope": { "attack": 0.01, "decay": 1.2, "sustain": 0.15, "release": 2.0 }
+        }
+      },
+      "volume": -18,
+      "range": ["A1", "C7"],
+      "optimal_range": ["F2", "C6"],
+      "effects": [
+        { "type": "Reverb", "config": { "decay": 5.0, "wet": 0.5 } },
+        { "type": "FeedbackDelay", "config": { "delayTime": "8n.", "feedback": 0.15, "wet": 0.2 } }
+      ]
+    },
+    "sub_bass": {
+      "type": "MonoSynth",
+      "config": {
+        "oscillator": { "type": "sine" },
+        "envelope": { "attack": 0.3, "decay": 0.5, "sustain": 0.9, "release": 2.0 },
+        "filterEnvelope": { "attack": 0.4, "decay": 0.3, "sustain": 0.8, "release": 2.0, "baseFrequency": 60, "octaves": 1 }
+      },
+      "volume": -15,
+      "range": ["C1", "G2"],
+      "optimal_range": ["C1", "E2"],
+      "effects": []
+    },
+    "pad": {
+      "type": "PolySynth",
+      "config": {
+        "voice": "FMSynth",
+        "maxPolyphony": 4,
+        "options": {
+          "harmonicity": 0.5,
+          "modulationIndex": 2,
+          "oscillator": { "type": "sine" },
+          "modulation": { "type": "triangle" },
+          "envelope": { "attack": 3.0, "decay": 1.0, "sustain": 0.7, "release": 5.0 },
+          "modulationEnvelope": { "attack": 3.5, "decay": 1.0, "sustain": 0.6, "release": 5.0 }
+        }
+      },
+      "volume": -22,
+      "range": ["C2", "C6"],
+      "optimal_range": ["C3", "C5"],
+      "effects": [
+        { "type": "Reverb", "config": { "decay": 8.0, "wet": 0.6 } }
+      ]
+    },
+    "timpani": {
+      "type": "MembraneSynth",
+      "config": {
+        "pitchDecay": 0.08,
+        "octaves": 4,
+        "oscillator": { "type": "sine" },
+        "envelope": { "attack": 0.01, "decay": 0.8, "sustain": 0, "release": 1.0 }
+      },
+      "volume": -16,
+      "effects": [
+        { "type": "Reverb", "config": { "decay": 3.0, "wet": 0.4 } }
+      ]
+    }
+  },
+  "master": {
+    "effects": [
+      { "type": "EQ3", "config": { "low": 2, "mid": 0, "high": -1 } },
+      { "type": "Compressor", "config": { "threshold": -18, "ratio": 3, "attack": 0.1, "release": 0.3 } },
+      { "type": "Filter", "config": { "frequency": 16000, "type": "lowpass", "rolloff": -12 } },
+        { "type": "Limiter", "config": { "threshold": -3 } }
+    ]
+  },
+  "progression": {
+    "chords": ["i", "VI", "III", "VII"],
+    "scale": "natural_minor",
+    "bars_per_chord": 2
+  },
+  "harmonic_system": {
+    "type": "functional_tonal",
+    "functions": {
+      "i": "T",
+      "VI": "SD",
+      "III": "T(mediant)",
+      "VII": "D"
+    },
+    "cadences": {
+      "primary": "half",
+      "reasoning": "Last chord is VII (D function) — progression ends on dominant = half cadence"
+    }
+  },
+  "arc": {
+    "intro": { "layers": ["pad"], "velocity": 0.3 },
+    "build": { "layers": ["pad", "piano", "strings", "sub_bass"], "velocity": 0.6 },
+    "climax": { "layers": ["pad", "piano", "strings", "sub_bass", "timpani"], "velocity": 0.9 },
+    "resolve": { "layers": ["pad", "piano"], "velocity": 0.3 }
+  },
+  "orchestration_limits": {
+    "intro": { "max_simultaneous_voices": 1 },
+    "build": { "max_simultaneous_voices": 4 },
+    "climax": { "max_simultaneous_voices": 5 },
+    "resolve": { "max_simultaneous_voices": 2 },
+    "hard_limit": 6,
+    "spectral_rule": "If 4+ active voices, at least one must be 'light' (high freq, little low content)"
+  },
+  "form": {
+    "type": "periodo_tematico",
+    "phrases": [
+      { "role": "antecedent", "cadence": "half" },
+      { "role": "consequent", "cadence": "deceptive" }
+    ],
+    "development": {
+      "climax": "augmentation_with_orchestral_swell",
+      "resolve": "inversion_of_antecedent"
+    }
+  },
+  "rhythmGrid": {
+    "_doc": "16-step velocity arrays. Cinematic uses no steady beat — only dramatic timpani punctuation on downbeats and key moments.",
+    "intro": {},
+    "build": {
+      "timpani": [0.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    },
+    "climax": {
+      "timpani": [1.0, 0, 0, 0, 0, 0, 0, 0, 0.7, 0, 0, 0, 0.9, 0, 0, 0.6]
+    },
+    "resolve": {}
+  },
+  "voiceLeading": {
+    "_doc": "Concrete voicings for D minor: i=Dm, VI=Bb, III=F, VII=C",
+    "chords": {
+      "Dm": {
+        "root":   ["D2", "A2", "D3", "F3", "A3"],
+        "drop2":  ["D2", "A2", "F3", "A3", "D4"],
+        "spread": ["D2", "D3", "A3", "F4"]
+      },
+      "Bb": {
+        "root":   ["Bb1", "F2", "Bb2", "D3", "F3"],
+        "drop2":  ["Bb1", "F2", "D3", "F3", "Bb3"],
+        "spread": ["Bb1", "Bb2", "F3", "D4"]
+      },
+      "F": {
+        "root":   ["F2", "C3", "F3", "A3", "C4"],
+        "drop2":  ["F2", "C3", "A3", "C4", "F4"],
+        "spread": ["F2", "F3", "C4", "A4"]
+      },
+      "C": {
+        "root":   ["C2", "G2", "C3", "E3", "G3"],
+        "drop2":  ["C2", "G2", "E3", "G3", "C4"],
+        "spread": ["C2", "C3", "G3", "E4"]
+      }
+    },
+    "transitions": {
+      "Dm_to_Bb": { "motion": "bass descends major third D→Bb, F3 common tone, A3→D3 inner voice descends", "parallel_motion_check": "no parallel P5 or P8" },
+      "Bb_to_F":  { "motion": "bass ascends fifth Bb→F, D3→C3, voices move in parallel motion upward", "parallel_motion_check": "no parallel P5 or P8" },
+      "F_to_C":   { "motion": "bass descends fourth F→C, A3→G3, C4 holds common tone", "parallel_motion_check": "no parallel P5 or P8" },
+      "C_to_Dm":  { "motion": "bass ascends step C→D, E3→F3 chromatic approach, G3→A3", "parallel_motion_check": "no parallel P5 or P8" }
+    },
+    "arc_voicing": {
+      "intro": "spread",
+      "build": "drop2",
+      "climax": "root",
+      "resolve": "spread"
+    }
+  },
+  "melodicPatterns": {
+    "piano": {
+      "intro":  { "pattern": "silent" },
+      "build":  { "pattern": "slow_arpeggiate", "notes_per_beat": 0.5, "octave": 4, "range": 1 },
+      "climax": { "pattern": "octave_doubled_chords", "octave": 3, "range": 2 },
+      "resolve":{ "pattern": "descending_arpeggiate", "notes_per_beat": 0.5, "octave": 4, "range": 1 }
+    },
+    "strings": {
+      "intro":  { "pattern": "silent" },
+      "build":  { "pattern": "sustained_chords", "octave": 3, "crescendo": true },
+      "climax": {
+        "phrases": [
+          { "notes": ["A4", "Bb4", "C5", "D5", "F5"], "rhythm": ["4n", "4n", "4n", "2n", "1n"], "role": "antecedent", "cadence": "half" },
+          { "notes": ["D5", "C5", "A4", "F4"], "rhythm": ["2n", "4n", "4n", "1n"], "role": "consequent", "cadence": "authentic" }
+        ]
+      },
+      "resolve":{ "pattern": "sustained_chords", "octave": 3, "decrescendo": true }
+    },
+    "sub_bass": {
+      "intro":  { "pattern": "silent" },
+      "build":  { "pattern": "whole_notes", "notes": ["D1", "Bb0", "F1", "C1"] },
+      "climax": { "pattern": "whole_notes", "notes": ["D1", "Bb0", "F1", "C1"] },
+      "resolve":{ "pattern": "silent" }
+    }
+  },
+  "transitions": {
+    "intro_to_build": {
+      "type": "riser",
+      "bars_before": 1,
+      "implementation": "Pad filter sweep 200Hz→1500Hz over 1 bar. Sub bass enters with slow 2-bar fade-in. Strings begin pp with 1.8s attack envelope."
+    },
+    "build_to_climax": {
+      "type": "riser",
+      "bars_before": 1,
+      "implementation": "Timpani roll (8th notes) crescendo 0.3→1.0 over last bar. Strings swell from mp to ff. All voices converge on root voicing beat 1 of climax."
+    },
+    "climax_to_resolve": {
+      "type": "drop",
+      "bars_before": 0.5,
+      "implementation": "Timpani final hit on beat 1 at velocity 1.0 with long reverb tail. Sub bass fades out over 2 beats. Strings decrescendo ff→pp over half bar. Only pad and piano remain."
+    }
+  }
+}

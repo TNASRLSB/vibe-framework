@@ -1,0 +1,841 @@
+{
+  "_note": "FMSynth parameter database for acoustic instrument approximation. Used as FALLBACK when Tone.Sampler cannot load samples from sample-map.json. Each patch includes Tone.js constructor params + recommended effects. Updated with research-grade FM ratios from DX7/forum analysis. Patches with 'sampleSource' have a higher-quality sampled version available.",
+
+  "piano-ep": {
+    "label": "Electric Piano (DX7 Tine)",
+    "sampleSource": null,
+    "synth": "PolySynth(FMSynth)",
+    "params": {
+      "harmonicity": 15,
+      "modulationIndex": 2,
+      "oscillator": { "type": "sine" },
+      "modulation": { "type": "square" },
+      "envelope": { "attack": 0.001, "decay": 0.3, "sustain": 0.4, "release": 1.2 },
+      "modulationEnvelope": { "attack": 0.002, "decay": 0.2, "sustain": 0.1, "release": 0.8 }
+    },
+    "effects": [{ "type": "Reverb", "config": { "decay": 2.0, "wet": 0.25 } }],
+    "volume": -18,
+    "notes": "1:15 ratio = metallic tine. modEnv decays faster than ampEnv = brightness fades while note rings."
+  },
+
+  "piano-wurlitzer": {
+    "label": "Wurlitzer-style Soft EP",
+    "synth": "PolySynth(FMSynth)",
+    "params": {
+      "harmonicity": 3.4,
+      "modulationIndex": 3,
+      "oscillator": { "type": "fmsquare", "modulationType": "sawtooth" },
+      "modulation": { "type": "sine" },
+      "envelope": { "attack": 0.001, "decay": 0.1, "sustain": 0.1, "release": 0.1 },
+      "modulationEnvelope": { "attack": 0.001, "decay": 0.08, "sustain": 0.05, "release": 0.1 }
+    },
+    "effects": [
+      { "type": "Tremolo", "config": { "frequency": 3, "depth": 0.3, "wet": 0.3 } },
+      { "type": "Reverb", "config": { "decay": 1.5, "wet": 0.2 } }
+    ],
+    "volume": -18,
+    "notes": "Third harmonic emphasis (3.4). Softer, rounder than DX7 tine. fmsquare osc adds bark."
+  },
+
+  "piano-acoustic": {
+    "label": "Acoustic Piano (approximation)",
+    "sampleSource": "piano",
+    "synth": "PolySynth(FMSynth)",
+    "params": {
+      "harmonicity": 1.01,
+      "modulationIndex": 0.5,
+      "oscillator": { "type": "sine" },
+      "modulation": { "type": "sine" },
+      "envelope": { "attack": 0.002, "decay": 2.5, "sustain": 0.15, "release": 3.0 },
+      "modulationEnvelope": { "attack": 0.01, "decay": 1.5, "sustain": 0.05, "release": 1.0 }
+    },
+    "effects": [{ "type": "Reverb", "config": { "decay": 2.5, "wet": 0.3 } }],
+    "volume": -18,
+    "notes": "Slight detuning (1.01) for beating. Low modIndex = clean. Long decay simulates string resonance. Best with Sampler, this is a rough fallback."
+  },
+
+  "piano-upright": {
+    "label": "Upright Piano",
+    "sampleSource": "piano-upright",
+    "synth": "PolySynth(FMSynth)",
+    "params": {
+      "harmonicity": 1.8,
+      "modulationIndex": 1.2,
+      "oscillator": { "type": "triangle" },
+      "modulation": { "type": "square" },
+      "envelope": { "attack": 0.001, "decay": 0.25, "sustain": 0.35, "release": 0.8 },
+      "modulationEnvelope": { "attack": 0.002, "decay": 0.15, "sustain": 0.05, "release": 0.5 }
+    },
+    "effects": [{ "type": "Reverb", "config": { "decay": 1.2, "wet": 0.25 } }],
+    "volume": -16,
+    "notes": "More percussive than concert grand. Triangle carrier = harder hammer. Shorter decay = smaller resonance body. Higher harmonicity (1.8) adds brightness."
+  },
+
+  "clavinet": {
+    "label": "Clavinet (Hohner-style)",
+    "synth": "PolySynth(FMSynth)",
+    "params": {
+      "harmonicity": 6,
+      "modulationIndex": 1.5,
+      "oscillator": { "type": "sawtooth" },
+      "modulation": { "type": "square" },
+      "envelope": { "attack": 0.001, "decay": 0.2, "sustain": 0.1, "release": 0.2 },
+      "modulationEnvelope": { "attack": 0.001, "decay": 0.1, "sustain": 0, "release": 0.1 }
+    },
+    "effects": [
+      { "type": "AutoWah", "config": { "baseFrequency": 200, "octaves": 4, "sensitivity": -20, "wet": 0.3 } }
+    ],
+    "volume": -18,
+    "notes": "6:1 ratio = guitar-like texture. Fast decay, percussive. AutoWah for funky envelope."
+  },
+
+  "harpsichord": {
+    "label": "Harpsichord",
+    "sampleSource": "harpsichord",
+    "synth": "PolySynth(PluckSynth)",
+    "params": {
+      "attackNoise": 8,
+      "dampening": 2800,
+      "resonance": 0.88,
+      "release": 0.4
+    },
+    "effects": [{ "type": "Reverb", "config": { "decay": 1.5, "wet": 0.2 } }],
+    "volume": -18,
+    "notes": "Karplus-Strong plectrum pluck. High attackNoise (8) = mechanical quill snap. dampening 2800 Hz = characteristic bright-then-dark timbre. Low resonance (0.88) = fast decay, no sustain control like real harpsichord."
+  },
+
+  "organ-hammond": {
+    "label": "Hammond B3 Organ",
+    "sampleSource": "harmonium",
+    "synth": "PolySynth(FMSynth)",
+    "params": {
+      "harmonicity": 1,
+      "modulationIndex": 0.5,
+      "oscillator": { "type": "sawtooth", "count": 3, "spread": 5 },
+      "modulation": { "type": "sine" },
+      "envelope": { "attack": 0.02, "decay": 0.1, "sustain": 1.0, "release": 0.3 },
+      "modulationEnvelope": { "attack": 0.1, "decay": 0.2, "sustain": 0.3, "release": 0.3 },
+      "portamento": 0.05
+    },
+    "effects": [
+      { "type": "Chorus", "config": { "frequency": 4, "delayTime": 2.5, "depth": 0.5, "wet": 0.4 } },
+      { "type": "Distortion", "config": { "distortion": 0.1, "wet": 0.15 } }
+    ],
+    "volume": -18,
+    "notes": "Sawtooth osc = rich harmonics like tonewheels. count:3 + spread:5 simulates multiple drawbars. Chorus = Leslie rotary. Full sustain."
+  },
+
+  "organ-pipe": {
+    "label": "Church/Pipe Organ",
+    "sampleSource": "organ",
+    "synth": "PolySynth(FMSynth)",
+    "params": {
+      "harmonicity": 2,
+      "modulationIndex": 0.3,
+      "oscillator": { "type": "sine" },
+      "modulation": { "type": "triangle" },
+      "envelope": { "attack": 0.1, "decay": 0.5, "sustain": 0.9, "release": 2.0 },
+      "modulationEnvelope": { "attack": 0.2, "decay": 0.5, "sustain": 0.5, "release": 1.5 }
+    },
+    "effects": [{ "type": "Reverb", "config": { "decay": 5, "wet": 0.4 } }],
+    "volume": -16,
+    "notes": "Low modIndex = pure pipe tone. Slow attack = pipe speech. Long release = cathedral tail."
+  },
+
+  "bass-electric": {
+    "label": "Electric Bass (finger)",
+    "sampleSource": "bass-electric",
+    "synth": "MonoSynth",
+    "params": {
+      "oscillator": { "type": "triangle" },
+      "filter": { "Q": 1, "type": "lowpass", "rolloff": -12 },
+      "envelope": { "attack": 0.02, "decay": 0.4, "sustain": 0.6, "release": 0.5 },
+      "filterEnvelope": { "attack": 0.01, "decay": 0.3, "sustain": 0.4, "release": 0.4, "baseFrequency": 300, "octaves": 1.5 }
+    },
+    "effects": [
+      { "type": "Distortion", "config": { "distortion": 0.08, "wet": 0.2 } },
+      { "type": "Compressor", "config": { "threshold": -14, "ratio": 3, "attack": 0.02, "release": 0.2 } }
+    ],
+    "volume": -14,
+    "notes": "Triangle osc = warm fundamental. Filter envelope gives pluck. Mild distortion adds harmonics for small speakers. Compressor evens dynamics."
+  },
+
+  "bass-finger": {
+    "label": "Fingerstyle Warm Bass (FM)",
+    "synth": "FMSynth",
+    "params": {
+      "harmonicity": 0.5,
+      "modulationIndex": 0.8,
+      "oscillator": { "type": "sine" },
+      "modulation": { "type": "sine" },
+      "envelope": { "attack": 0.01, "decay": 0.4, "sustain": 0.6, "release": 0.3 },
+      "modulationEnvelope": { "attack": 0.01, "decay": 0.3, "sustain": 0.4, "release": 0.2 }
+    },
+    "effects": [
+      { "type": "Compressor", "config": { "threshold": -12, "ratio": 3, "attack": 0.01, "release": 0.15 } }
+    ],
+    "volume": -14,
+    "notes": "Modulator below carrier (0.5) = warm sub harmonics. FM alternative to MonoSynth bass."
+  },
+
+  "bass-slap": {
+    "label": "Funk Slap Bass",
+    "synth": "FMSynth",
+    "params": {
+      "harmonicity": 1,
+      "modulationIndex": 1.2,
+      "oscillator": { "type": "triangle" },
+      "modulation": { "type": "square" },
+      "envelope": { "attack": 0.0001, "decay": 0.3, "sustain": 0.4, "release": 0.1 },
+      "modulationEnvelope": { "attack": 0.001, "decay": 0.1, "sustain": 0.1, "release": 0.1 }
+    },
+    "effects": [
+      { "type": "Compressor", "config": { "threshold": -10, "ratio": 4, "attack": 0.005, "release": 0.1 } }
+    ],
+    "volume": -14,
+    "notes": "Immediate attack for slap. Square modulator adds pop. Tight release."
+  },
+
+  "bass-synth": {
+    "label": "Synth Bass (sub)",
+    "synth": "MonoSynth",
+    "params": {
+      "oscillator": { "type": "sine" },
+      "filter": { "Q": 1, "type": "lowpass", "rolloff": -24 },
+      "envelope": { "attack": 0.005, "decay": 0.3, "sustain": 0.5, "release": 0.2 },
+      "filterEnvelope": { "attack": 0.01, "decay": 0.2, "sustain": 0.3, "release": 0.2, "baseFrequency": 80, "octaves": 1 }
+    },
+    "effects": [
+      { "type": "Distortion", "config": { "distortion": 0.05, "wet": 0.3 } },
+      { "type": "Compressor", "config": { "threshold": -12, "ratio": 4, "attack": 0.005, "release": 0.1 } }
+    ],
+    "volume": -14,
+    "notes": "Pure sine sub. Mild distortion (0.05) generates audible harmonics at 100-200Hz for laptop/phone speakers. -24 rolloff filter keeps it tight."
+  },
+
+  "bass-growl": {
+    "label": "Growl Bass (Dubstep/Bass Music)",
+    "synth": "FMSynth",
+    "params": {
+      "harmonicity": 0.25,
+      "modulationIndex": 8,
+      "oscillator": { "type": "sawtooth" },
+      "modulation": { "type": "sawtooth" },
+      "envelope": { "attack": 0.05, "decay": 0.3, "sustain": 0.4, "release": 0.2 },
+      "modulationEnvelope": { "attack": 0.01, "decay": 0.2, "sustain": 0.8, "release": 0.2 }
+    },
+    "effects": [
+      { "type": "Distortion", "config": { "distortion": 0.3, "wet": 0.4 } },
+      { "type": "Filter", "config": { "frequency": 4000, "type": "lowpass", "rolloff": -24 } },
+      { "type": "Compressor", "config": { "threshold": -10, "ratio": 6, "attack": 0.005, "release": 0.1 } }
+    ],
+    "volume": -16,
+    "notes": "Inharmonic ratio (0.25) + high modIndex (8) = aggressive growl. Sawtooth on both. Lowpass 4kHz post-distortion controls aliasing."
+  },
+
+  "guitar-acoustic": {
+    "label": "Acoustic Steel String Guitar",
+    "sampleSource": "guitar-acoustic",
+    "synth": "PolySynth(PluckSynth)",
+    "params": {
+      "attackNoise": 4,
+      "dampening": 3200,
+      "resonance": 0.96,
+      "release": 1.5
+    },
+    "effects": [
+      { "type": "Reverb", "config": { "decay": 2.0, "wet": 0.25 } }
+    ],
+    "volume": -18,
+    "notes": "Karplus-Strong steel string. dampening 3200 Hz = bright steel attack that darkens naturally. High resonance (0.96) = body sustain. attackNoise 4 = finger pluck."
+  },
+
+  "guitar-clean": {
+    "label": "Clean Electric Guitar",
+    "sampleSource": "guitar-electric",
+    "synth": "PolySynth(PluckSynth)",
+    "params": {
+      "attackNoise": 3,
+      "dampening": 4500,
+      "resonance": 0.94,
+      "release": 0.8
+    },
+    "effects": [
+      { "type": "Chorus", "config": { "frequency": 1, "delayTime": 5, "depth": 0.5, "wet": 0.3 } },
+      { "type": "Reverb", "config": { "decay": 1.5, "wet": 0.2 } }
+    ],
+    "volume": -18,
+    "notes": "Karplus-Strong electric string. dampening 4500 Hz = brighter than acoustic (pickup captures more highs). Lower resonance (0.94) = shorter sustain. Chorus adds width like before."
+  },
+
+  "harp": {
+    "label": "Harp",
+    "sampleSource": "harp",
+    "synth": "PolySynth(PluckSynth)",
+    "params": {
+      "attackNoise": 0.8,
+      "dampening": 2000,
+      "resonance": 0.95,
+      "release": 2.5
+    },
+    "effects": [{ "type": "Reverb", "config": { "decay": 3.0, "wet": 0.4 } }],
+    "volume": -16,
+    "notes": "Karplus-Strong harp. Low attackNoise (0.8) = gentle finger pluck. Low dampening (2000 Hz) = warm, less metallic than guitar. Very high resonance = long sympathetic ring. Big reverb for concert hall ambience."
+  },
+
+  "guitar-nylon": {
+    "label": "Nylon String Guitar",
+    "sampleSource": "guitar-nylon",
+    "synth": "PolySynth(PluckSynth)",
+    "params": {
+      "attackNoise": 0.4,
+      "dampening": 2500,
+      "resonance": 0.7,
+      "release": 1.0
+    },
+    "effects": [{ "type": "Reverb", "config": { "decay": 1.8, "wet": 0.3 } }],
+    "volume": -18,
+    "notes": "Very soft attackNoise (0.4) = no metallic click. Higher dampening than steel = nylon doesn't ring as long. Lower resonance = shorter sustain. Warm classical guitar character."
+  },
+
+  "violin": {
+    "label": "Violin/Viola",
+    "sampleSource": "violin",
+    "synth": "PolySynth(FMSynth)",
+    "params": {
+      "harmonicity": 3.0,
+      "modulationIndex": 5.1,
+      "oscillator": { "type": "sawtooth" },
+      "modulation": { "type": "sine" },
+      "envelope": { "attack": 0.15, "decay": 0.3, "sustain": 0.8, "release": 0.8 },
+      "modulationEnvelope": { "attack": 0.1, "decay": 0.2, "sustain": 0.3, "release": 0.4 },
+      "portamento": 0.08
+    },
+    "effects": [
+      { "type": "Vibrato", "config": { "frequency": 5, "depth": 0.1, "wet": 0.4 } },
+      { "type": "Filter", "config": { "frequency": 10000, "type": "lowpass", "rolloff": -12 } },
+      { "type": "Reverb", "config": { "decay": 2.5, "wet": 0.3 } }
+    ],
+    "volume": -18,
+    "notes": "High modIndex (5.1) = brilliant bow. Sawtooth carrier. Portamento. Gentle lowpass 10kHz controls FM aliasing."
+  },
+
+  "cello": {
+    "label": "Cello",
+    "sampleSource": "cello",
+    "synth": "PolySynth(FMSynth)",
+    "params": {
+      "harmonicity": 1,
+      "modulationIndex": 0.7,
+      "oscillator": { "type": "triangle" },
+      "modulation": { "type": "sine" },
+      "envelope": { "attack": 0.2, "decay": 0.4, "sustain": 0.7, "release": 1.2 },
+      "modulationEnvelope": { "attack": 0.25, "decay": 0.3, "sustain": 0.5, "release": 0.8 }
+    },
+    "effects": [
+      { "type": "Vibrato", "config": { "frequency": 4.5, "depth": 0.08, "wet": 0.35 } },
+      { "type": "Reverb", "config": { "decay": 3.0, "wet": 0.35 } }
+    ],
+    "volume": -18,
+    "notes": "Triangle osc = warmer than sawtooth violin. Low modIndex = mellow. Slower attack than violin."
+  },
+
+  "contrabass": {
+    "label": "Contrabass",
+    "sampleSource": "contrabass",
+    "synth": "PolySynth(FMSynth)",
+    "params": {
+      "harmonicity": 0.8,
+      "modulationIndex": 0.3,
+      "oscillator": { "type": "triangle" },
+      "modulation": { "type": "sine" },
+      "envelope": { "attack": 0.25, "decay": 0.4, "sustain": 0.75, "release": 1.5 },
+      "modulationEnvelope": { "attack": 0.2, "decay": 0.4, "sustain": 0.2, "release": 0.8 },
+      "portamento": 0.12
+    },
+    "effects": [
+      { "type": "Vibrato", "config": { "frequency": 3, "depth": 0.08, "wet": 0.3 } },
+      { "type": "Reverb", "config": { "decay": 2.5, "wet": 0.3 } }
+    ],
+    "volume": -14,
+    "notes": "Sub-octave harmonicity (0.8) for deep gravity. Very low modIndex avoids mud in low frequencies. Slow attack = heavy bow. Portamento for expressive glissando."
+  },
+
+  "strings-ensemble": {
+    "label": "String Ensemble",
+    "synth": "PolySynth(FMSynth)",
+    "params": {
+      "harmonicity": 2.01,
+      "modulationIndex": 0.3,
+      "oscillator": { "type": "sawtooth" },
+      "modulation": { "type": "sine" },
+      "envelope": { "attack": 0.4, "decay": 0.3, "sustain": 0.7, "release": 1.5 },
+      "modulationEnvelope": { "attack": 0.5, "decay": 0.3, "sustain": 0.5, "release": 1.0 }
+    },
+    "effects": [
+      { "type": "Chorus", "config": { "frequency": 1.5, "delayTime": 3.5, "depth": 0.7, "wet": 0.5 } },
+      { "type": "Reverb", "config": { "decay": 3.5, "wet": 0.4 } }
+    ],
+    "volume": -20,
+    "notes": "Sawtooth osc = rich harmonics like bowed strings. Slow attack simulates bow. Chorus creates section width. Slight detuning (2.01) adds ensemble feel."
+  },
+
+  "strings-pizzicato": {
+    "label": "Pizzicato (Plucked Strings)",
+    "synth": "PolySynth(PluckSynth)",
+    "params": {
+      "attackNoise": 2,
+      "dampening": 2400,
+      "resonance": 0.90,
+      "release": 0.3
+    },
+    "effects": [{ "type": "Reverb", "config": { "decay": 1.5, "wet": 0.25 } }],
+    "volume": -18,
+    "notes": "Karplus-Strong pizzicato. Low attackNoise (2) = soft finger pluck, not pick. dampening 2400 Hz = warm orchestral tone. Moderate resonance = short but natural decay."
+  },
+
+  "trumpet": {
+    "label": "Trumpet",
+    "sampleSource": "trumpet",
+    "synth": "FMSynth",
+    "params": {
+      "harmonicity": 1,
+      "modulationIndex": 2,
+      "oscillator": { "type": "sawtooth" },
+      "modulation": { "type": "square" },
+      "envelope": { "attack": 0.05, "decay": 0.2, "sustain": 0.85, "release": 0.3 },
+      "modulationEnvelope": { "attack": 0.05, "decay": 0.2, "sustain": 0.8, "release": 0.3 }
+    },
+    "effects": [{ "type": "Reverb", "config": { "decay": 1.5, "wet": 0.2 } }],
+    "volume": -18,
+    "notes": "1:1 ratio. Sawtooth + square mod = bright brassy harmonics. Hard attack. High sustain."
+  },
+
+  "trombone": {
+    "label": "Trombone",
+    "sampleSource": "trombone",
+    "synth": "FMSynth",
+    "params": {
+      "harmonicity": 1,
+      "modulationIndex": 1.5,
+      "oscillator": { "type": "sawtooth" },
+      "modulation": { "type": "sawtooth" },
+      "envelope": { "attack": 0.08, "decay": 0.3, "sustain": 0.9, "release": 0.4 },
+      "modulationEnvelope": { "attack": 0.1, "decay": 0.3, "sustain": 0.6, "release": 0.3 }
+    },
+    "effects": [{ "type": "Reverb", "config": { "decay": 1.5, "wet": 0.2 } }],
+    "volume": -18,
+    "notes": "Slower attack than trumpet. Lower modIndex = mellower. Sawtooth modulator."
+  },
+
+  "french-horn": {
+    "label": "French Horn",
+    "sampleSource": "french-horn",
+    "synth": "FMSynth",
+    "params": {
+      "harmonicity": 2,
+      "modulationIndex": 1,
+      "oscillator": { "type": "sine" },
+      "modulation": { "type": "triangle" },
+      "envelope": { "attack": 0.15, "decay": 0.4, "sustain": 0.75, "release": 0.6 },
+      "modulationEnvelope": { "attack": 0.2, "decay": 0.4, "sustain": 0.5, "release": 0.4 }
+    },
+    "effects": [{ "type": "Reverb", "config": { "decay": 2.5, "wet": 0.3 } }],
+    "volume": -18,
+    "notes": "Sine osc = mellow tone. Very soft attack. Triangle modulator."
+  },
+
+  "tuba": {
+    "label": "Tuba/Low Brass",
+    "sampleSource": "tuba",
+    "synth": "FMSynth",
+    "params": {
+      "harmonicity": 1,
+      "modulationIndex": 0.6,
+      "oscillator": { "type": "sine" },
+      "modulation": { "type": "sine" },
+      "envelope": { "attack": 0.1, "decay": 0.4, "sustain": 0.9, "release": 0.5 },
+      "modulationEnvelope": { "attack": 0.15, "decay": 0.4, "sustain": 0.6, "release": 0.4 }
+    },
+    "effects": [{ "type": "Reverb", "config": { "decay": 1.5, "wet": 0.2 } }],
+    "volume": -16,
+    "notes": "Low modIndex = less bright for low brass. Sine on both osc."
+  },
+
+  "brass-section": {
+    "label": "Brass Section",
+    "synth": "PolySynth(FMSynth)",
+    "params": {
+      "harmonicity": 1,
+      "modulationIndex": 8,
+      "oscillator": { "type": "sawtooth" },
+      "modulation": { "type": "square" },
+      "envelope": { "attack": 0.08, "decay": 0.2, "sustain": 0.7, "release": 0.3 },
+      "modulationEnvelope": { "attack": 0.1, "decay": 0.3, "sustain": 0.4, "release": 0.2 }
+    },
+    "effects": [
+      { "type": "Filter", "config": { "frequency": 6000, "type": "lowpass", "rolloff": -12 } },
+      { "type": "Reverb", "config": { "decay": 1.5, "wet": 0.2 } }
+    ],
+    "volume": -18,
+    "notes": "High modIndex (8) = buzzy, brassy harmonics. Sawtooth + square mod. Lowpass 6kHz tames FM aliasing from high modIndex."
+  },
+
+  "clarinet": {
+    "label": "Clarinet",
+    "sampleSource": "clarinet",
+    "synth": "FMSynth",
+    "params": {
+      "harmonicity": 0.666,
+      "modulationIndex": 2,
+      "oscillator": { "type": "sine" },
+      "modulation": { "type": "sine" },
+      "envelope": { "attack": 0.1, "decay": 0.2, "sustain": 0.7, "release": 0.3 },
+      "modulationEnvelope": { "attack": 0.1, "decay": 0.2, "sustain": 0.5, "release": 0.3 }
+    },
+    "effects": [
+      { "type": "Vibrato", "config": { "frequency": 4.5, "depth": 0.08, "wet": 0.3 } },
+      { "type": "Reverb", "config": { "decay": 2.0, "wet": 0.25 } }
+    ],
+    "volume": -16,
+    "notes": "2:3 ratio (0.666) = odd harmonics only, characteristic clarinet spectrum. Reed attack."
+  },
+
+  "flute": {
+    "label": "Flute",
+    "sampleSource": "flute",
+    "synth": "FMSynth",
+    "params": {
+      "harmonicity": 2,
+      "modulationIndex": 0.7,
+      "oscillator": { "type": "sine" },
+      "modulation": { "type": "sine" },
+      "envelope": { "attack": 0.08, "decay": 0.2, "sustain": 0.8, "release": 0.3 },
+      "modulationEnvelope": { "attack": 0.1, "decay": 0.2, "sustain": 0.6, "release": 0.2 }
+    },
+    "effects": [
+      { "type": "Vibrato", "config": { "frequency": 5, "depth": 0.1, "wet": 0.4 } },
+      { "type": "Reverb", "config": { "decay": 2.5, "wet": 0.3 } }
+    ],
+    "volume": -16,
+    "notes": "Harmonicity 2 (not 1) with low modIndex = breathy pure tone. Breath attack."
+  },
+
+  "oboe": {
+    "label": "Oboe",
+    "synth": "FMSynth",
+    "params": {
+      "harmonicity": 0.666,
+      "modulationIndex": 2.5,
+      "oscillator": { "type": "sawtooth" },
+      "modulation": { "type": "sine" },
+      "envelope": { "attack": 0.12, "decay": 0.2, "sustain": 0.75, "release": 0.3 },
+      "modulationEnvelope": { "attack": 0.12, "decay": 0.2, "sustain": 0.5, "release": 0.2 }
+    },
+    "effects": [
+      { "type": "Vibrato", "config": { "frequency": 5, "depth": 0.06, "wet": 0.3 } },
+      { "type": "Reverb", "config": { "decay": 2.0, "wet": 0.25 } }
+    ],
+    "volume": -16,
+    "notes": "Same 2:3 ratio as clarinet but sawtooth osc = brighter. Higher modIndex."
+  },
+
+  "bassoon": {
+    "label": "Bassoon",
+    "sampleSource": "bassoon",
+    "synth": "FMSynth",
+    "params": {
+      "harmonicity": 0.2,
+      "modulationIndex": 1.5,
+      "oscillator": { "type": "triangle" },
+      "modulation": { "type": "sine" },
+      "envelope": { "attack": 0.15, "decay": 0.3, "sustain": 0.7, "release": 0.4 },
+      "modulationEnvelope": { "attack": 0.15, "decay": 0.25, "sustain": 0.5, "release": 0.3 }
+    },
+    "effects": [{ "type": "Reverb", "config": { "decay": 2.0, "wet": 0.25 } }],
+    "volume": -16,
+    "notes": "1:5 ratio (0.2) = low woody sound. Triangle osc. Slow attack."
+  },
+
+  "saxophone": {
+    "label": "Saxophone",
+    "sampleSource": "saxophone",
+    "synth": "FMSynth",
+    "params": {
+      "harmonicity": 8,
+      "modulationIndex": 2,
+      "oscillator": { "type": "sawtooth" },
+      "modulation": { "type": "square" },
+      "envelope": { "attack": 0.06, "decay": 0.2, "sustain": 0.8, "release": 0.3 },
+      "modulationEnvelope": { "attack": 0.06, "decay": 0.2, "sustain": 0.6, "release": 0.2 }
+    },
+    "effects": [
+      { "type": "Vibrato", "config": { "frequency": 5, "depth": 0.08, "wet": 0.3 } },
+      { "type": "Filter", "config": { "frequency": 7000, "type": "lowpass", "rolloff": -12 } },
+      { "type": "Reverb", "config": { "decay": 2.0, "wet": 0.25 } }
+    ],
+    "volume": -16,
+    "notes": "High harmonicity (8) = bright reed sound. Sawtooth + square mod. Lowpass 7kHz controls aliasing from high harmonicity."
+  },
+
+  "vibraphone": {
+    "label": "Vibraphone",
+    "sampleSource": "vibraphone",
+    "synth": "PolySynth(FMSynth)",
+    "params": {
+      "harmonicity": 3.5,
+      "modulationIndex": 0.4,
+      "oscillator": { "type": "sine" },
+      "modulation": { "type": "sine" },
+      "envelope": { "attack": 0.001, "decay": 0.8, "sustain": 0.5, "release": 1.5 },
+      "modulationEnvelope": { "attack": 0.001, "decay": 0.5, "sustain": 0.2, "release": 0.8 }
+    },
+    "effects": [
+      { "type": "Tremolo", "config": { "frequency": 6, "depth": 0.4, "wet": 0.5 } },
+      { "type": "Reverb", "config": { "decay": 3.0, "wet": 0.35 } }
+    ],
+    "volume": -18,
+    "notes": "3.5:1 metallic bar ratio. Tremolo simulates motorized vibrato discs. Longer sustain than marimba."
+  },
+
+  "marimba": {
+    "label": "Marimba",
+    "sampleSource": "marimba",
+    "synth": "FMSynth",
+    "params": {
+      "harmonicity": 4,
+      "modulationIndex": 0.5,
+      "oscillator": { "type": "sine" },
+      "modulation": { "type": "sine" },
+      "envelope": { "attack": 0.001, "decay": 0.4, "sustain": 0.01, "release": 0.3 },
+      "modulationEnvelope": { "attack": 0.001, "decay": 0.2, "sustain": 0.0, "release": 0.15 }
+    },
+    "effects": [{ "type": "Reverb", "config": { "decay": 1.5, "wet": 0.2 } }],
+    "volume": -16,
+    "notes": "4:1 harmonic wood bar. Lower modIndex (0.5) than old preset. Quick wood decay."
+  },
+
+  "xylophone": {
+    "label": "Xylophone",
+    "sampleSource": "xylophone",
+    "synth": "FMSynth",
+    "params": {
+      "harmonicity": 5,
+      "modulationIndex": 1.2,
+      "oscillator": { "type": "square" },
+      "modulation": { "type": "sine" },
+      "envelope": { "attack": 0.001, "decay": 0.2, "sustain": 0, "release": 0.2 },
+      "modulationEnvelope": { "attack": 0.001, "decay": 0.1, "sustain": 0, "release": 0.1 }
+    },
+    "effects": [{ "type": "Reverb", "config": { "decay": 1.0, "wet": 0.15 } }],
+    "volume": -16,
+    "notes": "Bright inharmonic (5:1). Square osc for bright attack. Very short decay."
+  },
+
+  "bell": {
+    "label": "Tubular Bell / Chime",
+    "sampleSource": "tubular-bells",
+    "synth": "FMSynth",
+    "params": {
+      "harmonicity": 3.5,
+      "modulationIndex": 2,
+      "oscillator": { "type": "sine" },
+      "modulation": { "type": "sine" },
+      "envelope": { "attack": 0.001, "decay": 2.0, "sustain": 0.3, "release": 3.0 },
+      "modulationEnvelope": { "attack": 0.001, "decay": 1.5, "sustain": 0.2, "release": 2.0 }
+    },
+    "effects": [{ "type": "Reverb", "config": { "decay": 4.0, "wet": 0.4 } }],
+    "volume": -18,
+    "notes": "3.5:1 ratio (updated from 5.07). modIndex 2 (down from 8) = cleaner bell ring. Long decay."
+  },
+
+  "music-box": {
+    "label": "Music Box",
+    "synth": "PluckSynth",
+    "params": {
+      "attackNoise": 1,
+      "dampening": 6000,
+      "resonance": 0.985,
+      "release": 2.5
+    },
+    "effects": [{ "type": "Reverb", "config": { "decay": 3.0, "wet": 0.35 } }],
+    "volume": -18,
+    "notes": "Karplus-Strong music box tine. Minimal attackNoise (1) = tiny pin strike. Very high dampening (6000 Hz) = sparkly highs. Near-max resonance (0.985) = notes ring very long. The ideal PluckSynth use case."
+  },
+
+  "glockenspiel": {
+    "label": "Glockenspiel",
+    "sampleSource": "glockenspiel",
+    "synth": "PolySynth(FMSynth)",
+    "params": {
+      "harmonicity": 8,
+      "modulationIndex": 0.25,
+      "oscillator": { "type": "sine" },
+      "modulation": { "type": "sine" },
+      "envelope": { "attack": 0.001, "decay": 0.4, "sustain": 0.1, "release": 0.8 },
+      "modulationEnvelope": { "attack": 0.001, "decay": 0.3, "sustain": 0, "release": 0.4 }
+    },
+    "effects": [
+      { "type": "Filter", "config": { "frequency": 8000, "type": "highpass", "rolloff": -12 } },
+      { "type": "Reverb", "config": { "decay": 0.8, "wet": 0.2 } }
+    ],
+    "volume": -20,
+    "notes": "High harmonicity (8) = bright metallic bar. Very low modIndex (0.25) prevents harshness in high register. Highpass 8kHz cleans low-end rumble. Reduced volume avoids ear fatigue."
+  },
+
+  "kalimba": {
+    "label": "Kalimba (Thumb Piano)",
+    "synth": "PluckSynth",
+    "params": {
+      "attackNoise": 1.5,
+      "dampening": 5000,
+      "resonance": 0.97,
+      "release": 1.2
+    },
+    "effects": [{ "type": "Reverb", "config": { "decay": 2.0, "wet": 0.3 } }],
+    "volume": -16,
+    "notes": "Karplus-Strong metallic tine. Very low attackNoise (1.5) = gentle thumb pluck. High dampening (5000 Hz) = bright metallic shimmer. Very high resonance (0.97) = tine rings long. PluckSynth excels at this timbre."
+  },
+
+  "sitar": {
+    "label": "Sitar",
+    "synth": "PluckSynth",
+    "params": {
+      "attackNoise": 5,
+      "dampening": 3800,
+      "resonance": 0.95,
+      "release": 1.2
+    },
+    "effects": [
+      { "type": "Distortion", "config": { "distortion": 0.08, "wet": 0.25 } },
+      { "type": "Reverb", "config": { "decay": 3.0, "wet": 0.35 } }
+    ],
+    "volume": -18,
+    "notes": "Karplus-Strong plucked string. attackNoise 5 = strong pluck. Mild distortion (0.08) simulates jawari (buzzing bridge) — the defining sitar characteristic. High resonance = sympathetic string ring."
+  },
+
+  "synth-lead-aggressive": {
+    "label": "Aggressive Lead",
+    "synth": "FMSynth",
+    "params": {
+      "harmonicity": 1,
+      "modulationIndex": 10,
+      "oscillator": { "type": "sawtooth" },
+      "modulation": { "type": "sawtooth" },
+      "envelope": { "attack": 0.01, "decay": 0.2, "sustain": 0.7, "release": 0.2 },
+      "modulationEnvelope": { "attack": 0.01, "decay": 0.15, "sustain": 0.6, "release": 0.15 }
+    },
+    "effects": [
+      { "type": "Distortion", "config": { "distortion": 0.2, "wet": 0.3 } },
+      { "type": "Filter", "config": { "frequency": 8000, "type": "lowpass", "rolloff": -24 } },
+      { "type": "Reverb", "config": { "decay": 1.5, "wet": 0.2 } }
+    ],
+    "volume": -20,
+    "notes": "Very high modIndex (10) = screaming. Sawtooth on both. For electronic/industrial. Lowpass 8kHz post-distortion to tame FM aliasing."
+  },
+
+  "synth-pad-ambient": {
+    "label": "Ambient Pad",
+    "synth": "PolySynth(FMSynth)",
+    "params": {
+      "harmonicity": 1.61,
+      "modulationIndex": 0.8,
+      "oscillator": { "type": "sine" },
+      "modulation": { "type": "sine" },
+      "envelope": { "attack": 2.0, "decay": 1.0, "sustain": 0.8, "release": 3.0 },
+      "modulationEnvelope": { "attack": 1.5, "decay": 2.0, "sustain": 0.5, "release": 4.0 }
+    },
+    "effects": [
+      { "type": "Filter", "config": { "frequency": 800, "type": "lowpass" } },
+      { "type": "Reverb", "config": { "decay": 6, "wet": 0.5 } }
+    ],
+    "volume": -22,
+    "notes": "Phi ratio (1.61) = inharmonic beauty/shimmer. Very slow attack. Long tails. Lowpass filter."
+  },
+
+  "synth-pad-glass": {
+    "label": "Glassy FM Pad",
+    "synth": "PolySynth(FMSynth)",
+    "params": {
+      "harmonicity": 1.5,
+      "modulationIndex": 1,
+      "oscillator": { "type": "sine" },
+      "modulation": { "type": "sine" },
+      "envelope": { "attack": 0.5, "decay": 0.5, "sustain": 0.6, "release": 2.0 },
+      "modulationEnvelope": { "attack": 0.5, "decay": 0.4, "sustain": 0.4, "release": 1.5 }
+    },
+    "effects": [
+      { "type": "Chorus", "config": { "frequency": 1.5, "delayTime": 3, "depth": 0.5, "wet": 0.4 } },
+      { "type": "Reverb", "config": { "decay": 4.0, "wet": 0.4 } }
+    ],
+    "volume": -22,
+    "notes": "Perfect fifth ratio (1.5). Clean sine + chorus = glassy texture. Medium attack."
+  },
+
+  "drums-synth": {
+    "label": "Synth Drum Kit",
+    "synth": "multi",
+    "params": {
+      "kick": {
+        "engine": "MembraneSynth",
+        "config": { "pitchDecay": 0.05, "octaves": 4, "oscillator": { "type": "sine" }, "envelope": { "attack": 0.001, "decay": 0.4, "sustain": 0, "release": 0.4 } },
+        "volume": 0
+      },
+      "snare": {
+        "engine": "NoiseSynth",
+        "config": { "noise": { "type": "pink" }, "envelope": { "attack": 0.001, "decay": 0.2, "sustain": 0, "release": 0.2 } },
+        "effects": [{ "type": "Filter", "config": { "frequency": 1000, "type": "lowpass" } }],
+        "volume": -6
+      },
+      "hihat-closed": {
+        "engine": "MetalSynth",
+        "config": { "frequency": 200, "envelope": { "attack": 0.001, "decay": 0.1, "release": 0.01 }, "harmonicity": 5.1, "modulationIndex": 32, "resonance": 4000, "octaves": 1.5 },
+        "volume": -15
+      },
+      "hihat-open": {
+        "engine": "MetalSynth",
+        "config": { "frequency": 200, "envelope": { "attack": 0.001, "decay": 0.5, "release": 0.3 }, "harmonicity": 5.1, "modulationIndex": 32, "resonance": 4000, "octaves": 1.5 },
+        "volume": -15
+      },
+      "crash": {
+        "engine": "MetalSynth",
+        "config": { "frequency": 300, "envelope": { "attack": 0.001, "decay": 1.5, "release": 1.0 }, "harmonicity": 3, "modulationIndex": 20, "resonance": 6000, "octaves": 1.2 },
+        "volume": -12
+      },
+      "ride": {
+        "engine": "MetalSynth",
+        "config": { "frequency": 400, "envelope": { "attack": 0.001, "decay": 0.8, "release": 0.5 }, "harmonicity": 4, "modulationIndex": 10, "resonance": 5000, "octaves": 1 },
+        "volume": -18
+      },
+      "tom-high": {
+        "engine": "MembraneSynth",
+        "config": { "pitchDecay": 0.03, "octaves": 2, "envelope": { "attack": 0.001, "decay": 0.3, "sustain": 0, "release": 0.3 } },
+        "volume": -8
+      },
+      "tom-mid": {
+        "engine": "MembraneSynth",
+        "config": { "pitchDecay": 0.03, "octaves": 2, "envelope": { "attack": 0.001, "decay": 0.3, "sustain": 0, "release": 0.3 } },
+        "volume": -8
+      },
+      "tom-low": {
+        "engine": "MembraneSynth",
+        "config": { "pitchDecay": 0.03, "octaves": 2, "envelope": { "attack": 0.001, "decay": 0.3, "sustain": 0, "release": 0.3 } },
+        "volume": -8
+      },
+      "rimshot": {
+        "engine": "NoiseSynth",
+        "config": { "noise": { "type": "white" }, "envelope": { "attack": 0.0001, "decay": 0.05, "sustain": 0, "release": 0.05 } },
+        "volume": -10
+      }
+    },
+    "noteMapping": {
+      "C1": "kick", "D1": "snare", "F#1": "hihat-closed",
+      "A#1": "hihat-open", "C#2": "crash", "D#2": "ride",
+      "D2": "tom-high", "B1": "tom-mid", "A1": "tom-low",
+      "E1": "rimshot"
+    },
+    "effects": [],
+    "volume": -6,
+    "notes": "Multi-engine synth drum kit. Kick=MembraneSynth, Snare=NoiseSynth(pink), Hats/Cymbals=MetalSynth, Toms=MembraneSynth. noteMapping matches sample-map.json drums for drop-in compatibility."
+  }
+}

@@ -1,0 +1,237 @@
+{
+  "style": "glitch",
+  "description": "Fragmented micro-edits with granular textures, rhythmic errors, and broken digital artifacts.",
+  "family": "experimental",
+  "temporal": {
+    "bpm": 115,
+    "range": [90, 140],
+    "swing": 0,
+    "timeSignature": [4, 4],
+    "endingBehavior": {
+      "type": "hard_cut",
+      "cadenceBars": 0,
+      "forceTonicLastBar": false,
+      "maxTempoDeviationPercent": 5
+    }
+  },
+  "key": "F#m",
+  "instruments": {
+    "glitch-lead": {
+      "type": "FMSynth",
+      "config": {
+        "harmonicity": 7.5,
+        "modulationIndex": 20,
+        "oscillator": { "type": "square" },
+        "modulation": { "type": "sawtooth" },
+        "envelope": { "attack": 0.001, "decay": 0.08, "sustain": 0.0, "release": 0.05 },
+        "modulationEnvelope": { "attack": 0.001, "decay": 0.06, "sustain": 0.0, "release": 0.04 }
+      },
+      "volume": -18,
+      "range": ["C3", "C6"],
+      "optimal_range": ["C4", "C6"],
+      "effects": [
+        { "type": "BitCrusher", "config": { "bits": 6 } },
+        { "type": "PingPongDelay", "config": { "delayTime": "16n", "feedback": 0.3, "wet": 0.3 } },
+        { "type": "Distortion", "config": { "distortion": 0.2, "wet": 0.25 } }
+      ]
+    },
+    "micro-perc": {
+      "type": "NoiseSynth",
+      "config": {
+        "noise": { "type": "white" },
+        "envelope": { "attack": 0.001, "decay": 0.015, "sustain": 0.0, "release": 0.01 }
+      },
+      "volume": -18,
+      "effects": [
+        { "type": "BitCrusher", "config": { "bits": 8 } },
+        { "type": "Filter", "config": { "frequency": 4000, "type": "bandpass", "Q": 12 } },
+        { "type": "FeedbackDelay", "config": { "delayTime": "32n", "feedback": 0.3, "wet": 0.25 } }
+      ]
+    },
+    "sub-bass": {
+      "type": "MonoSynth",
+      "config": {
+        "oscillator": { "type": "sine" },
+        "filter": { "Q": 1, "type": "lowpass", "rolloff": -24 },
+        "envelope": { "attack": 0.005, "decay": 0.3, "sustain": 0.5, "release": 0.2 },
+        "filterEnvelope": { "attack": 0.01, "decay": 0.2, "sustain": 0.3, "release": 0.2, "baseFrequency": 80, "octaves": 1 }
+      },
+      "volume": -14,
+      "range": ["E1", "G2"],
+      "fundamental_max_hz": 100,
+      "effects": [
+        { "type": "Compressor", "config": { "threshold": -12, "ratio": 4, "attack": 0.005, "release": 0.1 } }
+      ]
+    },
+    "texture-pad": {
+      "type": "AMSynth",
+      "config": {
+        "harmonicity": 4.01,
+        "oscillator": { "type": "sawtooth" },
+        "modulation": { "type": "square" },
+        "envelope": { "attack": 0.5, "decay": 0.3, "sustain": 0.6, "release": 1.5 },
+        "modulationEnvelope": { "attack": 0.3, "decay": 0.2, "sustain": 0.4, "release": 1.0 }
+      },
+      "volume": -22,
+      "range": ["C2", "C6"],
+      "optimal_range": ["C3", "C5"],
+      "effects": [
+        { "type": "AutoFilter", "config": { "frequency": 2, "baseFrequency": 400, "octaves": 5, "wet": 0.8 } },
+        { "type": "BitCrusher", "config": { "bits": 8 } },
+        { "type": "Reverb", "config": { "decay": 3.0, "wet": 0.4 } }
+      ]
+    },
+    "click": {
+      "type": "MetalSynth",
+      "config": {
+        "frequency": 800,
+        "envelope": { "attack": 0.001, "decay": 0.02, "release": 0.01 },
+        "harmonicity": 12,
+        "modulationIndex": 50,
+        "resonance": 6000,
+        "octaves": 0.5
+      },
+      "volume": -20,
+      "effects": [
+        { "type": "BitCrusher", "config": { "bits": 8 } },
+        { "type": "PingPongDelay", "config": { "delayTime": "16n.", "feedback": 0.35, "wet": 0.3 } }
+      ]
+    }
+  },
+  "master": {
+    "effects": [
+      { "type": "Compressor", "config": { "threshold": -18, "ratio": 3, "attack": 0.01, "release": 0.15 } },
+      { "type": "Filter", "config": { "frequency": 16000, "type": "lowpass", "rolloff": -12 } },
+        { "type": "Limiter", "config": { "threshold": -3 } }
+    ]
+  },
+  "progression": {
+    "chords": ["i", "bII", "v", "bVII", "iv", "bII", "i", "i"],
+    "scale": "chromatic",
+    "bars_per_chord": 1
+  },
+  "harmonic_system": {
+    "type": "atonal_cluster",
+    "field": "F#m",
+    "cadences": "none"
+  },
+  "arc": {
+    "intro": { "layers": ["micro-perc", "click"], "velocity": 0.4 },
+    "build": { "layers": ["micro-perc", "click", "sub-bass", "texture-pad"], "velocity": 0.6 },
+    "climax": { "layers": ["glitch-lead", "micro-perc", "click", "sub-bass", "texture-pad"], "velocity": 0.85 },
+    "resolve": { "layers": ["texture-pad", "micro-perc"], "velocity": 0.3 }
+  },
+  "orchestration_limits": {
+    "intro": { "max_simultaneous_voices": 2 },
+    "build": { "max_simultaneous_voices": 4 },
+    "climax": { "max_simultaneous_voices": 5 },
+    "resolve": { "max_simultaneous_voices": 2 },
+    "hard_limit": 8,
+    "spectral_rule": "If 4+ active voices, at least one must be 'light' (high freq, little low content)"
+  },
+  "form": {
+    "type": "atematico",
+    "density_per_phase": { "intro": 0.2, "build": 0.5, "climax": 0.9, "resolve": 0.3 }
+  },
+  "rhythmGrid": {
+    "intro": {
+      "micro-perc": [0.3, 0, 0, 0.5, 0, 0.2, 0, 0, 0.6, 0, 0, 0, 0.2, 0, 0.4, 0],
+      "click":      [0, 0, 0.4, 0, 0, 0, 0.3, 0, 0, 0.5, 0, 0, 0, 0, 0, 0.6]
+    },
+    "build": {
+      "micro-perc":  [0.4, 0.2, 0, 0.6, 0, 0, 0.5, 0, 0.3, 0, 0.7, 0, 0, 0.4, 0, 0.2],
+      "click":       [0, 0, 0.5, 0, 0.3, 0, 0, 0.6, 0, 0, 0, 0.4, 0, 0, 0.7, 0],
+      "sub-bass":    [0.7, 0, 0, 0, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0, 0, 0],
+      "texture-pad": [0.3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    },
+    "climax": {
+      "glitch-lead": [0.7, 0.3, 0, 0.8, 0, 0.4, 0.6, 0, 0.9, 0, 0.5, 0, 0.8, 0, 0.3, 0.7],
+      "micro-perc":  [0.5, 0.6, 0.3, 0.7, 0.4, 0.2, 0.8, 0.3, 0.6, 0.5, 0.9, 0.2, 0.7, 0.4, 0.6, 0.8],
+      "click":       [0.6, 0, 0.7, 0, 0, 0.5, 0, 0.8, 0, 0.4, 0, 0.7, 0, 0.6, 0, 0.3],
+      "sub-bass":    [0.8, 0, 0, 0, 0, 0, 0.5, 0, 0, 0, 0.6, 0, 0, 0, 0, 0.4],
+      "texture-pad": [0.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    },
+    "resolve": {
+      "texture-pad": [0.3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "micro-perc":  [0, 0, 0, 0.2, 0, 0, 0, 0, 0, 0, 0, 0.15, 0, 0, 0, 0]
+    }
+  },
+  "voiceLeading": {
+    "chords": {
+      "i": {
+        "root":   ["F#2", "C#3", "F#3", "A3", "C#4"],
+        "drop2":  ["F#2", "A2", "C#3", "F#3", "C#4"],
+        "spread": ["F#2", "C#3", "A3", "F#4", "C#5"]
+      },
+      "bII": {
+        "root":   ["G2", "B2", "D3", "G3", "B3"],
+        "drop2":  ["G2", "D2", "B2", "G3", "B3"],
+        "spread": ["G2", "D3", "B3", "G4", "D5"]
+      },
+      "v": {
+        "root":   ["C#3", "G#3", "C#4", "E4", "G#4"],
+        "drop2":  ["C#3", "E3", "G#3", "C#4", "G#4"],
+        "spread": ["C#2", "G#2", "E3", "C#4", "G#4"]
+      },
+      "bVII": {
+        "root":   ["E2", "B2", "E3", "G#3", "B3"],
+        "drop2":  ["E2", "G#2", "B2", "E3", "B3"],
+        "spread": ["E2", "B2", "G#3", "E4", "B4"]
+      },
+      "iv": {
+        "root":   ["B2", "F#3", "B3", "D4", "F#4"],
+        "drop2":  ["B2", "D3", "F#3", "B3", "F#4"],
+        "spread": ["B1", "F#2", "D3", "B3", "F#4"]
+      }
+    },
+    "transitions": {
+      "i_to_bII":    { "motion": "chromatic shift, F#→G, half-step voice leading all notes up" },
+      "bII_to_v":    { "motion": "tritone leap, G→C#, dissonant jump characteristic of glitch" },
+      "v_to_bVII":   { "motion": "minor third down, C#→E upper voices hold G#" },
+      "bVII_to_iv":  { "motion": "ascending fifth, E→B, smooth common-tone B" },
+      "iv_to_bII":   { "motion": "descending minor third, B→G, D holds" },
+      "bII_to_i":    { "motion": "half-step resolution, G→F#, all voices descend chromatically" }
+    },
+    "arc_voicing": {
+      "intro": "spread",
+      "build": "drop2",
+      "climax": "root",
+      "resolve": "spread"
+    }
+  },
+  "melodicPatterns": {
+    "glitch-lead": {
+      "climax_only": true,
+      "phrases": [
+        { "notes": ["F#4", "G4", "F#4", "E4", "C#4"], "rhythm": ["32n", "32n", "16n", "8n", "4n"] },
+        { "notes": ["A4", "G#4", "F#4", "G4", "F#4"], "rhythm": ["16n", "16n", "16n", "16n", "8n"] }
+      ]
+    },
+    "sub-bass": {
+      "build":  { "pattern": "whole_notes", "notes": ["F#1", "G1", "C#2", "E1", "B1", "G1", "F#1", "F#1"] },
+      "climax": { "pattern": "syncopated", "notes": ["F#1", "F#1", "G1", "C#2", "C#2", "E1", "B1", "G1", "F#1", "F#1"] },
+      "resolve": { "pattern": "whole_notes", "notes": ["F#1"] }
+    },
+    "texture-pad": {
+      "all_phases": true,
+      "note": "Follows voiceLeading chords per arc phase, sustained"
+    }
+  },
+  "transitions": {
+    "intro_to_build": {
+      "type": "riser",
+      "bars_before": 1,
+      "implementation": "BitCrushed noise sweep: NoiseSynth with bits decreasing 12→4 over 2 bars, AutoFilter rising from 100Hz to 6000Hz, stutter micro-perc at increasing density"
+    },
+    "build_to_climax": {
+      "type": "drop",
+      "bars_before": 0.5,
+      "implementation": "All layers cut to silence for 1 beat, glitch-lead buffer stutter effect (rapid 32nd note repeats of last note), then full drop with all climax layers hitting simultaneously"
+    },
+    "climax_to_resolve": {
+      "type": "fadeout",
+      "bars_before": 1,
+      "implementation": "Progressive bit reduction on all layers (16→3 bits) over 2 bars creating digital decay, volume ramp down, leave only texture-pad with heavy reverb wet 0.8"
+    }
+  }
+}

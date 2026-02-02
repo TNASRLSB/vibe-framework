@@ -1,0 +1,355 @@
+{
+  "_note": "Maps instrument names to sample files for Tone.Sampler. CDN baseUrl is configured in SKILL.md. Tone.Sampler interpolates missing notes automatically. Sources: VCSL (CC0), nbrosowsky/tonejs-instruments (CC-BY 3.0), Open Source Drumkit (Public Domain).",
+
+  "_cdnBaseUrl": "https://<user>.github.io/CLAUDE_SKILLS/samples/",
+
+  "piano": {
+    "source": "VCSL Steinway B",
+    "license": "CC0",
+    "fallbackPatch": "piano-acoustic",
+    "type": "chromatic",
+    "urls": {
+      "A1": "A1.ogg", "C2": "C2.ogg", "E2": "E2.ogg",
+      "A2": "A2.ogg", "C3": "C3.ogg", "E3": "E3.ogg",
+      "A3": "A3.ogg", "C4": "C4.ogg", "E4": "E4.ogg",
+      "A4": "A4.ogg", "C5": "C5.ogg", "E5": "E5.ogg",
+      "A5": "A5.ogg", "C6": "C6.ogg"
+    }
+  },
+
+  "piano-upright": {
+    "source": "VCSL Yamaha Upright",
+    "license": "CC0",
+    "fallbackPatch": "piano-upright",
+    "type": "chromatic",
+    "urls": {
+      "C2": "C2.ogg", "C3": "C3.ogg", "A3": "A3.ogg",
+      "C4": "C4.ogg", "A4": "A4.ogg", "C5": "C5.ogg"
+    }
+  },
+
+  "harpsichord": {
+    "source": "VCSL Italian Harpsichord",
+    "license": "CC0",
+    "fallbackPatch": "harpsichord",
+    "type": "chromatic",
+    "urls": {
+      "C3": "C3.ogg", "A3": "A3.ogg",
+      "C4": "C4.ogg", "A4": "A4.ogg", "C5": "C5.ogg"
+    }
+  },
+
+  "organ": {
+    "source": "VCSL Pipe Organ",
+    "license": "CC0",
+    "fallbackPatch": "organ-pipe",
+    "type": "chromatic",
+    "urls": {
+      "C2": "C2.ogg", "C3": "C3.ogg",
+      "C4": "C4.ogg", "C5": "C5.ogg"
+    }
+  },
+
+  "violin": {
+    "source": "nbrosowsky/tonejs-instruments",
+    "license": "CC-BY 3.0",
+    "fallbackPatch": "violin",
+    "type": "chromatic",
+    "urls": {
+      "A3": "A3.ogg", "E4": "E4.ogg",
+      "A4": "A4.ogg", "E5": "E5.ogg", "A5": "A5.ogg"
+    }
+  },
+
+  "cello": {
+    "source": "nbrosowsky/tonejs-instruments",
+    "license": "CC-BY 3.0",
+    "fallbackPatch": "cello",
+    "type": "chromatic",
+    "urls": {
+      "A2": "A2.ogg", "C3": "C3.ogg",
+      "A3": "A3.ogg", "C4": "C4.ogg", "A4": "A4.ogg"
+    }
+  },
+
+  "contrabass": {
+    "source": "nbrosowsky/tonejs-instruments",
+    "license": "CC-BY 3.0",
+    "fallbackPatch": "contrabass",
+    "type": "chromatic",
+    "urls": {
+      "A1": "A1.ogg", "E2": "E2.ogg",
+      "A2": "A2.ogg", "E3": "E3.ogg"
+    }
+  },
+
+  "harp": {
+    "source": "VCSL Concert Harp",
+    "license": "CC0",
+    "fallbackPatch": "harp",
+    "type": "chromatic",
+    "urls": {
+      "C3": "C3.ogg", "A3": "A3.ogg",
+      "C4": "C4.ogg", "A4": "A4.ogg", "C5": "C5.ogg"
+    }
+  },
+
+  "guitar-acoustic": {
+    "source": "nbrosowsky/tonejs-instruments",
+    "license": "CC-BY 3.0",
+    "fallbackPatch": "guitar-acoustic",
+    "type": "chromatic",
+    "urls": {
+      "A2": "A2.ogg", "E3": "E3.ogg",
+      "A3": "A3.ogg", "E4": "E4.ogg", "A4": "A4.ogg"
+    }
+  },
+
+  "guitar-electric": {
+    "source": "nbrosowsky/tonejs-instruments",
+    "license": "CC-BY 3.0",
+    "fallbackPatch": "guitar-clean",
+    "type": "chromatic",
+    "urls": {
+      "A2": "A2.ogg", "E3": "E3.ogg",
+      "A3": "A3.ogg", "A4": "A4.ogg"
+    }
+  },
+
+  "guitar-nylon": {
+    "source": "nbrosowsky/tonejs-instruments",
+    "license": "CC-BY 3.0",
+    "fallbackPatch": "guitar-nylon",
+    "type": "chromatic",
+    "urls": {
+      "A2": "A2.ogg", "E3": "E3.ogg",
+      "A3": "A3.ogg", "A4": "A4.ogg"
+    }
+  },
+
+  "bass-electric": {
+    "source": "nbrosowsky/tonejs-instruments",
+    "license": "CC-BY 3.0",
+    "fallbackPatch": "bass-electric",
+    "type": "chromatic",
+    "urls": {
+      "E1": "E1.ogg", "A1": "A1.ogg",
+      "E2": "E2.ogg", "A2": "A2.ogg"
+    }
+  },
+
+  "trumpet": {
+    "source": "nbrosowsky/tonejs-instruments",
+    "license": "CC-BY 3.0",
+    "fallbackPatch": "trumpet",
+    "type": "chromatic",
+    "urls": {
+      "A3": "A3.ogg", "C4": "C4.ogg",
+      "A4": "A4.ogg", "C5": "C5.ogg", "A5": "A5.ogg"
+    }
+  },
+
+  "trombone": {
+    "source": "nbrosowsky/tonejs-instruments",
+    "license": "CC-BY 3.0",
+    "fallbackPatch": "trombone",
+    "type": "chromatic",
+    "urls": {
+      "A2": "A2.ogg", "C3": "C3.ogg",
+      "A3": "A3.ogg", "C4": "C4.ogg"
+    }
+  },
+
+  "french-horn": {
+    "source": "nbrosowsky/tonejs-instruments",
+    "license": "CC-BY 3.0",
+    "fallbackPatch": "french-horn",
+    "type": "chromatic",
+    "urls": {
+      "A2": "A2.ogg", "A3": "A3.ogg",
+      "C4": "C4.ogg", "A4": "A4.ogg"
+    }
+  },
+
+  "tuba": {
+    "source": "nbrosowsky/tonejs-instruments",
+    "license": "CC-BY 3.0",
+    "fallbackPatch": "tuba",
+    "type": "chromatic",
+    "urls": {
+      "A1": "A1.ogg", "E2": "E2.ogg",
+      "A2": "A2.ogg", "E3": "E3.ogg"
+    }
+  },
+
+  "flute": {
+    "source": "nbrosowsky/tonejs-instruments",
+    "license": "CC-BY 3.0",
+    "fallbackPatch": "flute",
+    "type": "chromatic",
+    "urls": {
+      "A4": "A4.ogg", "C5": "C5.ogg",
+      "A5": "A5.ogg", "C6": "C6.ogg", "A6": "A6.ogg"
+    }
+  },
+
+  "clarinet": {
+    "source": "nbrosowsky/tonejs-instruments",
+    "license": "CC-BY 3.0",
+    "fallbackPatch": "clarinet",
+    "type": "chromatic",
+    "urls": {
+      "A3": "A3.ogg", "C4": "C4.ogg",
+      "A4": "A4.ogg", "C5": "C5.ogg"
+    }
+  },
+
+  "bassoon": {
+    "source": "nbrosowsky/tonejs-instruments",
+    "license": "CC-BY 3.0",
+    "fallbackPatch": "bassoon",
+    "type": "chromatic",
+    "urls": {
+      "A1": "A1.ogg", "A2": "A2.ogg",
+      "C3": "C3.ogg", "A3": "A3.ogg"
+    }
+  },
+
+  "saxophone": {
+    "source": "nbrosowsky/tonejs-instruments",
+    "license": "CC-BY 3.0",
+    "fallbackPatch": "saxophone",
+    "type": "chromatic",
+    "urls": {
+      "A3": "A3.ogg", "C4": "C4.ogg",
+      "A4": "A4.ogg", "C5": "C5.ogg"
+    }
+  },
+
+  "harmonium": {
+    "source": "nbrosowsky/tonejs-instruments",
+    "license": "CC-BY 3.0",
+    "fallbackPatch": "organ-hammond",
+    "type": "chromatic",
+    "urls": {
+      "C3": "C3.ogg", "C4": "C4.ogg", "C5": "C5.ogg"
+    }
+  },
+
+  "vibraphone": {
+    "source": "VCSL",
+    "license": "CC0",
+    "fallbackPatch": "vibraphone",
+    "type": "chromatic",
+    "urls": {
+      "C3": "C3.ogg", "A3": "A3.ogg",
+      "C4": "C4.ogg", "A4": "A4.ogg", "C5": "C5.ogg"
+    }
+  },
+
+  "marimba": {
+    "source": "VCSL",
+    "license": "CC0",
+    "fallbackPatch": "marimba",
+    "type": "chromatic",
+    "urls": {
+      "C3": "C3.ogg", "A3": "A3.ogg",
+      "C4": "C4.ogg", "A4": "A4.ogg"
+    }
+  },
+
+  "xylophone": {
+    "source": "VCSL",
+    "license": "CC0",
+    "fallbackPatch": "xylophone",
+    "type": "chromatic",
+    "urls": {
+      "C4": "C4.ogg", "A4": "A4.ogg",
+      "C5": "C5.ogg", "A5": "A5.ogg"
+    }
+  },
+
+  "glockenspiel": {
+    "source": "VCSL",
+    "license": "CC0",
+    "fallbackPatch": "glockenspiel",
+    "type": "chromatic",
+    "urls": {
+      "C5": "C5.ogg", "A5": "A5.ogg", "C6": "C6.ogg"
+    }
+  },
+
+  "tubular-bells": {
+    "source": "VCSL",
+    "license": "CC0",
+    "fallbackPatch": "bell",
+    "type": "chromatic",
+    "urls": {
+      "C4": "C4.ogg", "A4": "A4.ogg", "C5": "C5.ogg"
+    }
+  },
+
+  "timpani": {
+    "source": "VCSL",
+    "license": "CC0",
+    "fallbackPatch": null,
+    "fallbackSynth": "MembraneSynth",
+    "type": "chromatic",
+    "urls": {
+      "C2": "C2.ogg", "E2": "E2.ogg",
+      "A2": "A2.ogg", "C3": "C3.ogg"
+    }
+  },
+
+  "triangle": {
+    "source": "VCSL",
+    "license": "CC0",
+    "fallbackPatch": null,
+    "fallbackSynth": "MetalSynth",
+    "type": "oneshot",
+    "urls": { "hit": "hit.ogg" }
+  },
+
+  "tambourine": {
+    "source": "VCSL",
+    "license": "CC0",
+    "fallbackPatch": null,
+    "fallbackSynth": "MetalSynth",
+    "type": "oneshot",
+    "urls": { "hit": "hit.ogg" }
+  },
+
+  "clap": {
+    "source": "VCSL",
+    "license": "CC0",
+    "fallbackPatch": null,
+    "fallbackSynth": "NoiseSynth",
+    "type": "oneshot",
+    "urls": { "hit": "hit.ogg" }
+  },
+
+  "drums": {
+    "source": "Open Source Drumkit (Real Music Media)",
+    "license": "Public Domain",
+    "fallbackPatch": "drums-synth",
+    "type": "kit",
+    "urls": {
+      "kick": "kick.ogg",
+      "snare": "snare.ogg",
+      "hihat-closed": "hihat-closed.ogg",
+      "hihat-open": "hihat-open.ogg",
+      "crash": "crash.ogg",
+      "ride": "ride.ogg",
+      "tom-high": "tom-high.ogg",
+      "tom-mid": "tom-mid.ogg",
+      "tom-low": "tom-low.ogg",
+      "rimshot": "rimshot.ogg"
+    },
+    "noteMapping": {
+      "C1": "kick", "D1": "snare", "F#1": "hihat-closed",
+      "A#1": "hihat-open", "C#2": "crash", "D#2": "ride",
+      "D2": "tom-high", "B1": "tom-mid", "A1": "tom-low",
+      "E1": "rimshot"
+    }
+  }
+}

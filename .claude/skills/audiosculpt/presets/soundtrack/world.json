@@ -1,0 +1,244 @@
+{
+  "style": "world",
+  "description": "Ethnic-flavored soundscape with modal melodies, hand percussion textures, and folk-inspired plucked strings.",
+  "family": "tonal",
+  "temporal": {
+    "bpm": 105,
+    "range": [90, 120],
+    "swing": 0.2,
+    "timeSignature": [4, 4],
+    "endingBehavior": {
+      "type": "cadential_insert",
+      "cadenceBars": 2,
+      "forceTonicLastBar": true,
+      "maxTempoDeviationPercent": 5
+    }
+  },
+  "key": "E",
+  "instruments": {
+    "sitar": {
+      "type": "PluckSynth",
+      "config": {
+        "attackNoise": 2.5,
+        "dampening": 3500,
+        "resonance": 0.96,
+        "release": 1.2
+      },
+      "volume": -18,
+      "range": ["C3", "C7"],
+      "optimal_range": ["E3", "E6"],
+      "effects": [
+        { "type": "Reverb", "config": { "decay": 3.0, "wet": 0.35 } },
+        { "type": "Vibrato", "config": { "frequency": 6, "depth": 0.3, "wet": 0.5 } }
+      ]
+    },
+    "tabla": {
+      "type": "MembraneSynth",
+      "config": {
+        "pitchDecay": 0.03,
+        "octaves": 5,
+        "oscillator": { "type": "sine" },
+        "envelope": { "attack": 0.001, "decay": 0.25, "sustain": 0.0, "release": 0.2 }
+      },
+      "volume": -16,
+      "effects": [
+        { "type": "Reverb", "config": { "decay": 1.2, "wet": 0.2 } }
+      ]
+    },
+    "shaker": {
+      "type": "NoiseSynth",
+      "config": {
+        "noise": { "type": "white" },
+        "envelope": { "attack": 0.001, "decay": 0.04, "sustain": 0.0, "release": 0.02 }
+      },
+      "volume": -20,
+      "effects": [
+        { "type": "Filter", "config": { "frequency": 6000, "type": "highpass", "rolloff": -12 } },
+        { "type": "Reverb", "config": { "decay": 0.8, "wet": 0.15 } }
+      ]
+    },
+    "drone": {
+      "type": "AMSynth",
+      "config": {
+        "harmonicity": 1.5,
+        "oscillator": { "type": "triangle" },
+        "modulation": { "type": "sine" },
+        "envelope": { "attack": 3.0, "decay": 1.0, "sustain": 0.9, "release": 4.0 },
+        "modulationEnvelope": { "attack": 2.0, "decay": 0.5, "sustain": 0.8, "release": 3.0 }
+      },
+      "volume": -16,
+      "range": ["C2", "C4"],
+      "optimal_range": ["E2", "E3"],
+      "effects": [
+        { "type": "Reverb", "config": { "decay": 5.0, "wet": 0.5 } },
+        { "type": "Filter", "config": { "frequency": 1200, "type": "lowpass", "rolloff": -12 } }
+      ]
+    },
+    "flute": {
+      "type": "MonoSynth",
+      "config": {
+        "oscillator": { "type": "sine" },
+        "filter": { "Q": 1.5, "type": "lowpass", "rolloff": -12 },
+        "envelope": { "attack": 0.15, "decay": 0.2, "sustain": 0.75, "release": 0.8 },
+        "filterEnvelope": { "attack": 0.1, "decay": 0.15, "sustain": 0.5, "release": 0.6, "baseFrequency": 1500, "octaves": 1.5 }
+      },
+      "volume": -18,
+      "range": ["C4", "C7"],
+      "optimal_range": ["D4", "D7"],
+      "effects": [
+        { "type": "Vibrato", "config": { "frequency": 5.5, "depth": 0.2, "wet": 0.6 } },
+        { "type": "Reverb", "config": { "decay": 2.5, "wet": 0.35 } },
+        { "type": "FeedbackDelay", "config": { "delayTime": "4n.", "feedback": 0.25, "wet": 0.2 } }
+      ]
+    }
+  },
+  "master": {
+    "effects": [
+      { "type": "EQ3", "config": { "low": 1, "mid": 0, "high": -1, "lowFrequency": 200, "highFrequency": 6000 } },
+      { "type": "Compressor", "config": { "threshold": -14, "ratio": 3, "attack": 0.03, "release": 0.2 } },
+      { "type": "Filter", "config": { "frequency": 16000, "type": "lowpass", "rolloff": -12 } },
+        { "type": "Limiter", "config": { "threshold": -3 } }
+    ]
+  },
+  "progression": {
+    "chords": ["i", "VII", "IV", "i", "v", "VII", "i", "i"],
+    "scale": "phrygian",
+    "bars_per_chord": 2
+  },
+  "harmonic_system": {
+    "type": "functional_tonal",
+    "functions": {
+      "i": "T",
+      "VII": "D",
+      "IV": "SD",
+      "v": "D"
+    },
+    "cadences": {
+      "primary": "authentic",
+      "reasoning": "VII→i at end of progression = modal authentic cadence (subtonic resolution to tonic)"
+    }
+  },
+  "arc": {
+    "intro": { "layers": ["drone", "shaker"], "velocity": 0.25 },
+    "build": { "layers": ["drone", "sitar", "tabla", "shaker"], "velocity": 0.5 },
+    "climax": { "layers": ["drone", "sitar", "flute", "tabla", "shaker"], "velocity": 0.7 },
+    "resolve": { "layers": ["drone", "sitar", "flute"], "velocity": 0.3 }
+  },
+  "orchestration_limits": {
+    "intro": { "max_simultaneous_voices": 2 },
+    "build": { "max_simultaneous_voices": 4 },
+    "climax": { "max_simultaneous_voices": 5 },
+    "resolve": { "max_simultaneous_voices": 3 },
+    "hard_limit": 6,
+    "spectral_rule": "If 4+ active voices, at least one must be 'light' (high freq, little low content)"
+  },
+  "form": {
+    "type": "periodo_tematico",
+    "phrases": [
+      { "role": "antecedent", "cadence": "half" },
+      { "role": "consequent", "cadence": "authentic" }
+    ],
+    "development": {
+      "climax": "ascending_sequence_by_step",
+      "resolve": "consequent_simplified"
+    }
+  },
+  "rhythmGrid": {
+    "_note": "16-step velocity arrays (16th notes per 4/4 bar). 0 = silence, 0.1-1.0 = hit velocity. World: polyrhythmic, 12/8 feel mapped to 16 steps, tabla/shaker layering.",
+    "intro": {
+      "shaker": [0.3, 0, 0.2, 0.3, 0, 0.2, 0.3, 0, 0.2, 0.3, 0, 0.2, 0.3, 0, 0.2, 0]
+    },
+    "build": {
+      "tabla":  [0.8, 0, 0, 0.4, 0, 0, 0.6, 0, 0, 0.5, 0, 0.3, 0.7, 0, 0, 0.4],
+      "shaker": [0.4, 0, 0.3, 0.4, 0, 0.3, 0.4, 0, 0.3, 0.4, 0, 0.3, 0.4, 0, 0.3, 0]
+    },
+    "climax": {
+      "tabla":  [0.9, 0, 0.4, 0.6, 0, 0.5, 0.8, 0, 0.3, 0.7, 0, 0.5, 0.9, 0.3, 0.4, 0.6],
+      "shaker": [0.5, 0.2, 0.4, 0.5, 0.2, 0.4, 0.5, 0.2, 0.4, 0.5, 0.2, 0.4, 0.5, 0.2, 0.4, 0.3]
+    },
+    "resolve": {
+      "tabla":  [0.5, 0, 0, 0.3, 0, 0, 0.4, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    }
+  },
+  "voiceLeading": {
+    "_key": "E phrygian",
+    "chords": {
+      "i": {
+        "root":   ["E3", "G3", "B3"],
+        "drop2":  ["G2", "E3", "B3"],
+        "spread": ["E2", "B3", "G4"]
+      },
+      "VII": {
+        "root":   ["D3", "F#3", "A3"],
+        "drop2":  ["F#2", "D3", "A3"],
+        "spread": ["D2", "A3", "F#4"]
+      },
+      "IV": {
+        "root":   ["A3", "C4", "E4"],
+        "drop2":  ["C3", "A3", "E4"],
+        "spread": ["A2", "E4", "C5"]
+      },
+      "v": {
+        "root":   ["B3", "D4", "F#4"],
+        "drop2":  ["D3", "B3", "F#4"],
+        "spread": ["B2", "F#4", "D5"]
+      }
+    },
+    "transitions": {
+      "i_to_VII":  { "motion": "E3→D3 (step down), G3→F#3 (step down), B3→A3 (step down)", "parallel_motion_check": "no parallel P5 or P8" },
+      "VII_to_IV": { "motion": "D3→C4 (step down), F#3→E4 (step down), A3→A3 (common)", "parallel_motion_check": "no parallel P5 or P8" },
+      "IV_to_i":   { "motion": "A3→G3 (step down), C4→B3 (step down), E4→E4 (common)", "parallel_motion_check": "no parallel P5 or P8" },
+      "i_to_v":    { "motion": "E3→F#4 (step up), G3→D4 (skip), B3→B3 (common)", "parallel_motion_check": "no parallel P5 or P8" },
+      "v_to_VII":  { "motion": "B3→A3 (step down), D4→D3 (octave), F#4→F#3 (octave)", "parallel_motion_check": "no parallel P5 or P8" }
+    },
+    "arc_voicing": {
+      "intro": "spread",
+      "build": "drop2",
+      "climax": "root",
+      "resolve": "spread"
+    }
+  },
+  "melodicPatterns": {
+    "sitar": {
+      "intro": "silent",
+      "build": "modal_riff_phrygian",
+      "climax": "ornamental_runs_with_bends",
+      "resolve": "sustained_tonic_drone",
+      "phrases": [
+        { "notes": ["E4", "F4", "G4", "A4", "G4", "F4", "E4"], "rhythm": ["8n", "8n", "8n", "4n", "8n", "8n", "2n"], "role": "antecedent", "cadence": "half" },
+        { "notes": ["B4", "A4", "G4", "F4", "E4"], "rhythm": ["16n", "16n", "8n", "4n", "2n"], "role": "consequent", "cadence": "authentic" }
+      ]
+    },
+    "flute": {
+      "climax_only": false,
+      "climax": "call_and_response_with_sitar",
+      "resolve": "descending_modal_phrase",
+      "phrases": [
+        { "notes": ["B5", "A5", "G5", "F5", "E5"], "rhythm": ["8n", "8n", "4n", "4n", "1n"] }
+      ]
+    },
+    "drone": {
+      "intro": "sustained_tonic_fifth",
+      "build": "sustained_tonic_fifth",
+      "climax": "sustained_tonic_fifth",
+      "resolve": "sustained_tonic_fadeout"
+    }
+  },
+  "transitions": {
+    "intro_to_build": {
+      "type": "riser",
+      "bars_before": 1,
+      "implementation": "Tabla enters with single downbeat hit, then fills in pattern over 1 bar. Sitar plucks first note on beat 3. Drone remains constant throughout."
+    },
+    "build_to_climax": {
+      "type": "riser",
+      "bars_before": 0.5,
+      "implementation": "Tabla plays rapid fill (16th notes ascending velocity 0.3→0.9 over 2 beats). Shaker doubles to constant 16ths. Flute enters on downbeat of climax with high sustained note."
+    },
+    "climax_to_resolve": {
+      "type": "fadeout",
+      "bars_before": 1,
+      "implementation": "Tabla thins to only downbeat hits, then drops out at beat 3. Shaker fades out over 1 bar. Sitar holds final note with vibrato increase (depth 0.3→0.6). Flute plays descending phrase to tonic."
+    }
+  }
+}

@@ -1,0 +1,256 @@
+{
+  "style": "acoustic",
+  "description": "Warm, organic-sounding plucked strings, marimba, and gentle percussion evoking ukulele folk and handmade charm.",
+  "family": "tonal",
+  "temporal": {
+    "bpm": 100,
+    "range": [90, 110],
+    "swing": 0.15,
+    "timeSignature": [4, 4],
+    "endingBehavior": {
+      "type": "cadential_insert",
+      "cadenceBars": 2,
+      "forceTonicLastBar": true,
+      "maxTempoDeviationPercent": 5
+    }
+  },
+  "key": "C major",
+  "instruments": {
+    "guitar": {
+      "type": "PluckSynth",
+      "config": {
+        "attackNoise": 1.5,
+        "dampening": 3500,
+        "resonance": 0.96,
+        "release": 1.2
+      },
+      "volume": -18,
+      "range": ["E2", "E6"],
+      "optimal_range": ["E2", "B5"],
+      "effects": [
+        { "type": "Reverb", "config": { "decay": 2.0, "wet": 0.25 } },
+        { "type": "Chorus", "config": { "frequency": 0.5, "delayTime": 3.5, "depth": 0.3, "wet": 0.15 } }
+      ]
+    },
+    "ukulele": {
+      "type": "PluckSynth",
+      "config": {
+        "attackNoise": 2.0,
+        "dampening": 4500,
+        "resonance": 0.93,
+        "release": 0.8
+      },
+      "volume": -18,
+      "range": ["C4", "A6"],
+      "optimal_range": ["C4", "E6"],
+      "effects": [
+        { "type": "Reverb", "config": { "decay": 1.5, "wet": 0.2 } }
+      ]
+    },
+    "marimba": {
+      "type": "FMSynth",
+      "config": {
+        "harmonicity": 8,
+        "modulationIndex": 12,
+        "oscillator": { "type": "sine" },
+        "modulation": { "type": "sine" },
+        "envelope": { "attack": 0.001, "decay": 0.5, "sustain": 0, "release": 0.6 },
+        "modulationEnvelope": { "attack": 0.001, "decay": 0.3, "sustain": 0, "release": 0.4 }
+      },
+      "volume": -18,
+      "range": ["C3", "C7"],
+      "optimal_range": ["F3", "F6"],
+      "effects": [
+        { "type": "Reverb", "config": { "decay": 2.5, "wet": 0.3 } }
+      ]
+    },
+    "bass": {
+      "type": "PluckSynth",
+      "config": {
+        "attackNoise": 0.8,
+        "dampening": 2000,
+        "resonance": 0.97,
+        "release": 1.5
+      },
+      "volume": -14,
+      "range": ["E1", "G3"],
+      "optimal_range": ["E1", "E3"],
+      "effects": [
+        { "type": "Filter", "config": { "frequency": 800, "type": "lowpass", "rolloff": -12 } }
+      ]
+    },
+    "shaker": {
+      "type": "NoiseSynth",
+      "config": {
+        "noise": { "type": "white" },
+        "envelope": { "attack": 0.001, "decay": 0.04, "sustain": 0, "release": 0.03 }
+      },
+      "volume": -20,
+      "effects": [
+        { "type": "Filter", "config": { "frequency": 5000, "type": "highpass" } },
+        { "type": "Filter", "config": { "frequency": 12000, "type": "lowpass" } }
+      ]
+    },
+    "pad": {
+      "type": "PolySynth",
+      "config": {
+        "voice": "Synth",
+        "maxPolyphony": 4,
+        "options": {
+          "oscillator": { "type": "sine4" },
+          "envelope": { "attack": 1.5, "decay": 0.5, "sustain": 0.6, "release": 2.5 }
+        }
+      },
+      "volume": -18,
+      "range": ["C2", "C6"],
+      "optimal_range": ["C3", "C5"],
+      "effects": [
+        { "type": "Reverb", "config": { "decay": 3.5, "wet": 0.45 } }
+      ]
+    }
+  },
+  "master": {
+    "effects": [
+      { "type": "EQ3", "config": { "low": 0, "mid": 1, "high": -1 } },
+      { "type": "Compressor", "config": { "threshold": -14, "ratio": 3, "attack": 0.03, "release": 0.2 } },
+      { "type": "Filter", "config": { "frequency": 16000, "type": "lowpass", "rolloff": -12 } },
+        { "type": "Limiter", "config": { "threshold": -3 } }
+    ]
+  },
+  "progression": {
+    "chords": ["I", "IV", "V", "I"],
+    "scale": "major",
+    "bars_per_chord": 2
+  },
+  "harmonic_system": {
+    "type": "functional_tonal",
+    "functions": {
+      "I": "T",
+      "IV": "SD",
+      "V": "D"
+    },
+    "cadences": {
+      "primary": "authentic",
+      "reasoning": "V→I = authentic cadence"
+    }
+  },
+  "arc": {
+    "intro": { "layers": ["guitar", "pad"], "velocity": 0.4 },
+    "build": { "layers": ["guitar", "ukulele", "bass", "shaker", "pad"], "velocity": 0.6 },
+    "climax": { "layers": ["guitar", "ukulele", "marimba", "bass", "shaker", "pad"], "velocity": 0.75 },
+    "resolve": { "layers": ["guitar", "pad"], "velocity": 0.35 }
+  },
+  "orchestration_limits": {
+    "intro": { "max_simultaneous_voices": 2 },
+    "build": { "max_simultaneous_voices": 5 },
+    "climax": { "max_simultaneous_voices": 6 },
+    "resolve": { "max_simultaneous_voices": 2 },
+    "hard_limit": 6,
+    "spectral_rule": "If 4+ active voices, at least one must be 'light' (high freq, little low content)"
+  },
+  "form": {
+    "type": "periodo_tematico",
+    "phrases": [
+      { "role": "antecedent", "cadence": "half" },
+      { "role": "consequent", "cadence": "authentic" }
+    ],
+    "development": {
+      "climax": "ascending_sequence_by_step",
+      "resolve": "consequent_simplified"
+    }
+  },
+  "rhythmGrid": {
+    "_doc": "16-step velocity arrays (16th notes, 4/4 bar). 0 = silence, 0.1-1.0 = hit velocity.",
+    "intro": {
+      "guitar": [0.4, 0, 0.2, 0, 0.35, 0, 0.2, 0, 0.4, 0, 0.2, 0, 0.3, 0, 0.15, 0],
+      "pad":    [0.4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    },
+    "build": {
+      "guitar":  [0.5, 0, 0.25, 0, 0.45, 0, 0.3, 0, 0.5, 0, 0.25, 0, 0.4, 0, 0.2, 0],
+      "ukulele": [0, 0, 0.3, 0, 0, 0, 0.3, 0, 0, 0, 0.3, 0, 0, 0, 0.3, 0],
+      "bass":    [0.6, 0, 0, 0, 0, 0, 0, 0, 0.55, 0, 0, 0, 0, 0, 0, 0],
+      "shaker":  [0.2, 0.15, 0.2, 0.15, 0.2, 0.15, 0.2, 0.15, 0.2, 0.15, 0.2, 0.15, 0.2, 0.15, 0.2, 0.15],
+      "pad":     [0.5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    },
+    "climax": {
+      "guitar":  [0.6, 0, 0.3, 0.15, 0.55, 0, 0.35, 0.15, 0.6, 0, 0.3, 0.15, 0.5, 0, 0.25, 0.15],
+      "ukulele": [0, 0.25, 0.4, 0.2, 0, 0.25, 0.4, 0.2, 0, 0.25, 0.4, 0.2, 0, 0.25, 0.4, 0.2],
+      "marimba": [0.5, 0, 0, 0.3, 0, 0, 0.4, 0, 0.5, 0, 0, 0.3, 0, 0, 0.35, 0],
+      "bass":    [0.7, 0, 0, 0, 0, 0, 0, 0.3, 0.65, 0, 0, 0, 0, 0, 0, 0.25],
+      "shaker":  [0.3, 0.2, 0.3, 0.2, 0.3, 0.2, 0.3, 0.2, 0.3, 0.2, 0.3, 0.2, 0.3, 0.2, 0.3, 0.2],
+      "pad":     [0.6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    },
+    "resolve": {
+      "guitar": [0.35, 0, 0.15, 0, 0.3, 0, 0.15, 0, 0.3, 0, 0.15, 0, 0.25, 0, 0.1, 0],
+      "pad":    [0.3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    }
+  },
+  "voiceLeading": {
+    "_doc": "Key: C major. I=C, IV=F, V=G",
+    "chords": {
+      "I": {
+        "root":   ["C4", "E4", "G4", "C5"],
+        "drop2":  ["C3", "G3", "C4", "E4"],
+        "spread": ["C3", "G4", "E5"]
+      },
+      "IV": {
+        "root":   ["F3", "A3", "C4", "F4"],
+        "drop2":  ["F3", "C4", "F4", "A4"],
+        "spread": ["F3", "C5", "A5"]
+      },
+      "V": {
+        "root":   ["G3", "B3", "D4", "G4"],
+        "drop2":  ["G3", "D4", "G4", "B4"],
+        "spread": ["G3", "D5", "B5"]
+      }
+    },
+    "transitions": {
+      "I_to_IV":  { "motion": "E4→F4 (half-step up), G4→A4 (step up), C stays", "parallel_motion_check": "no parallel P5 or P8" },
+      "IV_to_V":  { "motion": "F→G (step up), A→B (step up), C→D (step up)", "parallel_motion_check": "no parallel P5 or P8" },
+      "V_to_I":   { "motion": "B→C (half-step up), D→E (step up), G stays", "parallel_motion_check": "no parallel P5 or P8" }
+    },
+    "arc_voicing": {
+      "intro": "spread",
+      "build": "drop2",
+      "climax": "root",
+      "resolve": "spread"
+    }
+  },
+  "melodicPatterns": {
+    "guitar": {
+      "intro": "fingerpick_arpeggiate_up",
+      "build": "fingerpick_travis_pattern",
+      "climax": "strum_full_chords",
+      "resolve": "fingerpick_arpeggiate_down"
+    },
+    "ukulele": {
+      "build": "island_strum_DU_UDU",
+      "climax": "island_strum_DU_UDU_accented"
+    },
+    "marimba": {
+      "climax_only": true,
+      "climax": "broken_chord_eighths_with_passing_tones"
+    },
+    "bass": {
+      "build": "root_notes_half_notes",
+      "climax": "root_fifth_walking"
+    }
+  },
+  "transitions": {
+    "intro_to_build": {
+      "type": "fadeout",
+      "bars_before": 1,
+      "implementation": "Ramp guitar volume from -6 to -4 over 2 beats. Trigger shaker and ukulele entry with velocity ramp 0→0.3 over 4 beats. Bass enters on beat 1 of new section."
+    },
+    "build_to_climax": {
+      "type": "riser",
+      "bars_before": 0.5,
+      "implementation": "Shaker 16th-note fill with velocity ramp 0.2→0.5 over 2 beats. Guitar switches from fingerpick to strum on beat 3. Marimba enters with grace-note pickup on beat 4."
+    },
+    "climax_to_resolve": {
+      "type": "fadeout",
+      "bars_before": 1,
+      "implementation": "All instruments except guitar and pad ramp volume to -Infinity over 4 beats. Guitar returns to fingerpick pattern. Pad envelope release set to 5s for gentle tail."
+    }
+  }
+}

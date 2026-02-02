@@ -1,0 +1,227 @@
+{
+  "style": "jazz",
+  "description": "Warm piano trio with walking bass, brush kit textures, and extended chord voicings with swing feel.",
+  "family": "tonal",
+  "temporal": {
+    "bpm": 120,
+    "range": [100, 140],
+    "swing": 0.65,
+    "timeSignature": [4, 4],
+    "endingBehavior": {
+      "type": "cadential_insert",
+      "cadenceBars": 2,
+      "forceTonicLastBar": true,
+      "maxTempoDeviationPercent": 5
+    }
+  },
+  "key": "Bb",
+  "instruments": {
+    "piano": {
+      "type": "Sampler",
+      "sampleMap": "piano",
+      "fallbackPatch": "piano-acoustic",
+      "volume": -18,
+      "range": ["A1", "C7"],
+      "optimal_range": ["F2", "C6"],
+      "effects": [
+        { "type": "Reverb", "config": { "decay": 2.0, "wet": 0.25 } }
+      ]
+    },
+    "bass": {
+      "type": "MonoSynth",
+      "config": {
+        "oscillator": { "type": "triangle" },
+        "filter": { "Q": 1, "type": "lowpass", "rolloff": -12 },
+        "envelope": { "attack": 0.02, "decay": 0.4, "sustain": 0.6, "release": 0.5 },
+        "filterEnvelope": { "attack": 0.01, "decay": 0.3, "sustain": 0.4, "release": 0.4, "baseFrequency": 300, "octaves": 1.5 }
+      },
+      "volume": -14,
+      "range": ["E1", "G3"],
+      "optimal_range": ["E1", "E3"],
+      "effects": [
+        { "type": "Compressor", "config": { "threshold": -14, "ratio": 3, "attack": 0.02, "release": 0.2 } },
+        { "type": "Reverb", "config": { "decay": 1.2, "wet": 0.15 } }
+      ]
+    },
+    "ride": {
+      "type": "MetalSynth",
+      "config": {
+        "frequency": 350,
+        "envelope": { "attack": 0.001, "decay": 0.6, "release": 0.4 },
+        "harmonicity": 5.1,
+        "modulationIndex": 24,
+        "resonance": 5000,
+        "octaves": 1
+      },
+      "volume": -20,
+      "effects": [
+        { "type": "Filter", "config": { "frequency": 8000, "type": "highpass", "rolloff": -12 } },
+        { "type": "Reverb", "config": { "decay": 1.5, "wet": 0.2 } }
+      ]
+    },
+    "brush": {
+      "type": "NoiseSynth",
+      "config": {
+        "noise": { "type": "pink" },
+        "envelope": { "attack": 0.02, "decay": 0.15, "sustain": 0.0, "release": 0.1 }
+      },
+      "volume": -24,
+      "effects": [
+        { "type": "Filter", "config": { "frequency": 5000, "type": "bandpass", "Q": 2 } },
+        { "type": "Reverb", "config": { "decay": 1.0, "wet": 0.2 } }
+      ]
+    }
+  },
+  "master": {
+    "effects": [
+      { "type": "Compressor", "config": { "threshold": -14, "ratio": 2.5, "attack": 0.03, "release": 0.2 } },
+      { "type": "Filter", "config": { "frequency": 16000, "type": "lowpass", "rolloff": -12 } },
+        { "type": "Limiter", "config": { "threshold": -3 } }
+    ]
+  },
+  "progression": {
+    "chords": ["IImaj7", "V7", "Imaj7", "Imaj7", "IImaj7", "V7", "IIImaj7", "VI7"],
+    "scale": "dorian",
+    "bars_per_chord": 1
+  },
+  "harmonic_system": {
+    "type": "functional_tonal",
+    "functions": {
+      "IImaj7": "SD",
+      "V7": "D",
+      "Imaj7": "T",
+      "IIImaj7": "T(mediant)",
+      "VI7": "T(relative)"
+    },
+    "cadences": {
+      "primary": "authentic",
+      "reasoning": "V7→Imaj7 = authentic; final chords IIImaj7→VI7 = deceptive-like secondary motion"
+    }
+  },
+  "arc": {
+    "intro": { "layers": ["bass", "ride", "brush"], "velocity": 0.35 },
+    "build": { "layers": ["piano", "bass", "ride", "brush"], "velocity": 0.5 },
+    "climax": { "layers": ["piano", "bass", "ride", "brush"], "velocity": 0.75 },
+    "resolve": { "layers": ["piano", "bass", "ride"], "velocity": 0.3 }
+  },
+  "orchestration_limits": {
+    "intro": { "max_simultaneous_voices": 3 },
+    "build": { "max_simultaneous_voices": 4 },
+    "climax": { "max_simultaneous_voices": 4 },
+    "resolve": { "max_simultaneous_voices": 3 },
+    "hard_limit": 6,
+    "spectral_rule": "If 4+ active voices, at least one must be 'light' (high freq, little low content)"
+  },
+  "form": {
+    "type": "periodo_tematico",
+    "phrases": [
+      { "role": "antecedent", "cadence": "half" },
+      { "role": "consequent", "cadence": "authentic" }
+    ],
+    "development": {
+      "climax": "ascending_sequence_by_thirds",
+      "resolve": "inversion_of_antecedent"
+    }
+  },
+  "rhythmGrid": {
+    "_note": "16-step velocity arrays (16th notes per 4/4 bar). 0 = silence, 0.1-1.0 = hit velocity. Jazz swing: long-short 8th feel, ride pattern, brushes, kick on 1&3. Steps 1-2 = swung 8th 1, 3-4 = swung 8th 2, etc.",
+    "intro": {
+      "ride":  [0.7, 0, 0, 0.4, 0.6, 0, 0, 0.3, 0.7, 0, 0, 0.4, 0.6, 0, 0, 0.3],
+      "brush": [0, 0, 0.3, 0, 0, 0, 0.3, 0, 0, 0, 0.3, 0, 0, 0, 0.3, 0]
+    },
+    "build": {
+      "ride":  [0.8, 0, 0, 0.5, 0.7, 0, 0, 0.4, 0.8, 0, 0, 0.5, 0.7, 0, 0, 0.4],
+      "brush": [0, 0, 0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0, 0, 0, 0.4, 0]
+    },
+    "climax": {
+      "ride":  [0.9, 0, 0, 0.6, 0.8, 0, 0, 0.5, 0.9, 0, 0, 0.6, 0.8, 0, 0, 0.5],
+      "brush": [0.3, 0, 0.5, 0, 0.3, 0, 0.5, 0, 0.3, 0, 0.5, 0, 0.3, 0, 0.5, 0.3]
+    },
+    "resolve": {
+      "ride":  [0.6, 0, 0, 0.3, 0.5, 0, 0, 0.2, 0.6, 0, 0, 0.3, 0.5, 0, 0, 0]
+    }
+  },
+  "voiceLeading": {
+    "_key": "Bb major (jazz extended voicings with 7ths and 9ths)",
+    "chords": {
+      "IImaj7": {
+        "root":   ["C3", "E3", "G3", "Bb3"],
+        "drop2":  ["E2", "C3", "G3", "Bb3"],
+        "spread": ["C2", "G3", "Bb3", "E4"]
+      },
+      "V7": {
+        "root":   ["F3", "A3", "C4", "Eb4"],
+        "drop2":  ["A2", "F3", "C4", "Eb4"],
+        "spread": ["F2", "C4", "Eb4", "A4"]
+      },
+      "Imaj7": {
+        "root":   ["Bb2", "D3", "F3", "A3"],
+        "drop2":  ["D2", "Bb2", "F3", "A3"],
+        "spread": ["Bb1", "F3", "A3", "D4"]
+      },
+      "IIImaj7": {
+        "root":   ["D3", "F#3", "A3", "C#4"],
+        "drop2":  ["F#2", "D3", "A3", "C#4"],
+        "spread": ["D2", "A3", "C#4", "F#4"]
+      },
+      "VI7": {
+        "root":   ["G3", "B3", "D4", "F4"],
+        "drop2":  ["B2", "G3", "D4", "F4"],
+        "spread": ["G2", "D4", "F4", "B4"]
+      }
+    },
+    "transitions": {
+      "IImaj7_to_V7":   { "motion": "C3→C4 (common), E3→Eb4 (chromatic down), G3→F3 (step down), Bb3→A3 (step down)", "parallel_motion_check": "no parallel P5 or P8" },
+      "V7_to_Imaj7":    { "motion": "F3→F3 (common), A3→A3 (common), C4→Bb3 (step down), Eb4→D4 (step down)", "parallel_motion_check": "no parallel P5 or P8" },
+      "IImaj7_to_V7_2": { "motion": "same as IImaj7_to_V7", "parallel_motion_check": "no parallel P5 or P8" },
+      "V7_to_IIImaj7":  { "motion": "F3→F#3 (chromatic up), A3→A3 (common), C4→C#4 (chromatic up), Eb4→D4 (step down)", "parallel_motion_check": "no parallel P5 or P8" },
+      "IIImaj7_to_VI7": { "motion": "D3→D4 (common), F#3→F4 (chromatic down), A3→G3 (step down), C#4→B3 (step down)", "parallel_motion_check": "no parallel P5 or P8" }
+    },
+    "arc_voicing": {
+      "intro": "spread",
+      "build": "drop2",
+      "climax": "root",
+      "resolve": "spread"
+    }
+  },
+  "melodicPatterns": {
+    "piano": {
+      "intro": "silent",
+      "build": "comping_shells_7ths",
+      "climax": "block_chords_rhythmic",
+      "resolve": "sparse_shell_voicings",
+      "phrases": [
+        { "notes": ["Bb4", "A4", "G4", "F4", "D4"], "rhythm": ["8n", "8n", "8n", "4n", "2n"], "role": "antecedent", "cadence": "half" },
+        { "notes": ["D5", "C5", "Bb4", "A4", "F4", "Bb4"], "rhythm": ["8n", "8n", "8n", "8n", "4n", "2n"], "role": "consequent", "cadence": "authentic" }
+      ]
+    },
+    "bass": {
+      "intro": "whole_notes",
+      "build": "walking_quarter_notes",
+      "climax": "walking_quarter_notes",
+      "resolve": "whole_notes",
+      "walking_example": {
+        "over_IImaj7": ["C2", "D2", "E2", "F2"],
+        "over_V7":     ["F2", "E2", "Eb2", "D2"],
+        "over_Imaj7":  ["Bb1", "C2", "D2", "F2"]
+      }
+    }
+  },
+  "transitions": {
+    "intro_to_build": {
+      "type": "riser",
+      "bars_before": 0.5,
+      "implementation": "Bass walks up from root to fifth over 2 beats. Piano enters with pickup notes (2 eighth notes before downbeat). Ride increases velocity by 0.1."
+    },
+    "build_to_climax": {
+      "type": "riser",
+      "bars_before": 0.5,
+      "implementation": "Brush pattern intensifies with closed hihat-style hits on all 8th notes. Bass plays ascending chromatic run over last 2 beats. Piano hits accented chord on 'and' of beat 4."
+    },
+    "climax_to_resolve": {
+      "type": "fadeout",
+      "bars_before": 1,
+      "implementation": "Piano thins to shell voicings (root + 7th only). Brush drops out at beat 3. Bass returns to whole notes. Ride moves to just beats 1 and 3 with decreasing velocity."
+    }
+  }
+}

@@ -266,7 +266,7 @@ The wireframe layer bridges "what blocks are needed" with "how to position them 
 ```
 wireframes/
 ├── README.md           # How the system works
-├── primitives.md       # Reusable layout blocks (STACK, GRID, SPLIT, SIDEBAR, CENTERED, HERO)
+├── primitives.md       # Reusable layout blocks (STACK, GRID, SPLIT, SIDEBAR, CENTERED, HERO, CONTAINER)
 ├── entry.md            # Landing page wireframes + variants
 ├── discovery.md        # Search/listing wireframes + variants
 ├── detail.md           # Item detail wireframes + variants
