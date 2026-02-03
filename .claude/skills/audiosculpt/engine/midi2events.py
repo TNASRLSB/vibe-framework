@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 AudioSculpt MIDI-to-Events Parser
-Converts a MIDI file into a JSON array of note events for Tone.js scheduling.
+Converts a MIDI file into a JSON array of note events for Strudel scheduling.
 
 Usage:
     python midi2events.py input.mid                    # prints JSON to stdout

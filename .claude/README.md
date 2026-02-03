@@ -16,8 +16,8 @@ Due componenti che lavorano insieme:
    - **security-guardian** — Sicurezza AI-specific: OWASP, credential detection, BaaS audit
    - **seo-geo-copy** — SEO tradizionale + GEO (AI search) + copywriting persuasivo
    - **video-craft** — Generazione video programmatica da design system + contenuti (CSS animations + Playwright + FFmpeg)
-   - **audiosculpt** — Generazione audio programmatica (soundtrack + SFX) con Tone.js, integrazione video-craft
-   - **techdebt** — Audit duplicazioni, export orfani, import inutilizzati, pattern estraibili
+   - **audiosculpt** — Generazione audio programmatica (soundtrack + SFX) con Strudel, integrazione video-craft
+   - **techdebt** — Audit duplicazioni, export orfani, import inutilizzati, pattern estraibili, file oversized
 
 Il framework definisce *come* Claude lavora. Le skill definiscono *cosa* sa fare in ambiti specifici.
 
@@ -64,7 +64,7 @@ progetto/
         │   ├── geo/          # GEO per AI search
         │   ├── copywriting/  # Framework persuasivi
         │   ├── generation/   # Prompt operativi per generazione
-        │   ├── validation/   # 40 regole misurabili
+        │   ├── validation/   # 46 regole misurabili
         │   ├── templates/    # Template contenuti + JSON-LD schemas
         │   ├── checklists/   # Pre-publish e audit
         │   ├── workflows/    # Flussi interattivi
@@ -94,13 +94,9 @@ progetto/
 #### Progetto con UI (frontend o fullstack)
 
 ```
-/ui-craft generate
+/ui-craft setup
 ```
-Genera uno stile visivo. Poi:
-```
-/ui-craft establish
-```
-Crea il design system in `.ui-craft/tokens.css` + `.ui-craft/design-system.html`. Poi:
+Genera stile visivo e crea il design system in `.ui-craft/tokens.css` + `.ui-craft/design-system.html`. Poi:
 ```
 /ui-craft preview
 ```
@@ -173,11 +169,12 @@ Aggiungi le decisioni rilevanti a .claude/docs/decisions.md.
 
 Se il progetto ha già componenti UI, segui i passi sopra più:
 
-1. **Stabilisci il design system** (importa valori esistenti o creane uno nuovo):
+1. **Estrai il design system** dal codice esistente:
 
 ```
-/ui-craft establish
+/ui-craft extract
 ```
+Analizza CSS/SCSS, estrae token, genera `.ui-craft/tokens.css` + `.ui-craft/design-system.html` + report inconsistenze.
 
 2. **Analizza lo stato attuale della UI:**
 
@@ -215,7 +212,8 @@ Crea `.ui-craft/project-map.md` con:
 | `decisions.md` | Consigliato | Se ci sono pattern già stabiliti |
 | `/security-guardian audit` | Consigliato | Audit sicurezza iniziale su progetti esistenti |
 | `/techdebt` | Consigliato | Audit tech debt iniziale |
-| `/ui-craft establish` | Consigliato | Per progetti con UI |
+| `/ui-craft setup` | Consigliato | Per nuovi progetti con UI |
+| `/ui-craft extract` | Consigliato | Per progetti esistenti con UI (estrae token dal codice) |
 | `/ui-craft analyze-project` | Consigliato | Per progetti esistenti con UI da migrare |
 | `checklist.md` | Opzionale | Se ci sono check specifici del progetto |
 | `workflows.md` | No | Diagrammi universali, non modificare |
@@ -321,20 +319,21 @@ Si attiva automaticamente quando il contesto riguarda UI/UX, oppure manualmente:
 
 | Comando | Cosa fa |
 |---------|---------|
-| `/ui-craft generate` | Genera stile visivo con sistema fuzzy weights (safe/chaos/hybrid) |
-| `/ui-craft establish` | Crea tokens.css + design-system.html |
+| `/ui-craft setup` | Genera stile visivo + crea tokens.css + design-system.html (safe/chaos/hybrid) |
+| `/ui-craft extract` | Estrae design system da codice esistente → tokens.css + report |
+| `/ui-craft preview` | Apri design-system.html per validazione visiva |
+| `/ui-craft build [type]` | Genera pagina completa (entry/discovery/detail/action/management/system) |
 | `/ui-craft apply` | Applica il design system durante la generazione |
 | `/ui-craft audit` | Verifica accessibilità e coerenza |
 | `/ui-craft research [topic]` | Ricerca prima di progettare |
 | `/ui-craft polish` | Rifinitura finale |
-| `/ui-craft extract [name]` | Salva un pattern riutilizzabile |
+| `/ui-craft save-pattern [name]` | Salva un pattern riutilizzabile |
 | `/ui-craft reference [pattern]` | Consulta riferimenti visivi curati |
 | `/ui-craft compliance` | Audit compliance design system su tutto il codebase |
 | `/ui-craft migrate [pattern]` | Migrazione sistematica di un pattern |
-| `/ui-craft preview` | Apri design-system.html per validazione visiva |
-| `/ui-craft test-system` | Genera pagine HTML statiche per testare il design system |
-| `/ui-craft map-sitemap` | Mappa route progetto → archetipi pagina |
-| `/ui-craft archetype [type]` | Genera template completo per un archetipo |
+| `/ui-craft analyze-project` | Analizza codebase esistente, crea project-map.md |
+| `/ui-craft migrate-project` | Guida migrazione sistematica al design system |
+| `/ui-craft migration-status` | Stato migrazione in corso |
 
 **Generative System:** La skill include un sistema di generazione stili basato su:
 - **Matrici fuzzy weights** — Profili per tipo (25), industria (40+), target (7 dimensioni)
@@ -360,9 +359,11 @@ Framework di sviluppo agnostico con pattern core universali e generazione dinami
 | `/dev-patterns api` | REST/GraphQL design patterns |
 | `/dev-patterns testing` | TDD, coverage, mocking |
 | `/dev-patterns security` | Checklist sicurezza |
+| `/dev-patterns caching` | Strategie di caching |
+| `/dev-patterns error-handling` | Gestione errori |
 | `/dev-patterns stack` | Pattern specifici del tuo stack |
 | `/dev-patterns review` | Code review con checklist |
-| `/dev-patterns checklist [type]` | Carica checklist (pre-deploy, refactoring) |
+| `/dev-patterns checklist [type]` | Carica checklist (pre-deploy, refactoring, code-review, security) |
 
 **Architettura a due livelli:**
 1. **Core agnostico** — Principi universali sempre disponibili (SOLID, API design, testing, security, error handling, caching)
@@ -381,7 +382,8 @@ Analisi di sicurezza specifica per codice AI-generated. Rileva vulnerabilità ti
 | `/security-guardian secrets` | Scansione credenziali e segreti |
 | `/security-guardian baas [provider]` | Audit configurazione BaaS (Supabase/Firebase) |
 | `/security-guardian status` | Stato sicurezza dei file tracciati |
-| `/security-guardian report [format]` | Genera report (sarif/markdown/json) |
+| `/security-guardian report [format]` | Genera report (markdown/json/sarif) |
+| `/security-guardian reset [path]` | Reset iteration tracking dopo review umana |
 | `/security-guardian config` | Configura impostazioni |
 
 **Funzionalità:** Pattern OWASP Top 10, rilevamento credenziali hardcoded, audit BaaS, tracciamento iteration degradation, rilevamento logic inversion
@@ -406,18 +408,18 @@ Contenuti ottimizzati per search engine tradizionali (Google, Bing) e AI search 
 
 #### Video-Craft
 
-Generazione video programmatica. Genera pagine HTML con CSS animations, cattura frame-by-frame via Web Animations API, e codifica in MP4 con FFmpeg.
+Generazione video programmatica. Segue un workflow cinematografico: Pre-production → Screenplay → Storyboard → Direction → Production.
 
 | Comando | Cosa fa |
 |---------|---------|
-| `/video-craft create` | Flusso guidato — crea un video interattivamente |
-| `/video-craft render <file>` | Renderizza video da HTML o config YAML |
-| `/video-craft storyboard <file>` | Preview testuale dello storyboard |
-| `/video-craft validate <file>` | Controlla errori nella config |
+| `/video-craft create` | Flusso guidato — crea un video interattivamente (4 fasi) |
+| `/video-craft render <file.html>` | Renderizza video da HTML config |
 | `/video-craft formats` | Lista formati disponibili |
 | `/video-craft entrances` | Lista animazioni entrance disponibili |
 
-**Caratteristiche:** 131 animazioni, 4 modi (safe/chaos/hybrid/cocomelon), timing automatico, integrazione ui-craft + seo-geo-copy, director system (content-aware animation), scene templates, choreography system
+**Workflow:** Claude fa lo sceneggiatore (analizza source, struttura scene, scrive copy con seo-geo-copy), poi autogen genera HTML, director assegna animazioni, capture engine produce MP4.
+
+**Caratteristiche:** 131 animazioni, 4 modi (safe/chaos/hybrid/cocomelon), timing automatico, integrazione ui-craft + seo-geo-copy, director system (content-aware animation)
 
 **Requisiti di sistema:** FFmpeg installato (`ffmpeg` nel PATH)
 
@@ -425,7 +427,7 @@ Generazione video programmatica. Genera pagine HTML con CSS animations, cattura 
 
 #### AudioSculpt
 
-Generazione audio programmatica (soundtrack + SFX) con Tone.js. Due engine: Text2midi (AI-generated MIDI → Tone.js rendering) o sintesi Tone.js diretta. Output: blocco `<script>` self-contained.
+Generazione audio programmatica (soundtrack + SFX) con Strudel (TidalCycles per JavaScript). Output: blocco `<script>` self-contained per playback nel browser.
 
 | Comando | Cosa fa |
 |---------|---------|
@@ -433,9 +435,13 @@ Generazione audio programmatica (soundtrack + SFX) con Tone.js. Due engine: Text
 | `/audiosculpt add-to-video <html>` | Inietta audio in un webvideo video-craft esistente |
 | `/audiosculpt preview <style>` | Genera pagina HTML con demo 15s di uno stile |
 | `/audiosculpt styles` | Lista i 20 stili soundtrack disponibili |
-| `/audiosculpt setup` | Installa engine Text2midi (opzionale, richiede Python + GPU) |
+| `/audiosculpt create --template <id>` | Usa un template parametrico per generazione rapida |
+| `/audiosculpt create --narration` | Abilita narrazione TTS (integrazione video-craft) |
+| `/audiosculpt add-narration <html>` | Aggiunge narrazione a HTML esistente |
 
-**Caratteristiche:** 20 stili in 4 famiglie (tonal/modal/loop/experimental + horror hybrid), 6 famiglie SFX, 31 strumenti campionati con fallback FM, 45 patch FM, regole per-famiglia (contrappunto, armonia funzionale, orchestrazione, forma tematica, densità orchestrale, quantizzazione temporale video→musica). Integrazione video-craft.
+**Caratteristiche:** 20 stili in 4 famiglie (tonal/modal/loop/experimental + horror hybrid), 6 famiglie SFX, 6 template parametrici (tech_promo, epic_trailer, chill_lifestyle, corporate_safe, hype_social, luxury_minimal), regole per-famiglia (voice leading, armonia funzionale, orchestrazione, forma tematica, soft constraints spettrali, quantizzazione temporale video→musica). Impact Frame per hook immediato. Voiceover Mode con frequency splitting. TTS narration con Edge-TTS. Integrazione video-craft.
+
+**Requisiti opzionali:** `pip install edge-tts` per narrazione TTS
 
 **Attivazione:** audio generation, soundtrack, sound effects, music, audio for video
 

@@ -7,9 +7,7 @@ Programmatic video generation from design system + content. Generates purpose-bu
 | Command | What it does |
 |---------|-------------|
 | `/video-craft create` | **Guided flow** — interactively create a video from a folder, URL, or manual input |
-| `/video-craft render <config.yaml>` | Render video from YAML config |
-| `/video-craft storyboard <config.yaml>` | Generate text storyboard preview without rendering |
-| `/video-craft validate <config.yaml>` | Check config for errors |
+| `/video-craft render <file.html>` | Render video from HTML config |
 | `/video-craft formats` | List format presets |
 | `/video-craft entrances` | List all available entrances |
 
@@ -39,109 +37,243 @@ npx tsx .claude/skills/video-craft/engine/src/index.ts <command> [args]
 
 ## Guided Flow (`/video-craft create`)
 
-When the user runs `/video-craft create`, follow this interactive process step by step. Use `AskUserQuestion` for each step.
+The workflow follows a filmmaking process: **Pre-production → Screenplay → Storyboard → Direction → Production**.
 
-### Step 1: Source
+Use `AskUserQuestion` for each interactive step.
+
+---
+
+### PHASE 1: PRE-PRODUCTION
+
+#### Step 1.1: Source
 
 Ask the user where the content comes from:
 
-- **from-folder `<path>`** — Analyze a local project/site folder. The user provides a path. Run: `npx tsx .claude/skills/video-craft/engine/src/index.ts analyze-folder <path>` to extract content. Read the JSON output.
-- **from-url `<url>`** — Fetch and analyze a live URL. Run: `npx tsx .claude/skills/video-craft/engine/src/index.ts analyze-url <url>`. Read the JSON output.
-- **manual** — The user will describe the content in chat. Ask them: project name, description, key features (3-6), call to action text.
+- **from-folder `<path>`** — Analyze a local project/site folder
+- **from-url `<url>`** — Fetch and analyze a live URL
+- **manual** — User describes content in chat
 
-After analysis, show the user a brief summary of what was found:
-- Project name
-- Description
-- Number of features/sections found
-- Colors/fonts detected (if any)
-- Images found (if any)
+**For folder/URL:** Run the analyzer and **read the ENTIRE source material** (not just the JSON summary):
+```bash
+npx tsx .claude/skills/video-craft/engine/src/index.ts analyze-folder <path>
+```
 
-Ask: "Does this look right? Anything to add or change?"
+The JSON output is a starting point, but you MUST also read the original files (README, docs, etc.) to understand:
+- What is the core value proposition?
+- What are ALL the features (not just the first 3-4)?
+- What problems does it solve?
+- Who is the target audience?
+- What makes it unique vs competitors?
 
-### Step 1b: Design System
+Show the user a comprehensive summary and ask: "Does this capture everything important? Anything missing?"
 
-After analyzing the source, check for an existing ui-craft design system:
+#### Step 1.2: Design System
 
-1. Look for `<project-folder>/.ui-craft/tokens.css` (or legacy `system.md`)
-2. **If found** → read it, inform the user: "Found an existing design system — the video will use your brand colors, fonts, and tokens."
-3. **If NOT found** → invoke `/ui-craft extract` on the project folder so ui-craft analyzes the project and creates a design system. Then inform the user: "Created a design system from your project — the video will match your brand."
+Check for existing ui-craft design system:
+1. Look for `<project-folder>/.ui-craft/tokens.css`
+2. **If found** → inform user: "Found existing design system — video will use your brand."
+3. **If NOT found** → invoke `/ui-craft extract` to create one.
 
-The design system ensures the video is visually coherent with the project's brand identity (colors, typography, spacing). Pass `--design-system=` pointing to the `.ui-craft/` directory or directly to `tokens.css`.
+#### Step 1.3: Output Location
 
-### Step 2: Video Intent
+Ask where to save generated files:
+- **Project folder** — e.g., `<project>/video/`
+- **Current directory**
+- **Custom path**
 
-Ask what the video is for:
+#### Step 1.4: Video Parameters
+
+Collect in sequence:
+
+**Intent:**
 - Product launch / feature showcase
 - Social media promo (Instagram/TikTok/YouTube Shorts)
 - Explainer / tutorial teaser
 - Portfolio / case study
-- Custom (user describes)
+- Custom
 
-### Step 3: Format
+**Format** (suggest based on intent):
+- `horizontal-16x9` (1920x1080) — YouTube, presentations
+- `vertical-9x16` (1080x1920) — Reels, TikTok, Shorts
+- `vertical-4x5` (1080x1350) — Instagram feed
+- `square-1x1` (1080x1080) — Instagram, Twitter
 
-Suggest a format based on intent (social → vertical-9x16, presentation → horizontal-16x9, generic → square-1x1), then let user confirm or change:
-- `vertical-9x16` (1080x1920 — Instagram Reels, TikTok, YouTube Shorts)
-- `vertical-4x5` (1080x1350 — Instagram feed)
-- `horizontal-16x9` (1920x1080 — YouTube, presentations)
-- `square-1x1` (1080x1080 — Instagram feed, Twitter)
+**Style:**
+- **safe** — Clean, corporate, professional
+- **hybrid** — Clean base + one surprise per scene
+- **chaos** — Dynamic, experimental, random
+- **cocomelon** — Neuro-optimized, pattern interrupts, dopamine loops
 
-### Step 4: Style
-
-Ask mode preference:
-- **safe** — Clean, corporate, professional animations
-- **chaos** — Dynamic, experimental, random animation picks
-- **hybrid** — Clean base with one surprise element per scene
-- **cocomelon** — Hyper-engaging neuro-optimized mode. Uses pattern interrupts, dopamine micro-loops, high contrast, aggressive pacing, and arousal arc (arrest→escalate→climax→descend→convert). Best for ads, promos, social media hooks
-
-### Step 5: Speed
-
-Ask pacing:
-- **slow** — More reading time, relaxed pace
+**Speed:**
+- **slow** — Relaxed, more reading time
 - **normal** — Balanced
-- **fast** — Punchy, social-optimized, quick cuts
+- **fast** — Punchy, quick cuts
 
-### Step 6: Generate & Review
+---
 
-Generate the YAML config. **IMPORTANT: Do NOT copy-paste text from the source.** The extracted content is *context*, not copy.
+### PHASE 2: SCREENPLAY (Sceneggiatura)
 
-**Before writing texts, invoke `/seo-geo-copy`** to apply persuasive copywriting principles. Use it to craft:
-- Short, punchy phrases optimized for visual impact (not full sentences from a README)
-- Headlines that work as video titles — clear value proposition, emotional hook
-- CTAs that drive action for the specific video intent and platform
-- Copy adapted to the target audience and video format
+This is where Claude acts as the **screenwriter**. The goal: transform raw content into a structured narrative with compelling copy.
 
-The source project/site content is never modified — the YAML is a separate document with its own copy.
+#### Step 2.1: Scene Structure
 
-Generate the YAML directly using your knowledge of the config schema, the extracted content, and seo-geo-copy principles (preferred — you write better copy than the algorithm). You can also use the CLI as a scaffold: save the extracted content JSON to a temp file, run `npx tsx .claude/skills/video-craft/engine/src/index.ts autogen <json> --format=<chosen-format> --mode=X --speed=X --intent=X --design-system=<path-to-tokens.css>`, then **rewrite all texts** applying seo-geo-copy.
+Based on the source material analysis, design the scene structure:
 
-**CRITICAL:** Always pass `--format=` with the exact format the user chose (e.g. `horizontal-16x9`). If omitted, the default is `vertical-9x16` and the video will be portrait. Also pass `--design-system=` pointing to the ui-craft `tokens.css` (or the `.ui-craft/` directory) if one exists. When writing YAML manually, ensure `video.format` matches the user's choice exactly.
+1. **Identify key messages** — What MUST be in the video? (core value, differentiators, proof points)
+2. **Map to scene types** — Hook, problem, solution, features, proof, CTA
+3. **Decide scene count** — Based on content depth and video intent (social = 4-6 scenes, presentation = 6-10)
 
-**Show the full YAML to the user.** Explain each scene briefly. The user reviews and can adjust any text before rendering.
+Present the scene outline to the user:
+```
+Scene 1 (Hook): [provocative question or statement]
+Scene 2 (Problem): [pain point]
+Scene 3 (Solution): [product intro]
+Scene 4 (Feature): [key capability 1]
+Scene 5 (Feature): [key capability 2]
+Scene 6 (Proof): [benchmarks/social proof]
+Scene 7 (CTA): [call to action]
+```
 
-Ask: "Ready to render? Or want to adjust anything?"
+Ask: "Does this structure work? Want to add/remove/reorder scenes?"
 
-### Step 7: Render
+#### Step 2.2: Copywriting
 
-On approval:
-1. Save the YAML config to a file (e.g., `video-config.yaml` in the project root or a location the user specifies)
-2. Run: `npx tsx .claude/skills/video-craft/engine/src/index.ts render <config.yaml>`
-3. Report the output path and stats when done.
+Ask the user: **"Do you want me to invoke `/seo-geo-copy` to optimize the video text?"**
+
+- **Yes** → Invoke `/seo-geo-copy` with:
+  - Video intent and target platform
+  - Source content summary
+  - Scene structure
+  - Request: punchy headlines, emotional hooks, action-oriented CTAs
+
+- **No** → Use source text as-is (shortened for video)
+
+**Write the copy for each scene:**
+- Headlines: 3-8 words, clear value prop
+- Body text: 10-20 words max per element
+- CTAs: action verbs, urgency
+
+Show the complete screenplay to the user:
+```
+Scene 1: "Hook"
+  - Heading: "What if 100 AI agents worked for you?"
+
+Scene 2: "The Problem"
+  - Heading: "One task. One agent. One bottleneck."
+  - Text: "Sequential execution is holding you back"
+
+Scene 3: "The Solution"
+  - Heading: "Kimi K2.5"
+  - Text: "The world's first agentic swarm AI"
+
+[...etc for all scenes...]
+```
+
+Ask: "Happy with the screenplay? Any text changes?"
+
+---
+
+### PHASE 3: STORYBOARD
+
+#### Step 3.1: Generate HTML
+
+Build the content JSON from the approved screenplay:
+```json
+{
+  "source": "manual",
+  "projectName": "...",
+  "description": "...",
+  "features": ["feature 1 as string", "feature 2 as string", ...],
+  "headings": ["scene 1 heading", "scene 2 heading", ...],
+  "heroText": "hook headline",
+  "ctaText": "CTA text",
+  "techStack": [...],
+  "colors": [...],
+  "fonts": [],
+  "images": [],
+  "sections": [
+    {"title": "scene title", "body": "scene body text"},
+    ...
+  ],
+  "raw": {}
+}
+```
+
+**CRITICAL:** The content JSON must contain ALL the scenes from the screenplay. If you wrote 8 scenes, the JSON must have enough features/sections/headings to generate 8 scenes.
+
+Run autogen:
+```bash
+npx tsx .claude/skills/video-craft/engine/src/index.ts autogen <content.json> \
+  --format=<format> \
+  --mode=<mode> \
+  --speed=<speed> \
+  --intent=<intent> \
+  --design-system=<path-to-tokens.css> \
+  > <output-dir>/video-config.html
+```
+
+#### Step 3.2: Verify Storyboard
+
+Parse the generated HTML to verify it matches the screenplay:
+- Count scenes (look for `<!-- @scene name="..." -->` comments)
+- Extract headings and text from each scene div
+- Compare with approved screenplay
+
+If autogen produced fewer scenes than the screenplay:
+- The content JSON was insufficient
+- Add more features/sections to match the screenplay
+- Re-run autogen
+
+Show the user the storyboard summary:
+```
+Generated 7 scenes (21.3s total):
+  1. "Hook" (4.0s) — "What if 100 AI agents..."
+  2. "The Problem" (4.0s) — "One task. One agent..."
+  [...]
+```
+
+Ask: "Storyboard matches the screenplay. Ready to render?"
+
+---
+
+### PHASE 4: DIRECTION & PRODUCTION
+
+#### Step 4.1: Render
+
+The director (internal to autogen) has already assigned animations. Now render:
+
+```bash
+npx tsx .claude/skills/video-craft/engine/src/index.ts render <output-dir>/video-config.html
+```
+
+Report output path and stats when done.
 
 ---
 
 ## How It Works
 
-1. Read YAML config defining scenes and content
-2. Read design system tokens (optional ui-craft integration)
-3. Compute timing from text word count + speed preset
-4. Generate self-contained HTML with CSS @keyframes animations
-5. Launch Playwright headless, pause all animations
-6. For each frame: set `animation.currentTime` via Web Animations API, screenshot, pipe to FFmpeg
-7. FFmpeg encodes to MP4 (h264/h265/av1)
+**Filmmaking workflow:**
+
+| Phase | What happens | Who does it |
+|-------|--------------|-------------|
+| **Pre-production** | Analyze source, collect video params | Claude + user |
+| **Screenplay** | Design scene structure, write copy | Claude + seo-geo-copy |
+| **Storyboard** | Generate HTML, verify scenes | autogen |
+| **Direction** | Assign animations, timing, easing | director.ts (internal) |
+| **Production** | Render frame-by-frame | Playwright + FFmpeg |
+
+**Technical flow:**
+1. Claude reads 100% of source material, identifies key messages
+2. Claude writes screenplay (scene structure + copy, optionally via seo-geo-copy)
+3. Claude builds content JSON matching the screenplay
+4. `autogen` generates HTML (calls director internally for animations)
+5. Playwright captures frames via Web Animations API
+6. FFmpeg encodes to MP4 (h264/h265/av1)
 
 ## Key Concepts
 
 - **NOT a screen recorder** — generates original video content
+- **HTML-based config** — self-contained HTML with embedded CSS animations and `<!-- @video ... -->` metadata
 - **Web Animations API** — deterministic frame capture (NOT frozen clock — `page.clock.fastForward()` does not advance CSS animation time)
 - **Content-driven timing** — duration computed from word count
 - **Four modes**: safe (corporate), chaos (experimental), hybrid (safe + one breaker), cocomelon (neuro-hijack)
@@ -157,10 +289,12 @@ On approval:
 /video-craft create
 
 # Direct CLI (from project root)
-npx tsx .claude/skills/video-craft/engine/src/index.ts render config.yaml
-npx tsx .claude/skills/video-craft/engine/src/index.ts storyboard config.yaml
+npx tsx .claude/skills/video-craft/engine/src/index.ts render video-config.html
 npx tsx .claude/skills/video-craft/engine/src/index.ts analyze-folder ./my-project
 npx tsx .claude/skills/video-craft/engine/src/index.ts analyze-url https://example.com
+npx tsx .claude/skills/video-craft/engine/src/index.ts autogen content.json --format=horizontal-16x9 --mode=hybrid
+npx tsx .claude/skills/video-craft/engine/src/index.ts formats
+npx tsx .claude/skills/video-craft/engine/src/index.ts entrances
 ```
 
 ## Reference
@@ -182,7 +316,6 @@ npx tsx .claude/skills/video-craft/engine/src/index.ts analyze-url https://examp
 - Config schema: `.claude/skills/video-craft/engine/src/config.ts`
 - Capture (Playwright frame capture): `.claude/skills/video-craft/engine/src/capture.ts`
 - Encode (FFmpeg): `.claude/skills/video-craft/engine/src/encode.ts`
-- Storyboard: `.claude/skills/video-craft/engine/src/storyboard.ts`
 - Folder analysis: `.claude/skills/video-craft/engine/src/analyze-folder.ts`
 - URL analysis: `.claude/skills/video-craft/engine/src/analyze-url.ts`
 - Config generation: `.claude/skills/video-craft/engine/src/autogen.ts`
