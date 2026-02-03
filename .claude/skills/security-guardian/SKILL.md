@@ -174,11 +174,11 @@ Show security status for tracked files.
 
 Generate security report.
 
-**Formats**: `text` (default), `json`, `sarif`
+**Formats**: `markdown` (default), `json`, `sarif`
 
 **Use cases**:
+- Documentation and review (Markdown)
 - GitHub Security integration (SARIF)
-- Documentation (Markdown)
 - CI/CD pipelines (JSON)
 
 ### `/security-guardian config`
@@ -189,6 +189,20 @@ Configure skill settings.
 - `--strict`: Block on HIGH severity (default: only CRITICAL)
 - `--quiet`: Suppress INFO messages
 - `--ignore <pattern>`: Add ignore pattern
+
+### `/security-guardian reset [path]`
+
+Reset iteration tracking for a file after human review.
+
+**Usage**:
+```bash
+/security-guardian reset src/auth/login.ts
+/security-guardian reset src/  # Reset all files in directory
+```
+
+**Purpose**: After a human has reviewed a file with high iteration count, reset the counter to acknowledge the review. This clears the iteration warning without dismissing the underlying research findings.
+
+**Note**: This only resets iteration tracking. Any vulnerability findings remain in the findings log.
 
 ---
 
@@ -432,7 +446,7 @@ if (user.active === false && user.role === 'admin') {
 
 **Output**:
 ```
-CRITICAL [BAC-003] Potential logic inversion - deactivated user granted admin access
+HIGH [BAC-003] Potential logic inversion - deactivated user granted admin access
 
 Location: src/auth/permissions.ts:45
 CWE: CWE-284 (Improper Access Control)
@@ -445,10 +459,7 @@ Did you mean?
 
 Reference: arXiv:2506.11022 - Logic inversions are a common AI code pattern
 
-Operation BLOCKED. Verify the logic is intentional.
-
-Note: In default mode, HIGH findings show a warning but allow the operation.
-Use `--strict` to also block on HIGH severity.
+[Operation proceeds with warning - use --strict to block on HIGH severity]
 ```
 
 ### Example 3: Iteration Warning

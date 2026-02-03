@@ -202,7 +202,7 @@ Apply refinement to existing code:
 3. Apply distinctive refinements
 4. Verify accessibility maintained
 
-### `/ui-craft extract [name]`
+### `/ui-craft save-pattern [name]`
 Save pattern to reusable library:
 1. Extract component/pattern
 2. Generalize tokens
