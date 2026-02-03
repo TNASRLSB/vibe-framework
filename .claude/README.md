@@ -36,6 +36,7 @@ progetto/
     │   ├── glossary.md       # Terminologia condivisa tra le skill
     │   ├── checklist.md      # Verifica pre-commit
     │   ├── workflows.md      # Diagrammi di flusso decisionali (Mermaid)
+    │   ├── request-log.md    # Registro incrementale richieste utente
     │   ├── visual-composition-principles.md  # Principi composizione visiva condivisi
     │   ├── specs/            # Specifiche feature (prima di implementare)
     │   └── session-notes/    # Post-mortem delle sessioni complesse
@@ -233,6 +234,32 @@ Crea `.ui-craft/project-map.md` con:
 
 ## Come funziona
 
+### First Run (Primo avvio)
+
+Quando il framework viene usato per la prima volta su un progetto (registry vuoto + request-log vuoto):
+
+1. **Claude si presenta** — Spiega cos'è il framework e cosa può fare
+2. **Rimanda alla documentazione** — Indica di leggere `.claude/README.md`
+3. **Aspetta conferma** — Prima di procedere con qualsiasi richiesta
+
+Questo assicura che l'utente capisca cosa ha davanti prima di iniziare a lavorare.
+
+### Request Logging
+
+Ogni richiesta che modifica il codebase viene registrata in `.claude/docs/request-log.md`:
+
+| Campo | Descrizione |
+|-------|-------------|
+| `#` | Numero progressivo |
+| `Data` | YYYY-MM-DD |
+| `Ora` | HH:MM |
+| `Tipologia` | Feature, Bug fix, Refactoring, Research, Config, Doc |
+| `Descrizione` | Breve sommario della richiesta |
+| `Doc riferimento` | Link alla spec (se non banale) |
+| `Stato` | in sospeso, in corso, completato, annullato |
+
+**Non vengono loggate:** domande semplici, letture file, richieste di chiarimento.
+
 ### Flusso di lavoro standard
 
 1. **Claude legge `CLAUDE.md`** all'inizio della sessione (automatico).
@@ -243,24 +270,29 @@ Crea `.ui-craft/project-map.md` con:
    - `.claude/docs/glossary.md` — Terminologia condivisa
    - `.claude/docs/workflows.md` — Diagrammi di flusso per decisioni complesse
 
-3. **Per modifiche non banali**, Claude:
+3. **Quando riceve una richiesta di lavoro**, Claude:
+   - Aggiunge entry a `.claude/docs/request-log.md` con stato `in corso`
+   - Se non banale, crea prima la spec e aggiunge il riferimento al log
+
+4. **Per modifiche non banali**, Claude:
    - Cerca soluzioni esistenti nel registry e nel codebase
    - Crea una spec in `.claude/docs/specs/[nome].md`
    - Aspetta approvazione ("PROCEED")
    - Implementa
 
-4. **Quando l'implementazione deraglia** (2+ tentativi falliti):
+5. **Quando l'implementazione deraglia** (2+ tentativi falliti):
    - Si ferma
    - Crea nuova spec analizzando cosa è andato storto
    - Ripianifica da zero
    - Aspetta nuovo "PROCEED"
 
-5. **Dopo aver implementato**, Claude:
+6. **Dopo aver implementato**, Claude:
    - Aggiorna il registry con nuovi componenti
    - Registra decisioni architetturali rilevanti
+   - Aggiorna request-log.md con stato `completato`
    - Esegue la checklist pre-commit
 
-6. **A fine sessione** (se la sessione è stata complessa):
+7. **A fine sessione** (se la sessione è stata complessa):
    - Crea note in `.claude/docs/session-notes/[data]-[topic].md`
    - Aggiorna CLAUDE.md se ha scoperto nuovi failure mode
 
