@@ -3,6 +3,7 @@
 
 import type { SpeedPreset } from './presets.js';
 import { MS_PER_WORD, INTER_ELEMENT_GAP, ENTRANCE_SPEED_MULTIPLIERS } from './presets.js';
+import { calculateStaggerDelays, type StaggerPattern } from './choreography.js';
 
 const MIN_HOLD_TIME = 500;
 const ENTRANCE_PADDING = 500;
@@ -42,26 +43,67 @@ export interface ElementTimingInput {
   explicitDuration?: number;     // element-level duration override
 }
 
+export interface SceneTimingOptions {
+  /** Override inter-element gap with scene-type stagger delay */
+  sceneStaggerDelayMs?: number;
+  /** Stagger pattern from composition.ts scene type */
+  staggerPattern?: StaggerPattern;
+  /** Micro-pause after first heading (from choreography plan) */
+  microPauseMs?: number;
+  /** Whether first element is a heading (for micro-pause) */
+  firstElementIsHeading?: boolean;
+}
+
 export function computeSceneTiming(
   elements: ElementTimingInput[],
   speed: SpeedPreset,
   entranceSpeed: SpeedPreset,
   transitionOutDuration: number,
   explicitSceneDuration?: number,
+  options?: SceneTimingOptions,
 ): SceneTiming {
   const speedMult = ENTRANCE_SPEED_MULTIPLIERS[entranceSpeed];
-  const gap = INTER_ELEMENT_GAP[speed];
+  const defaultGap = INTER_ELEMENT_GAP[speed];
+  const gap = options?.sceneStaggerDelayMs ?? defaultGap;
+  const pattern = options?.staggerPattern;
+  const microPauseMs = options?.microPauseMs ?? 0;
+  const firstIsHeading = options?.firstElementIsHeading ?? false;
+
+  // For non-cascade patterns, use parallel model (stagger delays from ENTRANCE_PADDING)
+  const useParallelModel = pattern && pattern !== 'cascade-down' && pattern !== 'none';
+  const staggerDelays = useParallelModel
+    ? calculateStaggerDelays(pattern, elements.length, gap)
+    : null;
 
   let cursor = ENTRANCE_PADDING;
   const computed: ElementTiming[] = [];
 
-  for (const el of elements) {
+  for (let i = 0; i < elements.length; i++) {
+    const el = elements[i];
     const entranceDuration = Math.round(el.entranceDurationBase * speedMult);
     const holdTime = el.explicitHold ?? computeHoldTime(el.text, speed);
     const exitDuration = Math.round(el.exitDurationBase * speedMult);
     const extraDelay = el.explicitDelay ?? 0;
 
-    const startTime = cursor + extraDelay;
+    let startTime: number;
+    if (staggerDelays) {
+      // Parallel model: all elements start from ENTRANCE_PADDING + their stagger offset
+      startTime = ENTRANCE_PADDING + staggerDelays[i] + extraDelay;
+    } else {
+      // Sequential model (cascade-down or no pattern): cursor-based
+      startTime = cursor + extraDelay;
+    }
+
+    // Micro-pause: add extra delay after the first heading
+    if (i === 1 && firstIsHeading && microPauseMs > 0) {
+      if (staggerDelays) {
+        startTime += microPauseMs;
+      } else {
+        cursor += microPauseMs;
+        startTime = cursor + extraDelay;
+      }
+    }
+
     const endTime = startTime + entranceDuration + holdTime + exitDuration;
 
     computed.push({
@@ -73,7 +115,9 @@ export function computeSceneTiming(
       endTime,
     });
 
-    cursor = startTime + entranceDuration + gap;
+    if (!staggerDelays) {
+      cursor = startTime + entranceDuration + gap;
+    }
   }
 
   // Scene ends after last element finishes + exit padding

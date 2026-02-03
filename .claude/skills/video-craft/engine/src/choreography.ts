@@ -267,8 +267,8 @@ export function getCompositionCSS(
   switch (composition) {
     case 'off-center-focal':
       return isVertical
-        ? `align-items: flex-start; padding-left: 12%; text-align: left;`
-        : `align-items: flex-start; padding-left: 15%; text-align: left;`;
+        ? `align-items: flex-start; padding-left: 8%; text-align: left;`
+        : `align-items: flex-start; padding-left: 8%; text-align: left;`;
 
     case 'asymmetric-split':
       return isVertical
@@ -277,7 +277,8 @@ export function getCompositionCSS(
 
     case 'layered-depth':
       // Depth handled via pseudo-elements in scene generation
-      return `position: relative;`;
+      // Do NOT emit position — it breaks scene stacking (scenes use position: absolute)
+      return ``;
 
     case 'diagonal-flow':
       return isVertical
@@ -289,14 +290,14 @@ export function getCompositionCSS(
 
     case 'right-aligned':
       return isVertical
-        ? `align-items: flex-end; padding-right: 12%; text-align: right;`
-        : `align-items: flex-end; padding-right: 15%; text-align: right;`;
+        ? `align-items: flex-end; padding-right: 5%; text-align: right;`
+        : `align-items: flex-end; padding-right: 5%; text-align: right;`;
 
     case 'bottom-anchored':
-      return `display: grid; grid-template-rows: 2fr auto 0.5fr; align-items: end; padding-bottom: 8%;`;
+      return `justify-content: flex-end; padding-bottom: 8%;`;
 
     case 'top-anchored':
-      return `display: grid; grid-template-rows: 0.5fr auto 2fr; align-items: start; padding-top: 8%;`;
+      return `justify-content: flex-start; padding-top: 8%;`;
 
     case 'full-bleed-text':
       return `align-items: center; justify-content: center; text-align: center; padding: 0;`;

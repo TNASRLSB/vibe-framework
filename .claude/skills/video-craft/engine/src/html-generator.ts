@@ -8,7 +8,7 @@ import { FORMAT_PRESETS } from './presets.js';
 import type { AnimationDef } from './actions.js';
 import type { DesignTokens } from './ux-bridge.js';
 import {
-  getLayoutProfile, autoSelectLayout, computeCardGridColumns,
+  getLayoutProfile, autoSelectLayout, computeCardGridColumns, computeEffectiveCardMaxWidth,
   type LayoutProfile, type LayoutMode, type ElementInfo,
 } from './layout-profiles.js';
 import {
@@ -102,6 +102,7 @@ ${tokensCss}
 }
 
 body {
+  position: relative; /* scenes use position: absolute and reference body */
   width: ${width}px;
   height: ${height}px;
   overflow: hidden;
@@ -360,11 +361,11 @@ body {
 }
 ${namedColors.length > 0 ? namedColors.map((c, i) => `.el-card:nth-child(${namedColors.length}n+${i + 1}) { border-left: 8px solid ${c.value}; }`).join('\n') : ''}
 
-/* In card-row layout, cards share space */
+/* In card-row layout, cards share space — max-width from CSS var (set per-scene) */
 .scene.layout-card-row .el-card {
   flex: 1 1 0;
   ${p.cardMinWidth > 0 ? `min-width: ${p.cardMinWidth}px;` : ''}
-  ${p.cardMaxWidth < 9000 ? `max-width: ${p.cardMaxWidth}px;` : 'max-width: 400px;'}
+  max-width: var(--card-max-width, ${p.cardMaxWidth < 9000 ? p.cardMaxWidth : 400}px);
 }
 
 .el-card .card-icon { font-size: ${p.cardIconSize}px; margin-bottom: 12px; }
@@ -560,7 +561,9 @@ function generateSceneHTML(
   const accentColor = tokens?.colorAccent ?? tokens?.colorPrimary ?? '#6366f1';
   const depthLayerHtml = getDepthLayerHTML(bgAnimType, accentColor);
 
-  const zIndex = `z-index: ${scene.sceneIndex + 1};`;
+  // Do NOT set z-index inline — scenes use position: absolute and stacking is
+  // controlled by DOM order + the scene-reveal animation timing
+  const zIndex = '';
 
   // Extract animation value from bgAnimCSS and combine with scene-reveal
   // to avoid one overwriting the other
@@ -593,12 +596,24 @@ function generateSceneHTML(
 
     const cardHtml = cardElements.flatMap(el => generateCardElements(el, tokens)).join('\n        ');
 
+    // Count actual individual cards (card-group expands into N cards)
+    const actualCardCount = cardElements.reduce((n, el) => {
+      if (el.element.type === 'card-group') return n + (el.element.items?.length ?? 1);
+      return n + 1;
+    }, 0);
+
     const gridCols = layoutMode === 'card-grid'
-      ? `grid-template-columns: ${computeCardGridColumns(profile, cardElements.length)};`
+      ? `grid-template-columns: ${computeCardGridColumns(profile, actualCardCount)};`
+      : '';
+
+    // Compute effective card max-width to prevent overflow
+    const effectiveMaxW = computeEffectiveCardMaxWidth(profile, actualCardCount, config.video.format);
+    const cardMaxWidthStyle = layoutMode === 'card-row'
+      ? `--card-max-width: ${effectiveMaxW}px;`
       : '';
 
     elementsHtml = `${nonCardHtml}
-      <div class="cards-container" style="${gridCols}">
+      <div class="cards-container" style="${gridCols}${cardMaxWidthStyle}">
         ${cardHtml}
       </div>`;
   } else {

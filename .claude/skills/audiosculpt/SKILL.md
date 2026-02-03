@@ -714,14 +714,116 @@ Insert before `</body>`:
 
 ## Audio Report
 
-Every time audiosculpt generates audio, produce a companion **HTML** report saved alongside the output. The report includes visual score rendering (piano roll + staff notation).
+Every time audiosculpt generates audio, produce a companion **HTML** report saved alongside the output. The report includes:
+- Visual score rendering (piano roll + staff notation in a unified panel)
+- **Live audio playback** with Tone.js
+- **Animated playhead** synchronized to both visualizations
 
 **File naming:** `<output-name>-audio-report.html` (e.g., `promo-v2-audio-report.html`)
 
+### Required CDN Includes
+
+```html
+<script src="https://unpkg.com/tone"></script>
+<script src="https://cdn.jsdelivr.net/npm/abcjs@6.4.1/dist/abcjs-basic-min.js"></script>
+```
+
+### Layout Structure
+
+**Toggle buttons** in the header bar: **Score** | Instruments | SFX Events | Master Chain
+
+The **Score** panel is a unified view containing both visualizations stacked vertically:
+- Piano Roll SVG (top)
+- Staff Notation / Partitura (bottom)
+
+Both share the same horizontal time axis and remain visible together (no separate toggles).
+
+### Playback Controls
+
+Add a **▶ Play** / **■ Stop** button in the header bar (above the toggle buttons):
+
+```javascript
+document.getElementById('playBtn').addEventListener('click', async () => {
+  if (isPlaying) {
+    Tone.Transport.stop();
+    Tone.Transport.position = 0;
+    isPlaying = false;
+    playBtn.textContent = '▶ Play';
+    resetPlayhead();
+    return;
+  }
+
+  await Tone.start();
+
+  // Recreate instruments with same config as video
+  const instruments = createInstruments(instrumentConfig);
+
+  // Schedule notes via Tone.Part (same data as piano roll)
+  const part = new Tone.Part((time, note) => {
+    instruments[note.instrument].triggerAttackRelease(
+      note.pitch, note.duration, time, note.velocity
+    );
+  }, noteEvents);
+  part.start(0);
+
+  // Schedule SFX (same data as SFX table)
+  scheduleSFX(sfxEvents, sfxSynth);
+
+  // Apply master chain
+  applyMasterChain(instruments, masterConfig);
+
+  Tone.Transport.bpm.value = BPM;
+  Tone.Transport.start();
+  isPlaying = true;
+  playBtn.textContent = '■ Stop';
+  startPlayheadAnimation();
+});
+```
+
+### Playhead Animation
+
+A vertical line that scrolls across both the piano roll SVG and the staff notation during playback:
+
+**Piano Roll Playhead:**
+```javascript
+const playhead = document.getElementById('playhead'); // <line> element in SVG
+function startPlayheadAnimation() {
+  function update() {
+    if (!isPlaying) return;
+    const seconds = Tone.Transport.seconds;
+    const x = (seconds / totalDuration) * pianoRollWidth;
+    playhead.setAttribute('x1', x);
+    playhead.setAttribute('x2', x);
+    requestAnimationFrame(update);
+  }
+  requestAnimationFrame(update);
+}
+```
+
+**Staff Notation Playhead (abcjs TimingCallbacks):**
+```javascript
+const timingCallbacks = new ABCJS.TimingCallbacks(visualObj, {
+  beatCallback: (beatNumber, totalBeats, totalTime, position) => {
+    // Highlight current beat/note
+  },
+  eventCallback: (event) => {
+    if (event) {
+      // event.elements contains the SVG elements for the current note
+      // Add/remove highlight class
+    }
+  }
+});
+// Sync with Tone.Transport
+Tone.Transport.scheduleRepeat((time) => {
+  timingCallbacks.setProgress(Tone.Transport.seconds / totalDuration);
+}, '16n');
+```
+
 ### Visualizations
 
-1. **Piano Roll (SVG)** — Custom SVG, X=time, Y=MIDI pitch, color per instrument. SFX as diamonds above a dashed separator. Include legend.
-2. **Staff Notation / Partitura (abcjs)** — Use `https://cdn.jsdelivr.net/npm/abcjs@6.4.1/dist/abcjs-basic-min.js`. Render a **full score (partitura)** with ALL instruments stacked vertically, one staff per instrument, all aligned to the same timeline. This is a partitura in the classical sense: all parts visible simultaneously so the reader can see the full orchestration at a glance.
+1. **Piano Roll (SVG)** — Custom SVG, X=time, Y=MIDI pitch, color per instrument. SFX as diamonds above a dashed separator. Include legend. Add a `<line id="playhead">` element styled with white/yellow color, semi-transparent.
+
+2. **Staff Notation / Partitura (abcjs)** — Render a **full score (partitura)** with ALL instruments stacked vertically, one staff per instrument, all aligned to the same timeline.
    - **Every pitched instrument** gets its own staff (treble or bass clef as appropriate)
    - **Percussion/noise instruments** (ride, brush, micro-perc, click) get a percussion staff or rhythm notation on a single-line staff
    - Use `%%staves` directive to group all staves into a single system
@@ -739,8 +841,10 @@ Every time audiosculpt generates audio, produce a companion **HTML** report save
 ### Design
 
 - Dark background (#0a0a0f), monospace, glitch aesthetic
-- Toggle buttons for each visualization
-- Responsive, scrollable piano roll
+- Header bar with Play/Stop button + toggle buttons for panels
+- Score panel shows piano roll + partitura together (unified timeline)
+- Responsive, scrollable piano roll and partitura
+- Playhead: `stroke: rgba(255, 220, 100, 0.8); stroke-width: 2px;`
 
 ---
 

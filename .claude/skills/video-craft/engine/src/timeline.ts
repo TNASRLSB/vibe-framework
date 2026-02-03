@@ -11,6 +11,8 @@ import {
 } from './actions.js';
 import type { SpeedPreset, ModeId } from './presets.js';
 import { SAFE_EASINGS, CHAOS_EASINGS } from './presets.js';
+import { SCENE_TYPES, type SceneTypeId } from './composition.js';
+import { planChoreography } from './choreography.js';
 
 export interface TimelineElement {
   sceneIndex: number;
@@ -88,6 +90,15 @@ export function buildTimeline(config: Config): Timeline {
 
     hybridBreakerUsedInScene = false;
 
+    // Get scene type info for choreography
+    const sceneTypeId = scene.sceneTypeId as SceneTypeId | undefined;
+    const sceneType = sceneTypeId ? SCENE_TYPES[sceneTypeId] : null;
+
+    // Plan choreography for this scene if we have a scene type
+    const choreoPlan = sceneType
+      ? planChoreography(sceneType, scene.elements.length, si, config.scenes.length, mode)
+      : null;
+
     for (const el of scene.elements) {
       // Pick entrance
       let entranceDef: AnimationDef;
@@ -121,8 +132,8 @@ export function buildTimeline(config: Config): Timeline {
         exitDef = EXITS[el.exit];
       }
 
-      // Pick easing
-      const easing = el.easing ?? pickRandom(easingPool);
+      // Pick easing: use choreography plan easing as default, element override takes precedence
+      const easing = el.easing ?? (choreoPlan?.easing) ?? pickRandom(easingPool);
 
       elemEntrances.push({ entranceId, entranceDef, exitId, exitDef, easing });
 
@@ -142,10 +153,17 @@ export function buildTimeline(config: Config): Timeline {
       });
     }
 
-    // Compute scene timing
+    // Compute scene timing with stagger options from scene type
     const sceneDuration = scene.duration ? parseDurationStr(String(scene.duration)) : undefined;
+    const firstElementIsHeading = scene.elements[0]?.type === 'heading';
     const sceneTiming = computeSceneTiming(
       elemInputs, speed, entranceSpeed, transitionOutDurationMs, sceneDuration,
+      sceneType ? {
+        sceneStaggerDelayMs: sceneType.staggerDelayMs,
+        staggerPattern: sceneType.staggerPattern,
+        microPauseMs: choreoPlan?.microPauseMs,
+        firstElementIsHeading,
+      } : undefined,
     );
 
     // Build timeline elements

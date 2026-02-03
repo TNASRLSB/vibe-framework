@@ -52,6 +52,8 @@ const SceneSchema = z.object({
   layout: z.enum(['centered', 'split', 'grid', 'stacked', 'fullscreen-text']).optional(),
   columns: z.number().optional(),
   elements: z.array(ElementSchema),
+  // Scene type ID from composition.ts (populated by autogen, used by timeline for choreography)
+  sceneTypeId: z.string().optional(),
 });
 
 const VideoSchema = z.object({

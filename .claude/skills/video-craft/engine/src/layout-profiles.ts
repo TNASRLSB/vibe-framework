@@ -319,3 +319,21 @@ export function computeCardGridColumns(
   const cols = Math.min(cardCount, max);
   return `repeat(${cols}, 1fr)`;
 }
+
+/**
+ * Compute effective max-width for cards based on available space and card count.
+ * Prevents card overflow when 4+ cards are in a row.
+ */
+export function computeEffectiveCardMaxWidth(
+  profile: LayoutProfile,
+  cardCount: number,
+  format: string,
+): number {
+  const preset = FORMAT_PRESETS[format];
+  const frameWidth = preset?.width ?? 1920;
+  const usableWidth = frameWidth - profile.padding.left - profile.padding.right;
+  const effectiveCards = Math.min(cardCount, profile.maxCardsPerRow);
+  const totalGap = (effectiveCards - 1) * profile.cardGap;
+  const maxPerCard = Math.floor((usableWidth - totalGap) / effectiveCards);
+  return Math.min(profile.cardMaxWidth, maxPerCard);
+}

@@ -38,6 +38,7 @@ interface SceneDef {
   'transition-out'?: string;
   'transition-duration'?: string;
   elements: ElementDef[];
+  sceneTypeId?: string;
 }
 
 interface ElementPhase {
@@ -458,19 +459,20 @@ export function generateConfig(content: ExtractedContent, options: AutogenOption
     const background = selectBackground(st, colors, i, totalScenes, mode, useTokens);
 
     const scene: SceneDef = {
-      name: sceneName(sceneTypeId, i),
+      name: sceneNameFromElements(elements, sceneTypeId, i),
       background,
       elements,
+      sceneTypeId,
     };
 
     // Layout hint: director override > scene-type default
-    // Skip explicit layout when scene contains cards — let autoSelectLayout
+    // Never set explicit layout when scene contains cards — let autoSelectLayout
     // pick the right card layout (card-column on vertical, card-row on horizontal)
-    if (sceneOverrides.layout) {
-      scene.layout = sceneOverrides.layout;
-    } else {
-      const hasCards = elements.some(e => e.type === 'card-group' || e.type === 'card');
-      if (st.layout !== 'centered' && !hasCards) {
+    const hasCards = elements.some(e => e.type === 'card-group' || e.type === 'card');
+    if (!hasCards) {
+      if (sceneOverrides.layout) {
+        scene.layout = sceneOverrides.layout;
+      } else if (st.layout !== 'centered') {
         scene.layout = st.layout;
       }
     }
@@ -575,10 +577,18 @@ function isDegenerate(elements: ElementDef[], content: ExtractedContent): boolea
 
 function truncate(text: string, max: number): string {
   if (text.length <= max) return text;
-  return text.slice(0, max - 1) + '…';
+  const cut = text.lastIndexOf(' ', max - 2);
+  return (cut > max * 0.6 ? text.slice(0, cut) : text.slice(0, max - 1)) + '…';
 }
 
-function sceneName(sceneTypeId: SceneTypeId, index: number): string {
+/** Derive scene name from actual content (called AFTER content recycling) */
+function sceneNameFromElements(elements: ElementDef[], sceneTypeId: SceneTypeId, index: number): string {
+  // Try to use the first heading's text as scene name
+  const heading = elements.find(e => e.type === 'heading');
+  if (heading?.text && !GENERIC_TEXTS.has(heading.text)) {
+    return truncate(heading.text, 40);
+  }
+  // Fallback to scene-type names
   const names: Record<SceneTypeId, string> = {
     'stat-callout': 'Key Stat',
     'problem-statement': 'The Challenge',
