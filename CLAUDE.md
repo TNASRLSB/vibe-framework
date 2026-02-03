@@ -29,6 +29,27 @@ ls .claude/docs/specs/
 
 ---
 
+## First Run (New User)
+
+**Detection:** This is a first run if:
+- Registry sections are all empty (only headers, no content)
+- AND `.claude/docs/request-log.md` has no entries in the Log table
+
+**When I detect first run, BEFORE doing anything else**, I MUST:
+
+1. **Greet and introduce:**
+   > "Ciao! Questo progetto usa il **Claude Development Framework** — un sistema operativo che mi aiuta a lavorare meglio.
+   >
+   > Il framework include skill specializzate per UI, development patterns, sicurezza, SEO/copywriting, video e audio.
+   >
+   > Per capire come funziona, leggi `.claude/README.md`. Lì trovi tutto: setup, comandi, skill disponibili."
+
+2. **Wait for acknowledgment** before proceeding with any user request.
+
+**This takes priority over ANY user request on first run.** Even if the user asks something specific, I first introduce the framework.
+
+---
+
 ## The Registry: My Memory
 
 **Location:** `.claude/docs/registry.md`
@@ -42,6 +63,42 @@ ls .claude/docs/specs/
 - Understand data flows
 
 **IMPORTANT:** After completing any feature or significant change, update the registry immediately. Do not defer.
+
+---
+
+## Request Logging
+
+**Location:** `.claude/docs/request-log.md`
+
+**Every user request that requires work** gets logged. This creates an audit trail of what was requested, when, and how it was handled.
+
+### When I receive a request:
+
+1. **Add entry** to request-log.md with:
+   - `#` — Next sequential number
+   - `Data` — YYYY-MM-DD
+   - `Ora` — HH:MM
+   - `Tipologia` — Feature | Bug fix | Refactoring | Research | Config | Doc
+   - `Descrizione` — Brief summary of the request
+   - `Doc riferimento` — Link to spec if non-trivial, `-` otherwise
+   - `Stato` — `in corso`
+
+2. **If non-trivial**, create spec first → update log with spec reference
+
+3. **When complete**, update status to `completato`
+
+### What to log:
+- Feature requests
+- Bug fixes
+- Refactoring tasks
+- Configuration changes
+- Any task that modifies files
+
+### What NOT to log:
+- Simple questions ("what is X?", "where is Y?")
+- Requests to just read files
+- Status checks
+- Conversation clarifications
 
 ---
 
@@ -198,6 +255,8 @@ At the end of complex sessions (multi-file changes, debugging, refactoring), cre
 | Fix bugs | Read `.claude/docs/bugs/bugs.md` → fix → add `**Sistemato:**` |
 | Audit tech debt | Run `/techdebt` → review report |
 | Record session learnings | Create `.claude/docs/session-notes/[date]-[topic].md` |
+| Log a request | Add entry to `.claude/docs/request-log.md` |
+| Check request history | Read `.claude/docs/request-log.md` |
 
 ---
 
