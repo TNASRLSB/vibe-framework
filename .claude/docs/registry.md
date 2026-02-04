@@ -1,6 +1,6 @@
 # Codebase Registry
 
-**Last updated:** 2026-02-03
+**Last updated:** —
 
 This is my memory. I update it as I learn. I check it before making claims.
 
@@ -10,7 +10,7 @@ This is my memory. I update it as I learn. I check it before making claims.
 
 | Name | Location | Purpose |
 |------|----------|---------|
-| audiosculpt | `.claude/skills/audiosculpt/` | Audio generation (soundtrack + SFX) using Strudel: Impact Frame, Parametric Templates (6), Voiceover Mode, TTS Narration, Voice Leading Tables, Preset Inheritance, Loop Variations, Feel Profiles, Soft Constraints |
+| | | |
 
 ---
 
@@ -62,9 +62,7 @@ This is my memory. I update it as I learn. I check it before making claims.
 
 | Package | Version | Used for |
 |---------|---------|----------|
-| @strudel/web | 1.0.3 | Pattern-based audio synthesis (audiosculpt) |
-| abcjs | 6.4.1 | Staff notation rendering in audio reports |
-| edge-tts | — | Python TTS narration generation (audiosculpt) |
+| | | |
 
 ---
 
