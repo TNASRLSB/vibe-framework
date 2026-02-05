@@ -4,6 +4,46 @@ Un framework operativo per lavorare con Claude su progetti software, con skill s
 
 ---
 
+## Quick Start
+
+### Quale percorso seguire?
+
+| Il tuo progetto | Percorso |
+|-----------------|----------|
+| **Nuovo**, senza codice esistente | → [Nuovo progetto](#nuovo-progetto-senza-codice-esistente) |
+| **Esistente**, solo backend | → [Progetto esistente](#progetto-esistente-con-codice-già-scritto) |
+| **Esistente**, con UI | → [Progetto esistente](#progetto-esistente-con-codice-già-scritto) + [con UI](#progetto-esistente-con-ui) |
+
+### Setup minimo (copia e incolla)
+
+**1. Copia il framework** nella root del progetto:
+- `CLAUDE.md`
+- `.claude/` (intera cartella)
+
+**2. Popola il registry** (se progetto esistente):
+```
+Analizza questo codebase e popola .claude/docs/registry.md con:
+- Components e services
+- Key functions
+- API endpoints
+- Database schema
+- Environment variables
+Salta le sezioni che non si applicano.
+```
+
+**3. Genera pattern per lo stack:**
+```
+/adapt-framework
+```
+
+**4. (Opzionale) Per progetti con UI:**
+```
+/seurat extract
+/seurat analyze-project
+```
+
+---
+
 ## Cos'è
 
 Due componenti che lavorano insieme:
@@ -11,13 +51,12 @@ Due componenti che lavorano insieme:
 1. **Framework operativo** (`CLAUDE.md` + `.claude/docs/`) — Regole di processo: investigare prima di implementare, tracciare decisioni, verificare prima di affermare.
 
 2. **Skill specializzate** (`.claude/skills/`) — Conoscenza di dominio:
-   - **ui-craft** — UI/UX: design direction, accessibilità WCAG, tipografia
-   - **dev-patterns** — Development: principi SOLID, API design, testing, security (agnostico + stack-specific)
-   - **security-guardian** — Sicurezza AI-specific: OWASP, credential detection, BaaS audit
-   - **seo-geo-copy** — SEO tradizionale + GEO (AI search) + copywriting persuasivo
-   - **video-craft** — Generazione video programmatica da design system + contenuti (CSS animations + Playwright + FFmpeg)
-   - **audiosculpt** — Generazione audio programmatica (soundtrack + SFX) con Strudel, integrazione video-craft
-   - **techdebt** — Audit duplicazioni, export orfani, import inutilizzati, pattern estraibili, file oversized
+   - **seurat** — UI/UX: design direction, accessibilità WCAG, tipografia
+   - **emmet** — Testing, debugging, tech debt audit, checklists, framework adaptation
+   - **heimdall** — Sicurezza AI-specific: OWASP, credential detection, BaaS audit
+   - **ghostwriter** — SEO tradizionale + GEO (AI search) + copywriting persuasivo
+   - **orson** — Generazione video programmatica da design system + contenuti (CSS animations + Playwright + FFmpeg)
+   - **audiosculpt** — Generazione audio programmatica (soundtrack + SFX) con Strudel, integrazione orson
 
 Il framework definisce *come* Claude lavora. Le skill definiscono *cosa* sa fare in ambiti specifici.
 
@@ -43,7 +82,7 @@ progetto/
     ├── rules/
     │   └── ui-components.md  # Regole per componenti UI
     └── skills/
-        ├── ui-craft/         # Skill UI/UX
+        ├── seurat/           # Skill UI/UX
         │   ├── SKILL.md      # Definizione skill e comandi
         │   ├── generation/   # Sistema generativo (safe/chaos/hybrid)
         │   ├── styles/       # 11 stili visivi base + modificatori
@@ -51,14 +90,12 @@ progetto/
         │   ├── factor-x/     # Controlled chaos
         │   ├── taxonomy/     # Tassonomia pagine ed elementi
         │   └── references.md # Sistema riferimenti visivi
-        ├── dev-patterns/     # Skill development patterns
+        ├── emmet/            # Skill testing, debug, tech debt, checklists
         │   ├── SKILL.md      # Entry point + /adapt-framework
-        │   ├── core/         # Pattern agnostici (sempre presenti)
-        │   ├── checklists/   # Checklist universali
-        │   ├── templates/    # Template per generazione
-        │   └── stacks/       # Pattern stack-specific (generati)
-        ├── security-guardian/ # Skill sicurezza AI-specific
-        ├── seo-geo-copy/     # Skill SEO + GEO + Copywriting
+        │   ├── testing/      # Static e dynamic testing
+        │   └── checklists/   # Checklist universali
+        ├── heimdall/         # Skill sicurezza AI-specific
+        ├── ghostwriter/      # Skill SEO + GEO + Copywriting
         │   ├── SKILL.md
         │   ├── seo/          # Fondamenti SEO tradizionale
         │   ├── geo/          # GEO per AI search
@@ -69,14 +106,12 @@ progetto/
         │   ├── checklists/   # Pre-publish e audit
         │   ├── workflows/    # Flussi interattivi
         │   └── reference/    # Contesto progetto (brand, products)
-        ├── video-craft/      # Skill generazione video
+        ├── orson/            # Skill generazione video
         │   ├── SKILL.md      # Definizione skill e comandi
         │   └── engine/       # Engine TypeScript (auto-setup)
-        ├── audiosculpt/      # Skill generazione audio
-        │   ├── SKILL.md      # Definizione skill e comandi
-        │   └── presets/      # Stili, patch FM, sample map, coherence matrix
-        └── techdebt/         # Skill audit tech debt
-            └── SKILL.md      # Definizione skill e comandi
+        └── audiosculpt/      # Skill generazione audio
+            ├── SKILL.md      # Definizione skill e comandi
+            └── presets/      # Stili, patch FM, sample map, coherence matrix
 ```
 
 ---
@@ -94,11 +129,11 @@ progetto/
 #### Progetto con UI (frontend o fullstack)
 
 ```
-/ui-craft setup
+/seurat setup
 ```
-Genera stile visivo e crea il design system in `.ui-craft/tokens.css` + `.ui-craft/design-system.html`. Poi:
+Genera stile visivo e crea il design system in `.seurat/tokens.css` + `.seurat/design-system.html`. Poi:
 ```
-/ui-craft preview
+/seurat preview
 ```
 Apri `design-system.html` nel browser per validare visivamente.
 
@@ -152,13 +187,13 @@ Aggiungi le decisioni rilevanti a .claude/docs/decisions.md.
 5. **Consigliato:** Esegui un audit di sicurezza iniziale:
 
 ```
-/security-guardian audit
+/heimdall audit
 ```
 
 6. **Consigliato:** Esegui un audit tech debt iniziale:
 
 ```
-/techdebt
+/emmet techdebt
 ```
 
 7. **Se il progetto ha check specifici** (linter, i18n, etc.), aggiungi a `.claude/docs/checklist.md`.
@@ -172,35 +207,35 @@ Se il progetto ha già componenti UI, segui i passi sopra più:
 1. **Estrai il design system** dal codice esistente:
 
 ```
-/ui-craft extract
+/seurat extract
 ```
-Analizza CSS/SCSS, estrae token, genera `.ui-craft/tokens.css` + `.ui-craft/design-system.html` + report inconsistenze.
+Analizza CSS/SCSS, estrae token, genera `.seurat/tokens.css` + `.seurat/design-system.html` + report inconsistenze.
 
 2. **Analizza lo stato attuale della UI:**
 
 ```
-/ui-craft analyze-project
+/seurat analyze-project
 ```
-Crea `.ui-craft/project-map.md` con:
+Crea `.seurat/project-map.md` con:
 - Pagine mappate agli archetipi (Entry, Discovery, Detail, Action, Management, System)
 - Inventario elementi per pagina
 - Stato compliance design system
 - Violazioni e priorità migrazione
 
-3. **Revisiona il project map** in `.ui-craft/project-map.md`:
+3. **Revisiona il project map** in `.seurat/project-map.md`:
 - Verifica che le classificazioni siano corrette
 - Controlla le priorità delle violazioni
 
 4. **Avvia la migrazione sistematica:**
 
 ```
-/ui-craft migrate-project
+/seurat migrate-project
 ```
 
 5. **Controlla lo stato migrazione in qualsiasi momento:**
 
 ```
-/ui-craft migration-status
+/seurat migration-status
 ```
 
 ### Cosa va popolato/configurato per-progetto
@@ -210,11 +245,11 @@ Crea `.ui-craft/project-map.md` con:
 | `registry.md` | **Obbligatorio** | Subito dopo aver copiato il framework |
 | `/adapt-framework` | **Obbligatorio** | Genera pattern per lo stack del progetto |
 | `decisions.md` | Consigliato | Se ci sono pattern già stabiliti |
-| `/security-guardian audit` | Consigliato | Audit sicurezza iniziale su progetti esistenti |
-| `/techdebt` | Consigliato | Audit tech debt iniziale |
-| `/ui-craft setup` | Consigliato | Per nuovi progetti con UI |
-| `/ui-craft extract` | Consigliato | Per progetti esistenti con UI (estrae token dal codice) |
-| `/ui-craft analyze-project` | Consigliato | Per progetti esistenti con UI da migrare |
+| `/heimdall audit` | Consigliato | Audit sicurezza iniziale su progetti esistenti |
+| `/emmet techdebt` | Consigliato | Audit tech debt iniziale |
+| `/seurat setup` | Consigliato | Per nuovi progetti con UI |
+| `/seurat extract` | Consigliato | Per progetti esistenti con UI (estrae token dal codice) |
+| `/seurat analyze-project` | Consigliato | Per progetti esistenti con UI da migrare |
 | `checklist.md` | Opzionale | Se ci sono check specifici del progetto |
 | `workflows.md` | No | Diagrammi universali, non modificare |
 | `specs/*.md` | Automatico | Claude li crea durante lo sviluppo |
@@ -303,7 +338,7 @@ Il file `.claude/docs/workflows.md` contiene diagrammi Mermaid che visualizzano 
 | Change Classification | Per decidere se serve una spec |
 | Registry Verification | Prima di affermare che qualcosa esiste |
 | Pre-Generation (UX) | Prima di generare codice UI |
-| Severity Enforcement | Quando security-guardian trova vulnerabilità |
+| Severity Enforcement | Quando heimdall trova vulnerabilità |
 | Iteration Tracking | Quando modifico lo stesso file ripetutamente |
 | Pre-Commit Checklist | Prima di ogni commit |
 
@@ -313,27 +348,27 @@ I diagrammi rendono esplicita la logica condizionale che altrimenti sarebbe spar
 
 Le skill sono moduli di conoscenza specializzata che Claude può attivare in base al contesto.
 
-#### UI-Craft
+#### Seurat
 
 Si attiva automaticamente quando il contesto riguarda UI/UX, oppure manualmente:
 
 | Comando | Cosa fa |
 |---------|---------|
-| `/ui-craft setup` | Genera stile visivo + crea tokens.css + design-system.html (safe/chaos/hybrid) |
-| `/ui-craft extract` | Estrae design system da codice esistente → tokens.css + report |
-| `/ui-craft preview` | Apri design-system.html per validazione visiva |
-| `/ui-craft build [type]` | Genera pagina completa (entry/discovery/detail/action/management/system) |
-| `/ui-craft apply` | Applica il design system durante la generazione |
-| `/ui-craft audit` | Verifica accessibilità e coerenza |
-| `/ui-craft research [topic]` | Ricerca prima di progettare |
-| `/ui-craft polish` | Rifinitura finale |
-| `/ui-craft save-pattern [name]` | Salva un pattern riutilizzabile |
-| `/ui-craft reference [pattern]` | Consulta riferimenti visivi curati |
-| `/ui-craft compliance` | Audit compliance design system su tutto il codebase |
-| `/ui-craft migrate [pattern]` | Migrazione sistematica di un pattern |
-| `/ui-craft analyze-project` | Analizza codebase esistente, crea project-map.md |
-| `/ui-craft migrate-project` | Guida migrazione sistematica al design system |
-| `/ui-craft migration-status` | Stato migrazione in corso |
+| `/seurat setup` | Genera stile visivo + crea tokens.css + design-system.html (safe/chaos/hybrid) |
+| `/seurat extract` | Estrae design system da codice esistente → tokens.css + report |
+| `/seurat preview` | Apri design-system.html per validazione visiva |
+| `/seurat build [type]` | Genera pagina completa (entry/discovery/detail/action/management/system) |
+| `/seurat apply` | Applica il design system durante la generazione |
+| `/seurat audit` | Verifica accessibilità e coerenza |
+| `/seurat research [topic]` | Ricerca prima di progettare |
+| `/seurat polish` | Rifinitura finale |
+| `/seurat save-pattern [name]` | Salva un pattern riutilizzabile |
+| `/seurat reference [pattern]` | Consulta riferimenti visivi curati |
+| `/seurat compliance` | Audit compliance design system su tutto il codebase |
+| `/seurat migrate [pattern]` | Migrazione sistematica di un pattern |
+| `/seurat analyze-project` | Analizza codebase esistente, crea project-map.md |
+| `/seurat migrate-project` | Guida migrazione sistematica al design system |
+| `/seurat migration-status` | Stato migrazione in corso |
 
 **Generative System:** La skill include un sistema di generazione stili basato su:
 - **Matrici fuzzy weights** — Profili per tipo (25), industria (40+), target (7 dimensioni)
@@ -348,78 +383,77 @@ Si attiva automaticamente quando il contesto riguarda UI/UX, oppure manualmente:
 
 **Attivazione:** UI, UX, component, interface, design system, accessibility, WCAG, frontend styling
 
-#### Dev Patterns
+#### Emmet
 
-Framework di sviluppo agnostico con pattern core universali e generazione dinamica di pattern stack-specific.
+Testing, debugging, tech debt audit, e checklist di sviluppo. Include anche l'adattamento del framework allo stack.
 
 | Comando | Cosa fa |
 |---------|---------|
 | `/adapt-framework` | Analizza il progetto e genera pattern per lo stack rilevato |
-| `/dev-patterns principles` | Consulta principi SOLID, DRY, KISS |
-| `/dev-patterns api` | REST/GraphQL design patterns |
-| `/dev-patterns testing` | TDD, coverage, mocking |
-| `/dev-patterns security` | Checklist sicurezza |
-| `/dev-patterns caching` | Strategie di caching |
-| `/dev-patterns error-handling` | Gestione errori |
-| `/dev-patterns stack` | Pattern specifici del tuo stack |
-| `/dev-patterns review` | Code review con checklist |
-| `/dev-patterns checklist [type]` | Carica checklist (pre-deploy, refactoring, code-review, security) |
+| `/emmet plan` | Genera test plan per feature/componente |
+| `/emmet test` | Esegui test dinamici con Playwright |
+| `/emmet journey [flow]` | Testa user journey completo |
+| `/emmet report [bug]` | Genera bug report strutturato |
+| `/emmet techdebt [path]` | Audit duplicazioni, export orfani, pattern estraibili, file oversized |
+| `/emmet checklist [type]` | Carica checklist (pre-deploy, refactoring, code-review, security) |
 
-**Architettura a due livelli:**
-1. **Core agnostico** — Principi universali sempre disponibili (SOLID, API design, testing, security, error handling, caching)
-2. **Stack-specific** — Pattern generati dinamicamente per il tuo stack
+**Funzionalità:**
+- **Static analysis** — Verifica codice senza esecuzione (type inference, complexity, patterns)
+- **Dynamic testing** — Test con Playwright (API, UI, E2E)
+- **Tech debt audit** — Duplicazioni, export orfani, import inutilizzati, file oversized
+- **Checklists** — Pre-deploy, refactoring, code-review, security
 
-**Attivazione:** Automatica quando crei un nuovo progetto, manuale con `/adapt-framework` su progetti esistenti
+**Attivazione:** testing, debugging, tech debt, code quality, checklist
 
-#### Security Guardian
+#### Heimdall
 
 Analisi di sicurezza specifica per codice AI-generated. Rileva vulnerabilità tipiche del vibe coding:
 
 | Comando | Cosa fa |
 |---------|---------|
-| `/security-guardian scan [path]` | Scansiona file/directory per vulnerabilità |
-| `/security-guardian audit` | Audit completo del progetto |
-| `/security-guardian secrets` | Scansione credenziali e segreti |
-| `/security-guardian baas [provider]` | Audit configurazione BaaS (Supabase/Firebase) |
-| `/security-guardian status` | Stato sicurezza dei file tracciati |
-| `/security-guardian report [format]` | Genera report (markdown/json/sarif) |
-| `/security-guardian reset [path]` | Reset iteration tracking dopo review umana |
-| `/security-guardian config` | Configura impostazioni |
+| `/heimdall scan [path]` | Scansiona file/directory per vulnerabilità |
+| `/heimdall audit` | Audit completo del progetto |
+| `/heimdall secrets` | Scansione credenziali e segreti |
+| `/heimdall baas [provider]` | Audit configurazione BaaS (Supabase/Firebase) |
+| `/heimdall status` | Stato sicurezza dei file tracciati |
+| `/heimdall report [format]` | Genera report (markdown/json/sarif) |
+| `/heimdall reset [path]` | Reset iteration tracking dopo review umana |
+| `/heimdall config` | Configura impostazioni |
 
 **Funzionalità:** Pattern OWASP Top 10, rilevamento credenziali hardcoded, audit BaaS, tracciamento iteration degradation, rilevamento logic inversion
 
 **Attivazione:** Security review, code audit, credential check, configuration analysis
 
-#### SEO-GEO-Copy
+#### Ghostwriter
 
 Contenuti ottimizzati per search engine tradizionali (Google, Bing) e AI search (ChatGPT, Claude, Perplexity).
 
 | Comando | Cosa fa |
 |---------|---------|
-| `/seo-geo-copy write [type]` | Genera contenuto dual-optimized (article, landing, product, faq) |
-| `/seo-geo-copy audit [url/content]` | Audit SEO + GEO + copywriting con score 0-100 |
-| `/seo-geo-copy schema [type]` | Genera JSON-LD |
-| `/seo-geo-copy pillar-cluster [topic]` | Progetta architettura topic cluster |
-| `/seo-geo-copy meta [content]` | Genera title tag, meta description, OG tags |
-| `/seo-geo-copy research [topic]` | Ricerca keyword + intent + competitor gaps |
-| `/seo-geo-copy optimize [file]` | Ottimizza contenuto esistente |
+| `/ghostwriter write [type]` | Genera contenuto dual-optimized (article, landing, product, faq) |
+| `/ghostwriter audit [url/content]` | Audit SEO + GEO + copywriting con score 0-100 |
+| `/ghostwriter schema [type]` | Genera JSON-LD |
+| `/ghostwriter pillar-cluster [topic]` | Progetta architettura topic cluster |
+| `/ghostwriter meta [content]` | Genera title tag, meta description, OG tags |
+| `/ghostwriter research [topic]` | Ricerca keyword + intent + competitor gaps |
+| `/ghostwriter optimize [file]` | Ottimizza contenuto esistente |
 
 **Attivazione:** content creation, SEO, copywriting, landing page, article, blog post, product description
 
-#### Video-Craft
+#### Orson
 
 Generazione video programmatica. Segue un workflow cinematografico: Pre-production → Screenplay → Storyboard → Direction → Production.
 
 | Comando | Cosa fa |
 |---------|---------|
-| `/video-craft create` | Flusso guidato — crea un video interattivamente (4 fasi) |
-| `/video-craft render <file.html>` | Renderizza video da HTML config |
-| `/video-craft formats` | Lista formati disponibili |
-| `/video-craft entrances` | Lista animazioni entrance disponibili |
+| `/orson create` | Flusso guidato — crea un video interattivamente (4 fasi) |
+| `/orson render <file.html>` | Renderizza video da HTML config |
+| `/orson formats` | Lista formati disponibili |
+| `/orson entrances` | Lista animazioni entrance disponibili |
 
-**Workflow:** Claude fa lo sceneggiatore (analizza source, struttura scene, scrive copy con seo-geo-copy), poi autogen genera HTML, director assegna animazioni, capture engine produce MP4.
+**Workflow:** Claude fa lo sceneggiatore (analizza source, struttura scene, scrive copy con ghostwriter), poi autogen genera HTML, director assegna animazioni, capture engine produce MP4.
 
-**Caratteristiche:** 131 animazioni, 4 modi (safe/chaos/hybrid/cocomelon), timing automatico, integrazione ui-craft + seo-geo-copy, director system (content-aware animation)
+**Caratteristiche:** 132 animazioni, 4 modi (safe/chaos/hybrid/cocomelon), timing automatico, integrazione seurat + ghostwriter, director system (content-aware animation)
 
 **Requisiti di sistema:** FFmpeg installato (`ffmpeg` nel PATH)
 
@@ -432,30 +466,18 @@ Generazione audio programmatica (soundtrack + SFX) con Strudel (TidalCycles per 
 | Comando | Cosa fa |
 |---------|---------|
 | `/audiosculpt create` | Flusso guidato — crea audio per webvideo o standalone |
-| `/audiosculpt add-to-video <html>` | Inietta audio in un webvideo video-craft esistente |
+| `/audiosculpt add-to-video <html>` | Inietta audio in un webvideo orson esistente |
 | `/audiosculpt preview <style>` | Genera pagina HTML con demo 15s di uno stile |
 | `/audiosculpt styles` | Lista i 20 stili soundtrack disponibili |
 | `/audiosculpt create --template <id>` | Usa un template parametrico per generazione rapida |
-| `/audiosculpt create --narration` | Abilita narrazione TTS (integrazione video-craft) |
+| `/audiosculpt create --narration` | Abilita narrazione TTS (integrazione orson) |
 | `/audiosculpt add-narration <html>` | Aggiunge narrazione a HTML esistente |
 
-**Caratteristiche:** 20 stili in 4 famiglie (tonal/modal/loop/experimental + horror hybrid), 6 famiglie SFX, 6 template parametrici (tech_promo, epic_trailer, chill_lifestyle, corporate_safe, hype_social, luxury_minimal), regole per-famiglia (voice leading, armonia funzionale, orchestrazione, forma tematica, soft constraints spettrali, quantizzazione temporale video→musica). Impact Frame per hook immediato. Voiceover Mode con frequency splitting. TTS narration con Edge-TTS. Integrazione video-craft.
+**Caratteristiche:** 20 stili in 4 famiglie (tonal/modal/loop/experimental + horror hybrid), 6 famiglie SFX, 6 template parametrici (tech_promo, epic_trailer, chill_lifestyle, corporate_safe, hype_social, luxury_minimal), regole per-famiglia (voice leading, armonia funzionale, orchestrazione, forma tematica, soft constraints spettrali, quantizzazione temporale video→musica). Impact Frame per hook immediato. Voiceover Mode con frequency splitting. TTS narration con Edge-TTS. Integrazione orson.
 
 **Requisiti opzionali:** `pip install edge-tts` per narrazione TTS
 
 **Attivazione:** audio generation, soundtrack, sound effects, music, audio for video
-
-#### Techdebt
-
-Audit rapido del codebase per debito tecnico strutturale.
-
-| Comando | Cosa fa |
-|---------|---------|
-| `/techdebt [path]` | Audit duplicazioni, export orfani, import inutilizzati, pattern estraibili, file oversized |
-
-**Output:** Report in `.claude/docs/techdebt-report.md`
-
-**Quando usarlo:** Fine sessione, prima di PR, periodicamente come igiene del codice
 
 ---
 
@@ -467,14 +489,14 @@ Terminologia condivisa tra le skill. Il file `glossary.md` nel progetto utente �
 
 | Termine | Definizione |
 |---------|------------|
-| **website** | Sito internet completo generato da ui-craft (HTML + CSS + assets). Il prodotto finale per il web. |
-| **webvideo** | Pagina .html generata da video-craft, destinata a diventare video. Non è un sito — è un file self-contained con scene animate, che il capture engine trasforma in .mp4. |
+| **website** | Sito internet completo generato da seurat (HTML + CSS + assets). Il prodotto finale per il web. |
+| **webvideo** | Pagina .html generata da orson, destinata a diventare video. Non è un sito — è un file self-contained con scene animate, che il capture engine trasforma in .mp4. |
 
 ### Design System
 
 | Termine | Definizione |
 |---------|------------|
-| **design system** | L'intera identità visiva di un progetto: `tokens.css` + `style.css`. Entrambi vivono in `.ui-craft/` o nella cartella assets del website. |
+| **design system** | L'intera identità visiva di un progetto: `tokens.css` + `style.css`. Entrambi vivono in `.seurat/` o nella cartella assets del website. |
 | **tokens** (`tokens.css`) | Variabili CSS primitive: colori, font, spacing, motion, radius, border. I valori grezzi, senza contesto d'uso. |
 | **styles** (`style.css`) | Regole CSS che applicano i token ai componenti: nav, hero, cards, buttons, layout grid, responsive. L'identità visiva concreta. |
 | **design-system.html** | Preview vivente del design system. Importa tokens.css e mostra tutti gli elementi visivamente. |
@@ -483,18 +505,18 @@ Terminologia condivisa tra le skill. Il file `glossary.md` nel progetto utente �
 
 | Termine | Definizione |
 |---------|------------|
-| **archetype** (ui-craft) | Tipo di pagina web: Entry, Discovery, Detail, Action, Management, System. Ogni archetype ha wireframe e layout predefiniti. |
-| **scene-type** (video-craft) | Tipo di scena nel webvideo: stat-callout, feature-showcase, cta-outro, ecc. Definisce layout, densità, background e animazioni della scena. |
+| **archetype** (seurat) | Tipo di pagina web: Entry, Discovery, Detail, Action, Management, System. Ogni archetype ha wireframe e layout predefiniti. |
+| **scene-type** (orson) | Tipo di scena nel webvideo: stat-callout, feature-showcase, cta-outro, ecc. Definisce layout, densità, background e animazioni della scena. |
 
 ### Modalità
 
 | Termine | Definizione |
 |---------|------------|
-| **mode** | Direzione creativa che Claude segue nella generazione. Condiviso tra ui-craft e video-craft. |
+| **mode** | Direzione creativa che Claude segue nella generazione. Condiviso tra seurat e orson. |
 | **safe** | Pulito, corporate, professionale. Basso rischio. |
 | **chaos** | Dinamico, sperimentale, scelte random. Alto rischio. |
 | **hybrid** | Base safe con un elemento sorpresa per scena/pagina. Rischio medio. |
-| **cocomelon** | Hyper-engaging, neuro-ottimizzato. Arco di arousal (arrest→escalate→climax→descend→convert). Solo video-craft. |
+| **cocomelon** | Hyper-engaging, neuro-ottimizzato. Arco di arousal (arrest→escalate→climax→descend→convert). Solo orson. |
 
 ### Pipeline Video
 

@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Design System</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+  /* ─── Page Layout ─── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font-body, system-ui, -apple-system, sans-serif);
+    background: var(--color-bg, #0f0f0f);
+    color: var(--color-text, #ffffff);
+    line-height: var(--line-height, 1.5);
+    padding: 0;
+  }
+
+  .ds-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 48px 32px;
+  }
+
+  .ds-header {
+    margin-bottom: 64px;
+    border-bottom: 1px solid var(--color-border, rgba(255,255,255,0.1));
+    padding-bottom: 32px;
+  }
+
+  .ds-header h1 {
+    font-family: var(--font-display, var(--font-body, system-ui));
+    font-size: 48px;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+
+  .ds-header p {
+    opacity: 0.6;
+    font-size: 18px;
+  }
+
+  .ds-section {
+    margin-bottom: 64px;
+  }
+
+  .ds-section h2 {
+    font-family: var(--font-display, var(--font-body, system-ui));
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--color-border, rgba(255,255,255,0.08));
+  }
+
+  .ds-section h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    opacity: 0.7;
+  }
+
+  .ds-grid {
+    display: grid;
+    gap: 16px;
+  }
+
+  /* ─── Color Palette ─── */
+  .ds-colors {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  }
+
+  .ds-color-swatch {
+    border-radius: var(--radius, 8px);
+    overflow: hidden;
+    border: 1px solid var(--color-border, rgba(255,255,255,0.1));
+  }
+
+  .ds-color-swatch .swatch {
+    height: 100px;
+    display: flex;
+    align-items: flex-end;
+    padding: 8px 12px;
+  }
+
+  .ds-color-swatch .swatch-info {
+    padding: 12px;
+    font-size: 13px;
+    background: var(--color-surface, rgba(255,255,255,0.05));
+  }
+
+  .ds-color-swatch .swatch-name {
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+
+  .ds-color-swatch .swatch-value {
+    opacity: 0.6;
+    font-family: var(--font-mono, monospace);
+    font-size: 12px;
+  }
+
+  /* ─── Typography ─── */
+  .ds-type-sample {
+    margin-bottom: 24px;
+  }
+
+  .ds-type-sample .label {
+    font-size: 12px;
+    opacity: 0.5;
+    font-family: var(--font-mono, monospace);
+    margin-bottom: 4px;
+  }
+
+  .ds-type-display {
+    font-family: var(--font-display, var(--font-body, system-ui));
+  }
+
+  .ds-type-body {
+    font-family: var(--font-body, system-ui);
+  }
+
+  .ds-type-mono {
+    font-family: var(--font-mono, monospace);
+  }
+
+  /* ─── Spacing ─── */
+  .ds-spacing-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 8px;
+  }
+
+  .ds-spacing-block {
+    background: var(--color-accent, #e94560);
+    opacity: 0.6;
+    border-radius: 2px;
+    height: 24px;
+  }
+
+  .ds-spacing-label {
+    font-family: var(--font-mono, monospace);
+    font-size: 13px;
+    opacity: 0.6;
+    min-width: 120px;
+  }
+
+  /* ─── Radius ─── */
+  .ds-radius-samples {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .ds-radius-box {
+    width: 100px;
+    height: 100px;
+    background: var(--color-surface, rgba(255,255,255,0.08));
+    border: 1px solid var(--color-border, rgba(255,255,255,0.1));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono, monospace);
+    font-size: 13px;
+    opacity: 0.7;
+  }
+
+  /* ─── Buttons ─── */
+  .ds-button-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .ds-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 32px;
+    font-size: 16px;
+    font-weight: 600;
+    font-family: inherit;
+    border-radius: var(--radius, 8px);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+    min-height: 44px;
+  }
+
+  .ds-btn-primary {
+    background: var(--color-primary, #6366f1);
+    color: var(--color-on-primary, #fff);
+  }
+
+  .ds-btn-accent {
+    background: var(--color-accent, #e94560);
+    color: var(--color-on-accent, #fff);
+  }
+
+  .ds-btn-ghost {
+    background: transparent;
+    color: var(--color-text, #fff);
+    border-color: var(--color-border, rgba(255,255,255,0.2));
+  }
+
+  .ds-btn-disabled {
+    background: var(--color-surface, rgba(255,255,255,0.05));
+    color: var(--color-text, #fff);
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  /* ─── Cards ─── */
+  .ds-cards {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+
+  .ds-card {
+    background: var(--color-surface, rgba(255,255,255,0.05));
+    border-radius: var(--radius, 8px);
+    padding: 24px;
+    border: 1px solid var(--color-border, rgba(255,255,255,0.1));
+  }
+
+  .ds-card h4 {
+    font-family: var(--font-display, var(--font-body, system-ui));
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .ds-card p {
+    opacity: 0.7;
+    font-size: 15px;
+  }
+
+  /* ─── Form Elements ─── */
+  .ds-form-group {
+    margin-bottom: 20px;
+    max-width: 400px;
+  }
+
+  .ds-form-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .ds-input {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 16px;
+    font-family: inherit;
+    background: var(--color-surface, rgba(255,255,255,0.05));
+    color: var(--color-text, #fff);
+    border: 1px solid var(--color-border, rgba(255,255,255,0.15));
+    border-radius: var(--radius, 8px);
+    outline: none;
+    min-height: 44px;
+  }
+
+  .ds-input:focus {
+    border-color: var(--color-primary, #6366f1);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary, #6366f1) 25%, transparent);
+  }
+
+  .ds-input-error {
+    border-color: #ef4444;
+  }
+
+  .ds-error-text {
+    color: #ef4444;
+    font-size: 13px;
+    margin-top: 4px;
+  }
+
+  /* ─── States ─── */
+  .ds-states {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+
+  .ds-state-box {
+    padding: 20px;
+    border-radius: var(--radius, 8px);
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  /* ─── Motion ─── */
+  .ds-motion-demos {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .ds-motion-box {
+    width: 120px;
+    height: 120px;
+    background: var(--color-primary, #6366f1);
+    border-radius: var(--radius, 8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-on-primary, #fff);
+    cursor: pointer;
+    transition: transform var(--duration-base, 300ms) var(--ease-standard, cubic-bezier(0.4, 0, 0.2, 1));
+  }
+
+  .ds-motion-box:hover {
+    transform: scale(1.08);
+  }
+
+  .ds-motion-box.entrance {
+    animation: ds-entrance var(--duration-base, 300ms) var(--ease-entrance, cubic-bezier(0, 0, 0.2, 1)) both;
+  }
+
+  @keyframes ds-entrance {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ─── Divider ─── */
+  .ds-divider {
+    width: 60px;
+    height: 4px;
+    background: var(--color-accent, #e94560);
+    border-radius: 2px;
+    margin-bottom: 24px;
+  }
+
+  /* ─── Token Table ─── */
+  .ds-token-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+
+  .ds-token-table th,
+  .ds-token-table td {
+    text-align: left;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--color-border, rgba(255,255,255,0.06));
+  }
+
+  .ds-token-table th {
+    font-weight: 600;
+    opacity: 0.5;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .ds-token-table code {
+    font-family: var(--font-mono, monospace);
+    font-size: 13px;
+    background: var(--color-surface, rgba(255,255,255,0.05));
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+</style>
+</head>
+<body>
+<div class="ds-page">
+
+  <header class="ds-header">
+    <h1>Design System</h1>
+    <p>Generated by seurat — tokens.css is the source of truth</p>
+  </header>
+
+  <!-- ═══════ COLORS ═══════ -->
+  <section class="ds-section" id="colors">
+    <h2>Color Palette</h2>
+    <h3>Core</h3>
+    <div class="ds-grid ds-colors" id="core-colors"></div>
+    <h3 style="margin-top:24px">Named Palette</h3>
+    <div class="ds-grid ds-colors" id="named-colors"></div>
+  </section>
+
+  <!-- ═══════ TYPOGRAPHY ═══════ -->
+  <section class="ds-section" id="typography">
+    <h2>Typography</h2>
+    <div class="ds-type-sample">
+      <div class="label">Display — font-display</div>
+      <div class="ds-type-display" style="font-size:48px;font-weight:800;">The quick brown fox</div>
+    </div>
+    <div class="ds-type-sample">
+      <div class="label">H1</div>
+      <div class="ds-type-display" style="font-size:36px;font-weight:700;">Heading Level One</div>
+    </div>
+    <div class="ds-type-sample">
+      <div class="label">H2</div>
+      <div class="ds-type-display" style="font-size:28px;font-weight:700;">Heading Level Two</div>
+    </div>
+    <div class="ds-type-sample">
+      <div class="label">H3</div>
+      <div class="ds-type-display" style="font-size:22px;font-weight:600;">Heading Level Three</div>
+    </div>
+    <div class="ds-type-sample">
+      <div class="label">Body — font-body</div>
+      <div class="ds-type-body" style="font-size:16px;">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.</div>
+    </div>
+    <div class="ds-type-sample">
+      <div class="label">Mono — font-mono</div>
+      <div class="ds-type-mono" style="font-size:14px;">const tokens = readDesignTokens('./tokens.css');</div>
+    </div>
+  </section>
+
+  <!-- ═══════ SPACING ═══════ -->
+  <section class="ds-section" id="spacing">
+    <h2>Spacing Scale</h2>
+    <div id="spacing-scale"></div>
+  </section>
+
+  <!-- ═══════ RADIUS & BORDERS ═══════ -->
+  <section class="ds-section" id="radius">
+    <h2>Radius &amp; Borders</h2>
+    <div class="ds-radius-samples" id="radius-samples"></div>
+  </section>
+
+  <!-- ═══════ BUTTONS ═══════ -->
+  <section class="ds-section" id="buttons">
+    <h2>Buttons</h2>
+    <div class="ds-button-row">
+      <button class="ds-btn ds-btn-primary">Primary</button>
+      <button class="ds-btn ds-btn-accent">Accent</button>
+      <button class="ds-btn ds-btn-ghost">Ghost</button>
+      <button class="ds-btn ds-btn-disabled" disabled>Disabled</button>
+    </div>
+  </section>
+
+  <!-- ═══════ CARDS ═══════ -->
+  <section class="ds-section" id="cards">
+    <h2>Cards</h2>
+    <div class="ds-grid ds-cards">
+      <div class="ds-card">
+        <h4>Card Title</h4>
+        <p>A brief description of this card's content. Demonstrates surface, border, and radius tokens.</p>
+      </div>
+      <div class="ds-card">
+        <h4>Another Card</h4>
+        <p>Cards use --color-surface for background and --radius for border-radius.</p>
+      </div>
+      <div class="ds-card">
+        <h4>Third Card</h4>
+        <p>Consistent spacing and typography across all card instances.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════ FORM ELEMENTS ═══════ -->
+  <section class="ds-section" id="forms">
+    <h2>Form Elements</h2>
+    <div class="ds-form-group">
+      <label for="demo-input">Text Input</label>
+      <input class="ds-input" id="demo-input" type="text" placeholder="Type something...">
+    </div>
+    <div class="ds-form-group">
+      <label for="demo-input-focus">Focused Input</label>
+      <input class="ds-input" id="demo-input-focus" type="text" value="Focused state" autofocus>
+    </div>
+    <div class="ds-form-group">
+      <label for="demo-input-error">Error State</label>
+      <input class="ds-input ds-input-error" id="demo-input-error" type="text" value="Invalid value">
+      <div class="ds-error-text">This field has an error</div>
+    </div>
+    <div class="ds-form-group">
+      <label for="demo-textarea">Textarea</label>
+      <textarea class="ds-input" id="demo-textarea" rows="3" placeholder="Multi-line input..."></textarea>
+    </div>
+  </section>
+
+  <!-- ═══════ STATES ═══════ -->
+  <section class="ds-section" id="states">
+    <h2>States</h2>
+    <div class="ds-grid ds-states">
+      <div class="ds-state-box" style="background:color-mix(in srgb, var(--color-primary) 15%, transparent); color:var(--color-primary);">Info</div>
+      <div class="ds-state-box" style="background:color-mix(in srgb, #22c55e 15%, transparent); color:#22c55e;">Success</div>
+      <div class="ds-state-box" style="background:color-mix(in srgb, #f59e0b 15%, transparent); color:#f59e0b;">Warning</div>
+      <div class="ds-state-box" style="background:color-mix(in srgb, #ef4444 15%, transparent); color:#ef4444;">Error</div>
+    </div>
+  </section>
+
+  <!-- ═══════ MOTION ═══════ -->
+  <section class="ds-section" id="motion">
+    <h2>Motion</h2>
+    <p style="margin-bottom:16px;opacity:0.6;">Hover to see scale transition. Click to replay entrance animation.</p>
+    <div class="ds-motion-demos">
+      <div class="ds-motion-box entrance" onclick="this.classList.remove('entrance');void this.offsetWidth;this.classList.add('entrance');">Entrance</div>
+      <div class="ds-motion-box" style="background:var(--color-accent);">Hover me</div>
+    </div>
+  </section>
+
+  <!-- ═══════ TOKEN TABLE ═══════ -->
+  <section class="ds-section" id="tokens">
+    <h2>All Tokens</h2>
+    <table class="ds-token-table" id="token-table">
+      <thead>
+        <tr><th>Token</th><th>Value</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </section>
+
+</div>
+
+<script>
+(function() {
+  const root = getComputedStyle(document.documentElement);
+
+  // ─── Read all custom properties from tokens.css ───
+  const tokens = {};
+  for (const sheet of document.styleSheets) {
+    try {
+      for (const rule of sheet.cssRules) {
+        if (rule.selectorText === ':root') {
+          for (const prop of rule.style) {
+            if (prop.startsWith('--')) {
+              tokens[prop] = rule.style.getPropertyValue(prop).trim();
+            }
+          }
+        }
+      }
+    } catch (e) { /* cross-origin */ }
+  }
+
+  // ─── Color Palette ───
+  const coreColorNames = [
+    'color-primary', 'color-accent', 'color-bg', 'color-text',
+    'color-surface', 'color-on-primary', 'color-on-accent', 'color-border'
+  ];
+  const coreContainer = document.getElementById('core-colors');
+  const namedContainer = document.getElementById('named-colors');
+
+  for (const [prop, value] of Object.entries(tokens)) {
+    const name = prop.replace('--', '');
+    if (!name.startsWith('color-')) continue;
+
+    const swatch = document.createElement('div');
+    swatch.className = 'ds-color-swatch';
+
+    // Determine text color for swatch
+    const textColor = isLightColor(value) ? '#000' : '#fff';
+
+    swatch.innerHTML = `
+      <div class="swatch" style="background:${value};color:${textColor};">
+        <span style="font-size:12px;font-weight:600;text-shadow:0 1px 2px rgba(0,0,0,0.3);">${name}</span>
+      </div>
+      <div class="swatch-info">
+        <div class="swatch-name">${name}</div>
+        <div class="swatch-value">${value}</div>
+      </div>`;
+
+    if (coreColorNames.includes(name)) {
+      coreContainer.appendChild(swatch);
+    } else {
+      namedContainer.appendChild(swatch);
+    }
+  }
+
+  // ─── Spacing Scale ───
+  const spacingContainer = document.getElementById('spacing-scale');
+  const spaceTokens = Object.entries(tokens)
+    .filter(([k]) => k.match(/^--space-\d+$/))
+    .sort((a, b) => parseInt(a[1]) - parseInt(b[1]));
+
+  if (spaceTokens.length > 0) {
+    for (const [prop, value] of spaceTokens) {
+      const px = parseInt(value);
+      const row = document.createElement('div');
+      row.className = 'ds-spacing-row';
+      row.innerHTML = `
+        <span class="ds-spacing-label"><code>${prop.replace('--', '')}</code> ${value}</span>
+        <div class="ds-spacing-block" style="width:${Math.max(px, 4)}px;"></div>`;
+      spacingContainer.appendChild(row);
+    }
+  } else {
+    // Generate from base
+    const base = parseInt(tokens['--space-base'] || '4');
+    const multipliers = [1, 2, 3, 4, 6, 8, 12, 16, 24, 32];
+    for (const m of multipliers) {
+      const px = base * m;
+      const row = document.createElement('div');
+      row.className = 'ds-spacing-row';
+      row.innerHTML = `
+        <span class="ds-spacing-label"><code>space-${m}</code> ${px}px</span>
+        <div class="ds-spacing-block" style="width:${px}px;"></div>`;
+      spacingContainer.appendChild(row);
+    }
+  }
+
+  // ─── Radius ───
+  const radiusContainer = document.getElementById('radius-samples');
+  const radiusVal = tokens['--radius'] || '8px';
+  const radiusPx = parseInt(radiusVal);
+  const radii = [0, Math.round(radiusPx / 2), radiusPx, radiusPx * 2, 9999];
+  for (const r of radii) {
+    const box = document.createElement('div');
+    box.className = 'ds-radius-box';
+    box.style.borderRadius = r + 'px';
+    box.textContent = r === 9999 ? 'pill' : r + 'px';
+    radiusContainer.appendChild(box);
+  }
+
+  // ─── Token Table ───
+  const tbody = document.querySelector('#token-table tbody');
+  for (const [prop, value] of Object.entries(tokens).sort()) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td><code>${prop}</code></td><td>${value}</td>`;
+    tbody.appendChild(tr);
+  }
+
+  // ─── Helper: is color light? ───
+  function isLightColor(color) {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 1;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = color;
+    ctx.fillRect(0, 0, 1, 1);
+    const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+    return (r * 0.299 + g * 0.587 + b * 0.114) > 150;
+  }
+})();
+</script>
+</body>
+</html>

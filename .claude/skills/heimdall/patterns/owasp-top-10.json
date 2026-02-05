@@ -1,0 +1,715 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-01-17",
+  "description": "OWASP Top 10 2021 vulnerability detection patterns for AI-generated code",
+
+  "A01_broken_access_control": {
+    "name": "Broken Access Control",
+    "description": "Restrictions on authenticated users are not properly enforced",
+    "patterns": [
+      {
+        "id": "BAC-001",
+        "name": "Role bypass with OR condition",
+        "pattern": "(?i)role\\s*[=!]=\\s*['\"]admin['\"]\\s*\\|\\|",
+        "severity": "HIGH",
+        "cwe": "CWE-284",
+        "description": "Role check with permissive OR condition may allow bypass",
+        "remediation": "Use AND conditions for role checks, ensure all conditions must pass"
+      },
+      {
+        "id": "BAC-002",
+        "name": "Direct object reference without auth",
+        "pattern": "(?i)params\\.(id|userId|user_id)(?!.*auth|.*session|.*token)",
+        "severity": "HIGH",
+        "cwe": "CWE-639",
+        "description": "Direct use of user-supplied ID without authorization check",
+        "remediation": "Always verify the requesting user has permission to access the resource"
+      },
+      {
+        "id": "BAC-003",
+        "name": "Logic inversion - deactivated user access",
+        "pattern": "(?i)(active|enabled|isActive)\\s*===?\\s*false\\s*&&.*admin",
+        "severity": "CRITICAL",
+        "cwe": "CWE-284",
+        "description": "AI-specific: Inverted boolean grants access when user is inactive",
+        "ai_specific": true,
+        "remediation": "Verify boolean logic - should likely be 'active === true'"
+      },
+      {
+        "id": "BAC-004",
+        "name": "Missing authorization middleware",
+        "pattern": "(?i)router\\.(get|post|put|delete|patch)\\(['\"][^'\"]*admin[^'\"]*['\"]\\s*,\\s*(?!.*auth|.*protect|.*guard)",
+        "severity": "HIGH",
+        "cwe": "CWE-862",
+        "description": "Admin route without authorization middleware",
+        "remediation": "Add authentication/authorization middleware to protected routes"
+      },
+      {
+        "id": "BAC-005",
+        "name": "Forced browsing vulnerability",
+        "pattern": "(?i)sendFile\\s*\\(.*\\+.*req\\.(params|query|body)",
+        "severity": "CRITICAL",
+        "cwe": "CWE-425",
+        "description": "User input directly concatenated into file path",
+        "remediation": "Use path.resolve() and validate against allowed paths"
+      },
+      {
+        "id": "BAC-006",
+        "name": "JWT without verification",
+        "pattern": "(?i)jwt\\.decode\\s*\\((?!.*verify)",
+        "severity": "HIGH",
+        "cwe": "CWE-347",
+        "description": "JWT decoded without signature verification",
+        "remediation": "Use jwt.verify() instead of jwt.decode() for authentication"
+      },
+      {
+        "id": "BAC-007",
+        "name": "Permissive CORS",
+        "pattern": "(?i)(Access-Control-Allow-Origin|cors).*\\*",
+        "severity": "MEDIUM",
+        "cwe": "CWE-942",
+        "description": "CORS allows all origins, may expose sensitive data",
+        "remediation": "Specify allowed origins explicitly"
+      },
+      {
+        "id": "BAC-008",
+        "name": "Missing rate limiting",
+        "pattern": "(?i)(login|signin|auth|password).*(?!.*rateLimit|.*throttle|.*limiter)",
+        "severity": "MEDIUM",
+        "cwe": "CWE-307",
+        "description": "Authentication endpoint without rate limiting",
+        "remediation": "Add rate limiting to prevent brute force attacks"
+      }
+    ]
+  },
+
+  "A02_cryptographic_failures": {
+    "name": "Cryptographic Failures",
+    "description": "Failures related to cryptography which often lead to sensitive data exposure",
+    "patterns": [
+      {
+        "id": "CF-001",
+        "name": "Weak hash algorithm",
+        "pattern": "(?i)(md5|sha1)\\s*\\(|createHash\\s*\\(['\"](?:md5|sha1)['\"]\\)",
+        "severity": "HIGH",
+        "cwe": "CWE-328",
+        "description": "MD5/SHA1 are cryptographically broken for security purposes",
+        "remediation": "Use SHA-256 or stronger: crypto.createHash('sha256')",
+        "secure_alternative": {
+          "description": "Use SHA-256 or stronger hash",
+          "node": "crypto.createHash('sha256').update(data).digest('hex')",
+          "python": "hashlib.sha256(data.encode()).hexdigest()",
+          "for_passwords": "Use bcrypt.hash(password, 12) instead of hashing"
+        }
+      },
+      {
+        "id": "CF-002",
+        "name": "Deprecated cipher",
+        "pattern": "(?i)createCipher\\s*\\(|\\b(DES|RC4|RC2|Blowfish)\\b",
+        "severity": "CRITICAL",
+        "cwe": "CWE-327",
+        "description": "Using deprecated/weak encryption algorithm",
+        "remediation": "Use AES-256-GCM: crypto.createCipheriv('aes-256-gcm', key, iv)"
+      },
+      {
+        "id": "CF-003",
+        "name": "Hardcoded encryption key",
+        "pattern": "(?i)(encryption[_-]?key|secret[_-]?key|aes[_-]?key)\\s*[:=]\\s*['\"][^'\"]{8,}['\"]",
+        "severity": "CRITICAL",
+        "cwe": "CWE-321",
+        "description": "Encryption key hardcoded in source",
+        "remediation": "Use environment variables or secure key management service"
+      },
+      {
+        "id": "CF-004",
+        "name": "Predictable IV/nonce",
+        "pattern": "(?i)iv\\s*=\\s*['\"][^'\"]+['\"]|nonce\\s*=\\s*['\"][^'\"]+['\"]",
+        "severity": "HIGH",
+        "cwe": "CWE-329",
+        "description": "Static IV/nonce breaks encryption security",
+        "remediation": "Generate random IV for each encryption: crypto.randomBytes(16)"
+      },
+      {
+        "id": "CF-005",
+        "name": "Password in plain text",
+        "pattern": "(?i)password\\s*[:=]\\s*['\"][^'\"]+['\"](?!.*hash|.*bcrypt|.*argon)",
+        "severity": "CRITICAL",
+        "cwe": "CWE-256",
+        "description": "Password stored or transmitted in plain text",
+        "remediation": "Hash passwords with bcrypt or Argon2"
+      },
+      {
+        "id": "CF-006",
+        "name": "Insufficient key length",
+        "pattern": "(?i)generateKey.*(?:128|64)|keySize\\s*[:=]\\s*(?:128|64)",
+        "severity": "MEDIUM",
+        "cwe": "CWE-326",
+        "description": "Key length may be insufficient for long-term security",
+        "remediation": "Use 256-bit keys for symmetric encryption"
+      }
+    ]
+  },
+
+  "A03_injection": {
+    "name": "Injection",
+    "description": "User-supplied data is not validated, filtered, or sanitized",
+    "patterns": [
+      {
+        "id": "INJ-001",
+        "name": "SQL injection - string concatenation",
+        "pattern": "(?i)(execute|query|raw)\\s*\\(\\s*[f'\"`].*\\$\\{|\\+\\s*(?:req\\.|params\\.|query\\.|body\\.)",
+        "severity": "CRITICAL",
+        "cwe": "CWE-89",
+        "description": "SQL query built with string concatenation/interpolation",
+        "remediation": "Use parameterized queries: db.query('SELECT * FROM users WHERE id = $1', [userId])",
+        "secure_alternative": {
+          "description": "Use parameterized queries",
+          "postgresql": "db.query('SELECT * FROM users WHERE id = $1', [userId])",
+          "mysql": "db.query('SELECT * FROM users WHERE id = ?', [userId])",
+          "prisma": "prisma.user.findUnique({ where: { id: userId } })",
+          "python": "cursor.execute('SELECT * FROM users WHERE id = %s', (user_id,))"
+        }
+      },
+      {
+        "id": "INJ-002",
+        "name": "SQL injection - template literal",
+        "pattern": "(?i)\\$\\{.*\\}.*(?:SELECT|INSERT|UPDATE|DELETE|FROM|WHERE)|(?:SELECT|INSERT|UPDATE|DELETE|FROM|WHERE).*\\$\\{",
+        "severity": "CRITICAL",
+        "cwe": "CWE-89",
+        "description": "SQL keywords with template literal interpolation",
+        "remediation": "Never interpolate user input into SQL. Use ORM or parameterized queries"
+      },
+      {
+        "id": "INJ-003",
+        "name": "Command injection - exec/system",
+        "pattern": "(?i)(exec|execSync|spawn|system|popen|subprocess\\.call)\\s*\\(.*\\+|\\$\\{|\\%s|format\\(",
+        "severity": "CRITICAL",
+        "cwe": "CWE-78",
+        "description": "Shell command built with user input",
+        "remediation": "Use array arguments: execFile('cmd', [arg1, arg2]) instead of exec('cmd ' + input)"
+      },
+      {
+        "id": "INJ-004",
+        "name": "Command injection - shell=True",
+        "pattern": "(?i)shell\\s*=\\s*True",
+        "severity": "HIGH",
+        "cwe": "CWE-78",
+        "description": "subprocess with shell=True enables shell injection",
+        "remediation": "Use shell=False and pass arguments as list"
+      },
+      {
+        "id": "INJ-005",
+        "name": "NoSQL injection",
+        "pattern": "(?i)\\{\\s*\\$where\\s*:|find\\(\\{.*\\$|findOne\\(\\{.*\\+",
+        "severity": "HIGH",
+        "cwe": "CWE-943",
+        "description": "MongoDB query with potential injection vector",
+        "remediation": "Sanitize inputs, avoid $where, use mongoose schema validation"
+      },
+      {
+        "id": "INJ-006",
+        "name": "LDAP injection",
+        "pattern": "(?i)(ldap|ad).*filter.*\\+|\\(.*=.*\\+.*\\)",
+        "severity": "HIGH",
+        "cwe": "CWE-90",
+        "description": "LDAP filter built with user input",
+        "remediation": "Escape special LDAP characters: * ( ) \\ NUL"
+      },
+      {
+        "id": "INJ-007",
+        "name": "XPath injection",
+        "pattern": "(?i)xpath.*\\+|evaluate\\(.*\\+",
+        "severity": "HIGH",
+        "cwe": "CWE-643",
+        "description": "XPath query built with user input",
+        "remediation": "Use parameterized XPath queries or sanitize input"
+      },
+      {
+        "id": "INJ-008",
+        "name": "eval() with user input",
+        "pattern": "(?i)eval\\s*\\(.*(?:req\\.|params\\.|query\\.|body\\.|user)",
+        "severity": "CRITICAL",
+        "cwe": "CWE-95",
+        "description": "eval() with potentially user-controlled input",
+        "remediation": "Never use eval() with user input. Use JSON.parse() for data parsing",
+        "secure_alternative": {
+          "description": "Use safe parsing methods",
+          "for_json": "JSON.parse(userInput)",
+          "for_math": "Use a math expression parser library (e.g., mathjs)",
+          "for_config": "Use a schema validator like zod or yup"
+        }
+      },
+      {
+        "id": "INJ-009",
+        "name": "Template injection",
+        "pattern": "(?i)(render|template).*\\{\\{.*\\+|\\$\\{.*\\}.*render",
+        "severity": "HIGH",
+        "cwe": "CWE-1336",
+        "description": "Server-side template injection vulnerability",
+        "remediation": "Never pass user input directly to template engine"
+      },
+      {
+        "id": "INJ-010",
+        "name": "Regex injection (ReDoS)",
+        "pattern": "(?i)new\\s+RegExp\\s*\\(.*(?:req\\.|params\\.|query\\.|body\\.)|RegExp\\(.*\\+",
+        "severity": "MEDIUM",
+        "cwe": "CWE-1333",
+        "description": "Regular expression built from user input",
+        "remediation": "Escape regex special characters or use literal patterns"
+      },
+      {
+        "id": "INJ-011",
+        "name": "Header injection",
+        "pattern": "(?i)setHeader\\s*\\(.*(?:req\\.|params\\.|query\\.|body\\.)",
+        "severity": "HIGH",
+        "cwe": "CWE-113",
+        "description": "HTTP header set from user input",
+        "remediation": "Validate and sanitize header values, remove newlines"
+      },
+      {
+        "id": "INJ-012",
+        "name": "Log injection",
+        "pattern": "(?i)(?:console\\.log|logger\\.|log\\.).*(?:req\\.body|req\\.query|params)(?!.*sanitize|.*escape)",
+        "severity": "LOW",
+        "cwe": "CWE-117",
+        "description": "User input logged without sanitization",
+        "remediation": "Sanitize user input before logging to prevent log forging"
+      }
+    ]
+  },
+
+  "A04_insecure_design": {
+    "name": "Insecure Design",
+    "description": "Missing or ineffective control design",
+    "patterns": [
+      {
+        "id": "ID-001",
+        "name": "Missing input validation",
+        "pattern": "(?i)req\\.(body|query|params)\\.[a-zA-Z]+(?!.*valid|.*saniti|.*check|.*verify)",
+        "severity": "MEDIUM",
+        "cwe": "CWE-20",
+        "description": "User input used without validation",
+        "remediation": "Validate all user inputs using a validation library (joi, yup, zod)"
+      },
+      {
+        "id": "ID-002",
+        "name": "Missing authentication check",
+        "pattern": "(?i)async\\s+function\\s+\\w*(admin|delete|update|create).*\\{(?!.*auth|.*session|.*token)",
+        "severity": "HIGH",
+        "cwe": "CWE-306",
+        "description": "Sensitive operation without authentication check",
+        "remediation": "Add authentication middleware or check at function start"
+      },
+      {
+        "id": "ID-003",
+        "name": "Hardcoded admin credentials",
+        "pattern": "(?i)(admin|root|administrator).*password.*[:=]\\s*['\"][^'\"]+['\"]",
+        "severity": "CRITICAL",
+        "cwe": "CWE-798",
+        "description": "Administrative credentials hardcoded in source",
+        "remediation": "Remove hardcoded credentials, use secure credential storage"
+      },
+      {
+        "id": "ID-004",
+        "name": "Insufficient entropy for secrets",
+        "pattern": "(?i)Math\\.random\\(\\).*(?:token|secret|key|session|password)",
+        "severity": "HIGH",
+        "cwe": "CWE-330",
+        "description": "Math.random() used for security-sensitive values",
+        "remediation": "Use crypto.randomBytes() or crypto.randomUUID()",
+        "secure_alternative": {
+          "description": "Use cryptographically secure random",
+          "javascript": "crypto.randomUUID()",
+          "node": "crypto.randomBytes(32).toString('hex')",
+          "python": "import secrets; secrets.token_hex(32)"
+        }
+      }
+    ]
+  },
+
+  "A05_security_misconfiguration": {
+    "name": "Security Misconfiguration",
+    "description": "Missing appropriate security hardening",
+    "patterns": [
+      {
+        "id": "SM-001",
+        "name": "Debug mode in production",
+        "pattern": "(?i)(debug|DEBUG)\\s*[:=]\\s*(true|1|['\"]true['\"])",
+        "severity": "MEDIUM",
+        "cwe": "CWE-489",
+        "description": "Debug mode may expose sensitive information",
+        "remediation": "Ensure debug is disabled in production: process.env.NODE_ENV === 'production'"
+      },
+      {
+        "id": "SM-002",
+        "name": "Verbose error exposure",
+        "pattern": "(?i)res\\.(?:send|json)\\s*\\(.*(?:err|error)\\.(?:stack|message)",
+        "severity": "MEDIUM",
+        "cwe": "CWE-209",
+        "description": "Detailed error information sent to client",
+        "remediation": "Log errors server-side, return generic message to client"
+      },
+      {
+        "id": "SM-003",
+        "name": "Default credentials",
+        "pattern": "(?i)(?:password|pwd|pass)\\s*[:=]\\s*['\"](?:admin|password|123456|default|test)['\"]",
+        "severity": "CRITICAL",
+        "cwe": "CWE-1393",
+        "description": "Default/weak credentials in code",
+        "remediation": "Remove default credentials, enforce strong passwords"
+      },
+      {
+        "id": "SM-004",
+        "name": "Missing security headers",
+        "pattern": "(?i)app\\.use\\((?!.*helmet|.*security)",
+        "severity": "LOW",
+        "cwe": "CWE-693",
+        "description": "Application may be missing security headers",
+        "remediation": "Use helmet.js for security headers in Express"
+      },
+      {
+        "id": "SM-005",
+        "name": "Disabled SSL verification",
+        "pattern": "(?i)(rejectUnauthorized|verify_ssl|VERIFY_SSL)\\s*[:=]\\s*(false|0)",
+        "severity": "HIGH",
+        "cwe": "CWE-295",
+        "description": "SSL/TLS certificate verification disabled",
+        "remediation": "Enable SSL verification in production"
+      },
+      {
+        "id": "SM-006",
+        "name": "Exposed .env file",
+        "pattern": "(?i)sendFile.*\\.env|static.*\\.env|serve.*\\.env",
+        "severity": "CRITICAL",
+        "cwe": "CWE-538",
+        "description": ".env file may be served to clients",
+        "remediation": "Exclude .env from static file serving"
+      },
+      {
+        "id": "SM-007",
+        "name": "Directory listing enabled",
+        "pattern": "(?i)serveIndex|directory\\s*[:=]\\s*true|autoIndex\\s*[:=]\\s*true",
+        "severity": "MEDIUM",
+        "cwe": "CWE-548",
+        "description": "Directory listing exposes file structure",
+        "remediation": "Disable directory listing in production"
+      },
+      {
+        "id": "SM-008",
+        "name": "Exposed admin panel",
+        "pattern": "(?i)(?:router|app)\\.(?:get|use)\\(['\"]/?(?:admin|dashboard|panel)",
+        "severity": "LOW",
+        "cwe": "CWE-425",
+        "description": "Admin panel may be publicly accessible",
+        "remediation": "Ensure admin routes require authentication"
+      },
+      {
+        "id": "SM-009",
+        "name": "Insecure cookie settings",
+        "pattern": "(?i)cookie.*(?:secure\\s*[:=]\\s*false|httpOnly\\s*[:=]\\s*false)",
+        "severity": "MEDIUM",
+        "cwe": "CWE-614",
+        "description": "Cookie missing secure or httpOnly flag",
+        "remediation": "Set secure: true and httpOnly: true for sensitive cookies"
+      },
+      {
+        "id": "SM-010",
+        "name": "Exposed source maps",
+        "pattern": "(?i)sourceMappingURL|devtool\\s*[:=]\\s*['\"]source-map['\"]",
+        "severity": "LOW",
+        "cwe": "CWE-540",
+        "description": "Source maps may expose original source code",
+        "remediation": "Disable source maps in production builds"
+      }
+    ]
+  },
+
+  "A06_vulnerable_components": {
+    "name": "Vulnerable and Outdated Components",
+    "description": "Using components with known vulnerabilities",
+    "patterns": [
+      {
+        "id": "VC-001",
+        "name": "Known vulnerable package",
+        "pattern": "(?i)\"(lodash)\"\\s*:\\s*\"[0-3]\\.",
+        "severity": "HIGH",
+        "cwe": "CWE-1395",
+        "description": "Using lodash version with known vulnerabilities",
+        "remediation": "Update to latest lodash version"
+      },
+      {
+        "id": "VC-002",
+        "name": "Deprecated crypto API",
+        "pattern": "(?i)crypto\\.createCipher\\(|crypto\\.createDecipher\\(",
+        "severity": "HIGH",
+        "cwe": "CWE-327",
+        "description": "Using deprecated crypto methods without IV",
+        "remediation": "Use createCipheriv/createDecipheriv with explicit IV"
+      },
+      {
+        "id": "VC-003",
+        "name": "Unsafe pickle usage",
+        "pattern": "(?i)pickle\\.(loads?|dump)\\s*\\(",
+        "severity": "HIGH",
+        "cwe": "CWE-502",
+        "description": "pickle can execute arbitrary code during deserialization",
+        "remediation": "Use JSON or other safe serialization formats"
+      }
+    ]
+  },
+
+  "A07_auth_failures": {
+    "name": "Identification and Authentication Failures",
+    "description": "Confirmation of user identity, authentication, and session management",
+    "patterns": [
+      {
+        "id": "AF-001",
+        "name": "Weak password requirements",
+        "pattern": "(?i)password\\.length\\s*[<>=]+\\s*[1-7]\\b|minLength\\s*[:=]\\s*[1-7]\\b",
+        "severity": "MEDIUM",
+        "cwe": "CWE-521",
+        "description": "Password length requirement too weak",
+        "remediation": "Require minimum 8 characters with complexity rules"
+      },
+      {
+        "id": "AF-002",
+        "name": "Missing password hashing",
+        "pattern": "(?i)(?:user|account)\\.password\\s*=\\s*(?:req|body|input)\\.password(?!.*hash|.*bcrypt)",
+        "severity": "CRITICAL",
+        "cwe": "CWE-256",
+        "description": "Password stored without hashing",
+        "remediation": "Always hash passwords: await bcrypt.hash(password, 12)",
+        "secure_alternative": {
+          "description": "Hash passwords with bcrypt or Argon2",
+          "node": "const hashedPassword = await bcrypt.hash(password, 12)",
+          "python": "hashed_password = bcrypt.hashpw(password.encode(), bcrypt.gensalt(12))",
+          "verify_node": "const isMatch = await bcrypt.compare(password, hashedPassword)",
+          "verify_python": "bcrypt.checkpw(password.encode(), hashed_password)"
+        }
+      },
+      {
+        "id": "AF-003",
+        "name": "Session fixation risk",
+        "pattern": "(?i)session\\.(id|sessionId)\\s*=",
+        "severity": "HIGH",
+        "cwe": "CWE-384",
+        "description": "Manually setting session ID may enable fixation attacks",
+        "remediation": "Let session middleware generate IDs, regenerate after login"
+      },
+      {
+        "id": "AF-004",
+        "name": "Missing brute force protection",
+        "pattern": "(?i)comparePassword|verifyPassword|checkPassword(?!.*attempt|.*limit|.*lock)",
+        "severity": "MEDIUM",
+        "cwe": "CWE-307",
+        "description": "Password verification without brute force protection",
+        "remediation": "Implement account lockout or exponential backoff"
+      },
+      {
+        "id": "AF-005",
+        "name": "Credential in URL",
+        "pattern": "(?i)\\?.*(?:password|token|api_key|secret)=|&(?:password|token|api_key|secret)=",
+        "severity": "HIGH",
+        "cwe": "CWE-598",
+        "description": "Sensitive data in URL query string",
+        "remediation": "Use POST body or headers for sensitive data"
+      },
+      {
+        "id": "AF-006",
+        "name": "JWT stored in localStorage",
+        "pattern": "(?i)localStorage\\.setItem\\([^)]*(?:token|jwt|auth)",
+        "severity": "MEDIUM",
+        "cwe": "CWE-922",
+        "description": "JWT stored in localStorage is vulnerable to XSS",
+        "remediation": "Use httpOnly cookies for JWT storage"
+      }
+    ]
+  },
+
+  "A08_data_integrity": {
+    "name": "Software and Data Integrity Failures",
+    "description": "Code and infrastructure that does not protect against integrity violations",
+    "patterns": [
+      {
+        "id": "DI-001",
+        "name": "Insecure deserialization",
+        "pattern": "(?i)JSON\\.parse\\s*\\(.*(?:req|body|input)|unserialize\\s*\\(",
+        "severity": "HIGH",
+        "cwe": "CWE-502",
+        "description": "Deserializing untrusted data without validation",
+        "remediation": "Validate and sanitize deserialized data, use schema validation"
+      },
+      {
+        "id": "DI-002",
+        "name": "Missing integrity check",
+        "pattern": "(?i)fetch\\(.*\\)(?!.*integrity|.*hash|.*checksum)",
+        "severity": "LOW",
+        "cwe": "CWE-353",
+        "description": "External resource loaded without integrity verification",
+        "remediation": "Use Subresource Integrity (SRI) for external scripts"
+      },
+      {
+        "id": "DI-003",
+        "name": "Prototype pollution",
+        "pattern": "(?i)Object\\.assign\\(.*(?:req|body|input)|\\.\\.\\.(req|body|input)",
+        "severity": "HIGH",
+        "cwe": "CWE-1321",
+        "description": "Object merge with untrusted input may cause prototype pollution",
+        "remediation": "Use Object.assign({}, defaults, input) or validate input keys"
+      },
+      {
+        "id": "DI-004",
+        "name": "eval of external data",
+        "pattern": "(?i)eval\\s*\\(.*(?:fetch|axios|http|request)",
+        "severity": "CRITICAL",
+        "cwe": "CWE-494",
+        "description": "Executing code from external source",
+        "remediation": "Never eval external data, use JSON.parse for data"
+      }
+    ]
+  },
+
+  "A09_logging_failures": {
+    "name": "Security Logging and Monitoring Failures",
+    "description": "Without logging and monitoring, breaches cannot be detected",
+    "patterns": [
+      {
+        "id": "LF-001",
+        "name": "Sensitive data in logs",
+        "pattern": "(?i)(?:console\\.log|logger\\.|log\\.).*(?:password|secret|token|key|credit|ssn)",
+        "severity": "HIGH",
+        "cwe": "CWE-532",
+        "description": "Sensitive information written to logs",
+        "remediation": "Sanitize sensitive data before logging"
+      },
+      {
+        "id": "LF-002",
+        "name": "Missing authentication logging",
+        "pattern": "(?i)(?:login|signin|authenticate).*(?:success|fail)(?!.*log|.*audit|.*track)",
+        "severity": "LOW",
+        "cwe": "CWE-778",
+        "description": "Authentication events not logged",
+        "remediation": "Log all authentication attempts with timestamp and IP"
+      },
+      {
+        "id": "LF-003",
+        "name": "Exception swallowed",
+        "pattern": "(?i)catch\\s*\\([^)]*\\)\\s*\\{\\s*\\}|catch.*\\{\\s*\\/\\/",
+        "severity": "MEDIUM",
+        "cwe": "CWE-390",
+        "description": "Exception caught but not logged or handled",
+        "remediation": "Always log exceptions with context information"
+      }
+    ]
+  },
+
+  "A10_ssrf": {
+    "name": "Server-Side Request Forgery (SSRF)",
+    "description": "Web application fetches a remote resource without validating user-supplied URL",
+    "patterns": [
+      {
+        "id": "SSRF-001",
+        "name": "Unvalidated URL fetch",
+        "pattern": "(?i)(?:fetch|axios|http\\.get|request)\\s*\\(.*(?:req|body|query|params)\\.",
+        "severity": "HIGH",
+        "cwe": "CWE-918",
+        "description": "Server-side request to user-controlled URL",
+        "remediation": "Validate and whitelist allowed URLs/domains"
+      },
+      {
+        "id": "SSRF-002",
+        "name": "Internal service exposure",
+        "pattern": "(?i)(?:localhost|127\\.0\\.0\\.1|0\\.0\\.0\\.0|internal|metadata\\.google)",
+        "severity": "MEDIUM",
+        "cwe": "CWE-918",
+        "description": "Reference to internal services may indicate SSRF vector",
+        "remediation": "Block requests to internal networks and cloud metadata endpoints"
+      },
+      {
+        "id": "SSRF-003",
+        "name": "URL redirect without validation",
+        "pattern": "(?i)res\\.redirect\\s*\\(.*(?:req|body|query|params)\\.",
+        "severity": "HIGH",
+        "cwe": "CWE-601",
+        "description": "Open redirect to user-controlled URL",
+        "remediation": "Validate redirect URLs against whitelist"
+      },
+      {
+        "id": "SSRF-004",
+        "name": "Image/file URL from user input",
+        "pattern": "(?i)(?:img|image|file|url)\\s*[:=].*(?:req|body|query|params)\\.",
+        "severity": "MEDIUM",
+        "cwe": "CWE-918",
+        "description": "File/image URL from user input",
+        "remediation": "Validate URLs, use allowlist, avoid server-side fetching"
+      }
+    ]
+  },
+
+  "A07_xss": {
+    "name": "Cross-Site Scripting (XSS)",
+    "description": "XSS attacks are part of injection but common enough to highlight",
+    "patterns": [
+      {
+        "id": "XSS-001",
+        "name": "innerHTML assignment",
+        "pattern": "(?i)innerHTML\\s*=|outerHTML\\s*=",
+        "severity": "HIGH",
+        "cwe": "CWE-79",
+        "description": "Direct HTML assignment enables XSS",
+        "remediation": "Use textContent or sanitize with DOMPurify",
+        "secure_alternative": {
+          "description": "Use safe DOM methods or sanitize",
+          "text_only": "element.textContent = userInput",
+          "with_html": "element.innerHTML = DOMPurify.sanitize(userInput)",
+          "react": "Use JSX (default safe) or sanitize: <div dangerouslySetInnerHTML={{__html: DOMPurify.sanitize(html)}} />"
+        }
+      },
+      {
+        "id": "XSS-002",
+        "name": "document.write",
+        "pattern": "(?i)document\\.write\\s*\\(|document\\.writeln\\s*\\(",
+        "severity": "HIGH",
+        "cwe": "CWE-79",
+        "description": "document.write with user data enables XSS",
+        "remediation": "Use DOM manipulation methods instead"
+      },
+      {
+        "id": "XSS-003",
+        "name": "React dangerouslySetInnerHTML",
+        "pattern": "(?i)dangerouslySetInnerHTML",
+        "severity": "HIGH",
+        "cwe": "CWE-79",
+        "description": "React dangerous HTML insertion without sanitization",
+        "remediation": "Sanitize content with DOMPurify before setting"
+      },
+      {
+        "id": "XSS-004",
+        "name": "jQuery html() method",
+        "pattern": "(?i)\\$\\([^)]+\\)\\.html\\s*\\(|jQuery\\([^)]+\\)\\.html\\s*\\(",
+        "severity": "HIGH",
+        "cwe": "CWE-79",
+        "description": "jQuery html() with user data enables XSS",
+        "remediation": "Use .text() for user content or sanitize input"
+      },
+      {
+        "id": "XSS-005",
+        "name": "Template literal in HTML",
+        "pattern": "(?i)`<[^>]+>.*\\$\\{(?!.*escape|.*sanitize|.*encode)",
+        "severity": "HIGH",
+        "cwe": "CWE-79",
+        "description": "Template literal with unescaped variable in HTML",
+        "remediation": "Escape HTML special characters in interpolated values"
+      },
+      {
+        "id": "XSS-006",
+        "name": "URL javascript: protocol",
+        "pattern": "(?i)href\\s*=.*(?:req|body|query|params)(?!.*sanitize|.*validate)",
+        "severity": "HIGH",
+        "cwe": "CWE-79",
+        "description": "User input in href may allow javascript: URLs",
+        "remediation": "Validate URL protocol, only allow http/https"
+      }
+    ]
+  }
+}

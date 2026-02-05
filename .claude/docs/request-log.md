@@ -30,7 +30,11 @@ Registro incrementale di tutte le richieste gestite dal framework.
 
 | # | Data | Ora | Tipologia | Descrizione | Doc riferimento | Stato |
 |---|------|-----|-----------|-------------|-----------------|-------|
-| | | | | | | |
+| 1 | 2026-02-05 | 11:35 | Refactoring | Rename e consolidamento skill (rimozione trattini, emmet come orchestratore) | [migration-skill-rename.md](specs/migration-skill-rename.md) | completato |
+| 2 | 2026-02-05 | 14:20 | Feature | Heimdall v2: diff-aware analysis, import check, path-context severity, secure alternatives | [heimdall-v2-enhancements.md](specs/heimdall-v2-enhancements.md) | completato |
+| 3 | 2026-02-05 | 16:45 | Doc | Allineamento documentazione: fix comando inesistente, SKILL.md vs filesystem, README ristrutturazione | [documentation-alignment.md](specs/documentation-alignment.md) | in sospeso |
+| 4 | 2026-02-05 | 18:30 | Research | Audit approfondito skill: analisi file-per-file di tutte le 6 skill | [skill-audit-deep.md](specs/skill-audit-deep.md) | completato |
+| 5 | 2026-02-05 | 19:00 | Doc | Framework Alignment Audit: fix 34 incongruenze in skill docs, CLAUDE.md, README.md | [framework-alignment-audit.md](specs/framework-alignment-audit.md) | completato |
 
 ---
 

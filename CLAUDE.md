@@ -14,6 +14,25 @@
 
 ---
 
+## Quick Commands
+
+| I need to... | I do... |
+|--------------|---------|
+| Understand codebase | Read registry (loaded via @import above) |
+| Find where something lives | `grep "name" .claude/docs/registry.md` |
+| Understand decision flows | Read `.claude/docs/workflows.md` |
+| Start a new feature | Create spec → wait for PROCEED |
+| Track my progress | Use TodoWrite |
+| Record why I chose X over Y | Add to `.claude/docs/decisions.md` |
+| Verify before commit | Run through `.claude/docs/checklist.md` |
+| Fix bugs | Read `.claude/docs/bugs/bugs.md` → fix → add `**Sistemato:**` |
+| Audit tech debt | Run `/emmet techdebt` → review report |
+| Record session learnings | Create `.claude/docs/session-notes/[date]-[topic].md` |
+| Log a request | Add entry to `.claude/docs/request-log.md` |
+| Check request history | Read `.claude/docs/request-log.md` |
+
+---
+
 ## Session Startup
 
 Read these files before doing anything else:
@@ -29,24 +48,35 @@ ls .claude/docs/specs/
 
 ---
 
-## First Run (New User)
+## Primo Avvio / First Run
 
 **Detection:** This is a first run if:
 - Registry sections are all empty (only headers, no content)
 - AND `.claude/docs/request-log.md` has no entries in the Log table
 
-**When I detect first run, BEFORE doing anything else**, I MUST:
+### If first run detected:
 
-1. **Greet and introduce:**
-   > "Ciao! Questo progetto usa il **Claude Development Framework** — un sistema operativo che mi aiuta a lavorare meglio.
-   >
-   > Il framework include skill specializzate per UI, development patterns, sicurezza, SEO/copywriting, video e audio.
-   >
-   > Per capire come funziona, leggi `.claude/README.md`. Lì trovi tutto: setup, comandi, skill disponibili."
+**1. Greet and introduce:**
+> "Ciao! Questo progetto usa il **Claude Development Framework** — un sistema operativo che mi aiuta a lavorare meglio.
+>
+> Il framework include skill specializzate per UI, development patterns, sicurezza, SEO/copywriting, video e audio.
+>
+> Per capire come funziona, leggi `.claude/README.md`. Lì trovi tutto: setup, comandi, skill disponibili."
 
-2. **Wait for acknowledgment** before proceeding with any user request.
+**2. Wait for acknowledgment** before proceeding with any user request.
 
 **This takes priority over ANY user request on first run.** Even if the user asks something specific, I first introduce the framework.
+
+### Then populate the registry:
+- Components and services
+- Key functions
+- API endpoints
+- Database schema
+- Environment variables
+
+Skip sections that don't apply. Then run `/adapt-framework` to generate stack-specific patterns.
+
+For projects with existing UI, also run `/seurat extract` then `/seurat analyze-project`.
 
 ---
 
@@ -191,21 +221,6 @@ When asked to fix bugs from `.claude/docs/bugs/bugs.md`:
 
 ---
 
-## First Use on New Project
-
-When the registry sections are blank, this is a new project. Populate it:
-- Components and services
-- Key functions
-- API endpoints
-- Database schema
-- Environment variables
-
-Skip sections that don't apply. Then run `/adapt-framework` to generate stack-specific patterns.
-
-For projects with existing UI, also run `/ui-craft establish` then `/ui-craft analyze-project`.
-
----
-
 ## Session Notes (Post-Mortem)
 
 **Location:** `.claude/docs/session-notes/`
@@ -238,25 +253,6 @@ At the end of complex sessions (multi-file changes, debugging, refactoring), cre
 
 **When NOT to write one:**
 - Straightforward session, nothing surprising happened
-
----
-
-## Quick Commands
-
-| I need to... | I do... |
-|--------------|---------|
-| Understand codebase | Read registry (loaded via @import above) |
-| Find where something lives | `grep "name" .claude/docs/registry.md` |
-| Understand decision flows | Read `.claude/docs/workflows.md` |
-| Start a new feature | Create spec → wait for PROCEED |
-| Track my progress | Use TodoWrite |
-| Record why I chose X over Y | Add to `.claude/docs/decisions.md` |
-| Verify before commit | Run through `.claude/docs/checklist.md` |
-| Fix bugs | Read `.claude/docs/bugs/bugs.md` → fix → add `**Sistemato:**` |
-| Audit tech debt | Run `/techdebt` → review report |
-| Record session learnings | Create `.claude/docs/session-notes/[date]-[topic].md` |
-| Log a request | Add entry to `.claude/docs/request-log.md` |
-| Check request history | Read `.claude/docs/request-log.md` |
 
 ---
 

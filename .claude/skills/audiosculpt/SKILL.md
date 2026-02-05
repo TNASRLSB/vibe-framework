@@ -1,17 +1,17 @@
 # audiosculpt
 
-Programmatic audio generation (soundtrack + SFX) for video-craft webvideos or standalone use. Uses **Strudel** (TidalCycles for JavaScript) for pattern-based live-coding audio synthesis. Output is always a self-contained `<script>` block.
+Programmatic audio generation (soundtrack + SFX) for orson webvideos or standalone use. Uses **Strudel** (TidalCycles for JavaScript) for pattern-based live-coding audio synthesis. Output is always a self-contained `<script>` block.
 
 ## Commands
 
 | Command | What it does |
 |---------|-------------|
 | `/audiosculpt create` | **Guided flow** — create audio for a webvideo or standalone |
-| `/audiosculpt add-to-video <html>` | Inject audio into an existing video-craft webvideo |
+| `/audiosculpt add-to-video <html>` | Inject audio into an existing orson webvideo |
 | `/audiosculpt preview <style>` | Generate a standalone HTML page with 15s demo of a style |
 | `/audiosculpt styles` | List all 20 available soundtrack styles with descriptions |
 | `/audiosculpt create --template <id>` | Use a parametric template for quick generation |
-| `/audiosculpt create --narration` | Enable TTS narration (video-craft integration) |
+| `/audiosculpt create --narration` | Enable TTS narration (orson integration) |
 | `/audiosculpt add-narration <html>` | Add narration to existing HTML |
 
 ---
@@ -158,7 +158,7 @@ pip install edge-tts
 ### Entry Points
 
 **A. Video-Craft Integration** (`/audiosculpt create --narration`)
-- YAML from video-craft contains structured text elements
+- YAML from orson contains structured text elements
 - Narration brief generated automatically
 - Voiceover mode enabled automatically
 
@@ -275,7 +275,7 @@ The Strudel library is loaded via CDN: `https://unpkg.com/@strudel/web@1.0.3`
 ### Step 1: Source
 
 Ask the user:
-- **from-video `<path.html>`** — Analyze an existing video-craft webvideo.
+- **from-video `<path.html>`** — Analyze an existing orson webvideo.
 - **standalone** — User describes: mood, duration, purpose.
 
 If from-video: read the HTML file and **build the TIR** (see "Building the TIR" below).
@@ -1232,7 +1232,7 @@ Apply ducking to:
 
 ---
 
-## Integration with video-craft
+## Integration with orson
 
 ### Parsing the webvideo HTML
 
@@ -1257,6 +1257,67 @@ Insert before `</body>`:
   // Generated Strudel code here
 </script>
 ```
+
+---
+
+## Reference: Engine Scripts
+
+The `engine/` directory contains Python scripts for alternative workflows.
+
+### generate.py — Text2Midi Generator
+
+**Purpose:** Generate MIDI files from text prompts using the HuggingFace Text2Midi model. This is an **alternative** to the primary Strudel-based workflow.
+
+**When to use:** When you need actual MIDI files (for DAW import, external processing, or non-browser playback).
+
+**Dependencies:** PyTorch, transformers, miditok, symusic, huggingface_hub
+
+```bash
+# Setup
+bash .claude/skills/audiosculpt/engine/setup.sh
+
+# Usage
+python engine/generate.py --prompt "dark electronic, A minor, 122 BPM, 4/4" --output /tmp/soundtrack.mid
+python engine/generate.py --prompt "..." --output out.mid --temperature 1.0 --max-length 1024
+```
+
+**Arguments:**
+- `--prompt` — Text description of the music (style, key, BPM, time signature)
+- `--output` — Output .mid file path
+- `--temperature` — Sampling temperature (default: 1.0)
+- `--max-length` — Max token length (default: 1024)
+
+**Note:** Requires GPU (CUDA/MPS) for reasonable performance. CPU generation is slow.
+
+### midi2events.py — MIDI to JSON Parser
+
+**Purpose:** Convert MIDI files to JSON event arrays for Strudel scheduling.
+
+**When to use:** Bridge between generate.py output and Strudel playback. Parses MIDI into timed events that can be scheduled in the browser.
+
+```bash
+# Print to stdout
+python engine/midi2events.py input.mid
+
+# Write to file
+python engine/midi2events.py input.mid --output events.json
+```
+
+**Output format:**
+```json
+[
+  {"time": 0.0, "track": 0, "channel": 0, "note": "C4", "duration": 0.5, "velocity": 80},
+  {"time": 0.5, "track": 1, "channel": 1, "note": "A2", "duration": 1.0, "velocity": 64}
+]
+```
+
+### Workflow: Text2Midi → Strudel
+
+To use text2midi output in browser playback:
+
+1. Generate MIDI: `python engine/generate.py --prompt "..." --output track.mid`
+2. Convert to events: `python engine/midi2events.py track.mid --output events.json`
+3. Schedule in Strudel: Read events.json and trigger notes at specified times
 
 ---
 

@@ -11,15 +11,15 @@ Visual decision flows for the Claude Operating System framework. Reference these
    - [Registry Verification](#registry-verification)
    - [Spec Lifecycle](#spec-lifecycle)
    - [Large File Handling](#large-file-handling)
-2. [UX-Craft](#ui-craft)
+2. [Seurat](#seurat)
    - [Pre-Generation Validation](#pre-generation-validation)
    - [Design Direction Selection](#design-direction-selection)
    - [5-Phase Workflow](#5-phase-workflow)
-3. [Security-Guardian](#security-guardian)
+3. [Heimdall](#heimdall)
    - [Severity-Based Enforcement](#severity-based-enforcement)
    - [Iteration Degradation Tracking](#iteration-degradation-tracking)
    - [Security Scan Workflow](#security-scan-workflow)
-4. [Dev-Patterns](#dev-patterns)
+4. [Emmet](#emmet)
    - [Stack Detection](#stack-detection)
    - [Code Review Flow](#code-review-flow)
 5. [Pre-Commit Checklist](#pre-commit-checklist)
@@ -124,7 +124,7 @@ flowchart TD
 
 ---
 
-## UX-Craft
+## Seurat
 
 ### Pre-Generation Validation
 
@@ -133,7 +133,7 @@ Validation chain before generating UI code. Gates are ordered by severity.
 ```mermaid
 flowchart TD
     A[UI/UX Task] --> B{system.md exists?}
-    B -->|No| BLOCK1[BLOCK: Run /ui-craft establish first]
+    B -->|No| BLOCK1[BLOCK: Run /seurat establish first]
     B -->|Yes| C{Direction defined?}
     C -->|No| BLOCK2[BLOCK: Choose direction in system.md]
     C -->|Yes| D{Generic fonts used?<br/>Inter/Roboto/Arial/Helvetica}
@@ -164,7 +164,7 @@ Choosing the right design direction based on app type.
 
 ```mermaid
 flowchart TD
-    A["/ui-craft establish"] --> B{What type of app?}
+    A["/seurat establish"] --> B{What type of app?}
     B -->|Dashboard/Admin| C[1: Precision & Density]
     B -->|Consumer/Social| D[2: Warmth & Approachability]
     B -->|Finance/Enterprise| E[3: Sophistication & Trust]
@@ -209,7 +209,7 @@ flowchart LR
 
 ---
 
-## Security-Guardian
+## Heimdall
 
 ### Severity-Based Enforcement
 
@@ -269,7 +269,7 @@ Full security scan process.
 
 ```mermaid
 flowchart TD
-    A["/security-guardian scan"] --> B[Load patterns]
+    A["/heimdall scan"] --> B[Load patterns]
     B --> C["Scan for secrets<br/>50+ patterns"]
     B --> D["Scan for OWASP Top 10<br/>60+ patterns"]
     B --> E["Check BaaS config<br/>Supabase/Firebase"]
@@ -292,7 +292,7 @@ flowchart TD
 
 ---
 
-## Dev-Patterns
+## Emmet
 
 ### Stack Detection
 
@@ -336,17 +336,17 @@ flowchart TD
     T --> GEN
 ```
 
-**Output:** Stack-specific patterns in `.claude/skills/dev-patterns/stacks/[stack-name]/`
+**Output:** Stack-specific patterns in `.claude/skills/emmet/stacks/[stack-name]/`
 
 ---
 
 ### Code Review Flow
 
-Systematic code review using `/dev-patterns review`.
+Systematic code review using `/emmet checklist code-review`.
 
 ```mermaid
 flowchart TD
-    A["/dev-patterns review"] --> B[Load checklist]
+    A["/emmet checklist code-review"] --> B[Load checklist]
 
     B --> C[Architecture Check]
     C --> D{Single responsibility?}

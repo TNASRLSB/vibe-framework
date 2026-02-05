@@ -1,6 +1,6 @@
 # Visual Composition Principles
 
-**Shared foundation for ui-craft (web layout) and video-craft (frame composition).**
+**Shared foundation for seurat (web layout) and orson (frame composition).**
 
 These principles describe how the human eye processes visual information. They apply identically whether the canvas is a web page or a video frame. Each skill adapts them to its medium.
 
