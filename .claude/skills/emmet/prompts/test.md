@@ -178,13 +178,13 @@ Dopo ogni esecuzione, `/emmet test` aggiorna `functional-map.md`:
 Sostituisci la riga `Ultimo test:` con il risultato:
 
 ```markdown
-- **Ultimo test:** 2026-02-10 14:30 — Playwright — PASS
+- **Ultimo test:** YYYY-MM-DD HH:MM — Playwright — PASS
 ```
 
 oppure:
 
 ```markdown
-- **Ultimo test:** 2026-02-10 14:30 — Playwright — FAIL (BUG-SEC-001)
+- **Ultimo test:** YYYY-MM-DD HH:MM — Playwright — FAIL (BUG-SEC-001)
 ```
 
 ### Coverage Summary

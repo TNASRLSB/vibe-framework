@@ -118,7 +118,7 @@ ws.conditional_formatting.add('B2:B100',
 ws['B2'].number_format = '#,##0.00'        # 1,234.56
 ws['C2'].number_format = '$#,##0.00'       # $1,234.56
 ws['D2'].number_format = '0.00%'           # 12.34%
-ws['E2'].number_format = 'yyyy-mm-dd'      # 2026-02-11
+ws['E2'].number_format = 'yyyy-mm-dd'      # 2024-01-15
 ws['F2'].number_format = '#,##0.00;[Red]-#,##0.00'  # Red for negative
 ```
 
