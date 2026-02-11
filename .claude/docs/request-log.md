@@ -30,7 +30,6 @@ Registro incrementale di tutte le richieste gestite dal framework.
 
 | # | Data | Ora | Tipologia | Descrizione | Doc riferimento | Stato |
 |---|------|-----|-----------|-------------|-----------------|-------|
-| 1 | 2026-02-11 | — | Feature | Migrazione Audiosculpt → Orson + Demo Mode: audio integrato in Orson, Strudel rimosso, libreria curata + FFmpeg, `/orson demo` con Playwright recording | `cosmic-tumbling-kettle.md` | completato |
 
 ---
 
