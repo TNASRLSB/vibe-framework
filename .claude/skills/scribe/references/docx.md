@@ -238,7 +238,7 @@ python3 scripts/office/pack.py unpacked_document/ document_edited.docx
 
 **Insertion:**
 ```xml
-<w:ins w:id="1" w:author="Author" w:date="2026-02-11T10:00:00Z">
+<w:ins w:id="1" w:author="Author" w:date="2024-01-15T10:00:00Z">
   <w:r>
     <w:t>inserted text</w:t>
   </w:r>
@@ -247,7 +247,7 @@ python3 scripts/office/pack.py unpacked_document/ document_edited.docx
 
 **Deletion:**
 ```xml
-<w:del w:id="2" w:author="Author" w:date="2026-02-11T10:00:00Z">
+<w:del w:id="2" w:author="Author" w:date="2024-01-15T10:00:00Z">
   <w:r>
     <w:delText>deleted text</w:delText>
   </w:r>
@@ -256,7 +256,7 @@ python3 scripts/office/pack.py unpacked_document/ document_edited.docx
 
 **Format change:**
 ```xml
-<w:rPrChange w:id="3" w:author="Author" w:date="2026-02-11T10:00:00Z">
+<w:rPrChange w:id="3" w:author="Author" w:date="2024-01-15T10:00:00Z">
   <w:rPr>
     <!-- original formatting -->
   </w:rPr>
@@ -267,7 +267,7 @@ python3 scripts/office/pack.py unpacked_document/ document_edited.docx
 
 ```xml
 <!-- In word/comments.xml -->
-<w:comment w:id="1" w:author="Author" w:date="2026-02-11T10:00:00Z">
+<w:comment w:id="1" w:author="Author" w:date="2024-01-15T10:00:00Z">
   <w:p>
     <w:r><w:t>Comment text here</w:t></w:r>
   </w:p>

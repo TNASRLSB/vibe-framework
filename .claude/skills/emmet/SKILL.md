@@ -123,7 +123,7 @@ Simula utente reale basandosi sugli use cases della map. Ogni use case diventa u
 Dopo ogni esecuzione, aggiorna automaticamente lo stato test nella `functional-map.md`:
 
 ```markdown
-- **Ultimo test:** 2026-02-10 14:30 — Playwright — PASS
+- **Ultimo test:** YYYY-MM-DD HH:MM — Playwright — PASS
 ```
 
 **Riferimento completo:** `prompts/test.md`

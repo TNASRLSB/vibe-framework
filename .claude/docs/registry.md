@@ -1,6 +1,6 @@
 # Codebase Registry
 
-**Last updated:** 2026-02-11
+**Last updated:** —
 
 This is my memory. I update it as I learn. I check it before making claims.
 
@@ -86,8 +86,6 @@ This is my memory. I update it as I learn. I check it before making claims.
 
 *Anything else I've learned that doesn't fit above.*
 
-- **Emmet v2 (2026-02-10):** Nuovo `/emmet map` (functional map), `/emmet test` ridefinito con flag `--static`/`--browser`. Comandi deprecati: `/emmet plan`, `/emmet journey`. La functional map (`.claude/docs/functional-map.md`) e la source of truth per il testing.
-- **Framework Enhancement v2 (2026-02-11):** Nuove skill Scribe (documents) e Forge (meta-skill). Ghostwriter e Heimdall splittati con references/ on-demand. Visual QA aggiunto a Seurat/Orson/Emmet. Subagent orchestration aggiunto a Baptist/Emmet. Nuovo `with-server.sh` per Emmet.
 
 ---
 
