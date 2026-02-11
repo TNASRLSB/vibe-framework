@@ -19,16 +19,20 @@ allowed-tools:
 Skill completa per testing, debugging e quality assurance con ciclo:
 
 ```
-ANALISI -> PIANIFICAZIONE -> ESECUZIONE -> REPORT
+MAP → ANALISI → ESECUZIONE → REPORT
 ```
+
+La **functional map** e la fonte di verita: descrive cosa fa l'app, chi la usa, e quali flussi testare. Il testing usa la map per sapere **cosa** verificare.
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| `/emmet plan [scope]` | Analizza codice + spec, genera piano di test |
-| `/emmet test` | Esegue test statici (analisi codice senza esecuzione) |
-| `/emmet journey [flow]` | Esegue test dinamici con Playwright |
+| `/emmet map` | Analizza codebase, genera mappa funzionale completa |
+| `/emmet map --update` | Rigenera la mappa funzionale |
+| `/emmet test` | Ciclo QA completo: analisi statica + test browser |
+| `/emmet test --static` | Solo analisi statica (veloce, no browser) |
+| `/emmet test --browser` | Solo test browser (Playwright o BrowserMCP) |
 | `/emmet report` | Genera report bug da ultimo test |
 | `/emmet techdebt [path]` | Audit tech debt (duplicazioni, export orfani, ecc.) |
 | `/emmet checklist [type]` | Carica checklist (code-review, pre-deploy, refactoring, security) |
@@ -36,59 +40,93 @@ ANALISI -> PIANIFICAZIONE -> ESECUZIONE -> REPORT
 
 ---
 
-## `/emmet plan [scope]`
+## `/emmet map`
 
-Genera piano di test leggendo:
-1. Codice sorgente nel path specificato
-2. Spec in `.claude/docs/specs/`
-3. Requisiti/PDR se disponibili
+Analizza il 100% della codebase e produce una mappa funzionale strutturata.
 
-**Output:** `.claude/docs/test-plan.md`
+**Output:** `.claude/docs/functional-map.md`
+
+**Cosa contiene la map:**
+- **Screens/Views** — Tutte le schermate con elementi interattivi
+- **State Transitions** — Grafo di navigazione (Mermaid)
+- **Personas** — Derivate dalla complessita dei flussi
+- **Use Cases** — Flussi principali e alternativi con stato test
+- **Workflow Diagrams** — Diagrammi dei flussi complessi
+- **Coverage Summary** — Conteggio use cases testati/non testati
 
 **Workflow:**
-1. Leggo il codice
-2. Identifico funzionalita critiche
-3. Identifico edge case
-4. Identifico integrazioni da testare
-5. Genero piano con priorita
+1. Scansiona HTML/JSX per screen/container
+2. Scansiona JS/TS per addEventListener, navigazione, state actions
+3. Scansiona CSS per classi layout
+4. Ricostruisce grafo transizioni di stato
+5. Identifica punti di interazione utente
+6. Mappa ogni interazione al codice che la gestisce
+7. Genera personas dalla complessita dei flussi
+8. Genera use cases con flussi principali e alternativi
+9. Genera workflow diagrams
+10. Assembla map con template
+
+**Aggiornamento:** `/emmet map --update` rigenera la map mantenendo lo stato test esistente.
+
+**Riferimento completo:** `prompts/map.md`
 
 ---
 
 ## `/emmet test`
 
-Test statici: analisi del codice senza esecuzione.
+Ciclo QA completo. Usa la functional map come guida per sapere cosa testare.
 
-**Cosa cerca:**
-- Bug logici (off-by-one, null checks mancanti, race conditions)
-- Pattern problematici (callback hell, deeply nested conditionals)
-- Type errors potenziali
-- Error handling incompleto
-- Security issues (injection, XSS, hardcoded secrets)
-- Performance issues (N+1 queries, memory leaks)
+### Flag di scoping
+
+| Comando | Cosa esegue |
+|---------|-------------|
+| `/emmet test` | Ciclo completo: static + browser |
+| `/emmet test --static` | Solo analisi statica (veloce, no browser) |
+| `/emmet test --browser` | Solo test browser (Playwright o BrowserMCP) |
+
+### Flusso completo
+
+```
+1. Legge functional-map.md per sapere COSA testare
+2. Esegue analisi statica (security, logic, performance, code quality)
+3. Per ogni use case nella map:
+   a. Genera/aggiorna test script
+   b. Esegue test (Playwright o BrowserMCP)
+   c. Cattura evidenze (screenshot, log, errori)
+   d. Aggiorna stato test nella map
+4. Genera report finale in .claude/docs/test-report.md
+```
+
+### Backend browser
+
+| Backend | Caratteristiche | Uso ideale |
+|---------|-----------------|------------|
+| **Playwright** (default) | Headless, veloce, CI-friendly | Regression, CI/CD, test automatizzati |
+| **BrowserMCP** | Browser reale, Claude "vede" la pagina | Visual regression, UX validation |
+
+Auto-detection: se BrowserMCP e configurato come MCP server, lo usa; altrimenti Playwright.
+
+### Analisi statica
+
+Cerca: bug logici, pattern problematici, type errors, error handling incompleto, security issues, performance issues.
 
 **Riferimento completo:** `testing/static.md`
 
----
+### Test browser
 
-## `/emmet journey [flow]`
-
-Test dinamici con Playwright: simula utente reale.
-
-**Cosa testa:**
-- User flows completi (signup, login, checkout)
-- Interazioni UI (click, form submission, navigation)
-- Stato dell'applicazione
-- Comportamento responsive
-- Errori runtime
-
-**Workflow:**
-1. Identifico il flow da testare
-2. Genero script Playwright
-3. Eseguo script
-4. Catturo screenshot/video se fallimento
-5. Documento bug trovati
+Simula utente reale basandosi sugli use cases della map. Ogni use case diventa uno o piu test script.
 
 **Riferimento completo:** `testing/dynamic.md`
+
+### Aggiornamento map
+
+Dopo ogni esecuzione, aggiorna automaticamente lo stato test nella `functional-map.md`:
+
+```markdown
+- **Ultimo test:** 2026-02-10 14:30 — Playwright — PASS
+```
+
+**Riferimento completo:** `prompts/test.md`
 
 ---
 
@@ -207,26 +245,12 @@ Analizza il progetto e genera pattern stack-specific.
 
 ---
 
-## Due Tipi di Test
+## Deprecated Commands
 
-| Tipo | Cosa trova | Come |
-|------|------------|------|
-| **Statico** | Bug nel codice (logica, pattern, type error) | Analisi codice senza esecuzione |
-| **Dinamico** | Bug comportamentali (UI/UX, flussi) | Playwright simula utente |
-
-### Quando usare quale
-
-**Test Statici** (`/emmet test`):
-- Revisione codice nuovo
-- Audit sicurezza
-- Identificazione tech debt
-- Prima di code review
-
-**Test Dinamici** (`/emmet journey`):
-- Verifica user flows
-- Test di regressione UI
-- Validazione integrazioni
-- Prima di deploy
+| Comando | Sostituito da | Motivo |
+|---------|---------------|--------|
+| `/emmet plan` | `/emmet map` | La map include il test plan implicitamente (ogni UC = un test) |
+| `/emmet journey [flow]` | `/emmet test --browser` | Il test browser usa la map come source of truth |
 
 ---
 
@@ -240,24 +264,63 @@ Analizza il progetto e genera pattern stack-specific.
 
 ---
 
+## Confine con Seurat
+
+- **seurat** = design system (token, spacing, colori, componenti come pattern visivi)
+- **emmet map** = funzionalita (cosa fa l'utente, dove, con quale risultato)
+
+Non c'e sovrapposizione: seurat descrive **come appare**, emmet descrive **cosa fa**.
+
+---
+
 ## Directory Structure
 
 ```
 emmet/
-├── SKILL.md              # Questo file
+├── SKILL.md                # Questo file
+├── prompts/
+│   ├── map.md              # Workflow e logica di scan per /emmet map
+│   └── test.md             # Workflow unificato per /emmet test
+├── templates/
+│   └── functional-map.md   # Template output per la map
 ├── testing/
-│   ├── static.md         # Regole test statici
-│   ├── dynamic.md        # Regole test Playwright
-│   ├── plan-template.md  # Template piano test
-│   └── report-template.md # Template report bug
+│   ├── static.md           # Regole test statici
+│   ├── dynamic.md          # Regole test Playwright
+│   ├── plan-template.md    # [LEGACY] Template piano test
+│   └── report-template.md  # Template report bug
 ├── checklists/
 │   ├── code-review.md
 │   ├── pre-deploy.md
 │   ├── refactoring.md
 │   └── security.md
-└── stacks/               # Generato da /adapt-framework
+└── stacks/                 # Generato da /adapt-framework
     └── [stack-name]/
         ├── patterns.md
         ├── commands.md
         └── gotchas.md
 ```
+
+---
+
+## Visual Testing (Opus 4.6)
+
+For UI-related testing, use screenshot comparison:
+
+1. Screenshot the page before modifications
+2. Apply the code changes
+3. Screenshot the page after modifications
+4. Compare visually: layout shifts, missing elements, broken styling, color changes
+5. Flag any unintended visual regressions in the test report
+
+Works with both Playwright (headless screenshot) and BrowserMCP (visual inspection).
+
+---
+
+## Security Pre-Check
+
+Before running functional tests on newly written or modified code:
+
+1. Launch Heimdall scan on the modified files as a subagent (Task tool)
+2. If critical vulnerabilities found, report them before proceeding with tests
+3. If clean, proceed with the test suite
+4. Include security scan results in the test report summary

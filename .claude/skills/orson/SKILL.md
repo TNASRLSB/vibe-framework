@@ -1,3 +1,17 @@
+---
+name: orson
+description: "Programmatic video generation from design system + content. Creates HTML-based videos with CSS animations, rendered via Playwright + FFmpeg. Use when creating product videos, social media promos, explainers, or any video content. Triggers on 'video', 'render', 'animation', 'promo video', 'social media video'. Integrates with Seurat for design and Ghostwriter for copy."
+allowed-tools:
+  - Read
+  - Write
+  - Edit
+  - Grep
+  - Glob
+  - Bash
+  - AskUserQuestion
+  - Task
+---
+
 # orson
 
 Programmatic video generation from design system + content. Generates purpose-built HTML pages with CSS animations, captures frame-by-frame via Web Animations API, and encodes to video with FFmpeg.
@@ -325,35 +339,16 @@ npx tsx .claude/skills/orson/engine/src/index.ts entrances
 
 ---
 
-## Director Recipes
+The director assigns animations based on content signals. For recipe details and mode-specific animation pools, read `references/director-recipes.md`.
 
-The director assigns animations intelligently based on scene content. 13 specialized recipes analyze content signals (word count, metrics, position, cards) and apply appropriate animation strategies.
+---
 
-### Recipe Reference
+## Preview Frame (Opus 4.6)
 
-| Recipe | Triggers | Animation Strategy |
-|--------|----------|-------------------|
-| `hero-impact` | Opener + 1-3 word title | `slam`/`stamp` on heading, 2xl size, 400ms |
-| `metric-reveal` | Heading contains % or numbers | `scale-word` on heading, 2xl size, 500ms |
-| `text-kinetic` | 4-8 word title + non-safe mode | `kinetic-push`/`word-by-word`/`text-reveal-mask` |
-| `card-burst` | 3+ cards in scene | `spring-scale`/`spring-up`/`bounce-in` on cards |
-| `closer-dramatic` | CTA + final scene | `zoom-in`/`scale-word`/`blur-in`, xl size |
-| `opener-long-title` | Opener + 4+ word title | `clip-reveal-up`/`text-reveal-mask`/`typewriter` |
-| `proof-authority` | `social-proof` scene type | `fade-in`/`soft-reveal`/`letter-spacing-in` |
-| `mid-section-variety` | Mid scene, text-heavy, no cards | Alternating reveal styles based on position |
-| `fullscreen-slam` | Opener + 1-2 words + non-safe | Forces `fullscreen-text` layout, `slam`/`stamp`/`scale-word` |
-| `marquee-ticker` | `integration-hub`/`sequential-product-parade` + 4+ items | `marquee` animation, 8s duration |
-| `letter-cascade` | Non-opener + 1-3 words + chaos/cocomelon | `char-stagger`, xl size, 1200ms |
-| `multi-phase-reveal` | `stat-callout`/`data-visualization` + metric | Two-phase: label first, then metric dramatically |
-| `dramatic-pause` | Mid scene + 3-7 words + non-safe | 2200ms delay on non-heading elements |
+Before the full render, verify storyboard HTML visually:
 
-### Mode-Specific Pools
-
-The director uses animation pools filtered by mode:
-
-| Mode | Safe Entrances | Aggressive Entrances |
-|------|----------------|---------------------|
-| **safe** | `fade-in`, `fade-in-up`, `soft-reveal`, `slide-*`, `clip-reveal-*` | — |
-| **hybrid** | All safe + 1 surprise per scene from: `bounce-in`, `spring-scale`, `zoom-in` | — |
-| **chaos** | All animations including `slam`, `stamp`, `glitch-in`, `pop-in`, `skew-in` | Full pool |
-| **cocomelon** | Neuro-optimized: `scale-word`, `char-stagger`, `kinetic-push`, `word-by-word` | High-impact |
+1. Open the HTML config in the browser
+2. Screenshot the first frame of each scene
+3. Verify: layout integrity, typography rendering, color accuracy, animation key elements visible
+4. Check text fits containers (no overflow or truncation)
+5. If issues found, fix the HTML before proceeding to video render

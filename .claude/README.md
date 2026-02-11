@@ -52,11 +52,14 @@ Due componenti che lavorano insieme:
 
 2. **Skill specializzate** (`.claude/skills/`) — Conoscenza di dominio:
    - **seurat** — UI/UX: design direction, accessibilità WCAG, tipografia
-   - **emmet** — Testing, debugging, tech debt audit, checklists, framework adaptation
-   - **heimdall** — Sicurezza AI-specific: OWASP, credential detection, BaaS audit
+   - **emmet** — Testing, QA, tech debt audit, functional mapping, framework adaptation
+   - **heimdall** — Sicurezza AI-specific: OWASP, credential detection, BaaS audit, diff-aware analysis
    - **ghostwriter** — SEO tradizionale + GEO (AI search) + copywriting persuasivo
+   - **baptist** — CRO orchestrator: diagnosi conversioni (Fogg B=MAP), A/B test design, funnel analysis, coordina Ghostwriter e Seurat
    - **orson** — Generazione video programmatica da design system + contenuti (CSS animations + Playwright + FFmpeg)
    - **audiosculpt** — Generazione audio programmatica (soundtrack + SFX) con Strudel, integrazione orson
+   - **scribe** — Creazione e editing documenti Office (xlsx, docx, pptx) e PDF, routing automatico per tipo file
+   - **forge** — Meta-skill: creazione, manutenzione, audit e miglioramento skill Claude Code
 
 Il framework definisce *come* Claude lavora. Le skill definiscono *cosa* sa fare in ambiti specifici.
 
@@ -89,12 +92,26 @@ progetto/
         │   ├── matrices/     # Profili fuzzy weights (tipo, industria, target)
         │   ├── factor-x/     # Controlled chaos
         │   ├── taxonomy/     # Tassonomia pagine ed elementi
-        │   └── references.md # Sistema riferimenti visivi
-        ├── emmet/            # Skill testing, debug, tech debt, checklists
+        │   ├── references/   # Riferimenti on-demand
+        │   ├── references.md # Sistema riferimenti visivi (quick ref)
+        │   ├── templates/    # Archetipi pagina + preview
+        │   └── wireframes/   # Layout system, componenti, varianti
+        ├── emmet/            # Skill testing, QA, tech debt, checklists
         │   ├── SKILL.md      # Entry point + /adapt-framework
+        │   ├── prompts/      # Workflow operativi (map, test)
+        │   ├── templates/    # Template output (functional-map)
+        │   ├── scripts/      # Script automazione
         │   ├── testing/      # Static e dynamic testing
+        │   ├── stacks/       # Pattern generati per stack (via /adapt-framework)
         │   └── checklists/   # Checklist universali
         ├── heimdall/         # Skill sicurezza AI-specific
+        │   ├── SKILL.md      # Definizione skill e comandi
+        │   ├── patterns/     # OWASP, secrets, BaaS misconfig (JSON)
+        │   ├── data/         # Known packages database (2000+)
+        │   ├── hooks/        # PreToolUse + PostToolUse validators
+        │   ├── scripts/      # Scanner, diff-analyzer, import-checker
+        │   ├── references/   # Guide BaaS e credenziali (on-demand)
+        │   └── reference/    # OWASP guide, secure patterns
         ├── ghostwriter/      # Skill SEO + GEO + Copywriting
         │   ├── SKILL.md
         │   ├── seo/          # Fondamenti SEO tradizionale
@@ -105,13 +122,28 @@ progetto/
         │   ├── templates/    # Template contenuti + JSON-LD schemas
         │   ├── checklists/   # Pre-publish e audit
         │   ├── workflows/    # Flussi interattivi
-        │   └── reference/    # Contesto progetto (brand, products)
+        │   ├── reference/    # Contesto progetto (brand, products)
+        │   └── references/   # Approfondimenti on-demand
+        ├── baptist/          # Skill CRO (Conversion Rate Optimization)
+        │   ├── SKILL.md      # Definizione skill e comandi
+        │   ├── references/   # Approfondimenti (form, page, testing, popup, activation, paywall)
+        │   └── assets/       # Template (test plan, audit, funnel, ICE, results)
         ├── orson/            # Skill generazione video
         │   ├── SKILL.md      # Definizione skill e comandi
         │   └── engine/       # Engine TypeScript (auto-setup)
-        └── audiosculpt/      # Skill generazione audio
-            ├── SKILL.md      # Definizione skill e comandi
-            └── presets/      # Stili, patch FM, sample map, coherence matrix
+        ├── audiosculpt/      # Skill generazione audio
+        │   ├── SKILL.md      # Definizione skill e comandi
+        │   └── presets/      # Stili, patch FM, sample map, coherence matrix
+        ├── scribe/           # Skill documenti Office + PDF
+        │   ├── SKILL.md      # Routing automatico per tipo file
+        │   ├── references/   # Guide per formato (xlsx, docx, pdf)
+        │   ├── scripts/      # Validazione OOXML, recalc, thumbnail
+        │   └── templates/    # Template documenti (financial model, etc.)
+        └── forge/            # Meta-skill manutenzione skill
+            ├── SKILL.md      # Creazione, audit, fix skill
+            ├── references/   # Trimming methodology, quality checklist, anatomy
+            ├── scripts/      # audit-skills.sh (quantitativo)
+            └── templates/    # Skill template, reference template, knowledge template
 ```
 
 ---
@@ -247,6 +279,7 @@ Crea `.seurat/project-map.md` con:
 | `decisions.md` | Consigliato | Se ci sono pattern già stabiliti |
 | `/heimdall audit` | Consigliato | Audit sicurezza iniziale su progetti esistenti |
 | `/emmet techdebt` | Consigliato | Audit tech debt iniziale |
+| `/emmet map` | Consigliato | Genera functional map del codebase per testing |
 | `/seurat setup` | Consigliato | Per nuovi progetti con UI |
 | `/seurat extract` | Consigliato | Per progetti esistenti con UI (estrae token dal codice) |
 | `/seurat analyze-project` | Consigliato | Per progetti esistenti con UI da migrare |
@@ -385,25 +418,31 @@ Si attiva automaticamente quando il contesto riguarda UI/UX, oppure manualmente:
 
 #### Emmet
 
-Testing, debugging, tech debt audit, e checklist di sviluppo. Include anche l'adattamento del framework allo stack.
+Testing, QA, tech debt audit, functional mapping e checklist di sviluppo. Include anche l'adattamento del framework allo stack. Ciclo: MAP → ANALISI → ESECUZIONE → REPORT.
 
 | Comando | Cosa fa |
 |---------|---------|
 | `/adapt-framework` | Analizza il progetto e genera pattern per lo stack rilevato |
-| `/emmet plan` | Genera test plan per feature/componente |
-| `/emmet test` | Esegui test dinamici con Playwright |
-| `/emmet journey [flow]` | Testa user journey completo |
-| `/emmet report [bug]` | Genera bug report strutturato |
-| `/emmet techdebt [path]` | Audit duplicazioni, export orfani, pattern estraibili, file oversized |
+| `/emmet map` | Analizza codebase e genera functional map (source of truth per testing) |
+| `/emmet map --update` | Rigenera functional map preservando stato test |
+| `/emmet test` | Ciclo QA completo (static analysis + browser test) |
+| `/emmet test --static` | Solo analisi statica (veloce, no browser) |
+| `/emmet test --browser` | Solo test browser (Playwright o BrowserMCP) |
+| `/emmet report` | Genera bug report dall'ultimo test |
+| `/emmet techdebt [path]` | Audit duplicazioni, export orfani, import inutilizzati, file oversized |
 | `/emmet checklist [type]` | Carica checklist (pre-deploy, refactoring, code-review, security) |
 
 **Funzionalità:**
-- **Static analysis** — Verifica codice senza esecuzione (type inference, complexity, patterns)
+- **Functional mapping** — Scansiona 100% del codebase: schermate, transizioni stato, personas, use cases, workflow
+- **Dual testing backend** — Auto-rileva Playwright (CI) vs BrowserMCP (visual regression)
+- **Static analysis** — Sicurezza, errori logici, performance, qualità codice
 - **Dynamic testing** — Test con Playwright (API, UI, E2E)
-- **Tech debt audit** — Duplicazioni, export orfani, import inutilizzati, file oversized
+- **Visual QA** — Confronto screenshot per regressioni UI (Opus 4.6)
+- **Tech debt audit** — Duplicazioni, export orfani, import inutilizzati, file oversized (>300 righe)
 - **Checklists** — Pre-deploy, refactoring, code-review, security
+- **Integrazione Heimdall** — Security pre-check automatico su file sensibili
 
-**Attivazione:** testing, debugging, tech debt, code quality, checklist
+**Attivazione:** testing, debugging, QA, tech debt, code quality, checklist, framework adaptation
 
 #### Heimdall
 
@@ -420,9 +459,18 @@ Analisi di sicurezza specifica per codice AI-generated. Rileva vulnerabilità ti
 | `/heimdall reset [path]` | Reset iteration tracking dopo review umana |
 | `/heimdall config` | Configura impostazioni |
 
-**Funzionalità:** Pattern OWASP Top 10, rilevamento credenziali hardcoded, audit BaaS, tracciamento iteration degradation, rilevamento logic inversion
+**Funzionalità:**
+- **OWASP Top 10** — A01-A10 + XSS (6+ pattern ciascuno) con alternative sicure
+- **Credential detection** — API keys, JWT, chiavi private, segreti hardcoded
+- **BaaS audit** — RLS, security rules, service key exposure per provider (Supabase, Firebase, Amplify, PocketBase)
+- **Iteration tracking** — Warning su file editati 6+ volte (basato su ricerca arXiv:2506.11022)
+- **Diff-aware analysis** — Rileva pattern di sicurezza rimossi durante le modifiche
+- **Import checking** — Database 2000+ pacchetti comuni per rilevamento typo (no network)
+- **Path-context severity** — Gravità adattata al contesto (es. service_role key: CRITICAL in client, MEDIUM in server)
+- **Hook integration** — PreToolUse (pre-validazione) + PostToolUse (diff analysis + iteration tracking)
+- **SARIF export** — Integrazione GitHub Security
 
-**Attivazione:** Security review, code audit, credential check, configuration analysis
+**Attivazione:** Security review, code audit, credential check, configuration analysis, vulnerability scan
 
 #### Ghostwriter
 
@@ -430,15 +478,36 @@ Contenuti ottimizzati per search engine tradizionali (Google, Bing) e AI search 
 
 | Comando | Cosa fa |
 |---------|---------|
-| `/ghostwriter write [type]` | Genera contenuto dual-optimized (article, landing, product, faq) |
+| `/ghostwriter write [type]` | Genera contenuto dual-optimized (landing, article, product, service, faq, pillar, cluster) |
 | `/ghostwriter audit [url/content]` | Audit SEO + GEO + copywriting con score 0-100 |
-| `/ghostwriter schema [type]` | Genera JSON-LD |
+| `/ghostwriter research [topic]` | Ricerca keyword + intent + competitor gaps + AI platforms |
+| `/ghostwriter optimize [file]` | Ottimizza contenuto esistente per dual platform |
+| `/ghostwriter schema [type]` | Genera JSON-LD strutturato |
+| `/ghostwriter persona [audience]` | Crea buyer/reader persona |
 | `/ghostwriter pillar-cluster [topic]` | Progetta architettura topic cluster |
 | `/ghostwriter meta [content]` | Genera title tag, meta description, OG tags |
-| `/ghostwriter research [topic]` | Ricerca keyword + intent + competitor gaps |
-| `/ghostwriter optimize [file]` | Ottimizza contenuto esistente |
+| `/ghostwriter llms-txt` | Genera direttive llms.txt per AI crawlers |
+| `/ghostwriter robots [strategy]` | Configura robots.txt (allow-all/selective/search-only) |
 
-**Attivazione:** content creation, SEO, copywriting, landing page, article, blog post, product description
+**Attivazione:** content creation, SEO, GEO, copywriting, landing page, article, blog post, product description, AI citation
+
+#### Baptist
+
+CRO orchestrator. Diagnosa problemi di conversione con Fogg Behavior Model (B=MAP), progetta esperimenti A/B, analizza funnel, e coordina Ghostwriter (copy) e Seurat (UI) per le fix.
+
+| Comando | Cosa fa |
+|---------|---------|
+| `/baptist audit [url/content]` | Audit CRO completo su 7 dimensioni con ICE scores |
+| `/baptist test [ipotesi]` | Progetta esperimento A/B rigoroso con pre-registrazione |
+| `/baptist funnel [flusso]` | Analisi diagnostica funnel con drop-off e root cause |
+| `/baptist report` | Documentazione risultati e learning repository |
+| `/baptist analyze [tipo pagina]` | Analisi CRO focalizzata (landing, pricing, form, checkout, onboarding, paywall) |
+
+**Framework:** Fogg B=MAP (Behavior = Motivation × Ability × Prompt) come lente diagnostica unificante. Ogni problema di conversione è M, A, o P.
+
+**Orchestrazione:** Baptist non duplica psicologia persuasiva (Ghostwriter) né design patterns (Seurat). Diagnosa il problema, delega la fix all'owner corretto, progetta il test.
+
+**Attivazione:** CRO, conversion rate, A/B test, funnel, landing page optimization, form optimization
 
 #### Orson
 
@@ -478,6 +547,48 @@ Generazione audio programmatica (soundtrack + SFX) con Strudel (TidalCycles per 
 **Requisiti opzionali:** `pip install edge-tts` per narrazione TTS
 
 **Attivazione:** audio generation, soundtrack, sound effects, music, audio for video
+
+#### Scribe
+
+Creazione, lettura ed editing di documenti Office e PDF. Routing automatico per tipo file — l'utente specifica il formato e Scribe sceglie libreria e workflow.
+
+**Formati supportati:**
+
+| Formato | Libreria principale | Fallback |
+|---------|-------------------|----------|
+| `.xlsx` (Excel) | openpyxl (struttura + formule) | pandas (data-heavy), LibreOffice recalc |
+| `.docx` (Word) | python-docx | OOXML editing (tracked changes, content controls) |
+| `.pptx` (PowerPoint) | python-pptx | OOXML editing (design-heavy) |
+| `.pdf` | reportlab (creazione), pypdf (lettura/merge) | qpdf (ottimizzazione) |
+
+**Funzionalità:**
+- **OOXML editing workflow** — Unpack → Edit XML → Validate → Pack per feature non esposte dalle API high-level
+- **Zero-error output** — Ogni documento validato prima della consegna
+- **Script black-box** — Recalc formule, OOXML pack/unpack/validate, thumbnail generazione
+- **Integrazione** — Ghostwriter (contenuti), Seurat (design tokens), Baptist (report CRO), Emmet (static analysis)
+
+**Attivazione:** Excel, spreadsheet, Word, document, PowerPoint, presentation, PDF, .xlsx, .docx, .pptx, .pdf
+
+#### Forge
+
+Meta-skill per creare, mantenere e migliorare le skill Claude Code. Codifica best practice da Anthropic custom instructions e lesson learned da tutte le skill esistenti.
+
+| Comando | Cosa fa |
+|---------|---------|
+| `/forge create [name]` | Scaffold nuova skill da template (directory, SKILL.md, registrazione registry) |
+| `/forge audit` | Audit semantico + quantitativo di tutte le skill (produce piano, no modifiche) |
+| `/forge fix` | Esegue raccomandazioni da forge-audit.md |
+| `/forge fix [skill]` | Esegue fix solo per la skill specificata |
+
+**Funzionalità:**
+- **Skill scaffolding** — Struttura directory, SKILL.md template, registrazione automatica in registry
+- **Audit quantitativo** — Word count, metriche strutturali via `scripts/audit-skills.sh`
+- **Audit semantico** — Decision matrix (Claude needs? User needs? → Trim/Keep/Move/Delete)
+- **Trimming methodology** — Progressive disclosure (frontmatter → SKILL.md body → references/)
+- **Quality checklist** — Best practice da tutte le skill esistenti
+- **Budget** — SKILL.md body < 3000 parole
+
+**Attivazione:** create skill, new skill, improve skill, audit skills, skill quality, fix skill, trim skill
 
 ---
 

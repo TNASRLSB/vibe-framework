@@ -33,14 +33,7 @@ You are a Security Engineer specialized in AI-generated code vulnerabilities:
 
 ## Threat Model: Vibe Coding Risks
 
-### Research Findings (Verified Sources)
-
-| Finding | Source | Impact |
-|---------|--------|--------|
-| +37.6% critical vulns after 5 iterations | arXiv:2506.11022 (IEEE ISTAS 2025) | Iteration tracking needed |
-| 2,000+ vulns in 5,600 vibe-coded apps | Escape.tech 2025 | Pattern detection critical |
-| 10.3% apps with Supabase misconfig | Escape.tech audit | BaaS audit essential |
-| 21.1% crypto errors from security prompts | arXiv:2506.11022 | Paradox awareness |
+Research findings (arXiv:2506.11022, Escape.tech) document these risks. For source details, see `KNOWLEDGE.md`.
 
 ### AI-Specific Vulnerability Categories
 
@@ -148,17 +141,9 @@ BaaS configuration audit.
 
 **Providers**: `supabase` (default), `firebase`, `amplify`, `pocketbase`
 
-**Checks for Supabase**:
-- RLS (Row Level Security) status
-- Service role key exposure
-- Anon key misuse
-- Storage bucket permissions
-- RPC function security
+For detailed checks per provider (SQL queries, code patterns to flag, common misconfigurations), read `references/baas-config.md`.
 
-**Checks for Firebase**:
-- Security rules configuration
-- Service account exposure
-- Database rules permissiveness
+**Summary**: Checks RLS, service key exposure, security rules, storage permissions per provider.
 
 ### `/heimdall status`
 
@@ -235,15 +220,9 @@ Reset iteration tracking for a file after human review.
 
 ### Credential Patterns
 
-| Provider | Pattern Count | Examples |
-|----------|---------------|----------|
-| Generic API Keys | 5 | `api_key`, `apiKey`, `secret_key`, `access_token`, `password` |
-| Stripe | 3 | `sk_live_*`, `sk_test_*`, `rk_live_*` |
-| GitHub | 4 | `ghp_*`, `gho_*`, `ghu_*/ghs_*`, `ghr_*` |
-| Supabase | 4 | `service_role`, `SUPABASE_*` |
-| Firebase | 3 | `private_key`, `FIREBASE_*` |
-| AWS | 3 | `AKIA*`, `aws_secret_*`, `aws_session_token` |
-| JWT | 2 | `eyJ*.*.*` structure, `jwt_secret` |
+For full regex patterns, path-context severity, and remediation steps, read `references/credential-guide.md`.
+
+Covers 24+ patterns: Generic, Stripe, GitHub, Supabase, Firebase, AWS, JWT.
 
 ---
 
@@ -404,83 +383,7 @@ Keep in version control:
 
 ---
 
-## Examples
-
-### Example 1: Detecting Hardcoded Credential
-
-**Input** (attempted write):
-```javascript
-const supabase = createClient(
-  'https://abc.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFiYyIsInJvbGUiOiJzZXJ2aWNlX3JvbGUifQ.xxx'
-);
-```
-
-**Output**:
-```
-CRITICAL [SEC-001] Hardcoded Supabase service_role key detected
-
-Location: src/lib/supabase.ts:3
-CWE: CWE-798 (Use of Hard-coded Credentials)
-
-This exposes your service_role key which bypasses Row Level Security.
-Real-world impact: Lovable platform breach (170 apps compromised)
-
-Remediation:
-1. Rotate this key immediately in Supabase dashboard
-2. Use environment variable: process.env.SUPABASE_SERVICE_ROLE_KEY
-3. Ensure .env is in .gitignore
-4. For client-side, use anon key only
-
-Operation BLOCKED. Fix the issue and retry.
-```
-
-### Example 2: Logic Inversion Warning
-
-**Input**:
-```javascript
-if (user.active === false && user.role === 'admin') {
-  grantAdminAccess(user);
-}
-```
-
-**Output**:
-```
-HIGH [BAC-003] Potential logic inversion - deactivated user granted admin access
-
-Location: src/auth/permissions.ts:45
-CWE: CWE-284 (Improper Access Control)
-
-This pattern grants admin access when user.active is FALSE.
-AI-generated code frequently inverts boolean conditions.
-
-Did you mean?
-  if (user.active === true && user.role === 'admin')
-
-Reference: arXiv:2506.11022 - Logic inversions are a common AI code pattern
-
-[Operation proceeds with warning - use --strict to block on HIGH severity]
-```
-
-### Example 3: Iteration Warning
-
-**Output** (after 5th edit to same file):
-```
-WARNING: High iteration count for src/auth/login.ts
-
-Iterations: 5 (threshold: 5)
-Complexity change: +42% from baseline
-Recent findings: 2 MEDIUM issues
-
-Research shows 37.6% increase in critical vulnerabilities after 5 AI iterations.
-(Source: arXiv:2506.11022, IEEE ISTAS 2025)
-
-Recommendation: Human security review before continuing modifications.
-
-To reset after review: /heimdall reset src/auth/login.ts
-
-[Operation proceeds - this is informational only]
-```
+For detailed detection examples (hardcoded credentials, logic inversions, iteration warnings), see `KNOWLEDGE.md`.
 
 ---
 
@@ -506,30 +409,11 @@ To reset after review: /heimdall reset src/auth/login.ts
 
 ---
 
-## Version
-
-**Skill Version**: 2.0.0
-**Pattern Database**: 2026-02-05
-**Compatibility**: Claude Code 0.2.111+
-
----
-
 ## v2.0 Features
 
 ### Diff-Aware Security Analysis
 
-Heimdall v2 tracks when security patterns are removed during code changes. When an edit removes authentication checks, validation, rate limiting, or other security controls, Heimdall raises an alert.
-
-**Detected Security Pattern Categories**:
-- Authentication checks (`if (auth)`, `requireAuth`, middleware guards)
-- Input validation (`validate()`, zod/yup/joi usage)
-- Rate limiting (`rateLimit`, `throttle`)
-- Access control (`hasPermission`, `hasRole`, RBAC)
-- Cryptographic operations (`bcrypt`, `crypto.randomBytes`)
-- Input sanitization (`DOMPurify`, `escape()`)
-- SQL protection (parameterized queries)
-- CSRF protection
-- Security headers (`helmet()`)
+Tracks removal of security patterns during edits. For detected pattern categories, see `KNOWLEDGE.md`.
 
 **Severity escalation**:
 | Scenario | Severity |
@@ -540,12 +424,7 @@ Heimdall v2 tracks when security patterns are removed during code changes. When 
 
 ### Import Existence Check
 
-Detects potentially non-existent or typo'd package imports. Uses a static database of ~2000 common packages - no network calls required.
-
-**Detections**:
-- Known typos (`loadash` → `lodash`, `axois` → `axios`)
-- Unknown packages not in database
-- Fuzzy matching for similar package names
+Detects non-existent or typo'd package imports using a static database of ~2000 packages. For detection details, see `KNOWLEDGE.md`.
 
 **Supported languages**: JavaScript/TypeScript, Python, Go, Rust
 
@@ -564,19 +443,7 @@ Severity levels now adjust based on file location. A `service_role` key is CRITI
 
 ### "Did You Mean?" Suggestions
 
-When vulnerabilities are detected, Heimdall now shows secure alternatives inline.
-
-**Example output**:
-```
-HIGH [ID-004] Math.random() used for token generation
-Location: src/auth/token.ts:45
-
-Did you mean?
-  Use cryptographically secure random
-  → [javascript] crypto.randomUUID()
-  → [node] crypto.randomBytes(32).toString('hex')
-  → [python] import secrets; secrets.token_hex(32)
-```
+When vulnerabilities are detected, Heimdall shows secure alternatives inline. For example output, see `KNOWLEDGE.md`.
 
 ---
 

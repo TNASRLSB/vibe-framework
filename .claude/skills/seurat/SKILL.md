@@ -276,25 +276,9 @@ wireframes/
 └── variant-selection.md # Weight-to-variant mapping algorithm
 ```
 
-### Layout Primitives (from primitives.md)
+Layout primitives are defined in `wireframes/primitives.md`.
 
-| Primitive | CSS Pattern | Use |
-|-----------|------------|-----|
-| STACK | `flex-direction: column; gap` | Sequential content |
-| GRID | `grid-template-columns: repeat(N, 1fr)` | Multi-column layouts |
-| SPLIT | `grid-template-columns: 1fr 1fr` | Two-column equal |
-| SIDEBAR | `grid-template-columns: 280px 1fr` | Main + sidebar |
-| CENTERED | `max-width; margin-inline: auto` | Centered content |
-| HERO | `min-height: Nvh; place-items: center` | Full-viewport impact |
-| CONTAINER | `max-width; margin-inline: auto; padding-inline` | Width constraint |
-
-### Breakpoint Convention
-
-| Name | Range | Behavior |
-|------|-------|----------|
-| Mobile | < 768px | Single column, full-width buttons |
-| Tablet | 768px - 1024px | 2 columns where possible |
-| Desktop | > 1024px | Full layout |
+Breakpoint conventions are defined in `wireframes/primitives.md`.
 
 ---
 
@@ -320,6 +304,21 @@ Extracted reusable patterns.
 
 ---
 
+## Integration with Baptist (CRO)
+
+Quando Baptist identifica problemi UI/UX che impattano le conversioni, delega a Seurat:
+
+| Baptist identifica... | Seurat implementa... |
+|---|---|
+| Form con troppi campi / layout confuso | Redesign form: single column, field reduction, multi-step |
+| CTA poco visibile / basso contrasto | Redesign CTA: sizing, contrast, whitespace, positioning |
+| Popup intrusivo / mobile-unfriendly | Redesign popup: sizing, close button, mobile slide-up |
+| Visual hierarchy rotta | Ristrutturazione layout con gerarchia chiara |
+| Paywall screen inefficace | Redesign paywall: value demonstration, plan comparison |
+| Mobile experience degradata | Mobile-specific layout optimization |
+
+---
+
 ## Enforcement Rules
 
 | Rule | Violation | Action |
@@ -332,69 +331,29 @@ Extracted reusable patterns.
 
 ---
 
-## Detailed Resources
+## Resources
 
-### Core Documentation
-- **Accessibility Checklist**: [accessibility.md](accessibility.md)
-- **Typography System**: [typography.md](typography.md)
-- **Validation Rules**: [validation.md](validation.md)
-- **Visual References**: [references.md](references.md)
-- **Page Taxonomy**: [taxonomy/pages.md](taxonomy/pages.md)
-- **Element Taxonomy**: [taxonomy/elements.md](taxonomy/elements.md)
+For detailed documentation, explore the subdirectories:
+- `accessibility.md`, `typography.md`, `validation.md`, `references.md` — Core documentation
+- `taxonomy/` — Page and element taxonomy
+- `wireframes/` — Layout primitives, archetypes (entry, discovery, detail, action, management, system), variant selection, layout system, components, motion, visual composition
+- `generation/` — Modes, combination logic, anti-patterns
+- `styles/` — 11 base styles (flat, material, neumorphism, glassmorphism, brutalism, claymorphism, skeuomorphism, y2k, gen-z, bento, spatial) + modifiers
+- `matrices/` — Type profiles, industry profiles, target profiles
+- `factor-x/` — Factor X twist system
+- `templates/` — Design system page, archetype templates, preview system, project map template, test pages
 
-### Wireframe System
-- **How it works**: [wireframes/README.md](wireframes/README.md)
-- **Layout Primitives**: [wireframes/primitives.md](wireframes/primitives.md)
-- **Layout System**: [wireframes/layout-system.md](wireframes/layout-system.md) — Grid systems and responsive patterns
-- **Component Library**: [wireframes/components.md](wireframes/components.md) — Reusable component patterns
-- **Motion System**: [wireframes/motion.md](wireframes/motion.md) — Animation and transition patterns
-- **Visual Composition**: [wireframes/visual-composition.md](wireframes/visual-composition.md) — Layout rules and principles
-- **Entry Wireframe**: [wireframes/entry.md](wireframes/entry.md)
-- **Discovery Wireframe**: [wireframes/discovery.md](wireframes/discovery.md)
-- **Detail Wireframe**: [wireframes/detail.md](wireframes/detail.md)
-- **Action Wireframe**: [wireframes/action.md](wireframes/action.md)
-- **Management Wireframe**: [wireframes/management.md](wireframes/management.md)
-- **System Wireframe**: [wireframes/system.md](wireframes/system.md)
-- **Variant Selection**: [wireframes/variant-selection.md](wireframes/variant-selection.md)
+---
 
-### Generative System
-- **Generation Modes**: [generation/modes.md](generation/modes.md)
-- **Combination Logic**: [generation/combination-logic.md](generation/combination-logic.md)
-- **Anti-Patterns**: [generation/anti-patterns.md](generation/anti-patterns.md)
-- **Style Index**: [styles/index.md](styles/index.md)
-- **Style Modifiers**: [styles/modifiers/](styles/modifiers/)
+## Visual QA (Opus 4.6)
 
-#### 11 Base Styles
-| Style | File | Characteristics |
-|-------|------|-----------------|
-| Flat | [flat.md](styles/base/flat.md) | Clean, minimal, solid colors |
-| Material | [material.md](styles/base/material.md) | Google's design language, elevation |
-| Neumorphism | [neumorphism.md](styles/base/neumorphism.md) | Soft UI, inner/outer shadows |
-| Glassmorphism | [glassmorphism.md](styles/base/glassmorphism.md) | Frosted glass, transparency |
-| Brutalism | [brutalism.md](styles/base/brutalism.md) | Raw, bold, intentionally unpolished |
-| Claymorphism | [claymorphism.md](styles/base/claymorphism.md) | 3D clay-like, soft shadows |
-| Skeuomorphism | [skeuomorphism.md](styles/base/skeuomorphism.md) | Real-world textures, realism |
-| Y2K | [y2k.md](styles/base/y2k.md) | Retro-futuristic, chrome, gradients |
-| Gen-Z | [gen-z.md](styles/base/gen-z.md) | Bold, maximalist, gradient-heavy |
-| Bento | [bento.md](styles/base/bento.md) | Grid-based, modular containers |
-| Spatial | [spatial.md](styles/base/spatial.md) | 3D depth, perspective, layers |
-- **Type Profiles**: [matrices/by-type.md](matrices/by-type.md)
-- **Industry Profiles**: [matrices/by-industry.md](matrices/by-industry.md)
-- **Target Profiles**: [matrices/by-target/](matrices/by-target/)
-- **Factor X**: [factor-x/](factor-x/)
+After generating UI (HTML/CSS), verify visually:
 
-### Templates
-- **Design System Page**: [templates/design-system.html](templates/design-system.html)
-- **Archetype Templates**: [templates/archetypes/](templates/archetypes/)
-- **Project Map Template**: [templates/project-map-template.md](templates/project-map-template.md)
-- **Preview Spec**: [templates/preview-spec.md](templates/preview-spec.md) — Specification for design system preview
-- **Test Pages**: [templates/test-pages.md](templates/test-pages.md) — Test page templates
-
-#### Preview System (`templates/preview/`)
-Self-contained preview system for design tokens:
-| File | Purpose |
-|------|---------|
-| `index.html` | Main preview page structure |
-| `tokens.css` | Token variables (generated) |
-| `preview.css` | Preview-specific styles |
-| `preview.js` | Interactive preview functionality |
+1. Open the generated HTML in the browser
+2. Capture screenshot with Playwright or BrowserMCP
+3. Read the screenshot and verify:
+   - Alignment of elements (grid, flex gaps)
+   - Text legibility (contrast ratios meet WCAG AA)
+   - Design token adherence (colors, spacing, typography match the system)
+   - Responsive behavior at 375px, 768px, 1280px viewports
+4. If issues found, fix and re-verify before delivery

@@ -27,6 +27,12 @@
 | Verify before commit | Run through `.claude/docs/checklist.md` |
 | Fix bugs | Read `.claude/docs/bugs/bugs.md` → fix → add `**Sistemato:**` |
 | Audit tech debt | Run `/emmet techdebt` → review report |
+| Map codebase for testing | Run `/emmet map` → review functional map |
+| Run QA cycle | Run `/emmet test` (or `--static` / `--browser`) |
+| Security audit | Run `/heimdall audit` → review report |
+| Create/edit documents | Describe file type → Scribe routes automatically |
+| Audit skill quality | Run `/forge audit` → review plan → `/forge fix` |
+| Create a new skill | Run `/forge create [name]` |
 | Record session learnings | Create `.claude/docs/session-notes/[date]-[topic].md` |
 | Log a request | Add entry to `.claude/docs/request-log.md` |
 | Check request history | Read `.claude/docs/request-log.md` |
