@@ -13,6 +13,8 @@ import { analyzeUrl } from './analyze-url.js';
 import { generateConfig } from './autogen.js';
 import { parseHTMLFile, type HTMLConfig } from './html-parser.js';
 import { computeSceneTiming, type ElementTimingInput } from './timing.js';
+import { selectTrack, type VideoMeta } from './audio-selector.js';
+import { trimAndLoop, fadeInOut, mergeAudioVideo } from './audio-mixer.js';
 
 async function main() {
   const args = process.argv.slice(2);
@@ -24,6 +26,8 @@ async function main() {
 
 Commands:
   render <file.html>        Render video from HTML config
+  render <file.html> --no-audio  Render video without audio
+  demo <script.json>        Record demo video from script
   analyze-folder <path>     Analyze project folder, output extracted content as JSON
   analyze-url <url>         Analyze URL, output extracted content as JSON
   autogen <json> [options]  Generate HTML from extracted content JSON
@@ -66,6 +70,14 @@ Commands:
     return;
   }
 
+  if (command === 'demo') {
+    const scriptPath = args[1];
+    if (!scriptPath) { console.error('Error: demo script path required'); process.exit(1); }
+    const { runDemo } = await import('./demo-capture.js');
+    await runDemo(resolve(scriptPath));
+    return;
+  }
+
   if (command === 'autogen') {
     const jsonPath = args[1];
     if (!jsonPath) { console.error('Error: content JSON path required'); process.exit(1); }
@@ -97,8 +109,9 @@ Commands:
   const fullPath = resolve(configPath);
 
   if (command === 'render') {
+    const noAudio = args.includes('--no-audio');
     const htmlConfig = parseHTMLFile(fullPath);
-    await renderHTML(htmlConfig, fullPath);
+    await renderHTML(htmlConfig, fullPath, noAudio);
     return;
   }
 
@@ -108,7 +121,7 @@ Commands:
 
 // ─── HTML render ────────────────────────────────────────────
 
-async function renderHTML(htmlConfig: HTMLConfig, htmlPath: string) {
+async function renderHTML(htmlConfig: HTMLConfig, htmlPath: string, noAudio: boolean = false) {
   const fmt = FORMAT_PRESETS[htmlConfig.video.format];
   const width = fmt?.width ?? 1080;
   const height = fmt?.height ?? 1920;
@@ -186,9 +199,56 @@ async function renderHTML(htmlConfig: HTMLConfig, htmlPath: string) {
   await closeCapture(session);
   await encoder.finish();
 
+  const renderTime = ((Date.now() - startTime) / 1000).toFixed(1);
+  console.log(`\nVideo rendered: ${outputPath}`);
+  console.log(`${totalFrames} frames in ${renderTime}s`);
+
+  // ─── Audio Processing ─────────────────────────────────────
+  if (!noAudio) {
+    const audioDir = resolve(dirname(outputPath), '.audio-tmp');
+    if (!existsSync(audioDir)) mkdirSync(audioDir, { recursive: true });
+
+    try {
+      console.log('\nAdding audio...');
+
+      // Select track based on video metadata
+      const videoMeta: VideoMeta = {
+        mode: htmlConfig.video.mode as VideoMeta['mode'],
+        durationMs: totalDurationMs,
+      };
+      const track = selectTrack(videoMeta);
+      console.log(`  Track: ${track.style} (${track.bpm} BPM)`);
+
+      // Trim/loop to match video duration
+      const processedTrack = resolve(audioDir, 'music-processed.mp3');
+      await trimAndLoop(track.trackPath, totalDurationMs, processedTrack, track.loopable);
+
+      // Add fade in/out
+      const fadedTrack = resolve(audioDir, 'music-faded.mp3');
+      await fadeInOut(processedTrack, 500, 2000, fadedTrack);
+
+      // Merge audio into video
+      const finalOutput = outputPath.replace(/\.mp4$/, '-audio.mp4');
+      await mergeAudioVideo(outputPath, fadedTrack, finalOutput);
+
+      // Replace original with audio version
+      const { renameSync, unlinkSync } = await import('fs');
+      unlinkSync(outputPath);
+      renameSync(finalOutput, outputPath);
+
+      console.log(`  Audio merged: ${outputPath}`);
+    } catch (err: any) {
+      console.log(`  Audio skipped: ${err.message}`);
+      console.log('  (video rendered successfully without audio)');
+    } finally {
+      // Clean up temp files
+      const { rmSync } = await import('fs');
+      try { rmSync(audioDir, { recursive: true }); } catch {}
+    }
+  }
+
   const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
-  console.log(`\nDone: ${outputPath}`);
-  console.log(`${totalFrames} frames in ${totalTime}s`);
+  console.log(`\nDone: ${outputPath} (${totalTime}s total)`);
 }
 
 main().catch(err => {

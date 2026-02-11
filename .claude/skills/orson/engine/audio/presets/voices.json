@@ -1,0 +1,93 @@
+{
+  "_doc": "Recommended Edge-TTS voices for video narration",
+
+  "recommended": {
+    "en-US": [
+      {
+        "id": "en-US-AriaNeural",
+        "gender": "Female",
+        "character": "Professional, warm",
+        "use_cases": ["corporate", "tech", "explainer"],
+        "default": true
+      },
+      {
+        "id": "en-US-GuyNeural",
+        "gender": "Male",
+        "character": "Energetic, confident",
+        "use_cases": ["sports", "gaming", "hype"]
+      },
+      {
+        "id": "en-US-JennyNeural",
+        "gender": "Female",
+        "character": "Friendly, casual",
+        "use_cases": ["lifestyle", "wellness", "vlog"]
+      },
+      {
+        "id": "en-US-DavisNeural",
+        "gender": "Male",
+        "character": "Deep, authoritative",
+        "use_cases": ["trailer", "documentary", "dramatic"]
+      },
+      {
+        "id": "en-US-AmberNeural",
+        "gender": "Female",
+        "character": "Youthful, enthusiastic",
+        "use_cases": ["social media", "retail", "app promo"]
+      }
+    ],
+    "en-GB": [
+      {
+        "id": "en-GB-SoniaNeural",
+        "gender": "Female",
+        "character": "Elegant, sophisticated",
+        "use_cases": ["luxury", "fashion", "premium"]
+      },
+      {
+        "id": "en-GB-RyanNeural",
+        "gender": "Male",
+        "character": "Refined, trustworthy",
+        "use_cases": ["finance", "legal", "B2B"]
+      }
+    ],
+    "en-AU": [
+      {
+        "id": "en-AU-NatashaNeural",
+        "gender": "Female",
+        "character": "Approachable, friendly",
+        "use_cases": ["travel", "outdoor", "casual"]
+      }
+    ]
+  },
+
+  "template_voice_mapping": {
+    "tech_promo": "en-US-AriaNeural",
+    "epic_trailer": "en-US-DavisNeural",
+    "chill_lifestyle": "en-US-JennyNeural",
+    "corporate_safe": "en-US-AriaNeural",
+    "hype_social": "en-US-AmberNeural",
+    "luxury_minimal": "en-GB-SoniaNeural"
+  },
+
+  "style_voice_mapping": {
+    "electronic": "en-US-AriaNeural",
+    "trap": "en-US-GuyNeural",
+    "dnb": "en-US-GuyNeural",
+    "jazz": "en-US-JennyNeural",
+    "orchestral": "en-US-DavisNeural",
+    "cinematic": "en-US-DavisNeural",
+    "corporate": "en-US-AriaNeural",
+    "ambient": "en-US-JennyNeural",
+    "lo-fi": "en-US-JennyNeural",
+    "chillwave": "en-US-JennyNeural",
+    "neo-classical": "en-GB-SoniaNeural",
+    "upbeat": "en-US-AmberNeural",
+    "glitch": "en-US-GuyNeural",
+    "industrial": "en-US-GuyNeural",
+    "dramatic": "en-US-DavisNeural",
+    "horror": "en-US-DavisNeural",
+    "synthwave": "en-US-AriaNeural",
+    "minimal-techno": "en-US-AriaNeural",
+    "acoustic": "en-US-JennyNeural",
+    "world": "en-US-JennyNeural"
+  }
+}
