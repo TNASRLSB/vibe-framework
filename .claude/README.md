@@ -56,8 +56,8 @@ Due componenti che lavorano insieme:
    - **heimdall** — Sicurezza AI-specific: OWASP, credential detection, BaaS audit, diff-aware analysis
    - **ghostwriter** — SEO tradizionale + GEO (AI search) + copywriting persuasivo
    - **baptist** — CRO orchestrator: diagnosi conversioni (Fogg B=MAP), A/B test design, funnel analysis, coordina Ghostwriter e Seurat
-   - **orson** — Generazione video programmatica da design system + contenuti (CSS animations + Playwright + FFmpeg)
-   - **audiosculpt** — Generazione audio programmatica (soundtrack + SFX) con Strudel, integrazione orson
+   - **orson** — Generazione video + demo recording con audio integrato (CSS animations + Playwright + FFmpeg + Edge-TTS)
+   - **audiosculpt** — **DEPRECATED** — Audio migrato in Orson (TTS, mixing, libreria curata + FFmpeg)
    - **scribe** — Creazione e editing documenti Office (xlsx, docx, pptx) e PDF, routing automatico per tipo file
    - **forge** — Meta-skill: creazione, manutenzione, audit e miglioramento skill Claude Code
 
@@ -128,12 +128,13 @@ progetto/
         │   ├── SKILL.md      # Definizione skill e comandi
         │   ├── references/   # Approfondimenti (form, page, testing, popup, activation, paywall)
         │   └── assets/       # Template (test plan, audit, funnel, ICE, results)
-        ├── orson/            # Skill generazione video
+        ├── orson/            # Skill video + demo + audio integrato
         │   ├── SKILL.md      # Definizione skill e comandi
-        │   └── engine/       # Engine TypeScript (auto-setup)
-        ├── audiosculpt/      # Skill generazione audio
-        │   ├── SKILL.md      # Definizione skill e comandi
-        │   └── presets/      # Stili, patch FM, sample map, coherence matrix
+        │   └── engine/       # Engine TypeScript + audio (auto-setup)
+        │       ├── src/      # 28 file TS (render, demo, audio, capture, encode)
+        │       └── audio/    # TTS, presets, tracks, SFX, references
+        ├── audiosculpt/      # DEPRECATED — migrato in orson
+        │   └── SKILL.md      # Solo notice di deprecazione
         ├── scribe/           # Skill documenti Office + PDF
         │   ├── SKILL.md      # Routing automatico per tipo file
         │   ├── references/   # Guide per formato (xlsx, docx, pdf)
@@ -511,42 +512,40 @@ CRO orchestrator. Diagnosa problemi di conversione con Fogg Behavior Model (B=MA
 
 #### Orson
 
-Generazione video programmatica. Segue un workflow cinematografico: Pre-production → Screenplay → Storyboard → Direction → Production.
+Generazione video programmatica + demo recording. Segue un workflow cinematografico: Pre-production → Screenplay → Storyboard → Direction → Production.
 
 | Comando | Cosa fa |
 |---------|---------|
 | `/orson create` | Flusso guidato — crea un video interattivamente (4 fasi) |
-| `/orson render <file.html>` | Renderizza video da HTML config |
+| `/orson render <file.html>` | Renderizza video da HTML config (con audio) |
+| `/orson render <file.html> --no-audio` | Renderizza video senza audio |
+| `/orson demo <script.json>` | Demo mode — registra demo live con narrazione, zoom e cursor |
 | `/orson formats` | Lista formati disponibili |
 | `/orson entrances` | Lista animazioni entrance disponibili |
 
-**Workflow:** Claude fa lo sceneggiatore (analizza source, struttura scene, scrive copy con ghostwriter), poi autogen genera HTML, director assegna animazioni, capture engine produce MP4.
+**Workflow:** Claude fa lo sceneggiatore (analizza source, struttura scene, scrive copy con ghostwriter), poi autogen genera HTML, director assegna animazioni, capture engine produce MP4 con audio.
 
-**Caratteristiche:** 132 animazioni, 4 modi (safe/chaos/hybrid/cocomelon), timing automatico, integrazione seurat + ghostwriter, director system (content-aware animation)
+**Caratteristiche:** 132 animazioni, 4 modi (safe/chaos/hybrid/cocomelon), timing automatico, integrazione seurat + ghostwriter, director system (content-aware animation). Audio integrato: selezione tracce automatica, TTS narration (Edge-TTS), ducking, mixing FFmpeg. Demo mode: Playwright recording con zoom, cursor animato, narrazione, sottotitoli WebVTT.
 
-**Requisiti di sistema:** FFmpeg installato (`ffmpeg` nel PATH)
+**Requisiti di sistema:** FFmpeg installato (`ffmpeg` nel PATH). Opzionale: `pip install edge-tts` per narrazione TTS.
 
-**Attivazione:** video generation, promo video, social media video, product video
+**Attivazione:** video generation, promo video, social media video, product video, demo recording
 
-#### AudioSculpt
+#### AudioSculpt (DEPRECATED)
 
-Generazione audio programmatica (soundtrack + SFX) con Strudel (TidalCycles per JavaScript). Output: blocco `<script>` self-contained per playback nel browser.
+**Deprecata.** Tutta la funzionalità audio è stata migrata in **Orson**.
 
-| Comando | Cosa fa |
-|---------|---------|
-| `/audiosculpt create` | Flusso guidato — crea audio per webvideo o standalone |
-| `/audiosculpt add-to-video <html>` | Inietta audio in un webvideo orson esistente |
-| `/audiosculpt preview <style>` | Genera pagina HTML con demo 15s di uno stile |
-| `/audiosculpt styles` | Lista i 20 stili soundtrack disponibili |
-| `/audiosculpt create --template <id>` | Usa un template parametrico per generazione rapida |
-| `/audiosculpt create --narration` | Abilita narrazione TTS (integrazione orson) |
-| `/audiosculpt add-narration <html>` | Aggiunge narrazione a HTML esistente |
+| Old (audiosculpt) | New (orson) |
+|-------------------|-------------|
+| TTS Narration | `orson/engine/audio/narration_generator.py` |
+| Voice presets | `orson/engine/audio/presets/voices.json` |
+| Coherence matrix | `orson/engine/audio/presets/coherence-matrix.json` |
+| Templates (6) | `orson/engine/audio/presets/templates/` |
+| Reference docs | `orson/engine/audio/references/` |
 
-**Caratteristiche:** 20 stili in 4 famiglie (tonal/modal/loop/experimental + horror hybrid), 6 famiglie SFX, 6 template parametrici (tech_promo, epic_trailer, chill_lifestyle, corporate_safe, hype_social, luxury_minimal), regole per-famiglia (voice leading, armonia funzionale, orchestrazione, forma tematica, soft constraints spettrali, quantizzazione temporale video→musica). Impact Frame per hook immediato. Voiceover Mode con frequency splitting. TTS narration con Edge-TTS. Integrazione orson.
+**Rimosso:** Strudel (sostituito da libreria audio curata + FFmpeg), Text2Midi, preset Strudel.
 
-**Requisiti opzionali:** `pip install edge-tts` per narrazione TTS
-
-**Attivazione:** audio generation, soundtrack, sound effects, music, audio for video
+**Usa invece:** `/orson create` (video con musica automatica), `/orson demo` (demo con narrazione + musica + zoom).
 
 #### Scribe
 

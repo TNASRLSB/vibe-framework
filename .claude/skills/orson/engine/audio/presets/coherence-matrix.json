@@ -1,0 +1,173 @@
+{
+  "version": "3.0.0",
+  "last_updated": "2026-02-11",
+  "description": "Master mapping: context → style, mode → style, style → SFX family. V3: Cleaned for audio library selection (Strudel/text2midi removed).",
+
+  "styles": {
+    "corporate": {
+      "bpm": [80, 100], "energy": "low-medium",
+      "contexts": ["SaaS", "B2B", "enterprise", "fintech"],
+      "default_sfx": "clean",
+      "feature_profile": { "arousal": "low", "valence": "bright", "priority": 1 }
+    },
+    "cinematic": {
+      "bpm": [60, 90], "energy": "medium-high",
+      "contexts": ["product-launch", "brand-story", "trailer"],
+      "default_sfx": "cinematic",
+      "feature_profile": { "arousal": "medium", "valence": "neutral", "priority": 1 }
+    },
+    "electronic": {
+      "bpm": [110, 128], "energy": "medium-high",
+      "contexts": ["startup", "tech", "app", "dev-tools"],
+      "default_sfx": "digital",
+      "feature_profile": { "arousal": "high", "valence": "neutral", "priority": 1 }
+    },
+    "lo-fi": {
+      "bpm": [70, 85], "energy": "low",
+      "contexts": ["lifestyle", "edu", "blog", "podcast"],
+      "default_sfx": "organic",
+      "feature_profile": { "arousal": "low", "valence": "bright", "priority": 2 }
+    },
+    "ambient": {
+      "bpm": [60, 80], "energy": "very-low",
+      "contexts": ["luxury", "minimal", "portfolio", "wellness"],
+      "default_sfx": "clean",
+      "feature_profile": { "arousal": "low", "valence": "neutral", "priority": 1 }
+    },
+    "upbeat": {
+      "bpm": [120, 140], "energy": "high",
+      "contexts": ["social-media", "promo", "gaming", "retail"],
+      "default_sfx": "hyper",
+      "feature_profile": { "arousal": "high", "valence": "bright", "priority": 1 }
+    },
+    "acoustic": {
+      "bpm": [90, 110], "energy": "medium",
+      "contexts": ["nonprofit", "edu", "personal", "craft"],
+      "default_sfx": "organic",
+      "feature_profile": { "arousal": "medium", "valence": "bright", "priority": 1 }
+    },
+    "dramatic": {
+      "bpm": [90, 120], "energy": "high",
+      "contexts": ["explainer-tension", "confronto", "before-after"],
+      "default_sfx": "cinematic",
+      "feature_profile": { "arousal": "high", "valence": "dark", "priority": 5 }
+    },
+    "trap": {
+      "bpm": [130, 160], "energy": "high",
+      "contexts": ["urban", "streetwear", "hype", "sneakers"],
+      "default_sfx": "hyper",
+      "feature_profile": { "arousal": "high", "valence": "dark", "priority": 3 }
+    },
+    "synthwave": {
+      "bpm": [100, 118], "energy": "medium",
+      "contexts": ["retro-tech", "gaming", "nostalgia", "80s"],
+      "default_sfx": "digital",
+      "feature_profile": { "arousal": "medium", "valence": "neutral", "priority": 2 }
+    },
+    "orchestral": {
+      "bpm": [70, 110], "energy": "high",
+      "contexts": ["epic", "trailer", "institutional", "award"],
+      "default_sfx": "cinematic",
+      "feature_profile": { "arousal": "high", "valence": "bright", "priority": 2 }
+    },
+    "minimal-techno": {
+      "bpm": [120, 130], "energy": "low-medium",
+      "contexts": ["design", "architecture", "arte", "gallery"],
+      "default_sfx": "clean",
+      "feature_profile": { "arousal": "medium", "valence": "neutral", "priority": 3 }
+    },
+    "jazz": {
+      "bpm": [100, 140], "energy": "medium",
+      "contexts": ["premium", "food", "hospitality", "cocktail"],
+      "default_sfx": "organic",
+      "feature_profile": { "arousal": "medium", "valence": "bright", "priority": 2 }
+    },
+    "world": {
+      "bpm": [90, 120], "energy": "medium",
+      "contexts": ["travel", "cultura", "ONG", "documentary"],
+      "default_sfx": "organic",
+      "feature_profile": { "arousal": "medium", "valence": "bright", "priority": 3 }
+    },
+    "glitch": {
+      "bpm": [90, 140], "energy": "medium-high",
+      "contexts": ["sperimentale", "arte-digitale", "crypto", "AI"],
+      "default_sfx": "digital",
+      "feature_profile": { "arousal": "high", "valence": "dark", "priority": 2 }
+    },
+    "neo-classical": {
+      "bpm": [60, 80], "energy": "low",
+      "contexts": ["fashion", "beauty", "wellness", "spa"],
+      "default_sfx": "clean",
+      "feature_profile": { "arousal": "low", "valence": "neutral", "priority": 2 }
+    },
+    "dnb": {
+      "bpm": [170, 180], "energy": "very-high",
+      "contexts": ["gaming", "sport", "energia", "extreme"],
+      "default_sfx": "hyper",
+      "feature_profile": { "arousal": "high", "valence": "neutral", "priority": 5 }
+    },
+    "chillwave": {
+      "bpm": [90, 110], "energy": "low",
+      "contexts": ["lifestyle", "travel", "relax", "sunset"],
+      "default_sfx": "clean",
+      "feature_profile": { "arousal": "low", "valence": "bright", "priority": 3 }
+    },
+    "industrial": {
+      "bpm": [110, 140], "energy": "high",
+      "contexts": ["manifattura", "automotive", "hard-tech", "machinery"],
+      "default_sfx": "dark",
+      "feature_profile": { "arousal": "high", "valence": "dark", "priority": 4 }
+    },
+    "horror": {
+      "bpm": [60, 120], "energy": "variable",
+      "contexts": ["teaser", "suspense", "halloween", "thriller"],
+      "default_sfx": "dark",
+      "feature_profile": { "arousal": "medium", "valence": "dark", "priority": 1 }
+    }
+  },
+
+  "sfx_families": {
+    "clean":     { "description": "Click puliti, chime cristallini, whoosh morbidi", "associated_styles": ["corporate", "neo-classical", "ambient", "minimal-techno", "chillwave"] },
+    "digital":   { "description": "Blip, glitch, byte sound, keystroke", "associated_styles": ["electronic", "synthwave", "glitch", "trap"] },
+    "organic":   { "description": "Percussioni legno, page turn, spring, tap", "associated_styles": ["acoustic", "world", "jazz", "lo-fi"] },
+    "cinematic": { "description": "Impact profondi, riser orchestrali, swell, brass stab", "associated_styles": ["cinematic", "orchestral", "dramatic", "neo-classical"] },
+    "hyper":     { "description": "Impact massivi, laser, stinger aggressivi, reverse cymbal", "associated_styles": ["upbeat", "trap", "dnb", "industrial"] },
+    "dark":      { "description": "Sub-bass rumble, metal scrape, reverse texture, drone burst", "associated_styles": ["horror", "industrial", "glitch", "dramatic"] }
+  },
+
+  "mode_mapping": {
+    "safe": {
+      "soundtrack_styles": ["corporate", "ambient", "acoustic", "neo-classical", "chillwave"],
+      "sfx_family": "clean",
+      "sfx_alt": "organic"
+    },
+    "chaos": {
+      "soundtrack_styles": ["electronic", "glitch", "industrial", "trap", "dnb"],
+      "sfx_family": "digital",
+      "sfx_alt": ["hyper", "dark"]
+    },
+    "hybrid": {
+      "soundtrack_styles": ["corporate", "cinematic", "synthwave", "acoustic", "minimal-techno"],
+      "sfx_family": "clean",
+      "sfx_surprise": ["cinematic", "hyper"]
+    },
+    "cocomelon": {
+      "soundtrack_styles": ["upbeat", "trap", "dnb"],
+      "sfx_family": "hyper",
+      "sfx_density": "maximum",
+      "pattern_interrupt_interval_sec": 3.5
+    }
+  },
+
+  "style_selection_algorithm": {
+    "description": "Deterministic style selection using feature vector from video context",
+    "steps": [
+      "1. Determine mode from video config",
+      "2. Filter styles by mode_mapping[mode].soundtrack_styles",
+      "3. Match context tags to style.contexts",
+      "4. Match energy level to style.energy",
+      "5. If multiple matches, pick lowest priority number",
+      "6. Fallback: corporate (safe/hybrid) or electronic (chaos) or upbeat (cocomelon)"
+    ]
+  }
+}

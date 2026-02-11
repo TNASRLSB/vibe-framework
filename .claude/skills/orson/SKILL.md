@@ -21,7 +21,9 @@ Programmatic video generation from design system + content. Generates purpose-bu
 | Command | What it does |
 |---------|-------------|
 | `/orson create` | **Guided flow** — interactively create a video from a folder, URL, or manual input |
-| `/orson render <file.html>` | Render video from HTML config |
+| `/orson render <file.html>` | Render video from HTML config (with audio) |
+| `/orson render <file.html> --no-audio` | Render video without audio |
+| `/orson demo <script.json>` | **Demo mode** — record a live website demo with narration, zoom, and cursor |
 | `/orson formats` | List format presets |
 | `/orson entrances` | List all available entrances |
 
@@ -37,6 +39,11 @@ ENGINE_DIR=".claude/skills/orson/engine"
 # Check if node_modules exists
 if [ ! -d "$ENGINE_DIR/node_modules" ]; then
   cd "$ENGINE_DIR" && npm install && npx playwright install chromium
+fi
+
+# Check if audio library has tracks (generate placeholders if missing)
+if [ ! -d "$ENGINE_DIR/audio/tracks" ] || [ -z "$(ls "$ENGINE_DIR/audio/tracks/"*.mp3 2>/dev/null)" ]; then
+  bash "$ENGINE_DIR/audio/download-library.sh"
 fi
 ```
 
@@ -264,6 +271,51 @@ Report output path and stats when done.
 
 ---
 
+## Audio System
+
+Orson includes an integrated audio system for background music and narration. Audio is automatically added during `render` (use `--no-audio` to skip).
+
+### How Audio Selection Works
+
+1. **Mode filtering** — Video mode (safe/chaos/hybrid/cocomelon) determines allowed music styles via `coherence-matrix.json`
+2. **Context matching** — Video context tags are matched against style definitions
+3. **Energy matching** — Track energy level is matched to video energy
+4. **Track processing** — Selected track is trimmed/looped to video duration, faded in/out
+5. **Merge** — Processed audio is merged into the final MP4
+
+### Narration (Optional)
+
+TTS narration uses Edge-TTS (Microsoft Azure Neural voices). To enable:
+
+1. Generate a narration brief (JSON) with text + timing per element
+2. Run `narration_generator.py` to produce MP3 files
+3. Use `audio-mixer.ts` to concatenate, duck music, and merge
+
+```bash
+pip install edge-tts
+python .claude/skills/orson/engine/audio/narration_generator.py brief.json ./output/narration/
+```
+
+### Audio Library
+
+Tracks live in `engine/audio/tracks/` and SFX in `engine/audio/sfx/`. The catalog is in `engine/audio/presets/audio-library.json`.
+
+Run `engine/audio/download-library.sh` to bootstrap placeholder tracks. Replace with real CC0 audio from Pixabay, Mixkit, or similar.
+
+### Audio Reference Files
+
+- Coherence matrix (style→mode mapping): `engine/audio/presets/coherence-matrix.json`
+- Voice presets: `engine/audio/presets/voices.json`
+- Emphasis profiles: `engine/audio/presets/emphasis-profiles.json`
+- Templates (6): `engine/audio/presets/templates/`
+- TIR algorithm: `engine/audio/references/tir-algorithm.md`
+- TTS narration: `engine/audio/references/tts-narration.md`
+- Voiceover mode: `engine/audio/references/voiceover-mode.md`
+- Feel profiles: `engine/audio/references/feel-profiles.md`
+- Orchestration: `engine/audio/references/orchestration.md`
+
+---
+
 ## How It Works
 
 **Filmmaking workflow:**
@@ -296,14 +348,125 @@ Report output path and stats when done.
 - **Source analysis** — can auto-extract content from project folders or URLs
 - **132 animations**: 56 entrances, 30 exits, 26 transitions, 9 emphasis, 11 looping
 
+## Demo Mode (`/orson demo`)
+
+Record a live website demo with narration, zoom, cursor animation, and background music.
+
+### Guided Flow
+
+Use `AskUserQuestion` for each step.
+
+#### Pre-production
+
+1. **URL** — Ask for the website URL to demo
+2. **Auth** — Does the site require login? If yes, collect auth steps (URL, selectors, credentials)
+3. **Format** — `horizontal-16x9` (default for demos), or other
+4. **Voice** — Select from `engine/audio/presets/voices.json` based on brand tone
+5. **Music** — Enabled? Style auto or specific? Volume (default 0.3)?
+
+#### Screenplay
+
+Design the demo script step-by-step:
+
+1. For each feature to demonstrate, define:
+   - **narration** — What to say (conversational, 1-2 sentences)
+   - **action** — What to do (click, fill, scroll, hover, navigate, wait, none)
+   - **selector** — CSS selector for the action target
+   - **value** — Text to type (for fill) or URL (for navigate)
+   - **zoom** — Zoom level (1-3, optional)
+   - **highlight** — Show ring around target (optional)
+
+2. Present the screenplay to the user for approval
+
+#### Production
+
+Write the script JSON and run:
+
+```bash
+npx tsx .claude/skills/orson/engine/src/index.ts demo <script.json>
+```
+
+### Demo Script Format
+
+```json
+{
+  "url": "https://example.com",
+  "format": "horizontal-16x9",
+  "fps": 30,
+  "codec": "h264",
+  "voice": "en-US-AriaNeural",
+  "lang": "en-US",
+  "narrationStyle": "neutral",
+  "music": { "enabled": true, "style": "auto", "volume": 0.3 },
+  "subtitles": { "enabled": true, "style": "bottom" },
+  "auth": [
+    { "action": "navigate", "url": "https://example.com/login" },
+    { "action": "fill", "selector": "#email", "value": "user@example.com" },
+    { "action": "fill", "selector": "#password", "value": "password" },
+    { "action": "click", "selector": "button[type=submit]" },
+    { "action": "wait", "waitFor": ".dashboard" }
+  ],
+  "steps": [
+    {
+      "narration": "Welcome to Example App. Let me show you the dashboard.",
+      "action": "none",
+      "zoom": 1
+    },
+    {
+      "narration": "Click the New Project button to create a project.",
+      "action": "click",
+      "selector": ".btn-new-project",
+      "zoom": 1.5,
+      "highlight": true
+    },
+    {
+      "narration": "Type your project name here.",
+      "action": "fill",
+      "selector": "#project-name",
+      "value": "My First Project",
+      "zoom": 2,
+      "highlight": true
+    }
+  ],
+  "output": "./output/demo.mp4",
+  "gapBetweenSteps": 800,
+  "zoomTransitionMs": 400
+}
+```
+
+### Demo Pipeline
+
+1. Parse + validate script (Zod)
+2. Generate narration brief → run `narration_generator.py` → MP3 files
+3. Build narration-first timeline (zoom → narration → action)
+4. Launch Playwright, execute auth, record frames with actions + zoom + cursor
+5. Encode frames to video (FFmpeg)
+6. Process audio: concatenate narration → select music → duck → mix → merge
+7. Generate WebVTT subtitles
+
+### Demo Reference
+
+- Script parser: `engine/src/demo-script.ts`
+- Timeline builder: `engine/src/demo-timeline.ts`
+- Capture + orchestrator: `engine/src/demo-capture.ts`
+- Director (zoom + cursor): `engine/src/demo-director.ts`
+- Subtitles: `engine/src/demo-subtitles.ts`
+
+---
+
 ## Running
 
 ```bash
 # Guided creation (via Claude skill)
 /orson create
 
+# Demo recording (via Claude skill)
+/orson demo
+
 # Direct CLI (from project root)
 npx tsx .claude/skills/orson/engine/src/index.ts render video-config.html
+npx tsx .claude/skills/orson/engine/src/index.ts render video-config.html --no-audio
+npx tsx .claude/skills/orson/engine/src/index.ts demo demo-script.json
 npx tsx .claude/skills/orson/engine/src/index.ts analyze-folder ./my-project
 npx tsx .claude/skills/orson/engine/src/index.ts analyze-url https://example.com
 npx tsx .claude/skills/orson/engine/src/index.ts autogen content.json --format=horizontal-16x9 --mode=hybrid
@@ -313,7 +476,7 @@ npx tsx .claude/skills/orson/engine/src/index.ts entrances
 
 ## Reference
 
-- Engine source: `.claude/skills/orson/engine/src/` (22 files)
+- Engine source: `.claude/skills/orson/engine/src/` (28 files)
 - Animation database: `.claude/skills/orson/engine/src/actions.ts`
 - Choreography (animation selection & sequencing): `.claude/skills/orson/engine/src/choreography.ts`
 - Composition (scene layout & visual structure): `.claude/skills/orson/engine/src/composition.ts`
@@ -330,6 +493,14 @@ npx tsx .claude/skills/orson/engine/src/index.ts entrances
 - Config schema: `.claude/skills/orson/engine/src/config.ts`
 - Capture (Playwright frame capture): `.claude/skills/orson/engine/src/capture.ts`
 - Encode (FFmpeg): `.claude/skills/orson/engine/src/encode.ts`
+- Audio selector: `.claude/skills/orson/engine/src/audio-selector.ts`
+- Audio mixer: `.claude/skills/orson/engine/src/audio-mixer.ts`
+- Demo script parser: `.claude/skills/orson/engine/src/demo-script.ts`
+- Demo timeline: `.claude/skills/orson/engine/src/demo-timeline.ts`
+- Demo capture + orchestrator: `.claude/skills/orson/engine/src/demo-capture.ts`
+- Demo director (zoom + cursor): `.claude/skills/orson/engine/src/demo-director.ts`
+- Demo subtitles: `.claude/skills/orson/engine/src/demo-subtitles.ts`
+- Narration generator (Python): `.claude/skills/orson/engine/audio/narration_generator.py`
 - Folder analysis: `.claude/skills/orson/engine/src/analyze-folder.ts`
 - URL analysis: `.claude/skills/orson/engine/src/analyze-url.ts`
 - Config generation: `.claude/skills/orson/engine/src/autogen.ts`
