@@ -1,1 +1,4 @@
 node_modules/
+.claude/settings.local.json
+.claude/docs/session-notes/*.md
+!.claude/docs/session-notes/.gitkeep
