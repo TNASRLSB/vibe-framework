@@ -57,7 +57,6 @@ Due componenti che lavorano insieme:
    - **ghostwriter** — SEO tradizionale + GEO (AI search) + copywriting persuasivo
    - **baptist** — CRO orchestrator: diagnosi conversioni (Fogg B=MAP), A/B test design, funnel analysis, coordina Ghostwriter e Seurat
    - **orson** — Generazione video + demo recording con audio integrato (CSS animations + Playwright + FFmpeg + Edge-TTS)
-   - **audiosculpt** — **DEPRECATED** — Audio migrato in Orson (TTS, mixing, libreria curata + FFmpeg)
    - **scribe** — Creazione e editing documenti Office (xlsx, docx, pptx) e PDF, routing automatico per tipo file
    - **forge** — Meta-skill: creazione, manutenzione, audit e miglioramento skill Claude Code
 
@@ -133,8 +132,6 @@ progetto/
         │   └── engine/       # Engine TypeScript + audio (auto-setup)
         │       ├── src/      # 28 file TS (render, demo, audio, capture, encode)
         │       └── audio/    # TTS, presets, tracks, SFX, references
-        ├── audiosculpt/      # DEPRECATED — migrato in orson
-        │   └── SKILL.md      # Solo notice di deprecazione
         ├── scribe/           # Skill documenti Office + PDF
         │   ├── SKILL.md      # Routing automatico per tipo file
         │   ├── references/   # Guide per formato (xlsx, docx, pdf)
@@ -530,22 +527,6 @@ Generazione video programmatica + demo recording. Segue un workflow cinematograf
 **Requisiti di sistema:** FFmpeg installato (`ffmpeg` nel PATH). Opzionale: `pip install edge-tts` per narrazione TTS.
 
 **Attivazione:** video generation, promo video, social media video, product video, demo recording
-
-#### AudioSculpt (DEPRECATED)
-
-**Deprecata.** Tutta la funzionalità audio è stata migrata in **Orson**.
-
-| Old (audiosculpt) | New (orson) |
-|-------------------|-------------|
-| TTS Narration | `orson/engine/audio/narration_generator.py` |
-| Voice presets | `orson/engine/audio/presets/voices.json` |
-| Coherence matrix | `orson/engine/audio/presets/coherence-matrix.json` |
-| Templates (6) | `orson/engine/audio/presets/templates/` |
-| Reference docs | `orson/engine/audio/references/` |
-
-**Rimosso:** Strudel (sostituito da libreria audio curata + FFmpeg), Text2Midi, preset Strudel.
-
-**Usa invece:** `/orson create` (video con musica automatica), `/orson demo` (demo con narrazione + musica + zoom).
 
 #### Scribe
 
