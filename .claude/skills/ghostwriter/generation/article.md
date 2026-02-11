@@ -133,16 +133,16 @@ When generating, provide:
 
 ## Validation Score
 
-*Run full validation against `validation/rules.md` (46 rules total)*
+*Run full validation against `validation/rules.md` (50 rules total)*
 
 | Category | Score | Max |
 |----------|-------|-----|
 | SEO | X | 12 |
-| GEO | X | 10 |
+| GEO | X | 14 |
 | Copy | X | 10 |
 | Schema | X | 5 |
 | Tech | X | 9 |
-| **Total** | **X** | **46** |
+| **Total** | **X** | **50** |
 
 Quality threshold: 90%+ = Production ready
 

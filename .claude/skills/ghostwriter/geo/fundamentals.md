@@ -252,6 +252,56 @@ positions compared to shorter, single-topic pages.
 - Clear definitions
 - Step-by-step processes
 
+### Attribution Layer
+
+Every piece of citation-worthy content needs a structured attribution layer — explicit metadata that tells AI systems **who** created it, **when**, and **why they're credible**.
+
+**Required elements:**
+- **Author byline** with professional title or credentials
+- **Publication date** in ISO 8601 format
+- **Last modified date** (freshness signal for RAG systems)
+- **Organization** affiliation
+- **Links to related content** by the same author (reinforces authority)
+
+**HTML implementation:**
+```html
+<article itemscope itemtype="https://schema.org/Article">
+  <meta itemprop="datePublished" content="2025-01-15" />
+  <meta itemprop="dateModified" content="2025-06-20" />
+  <span itemprop="author" itemscope itemtype="https://schema.org/Person">
+    <span itemprop="name">Nome Autore</span>
+    <span itemprop="jobTitle">Titolo Professionale</span>
+  </span>
+  <span itemprop="publisher" itemscope itemtype="https://schema.org/Organization">
+    <span itemprop="name">Nome Organizzazione</span>
+  </span>
+</article>
+```
+
+**Why it matters:** RAG systems use attribution signals to assess source credibility. Content with clear authorship and dates is ranked higher during retrieval. See also `schema.md` for full Schema.org patterns.
+
+### 6. Content Freshness
+
+RAG systems privilege recently updated content. The `dateModified` meta tag is a direct ranking signal — more recent content is scored higher during retrieval when competing sources cover the same topic.
+
+**Freshness signals to implement:**
+
+1. **Update regularly**: Even small updates (new data points, rephrased sections) reset the freshness signal
+2. **Explicit dates in body text**: "Aggiornato a giugno 2025" in visible text, not just in meta tags — LLMs parse body text, not all parse meta
+3. **Avoid vague temporal references**: "Recentemente" → "A giugno 2025". "L'anno scorso" → "Nel 2024"
+4. **Timestamp format**: Use `dateModified` in Schema.org markup alongside visible dates
+
+**Implementation:**
+```html
+<!-- In Schema.org markup -->
+<meta itemprop="dateModified" content="2025-06-20" />
+
+<!-- In visible body text -->
+<p><em>Ultimo aggiornamento: giugno 2025</em></p>
+```
+
+**Why vague dates fail:** When a LLM retrieves a chunk containing "recentemente", it cannot determine the actual timeframe. "A giugno 2025" is precise, verifiable, and gives the model a concrete freshness signal to weigh.
+
 ---
 
 ## Content Structuring for AI Retrieval

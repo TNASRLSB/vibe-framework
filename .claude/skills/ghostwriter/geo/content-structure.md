@@ -110,6 +110,38 @@ Create natural chunk boundaries with:
 - Unnamed entities ("The company", "This method")
 - Vague qualifiers ("The previous technique", "The above example")
 
+### Chunk-Aware Writing Anti-Patterns
+
+When a chunk is retrieved in isolation, any reference to content outside that chunk is broken. Write as if every paragraph will be read alone.
+
+| Anti-Pattern | Why It Fails | Fix |
+|-------------|-------------|-----|
+| "Come detto sopra..." / "As mentioned earlier..." | The chunk above is not retrieved | Re-state the concept explicitly |
+| "Nel paragrafo precedente..." / "In the previous paragraph..." | Reader has no access to previous paragraph | Include the relevant fact inline |
+| "Vedi sezione X" / "See section X" | Section X is a separate chunk | Summarize the key point here |
+| "Questo..." / "Esso..." at paragraph start without antecedent | Pronoun has no referent in the chunk | Name the subject explicitly |
+| Implicit transitions between paragraphs | Context is lost at chunk boundaries | Open each paragraph by naming the subject |
+
+**Rules:**
+1. **Zero cross-chunk references**: No "come detto", "sopra", "precedente", "vedi sezione", "come menzionato"
+2. **No orphan pronouns**: Never start a paragraph with "Questo", "Esso", "Essa" without the antecedent in the same chunk
+3. **Explicit transitions**: Every paragraph re-establishes context by naming the subject in the opening sentence
+4. **Periodic summaries**: In long-form content (>1500 words), insert a mini-summary every 3-4 sections reinforcing context for isolated chunks
+
+### Chunk Size by Content Type
+
+The general 40-150 word range is the default. For specific content types, refine the target:
+
+| Content Type | Optimal Chunk Size | Notes |
+|-------------|-------------------|-------|
+| FAQ | 40-80 words | One question-answer pair per chunk |
+| Technical documentation | 80-150 words | Small chunks for precision |
+| Articles / blog posts | 150-250 words | Balance between precision and context |
+| Procedural guides | 80-150 words | One step per chunk |
+| In-depth publications | 250-400 words | Larger chunks to preserve context |
+
+**When to deviate:** If a concept cannot be self-contained within the target range, prioritize self-containment over chunk size. A 180-word FAQ answer that is complete is better than an 80-word answer that requires the next paragraph.
+
 ---
 
 ## Hierarchical Structure for LLMs
@@ -458,6 +490,30 @@ latency from 200ms to 15ms, a 93% improvement. Cached responses
 remain valid for 5 minutes before expiring.
 ```
 
+### Entity Salience
+
+Entity salience is about **where** key entities appear within a paragraph, not just whether they appear. Embedding models weight the first sentences more heavily, so positional placement matters for retrieval.
+
+**Principle:** The primary entity of every section and paragraph must appear in the **first 1-2 sentences** — ideally within the first 20 words.
+
+**Bad (entity buried):**
+```
+There are many approaches to building modern web applications. With the
+evolution of rendering strategies, one particular technology has gained
+significant traction. React Server Components allow developers to run
+components on the server.
+```
+
+**Good (entity salient):**
+```
+React Server Components allow developers to run components on the server,
+reducing client-side JavaScript by up to 60%. This rendering strategy
+improves initial page load times while maintaining the component-based
+architecture that React developers expect.
+```
+
+**Rule:** If a section heading contains a keyword (e.g., "React Server Components"), that exact keyword must appear in the first 30 words of the paragraph following the heading.
+
 ### Paragraph Extractability Test
 
 **For each paragraph, ask:**
@@ -465,6 +521,7 @@ remain valid for 5 minutes before expiring.
 2. Does it define its own subject in the first sentence?
 3. Are all referenced entities named (not "it" or "this")?
 4. Does it contain a complete thought with evidence?
+5. Does the primary entity appear in the first 20 words?
 
 If **no** to any question, revise the paragraph.
 
@@ -699,6 +756,47 @@ writing for GEO optimization.
 **Example:** "The 2026 GEO Benchmark Report: Analysis of 10,000 AI Citations"
 
 This becomes the authoritative source others cite.
+
+---
+
+## Citation Anchors
+
+Citation anchors are specific textual patterns that increase the probability of LLMs citing your content. While citation worthiness is about having valuable content, citation anchors are about **how you phrase it** so models can extract and attribute it.
+
+### Anchor Patterns
+
+| Pattern | Example | Why It Works |
+|---------|---------|--------------|
+| **Authority phrases** | "Secondo [Source]...", "Come dimostrato da [Studio]...", "I dati di [Organization] mostrano..." | Signals pre-existing attribution — LLMs propagate cited claims |
+| **Self-reference** | "Questa guida spiega...", "In questo articolo analizziamo...", "Il presente documento descrive..." | Gives the LLM a name to attribute when citing |
+| **Verifiable claims** | "Il 73% delle aziende B2B riporta un aumento del 40% nella lead generation entro 12 mesi" | Specific, falsifiable statements are preferred over vague assertions |
+| **Quantitative data** | Statistics, percentages, metrics with source | LLMs preferentially cite sources containing precise data |
+
+### Good vs Bad Examples
+
+```
+BAD:  "Le aziende dovrebbero investire nel content marketing"
+GOOD: "Secondo il Content Marketing Institute (2024), il 73% delle aziende B2B
+       che investono in content marketing riportano un aumento del 40% nella
+       lead generation entro 12 mesi"
+```
+
+```
+BAD:  "Questa tecnica è molto efficace"
+GOOD: "In questa guida analizziamo come la tecnica di chunking riduce il tempo
+       di retrieval del 40% e aumenta la probabilità di citazione di 2.8x,
+       secondo i benchmark interni su 500 passaggi analizzati"
+```
+
+### Implementation Checklist
+
+- [ ] At least 2 citation anchors per content piece
+- [ ] At least 1 citation anchor every 500 words for long-form content
+- [ ] Authority phrases cite named sources with year
+- [ ] Self-references use the document/article name explicitly
+- [ ] Quantitative claims include specific numbers, not vague qualifiers
+
+**Related:** See [Citation Worthiness](#citation-worthy-content) for what makes content worth citing. Citation anchors are about **how** you present that content for extraction.
 
 ---
 

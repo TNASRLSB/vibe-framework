@@ -134,6 +134,26 @@ Apply relevant rules after generation. Report pass/fail for each.
 - **Pass**: Most paragraphs 40-150 words
 - **Fail**: Split long paragraphs or combine very short ones
 
+### GEO-011: Citation Anchors
+- **Check**: Content contains citation anchor patterns (authority phrases, quantitative data, or self-reference with document name)
+- **Pass**: At least 2 citation anchors per article; at least 1 every 500 words for long-form content
+- **Fail**: Add authority phrases ("Secondo [Source]..."), quantitative claims ("[N]%"), or self-references ("Questa guida...")
+
+### GEO-012: Entity Salience
+- **Check**: The primary entity of each section appears in the first 2 sentences after the heading
+- **Pass**: H2/H3 keyword present in the first 30 words of the following paragraph, for 100% of sections
+- **Fail**: Rewrite paragraph openings to front-load the section's primary entity
+
+### GEO-013: Cross-Chunk Independence
+- **Check**: No paragraph contains references to content in other paragraphs
+- **Pass**: Zero occurrences of: "come detto", "sopra", "precedente", "vedi sezione", "come menzionato", "as mentioned", "see above", "previous section"
+- **Fail**: Replace cross-references with explicit re-statements of the referenced concept
+
+### GEO-014: Content Freshness Signals
+- **Check**: Content includes publication date and last modified date (in Schema.org markup or visible body text)
+- **Pass**: Both `datePublished` and `dateModified` present (in meta/Schema.org or in visible text)
+- **Fail**: Add date metadata in Schema.org markup and/or visible "Ultimo aggiornamento: [date]" in body text
+
 ---
 
 ## Copywriting Rules
@@ -276,13 +296,13 @@ Apply relevant rules after generation. Report pass/fail for each.
 
 ### Category Scores
 - **SEO Score**: Points earned / 12
-- **GEO Score**: Points earned / 10
+- **GEO Score**: Points earned / 14
 - **Copy Score**: Points earned / 10
 - **Schema Score**: Points earned / 5
 - **Tech Score**: Points earned / 9
 
 ### Overall Score
-Total points / 46 × 100 = Percentage
+Total points / 50 × 100 = Percentage
 
 ### Quality Thresholds
 - **90-100%**: Production ready
@@ -306,11 +326,11 @@ Total points / 46 × 100 = Percentage
 | Category | Score | Max | % |
 |----------|-------|-----|---|
 | SEO | X | 12 | X% |
-| GEO | X | 10 | X% |
+| GEO | X | 14 | X% |
 | Copy | X | 10 | X% |
 | Schema | X | 5 | X% |
 | Tech | X | 9 | X% |
-| **Total** | **X** | **46** | **X%** |
+| **Total** | **X** | **50** | **X%** |
 
 ### Failed Rules
 

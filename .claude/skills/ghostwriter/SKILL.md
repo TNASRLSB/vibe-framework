@@ -281,12 +281,12 @@ Available generation prompts:
 
 ### Validation System
 
-Every piece of generated content is validated against 46 measurable rules:
+Every piece of generated content is validated against 50 measurable rules:
 
 | Category | Rules | File |
 |----------|-------|------|
 | SEO | 12 rules | `validation/rules.md` |
-| GEO | 10 rules | `validation/rules.md` |
+| GEO | 14 rules | `validation/rules.md` |
 | Copywriting | 10 rules | `validation/rules.md` |
 | Schema | 5 rules | `validation/rules.md` |
 | Technical | 9 rules | `validation/rules.md` |
@@ -358,7 +358,7 @@ For detailed documentation, explore the subdirectories:
 - `geo/` — GEO (fundamentals, content structure, AI bots, schema)
 - `copywriting/` — Frameworks, headlines, CTA, psychology
 - `generation/` — Content generation prompts (article, landing page, product, pillar-cluster, FAQ, meta)
-- `validation/` — 46 measurable validation rules
+- `validation/` — 50 measurable validation rules
 - `templates/` — Article template + JSON-LD schema templates (article, FAQ, howto, product, local-business, person)
 - `checklists/` — Pre-publish, audit, technical SEO
 - `workflows/` — Content creation, interactive, optimization, audit flows

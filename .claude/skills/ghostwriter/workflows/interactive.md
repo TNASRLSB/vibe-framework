@@ -483,7 +483,7 @@ Proceed with this plan? [Yes / Adjust]
 ```
 ## Optimization Analysis: [Title]
 
-### Current Score: X/46 (X%)
+### Current Score: X/50 (X%)
 
 ### Changes I Propose
 
