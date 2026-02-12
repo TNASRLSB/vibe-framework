@@ -1,80 +1,78 @@
 #!/usr/bin/env python3
 """
-Narration Generator for Audiosculpt
-Generates TTS narration using Edge-TTS (Microsoft Azure Neural TTS)
+Narration Generator for Orson
+Generates TTS narration via pluggable engine architecture.
 
 Usage:
     python narration_generator.py <narration_brief.json> <output_dir>
+    python narration_generator.py --list-voices
+    python narration_generator.py --list-engines
 
-Requirements:
-    pip install edge-tts
+Engine selection (priority):
+    1. "tts_engine" field in narration brief JSON
+    2. ORSON_TTS_ENGINE environment variable
+    3. Auto-detect first available non-edge-tts engine
+    4. Fallback: edge-tts (free, no API key)
 
 The narration brief should contain:
-- narration.voice: Edge-TTS voice name
+- narration.voice: Voice name (engine-specific)
+- narration.tts_engine: Engine name (optional)
 - narration.scenes[].elements[]: items to narrate
 - Each element has: id, narration_text, element_type, timing
 """
 
 import asyncio
 import json
+import os
+import subprocess
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional
 
-try:
-    import edge_tts
-except ImportError:
-    print("Error: edge-tts not installed. Run: pip install edge-tts")
-    sys.exit(1)
+from engines import get_engine, list_engines
 
 
-async def get_audio_duration(audio_file: Path) -> int:
-    """Get duration of audio file in milliseconds using ffprobe if available."""
-    import subprocess
+async def normalize_audio(audio_file: Path) -> None:
+    """Normalize audio loudness to -16 LUFS using ffmpeg loudnorm."""
+    tmp_file = audio_file.with_suffix('.norm.mp3')
     try:
         result = subprocess.run(
-            ['ffprobe', '-v', 'error', '-show_entries', 'format=duration',
-             '-of', 'default=noprint_wrappers=1:nokey=1', str(audio_file)],
+            ['ffmpeg', '-y', '-i', str(audio_file),
+             '-af', 'loudnorm=I=-16:TP=-1.5:LRA=11',
+             '-q:a', '2', str(tmp_file)],
             capture_output=True, text=True
         )
-        if result.returncode == 0:
-            return int(float(result.stdout.strip()) * 1000)
+        if result.returncode == 0 and tmp_file.exists():
+            tmp_file.replace(audio_file)
+        else:
+            tmp_file.unlink(missing_ok=True)
     except FileNotFoundError:
-        pass
-    # Fallback: estimate 150ms per word
-    return None
+        pass  # ffmpeg not available, skip normalization
 
 
 async def generate_element_audio(
     element: Dict,
     voice: str,
     emphasis: Dict,
-    output_path: Path
+    output_path: Path,
+    engine,
 ) -> Optional[int]:
-    """Generate audio for a single narration element."""
+    """Generate audio for a single narration element using the active TTS engine."""
     text = element['narration_text']
     element_id = element['id']
-
-    # Build SSML with prosody
-    rate = emphasis.get('rate', '+0%')
-    pitch = emphasis.get('pitch', '+0Hz')
-
-    ssml = f"""<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="en-US">
-    <voice name="{voice}">
-        <prosody rate="{rate}" pitch="{pitch}">
-            {text}
-        </prosody>
-    </voice>
-</speak>"""
-
     output_file = output_path / f"{element_id}.mp3"
 
-    try:
-        communicate = edge_tts.Communicate(text, voice)
-        await communicate.save(str(output_file))
+    # Pass prosody hints — engine decides whether to use them
+    rate = emphasis.get('rate', '+0%') if engine.supports_prosody else None
+    pitch = emphasis.get('pitch', '+0Hz') if engine.supports_prosody else None
 
-        # Get duration
-        duration_ms = await get_audio_duration(output_file)
+    try:
+        duration_ms = await engine.generate(text, voice, output_file, rate=rate, pitch=pitch)
+
+        if duration_ms is not None:
+            # Normalize loudness to consistent -16 LUFS (engine-agnostic post-processing)
+            await normalize_audio(output_file)
+
         if duration_ms is None:
             # Estimate: ~150ms per word
             word_count = len(text.split())
@@ -100,6 +98,14 @@ async def generate_narration(brief_path: str, output_dir: str) -> Dict:
         print("Narration not enabled in brief")
         return brief
 
+    # Resolve TTS engine
+    engine_name = narration.get('tts_engine')
+    engine = get_engine(engine_name)
+
+    # Pass narration style to engine via env (used by ElevenLabs for voice_settings mapping)
+    style = narration.get('style', 'neutral')
+    os.environ['_ORSON_NARRATION_STYLE'] = style
+
     voice = narration.get('voice', 'en-US-AriaNeural')
     emphasis_profiles = narration.get('emphasis_by_element_type', {})
     prosody_defaults = narration.get('prosody_defaults', {'rate': '+0%', 'pitch': '+0Hz'})
@@ -107,8 +113,9 @@ async def generate_narration(brief_path: str, output_dir: str) -> Dict:
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
 
-    print(f"Generating narration with voice: {voice}")
-    print(f"Output directory: {output_path}")
+    print(f"TTS engine: {engine.name} (prosody: {'yes' if engine.supports_prosody else 'no'})")
+    print(f"Voice: {voice}")
+    print(f"Output: {output_path}")
 
     total_items = 0
     total_duration_ms = 0
@@ -127,7 +134,7 @@ async def generate_narration(brief_path: str, output_dir: str) -> Dict:
             print(f"  Generating: {element_id} ({element_type})")
 
             duration_ms = await generate_element_audio(
-                element, voice, emphasis, output_path
+                element, voice, emphasis, output_path, engine
             )
 
             if duration_ms:
@@ -140,7 +147,8 @@ async def generate_narration(brief_path: str, output_dir: str) -> Dict:
     narration['summary'] = {
         'total_items': total_items,
         'total_speech_duration_ms': total_duration_ms,
-        'output_directory': str(output_path)
+        'output_directory': str(output_path),
+        'engine': engine.name,
     }
 
     # Calculate ducking events
@@ -160,6 +168,7 @@ async def generate_narration(brief_path: str, output_dir: str) -> Dict:
         json.dump(brief, f, indent=2)
 
     print(f"\nGeneration complete!")
+    print(f"  Engine: {engine.name}")
     print(f"  Total items: {total_items}")
     print(f"  Total duration: {total_duration_ms}ms ({total_duration_ms/1000:.1f}s)")
     print(f"  Manifest saved to: {output_brief_path}")
@@ -209,16 +218,28 @@ def calculate_ducking(narration: Dict) -> List[Dict]:
     return events
 
 
-def list_voices():
-    """List available Edge-TTS voices."""
+def do_list_voices():
+    """List voices for the active TTS engine."""
     async def _list():
-        voices = await edge_tts.list_voices()
-        print("\nAvailable Edge-TTS voices (English):\n")
+        engine = get_engine()
+        voices = await engine.list_voices()
+        print(f"\nAvailable voices ({engine.name}):\n")
         for v in voices:
-            if v['Locale'].startswith('en'):
-                print(f"  {v['ShortName']:30} {v['Gender']:8} {v['Locale']}")
+            locale = v.get('locale', '')
+            if locale.startswith('en'):
+                print(f"  {v.get('id', '?'):30} {v.get('gender', '?'):8} {locale}")
 
     asyncio.run(_list())
+
+
+def do_list_engines():
+    """List all registered TTS engines with availability."""
+    engines = list_engines()
+    print("\nRegistered TTS engines:\n")
+    for e in engines:
+        status = 'available' if e['available'] else 'not installed'
+        prosody = 'yes' if e.get('supports_prosody') else 'no'
+        print(f"  {e['name']:20} {status:15} prosody: {prosody:4} pip: {e['pip_package']}")
 
 
 if __name__ == '__main__':
@@ -227,10 +248,13 @@ if __name__ == '__main__':
         print("\nCommands:")
         print("  python narration_generator.py <brief.json> <output_dir>")
         print("  python narration_generator.py --list-voices")
+        print("  python narration_generator.py --list-engines")
         sys.exit(1)
 
     if sys.argv[1] == '--list-voices':
-        list_voices()
+        do_list_voices()
+    elif sys.argv[1] == '--list-engines':
+        do_list_engines()
     else:
         if len(sys.argv) < 3:
             print("Error: Missing output directory")

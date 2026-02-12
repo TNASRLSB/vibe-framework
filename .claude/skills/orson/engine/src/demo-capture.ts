@@ -9,7 +9,7 @@ import { fileURLToPath } from 'url';
 
 import { parseDemoScript, generateNarrationBrief, type DemoScript, type AuthStep } from './demo-script.js';
 import { buildDemoTimeline, type DemoTimeline, type NarrationManifest } from './demo-timeline.js';
-import { injectCursor, animateCursor, injectZoomOverlay, applyZoom, resetZoom, highlightElement } from './demo-director.js';
+import { injectCursor, animateCursor, injectZoomOverlay, applyZoom, resetZoom, highlightElement, removeDevOverlay } from './demo-director.js';
 import { selectTrack, type VideoMeta } from './audio-selector.js';
 import { trimAndLoop, applyDucking, fadeInOut, concatenateNarration, mixTracks, mergeAudioVideo, type DuckingEvent } from './audio-mixer.js';
 import { generateWebVTT } from './demo-subtitles.js';
@@ -31,15 +31,20 @@ async function initDemoCapture(
   url: string,
   width: number,
   height: number,
+  storageState?: string,
 ): Promise<CaptureSession> {
   const browser = await chromium.launch({ headless: true });
-  const context = await browser.newContext({
+  const contextOpts: Record<string, unknown> = {
     viewport: { width, height },
     deviceScaleFactor: 1,
-  });
+  };
+  if (storageState && existsSync(storageState)) {
+    contextOpts.storageState = storageState;
+  }
+  const context = await browser.newContext(contextOpts);
   const page = await context.newPage();
 
-  await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
+  await page.goto(url, { waitUntil: 'load', timeout: 30000 });
 
   return { browser, page, width, height, fps: 30 };
 }
@@ -54,7 +59,7 @@ async function executeAuth(page: Page, authSteps: AuthStep[]): Promise<void> {
   for (const step of authSteps) {
     switch (step.action) {
       case 'navigate':
-        if (step.url) await page.goto(step.url, { waitUntil: 'networkidle', timeout: step.timeout ?? 15000 });
+        if (step.url) await page.goto(step.url, { waitUntil: 'load', timeout: step.timeout ?? 15000 });
         break;
       case 'click':
         if (step.selector) await page.click(step.selector, { timeout: step.timeout ?? 5000 });
@@ -118,7 +123,7 @@ async function executeAction(
       break;
 
     case 'navigate':
-      if (value) await page.goto(value, { waitUntil: 'networkidle', timeout: 15000 });
+      if (value) await page.goto(value, { waitUntil: 'load', timeout: 15000 });
       break;
 
     case 'wait':
@@ -146,7 +151,8 @@ async function recordDemo(opts: RecordingOptions): Promise<void> {
   const frameDuration = 1000 / session.fps;
   const totalFrames = Math.ceil(timeline.totalDurationMs / 1000 * session.fps);
 
-  // Inject visual overlays
+  // Remove framework dev overlays and inject visual overlays
+  await removeDevOverlay(page);
   await injectCursor(page);
   await injectZoomOverlay(page);
 
@@ -183,7 +189,23 @@ async function recordDemo(opts: RecordingOptions): Promise<void> {
       if (currentTimeMs >= activeStep.actionStart) {
         actionExecuted.add(activeStep.stepIndex);
         const step = script.steps[activeStep.stepIndex];
+        const urlBefore = page.url();
         await executeAction(page, step.action, step.selector, step.value, step.typingSpeed);
+
+        // After action: re-inject overlays only if page navigated
+        const urlAfter = page.url();
+        if (urlAfter !== urlBefore) {
+          await page.waitForTimeout(300);
+          await removeDevOverlay(page);
+          const cursorLost = await page.evaluate(() => !document.getElementById('orson-cursor'));
+          if (cursorLost) {
+            await injectCursor(page);
+            await injectZoomOverlay(page);
+          }
+        } else if (step.action === 'click') {
+          // Non-navigational click: wait for re-render (e.g. dark mode toggle)
+          await page.waitForTimeout(100);
+        }
       }
     }
 
@@ -292,9 +314,50 @@ export async function runDemo(scriptPath: string): Promise<void> {
 
   try {
     const narrationScript = resolve(__dirname, '..', 'audio', 'narration_generator.py');
-    if (existsSync(narrationScript)) {
+    const venvDir = resolve(__dirname, '..', 'audio', '.venv');
+    const venvPython = resolve(venvDir, 'bin', 'python3');
+
+    // Auto-create venv if missing
+    if (!existsSync(venvPython)) {
+      console.log('  Setting up Python venv for TTS...');
       await new Promise<void>((res, rej) => {
-        const proc = spawn('python3', [narrationScript, briefPath, narrationDir], {
+        const proc = spawn('python3', ['-m', 'venv', venvDir], { stdio: 'inherit' });
+        proc.on('close', (code) => code === 0 ? res() : rej(new Error(`venv creation failed with ${code}`)));
+        proc.on('error', rej);
+      });
+      // Always install edge-tts as fallback
+      await new Promise<void>((res, rej) => {
+        const pip = resolve(venvDir, 'bin', 'pip');
+        const proc = spawn(pip, ['install', '-q', 'edge-tts'], { stdio: 'inherit' });
+        proc.on('close', (code) => code === 0 ? res() : rej(new Error(`pip install failed with ${code}`)));
+        proc.on('error', rej);
+      });
+    }
+
+    // Install extra TTS engine package if configured
+    const ttsEngine = script.ttsEngine ?? process.env.ORSON_TTS_ENGINE;
+    if (ttsEngine && ttsEngine !== 'edge-tts') {
+      const presetsPath = resolve(__dirname, '..', 'audio', 'presets', 'voices.json');
+      if (existsSync(presetsPath)) {
+        const { readFileSync: readFs } = await import('fs');
+        const presets = JSON.parse(readFs(presetsPath, 'utf-8'));
+        const engineInfo = presets.engines?.[ttsEngine];
+        if (engineInfo?.pip_package) {
+          const pip = resolve(venvDir, 'bin', 'pip');
+          console.log(`  Installing TTS engine: ${engineInfo.pip_package}...`);
+          await new Promise<void>((res, rej) => {
+            const proc = spawn(pip, ['install', '-q', engineInfo.pip_package], { stdio: 'inherit' });
+            proc.on('close', (code) => code === 0 ? res() : rej(new Error(`pip install ${engineInfo.pip_package} failed`)));
+            proc.on('error', rej);
+          });
+        }
+      }
+    }
+
+    if (existsSync(narrationScript)) {
+      const pythonBin = existsSync(venvPython) ? venvPython : 'python3';
+      await new Promise<void>((res, rej) => {
+        const proc = spawn(pythonBin, [narrationScript, briefPath, narrationDir], {
           stdio: ['pipe', 'inherit', 'inherit'],
         });
         proc.on('close', (code) => code === 0 ? res() : rej(new Error(`Narration generator exited with ${code}`)));
@@ -329,7 +392,8 @@ export async function runDemo(scriptPath: string): Promise<void> {
   const width = fmt?.width ?? 1920;
   const height = fmt?.height ?? 1080;
 
-  const session = await initDemoCapture(script.url, width, height);
+  const storageStatePath = script.storageState ? resolve(dirname(scriptPath), script.storageState) : undefined;
+  const session = await initDemoCapture(script.url, width, height, storageStatePath);
   session.fps = script.fps;
 
   // Execute auth if present
@@ -340,7 +404,25 @@ export async function runDemo(scriptPath: string): Promise<void> {
   }
 
   // Navigate to demo URL (may have changed during auth)
-  await session.page.goto(script.url, { waitUntil: 'networkidle', timeout: 30000 });
+  await session.page.goto(script.url, { waitUntil: 'load', timeout: 30000 });
+
+  // Pre-flight: validate selectors on initial page
+  console.log('  Pre-flight: validating selectors...');
+  let selectorWarnings = 0;
+  for (const [i, step] of script.steps.entries()) {
+    if (step.selector) {
+      const found = await session.page.locator(step.selector).count();
+      if (found === 0) {
+        console.warn(`  WARNING: Step ${i + 1} selector not found: ${step.selector}`);
+        selectorWarnings++;
+      }
+    }
+  }
+  if (selectorWarnings > 0) {
+    console.warn(`  ${selectorWarnings} selector(s) not found (may appear after navigation)`);
+  } else {
+    console.log('  All initial selectors found');
+  }
 
   await recordDemo({
     session,
@@ -401,11 +483,11 @@ export async function runDemo(scriptPath: string): Promise<void> {
     const fadedMusic = resolve(workDir, 'music-faded.mp3');
     await fadeInOut(duckedMusic, 500, 2000, fadedMusic);
 
-    // Mix narration + music
+    // Mix narration + music (ducking already applied volume envelope, use fixed gain)
     finalAudioPath = resolve(workDir, 'audio-mixed.mp3');
     await mixTracks([
       { path: concatenatedNarration, gain: 1.0 },
-      { path: fadedMusic, gain: script.music.volume },
+      { path: fadedMusic, gain: 1.0 },
     ], finalAudioPath);
   }
 

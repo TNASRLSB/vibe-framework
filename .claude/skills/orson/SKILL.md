@@ -41,9 +41,21 @@ if [ ! -d "$ENGINE_DIR/node_modules" ]; then
   cd "$ENGINE_DIR" && npm install && npx playwright install chromium
 fi
 
-# Check if audio library has tracks (generate placeholders if missing)
+# Check if audio library has tracks (download if missing)
 if [ ! -d "$ENGINE_DIR/audio/tracks" ] || [ -z "$(ls "$ENGINE_DIR/audio/tracks/"*.mp3 2>/dev/null)" ]; then
   bash "$ENGINE_DIR/audio/download-library.sh"
+fi
+
+# Check if Python venv exists for TTS narration
+VENV_DIR="$ENGINE_DIR/audio/.venv"
+if [ ! -d "$VENV_DIR" ]; then
+  python3 -m venv "$VENV_DIR" && "$VENV_DIR/bin/pip" install -q edge-tts
+fi
+
+# If a non-default TTS engine is configured, install its package too
+if [ -n "$ORSON_TTS_ENGINE" ] && [ "$ORSON_TTS_ENGINE" != "edge-tts" ]; then
+  PIP_PKG=$(python3 -c "import json; d=json.load(open('$ENGINE_DIR/audio/presets/voices.json')); print(d.get('engines',{}).get('$ORSON_TTS_ENGINE',{}).get('pip_package',''))" 2>/dev/null)
+  [ -n "$PIP_PKG" ] && "$VENV_DIR/bin/pip" install -q "$PIP_PKG"
 fi
 ```
 
@@ -283,17 +295,48 @@ Orson includes an integrated audio system for background music and narration. Au
 4. **Track processing** — Selected track is trimmed/looped to video duration, faded in/out
 5. **Merge** — Processed audio is merged into the final MP4
 
-### Narration (Optional)
+### TTS Engines
 
-TTS narration uses Edge-TTS (Microsoft Azure Neural voices). To enable:
+Narration uses a pluggable TTS engine architecture. Any provider can be added; Edge-TTS is the built-in fallback (free, no API key).
+
+**Engine selection priority:**
+1. `ttsEngine` field in demo script JSON
+2. `ORSON_TTS_ENGINE` environment variable
+3. Auto-detect: first available non-edge-tts engine
+4. Fallback: `edge-tts`
+
+| Engine | Prosody | Languages | API Key | Pip Package |
+|--------|---------|-----------|---------|-------------|
+| `edge-tts` (default) | Yes (rate, pitch) | 75+ incl. Italian | None | `edge-tts` |
+| `elevenlabs` | Partial (speed, style) | 70+ incl. Italian | `ELEVENLABS_API_KEY` | `elevenlabs` |
+
+**To add a new engine:**
+1. Create `engine/audio/engines/your_engine.py` implementing `TTSEngine`
+2. Register it in `engine/audio/engines/__init__.py` → `ENGINES` dict
+3. Add its entry in `engine/audio/presets/voices.json` → `engines` section
+4. Install: `engine/audio/.venv/bin/pip install your-package`
+5. Set env var or `ttsEngine` in script JSON
+
+**Environment variables:**
+- `ORSON_TTS_ENGINE` — default engine name (e.g. `edge-tts`, `elevenlabs`)
+- `ELEVENLABS_API_KEY` — ElevenLabs API key (get from elevenlabs.io)
+- Engine-specific API keys as documented by each engine
+
+### Narration Pipeline
 
 1. Generate a narration brief (JSON) with text + timing per element
-2. Run `narration_generator.py` to produce MP3 files
+2. Run `narration_generator.py` — selects engine, produces MP3 files
 3. Use `audio-mixer.ts` to concatenate, duck music, and merge
 
 ```bash
-pip install edge-tts
+# Using default engine (edge-tts)
 python .claude/skills/orson/engine/audio/narration_generator.py brief.json ./output/narration/
+
+# List available voices for active engine
+python .claude/skills/orson/engine/audio/narration_generator.py --list-voices
+
+# List registered engines
+python .claude/skills/orson/engine/audio/narration_generator.py --list-engines
 ```
 
 ### Audio Library
@@ -437,20 +480,49 @@ npx tsx .claude/skills/orson/engine/src/index.ts demo <script.json>
 ### Demo Pipeline
 
 1. Parse + validate script (Zod)
-2. Generate narration brief → run `narration_generator.py` → MP3 files
+2. Generate narration brief → run `narration_generator.py` → MP3 files (loudness-normalized to -16 LUFS)
 3. Build narration-first timeline (zoom → narration → action)
-4. Launch Playwright, execute auth, record frames with actions + zoom + cursor
+4. Launch Playwright, pre-flight selector validation, execute auth, record frames
 5. Encode frames to video (FFmpeg)
 6. Process audio: concatenate narration → select music → duck → mix → merge
 7. Generate WebVTT subtitles
+
+### Known Issues with Modern Frameworks
+
+- Use `waitUntil: 'load'` (NOT `networkidle`) — frameworks with HMR/WebSocket (Next.js, Vite, Nuxt) keep connections open permanently, causing `networkidle` to timeout.
+- Next.js dev overlay (`<nextjs-portal>`) intercepts pointer events. The engine removes it automatically before recording and after navigation.
+- After SPA navigation (client-side routing), cursor/zoom overlays may be destroyed. The engine re-injects them automatically when URL changes.
+
+### Pre-flight Checks
+
+Before recording, the engine validates:
+1. All selectors exist on the initial page (warning if not found — selectors for post-navigation pages are expected to be missing)
+2. Python venv is available with edge-tts installed (auto-created if missing)
+3. Music tracks are available (downloaded or silence placeholders)
+
+### Authentication Patterns
+
+Demo mode supports pre-authenticated sessions. Two approaches:
+
+**1. Auth steps in script (username/password flows):**
+Use the `auth` array in the demo script. Steps execute before recording starts.
+
+**2. Pre-exported storageState (OAuth/SSO flows):**
+For providers like Clerk, Auth0, Firebase with OAuth (Google, GitHub SSO), Playwright cannot handle third-party OAuth popups. Instead:
+1. Log in manually in a browser
+2. Export the session via Playwright's `storageState` API or browser dev tools
+3. Pass the exported JSON via `storageState` field in the demo script
+
+The engine loads `storageState` into the browser context before navigating to the demo URL.
 
 ### Demo Reference
 
 - Script parser: `engine/src/demo-script.ts`
 - Timeline builder: `engine/src/demo-timeline.ts`
 - Capture + orchestrator: `engine/src/demo-capture.ts`
-- Director (zoom + cursor): `engine/src/demo-director.ts`
+- Director (zoom + cursor + overlay removal): `engine/src/demo-director.ts`
 - Subtitles: `engine/src/demo-subtitles.ts`
+- Narration generator: `engine/audio/narration_generator.py`
 
 ---
 

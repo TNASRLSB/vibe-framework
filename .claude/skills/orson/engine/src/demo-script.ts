@@ -30,7 +30,7 @@ const DemoStepSchema = z.object({
 const MusicConfigSchema = z.object({
   enabled: z.boolean().default(true),
   style: z.union([z.literal('auto'), z.string()]).default('auto'),
-  volume: z.number().min(0).max(1).default(0.3),
+  volume: z.number().min(0).max(1).default(0.2),
 });
 
 const SubtitleConfigSchema = z.object({
@@ -47,11 +47,13 @@ export const DemoScriptSchema = z.object({
   voice: z.string().default('en-US-AriaNeural'),
   lang: z.string().default('en-US'),
   narrationStyle: z.enum(['enthusiastic', 'neutral', 'calm', 'dramatic']).default('neutral'),
+  ttsEngine: z.string().optional().describe('TTS engine name (e.g. "edge-tts"). If omitted, uses ORSON_TTS_ENGINE env var or auto-detect'),
 
   music: MusicConfigSchema.default({}),
   subtitles: SubtitleConfigSchema.default({}),
 
   auth: z.array(AuthStepSchema).optional().describe('Pre-recording auth steps'),
+  storageState: z.string().optional().describe('Path to Playwright storageState JSON for pre-authenticated sessions'),
   steps: z.array(DemoStepSchema).min(1),
 
   output: z.string().default('./output/demo.mp4'),
@@ -70,6 +72,7 @@ export interface NarrationBrief {
     enabled: boolean;
     voice: string;
     style: string;
+    tts_engine?: string;
     scenes: Array<{
       scene_index: number;
       scene_name: string;
@@ -129,6 +132,7 @@ export function generateNarrationBrief(script: DemoScript): NarrationBrief {
       enabled: true,
       voice: script.voice,
       style: script.narrationStyle,
+      ...(script.ttsEngine ? { tts_engine: script.ttsEngine } : {}),
       scenes,
       emphasis_by_element_type: {
         text: prosody,

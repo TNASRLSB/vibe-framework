@@ -1,10 +1,33 @@
 {
-  "_doc": "Recommended Edge-TTS voices for video narration",
+  "_doc": "TTS voice recommendations and engine registry",
+
+  "engines": {
+    "edge-tts": {
+      "pip_package": "edge-tts",
+      "env_var": null,
+      "prosody": true,
+      "description": "Microsoft Azure Neural TTS — free, no API key, 300+ voices, 75+ languages"
+    },
+    "elevenlabs": {
+      "pip_package": "elevenlabs",
+      "env_var": "ELEVENLABS_API_KEY",
+      "prosody": false,
+      "model_id": "eleven_multilingual_v2",
+      "description": "High-quality multilingual TTS — 70+ languages incl. Italian, voice cloning. Requires API key."
+    },
+    "_template": {
+      "pip_package": "your-package",
+      "env_var": "YOUR_API_KEY_VAR",
+      "prosody": false,
+      "description": "Copy this block and fill in for your engine"
+    }
+  },
 
   "recommended": {
     "en-US": [
       {
         "id": "en-US-AriaNeural",
+        "engine": "edge-tts",
         "gender": "Female",
         "character": "Professional, warm",
         "use_cases": ["corporate", "tech", "explainer"],
@@ -12,24 +35,28 @@
       },
       {
         "id": "en-US-GuyNeural",
+        "engine": "edge-tts",
         "gender": "Male",
         "character": "Energetic, confident",
         "use_cases": ["sports", "gaming", "hype"]
       },
       {
         "id": "en-US-JennyNeural",
+        "engine": "edge-tts",
         "gender": "Female",
         "character": "Friendly, casual",
         "use_cases": ["lifestyle", "wellness", "vlog"]
       },
       {
         "id": "en-US-DavisNeural",
+        "engine": "edge-tts",
         "gender": "Male",
         "character": "Deep, authoritative",
         "use_cases": ["trailer", "documentary", "dramatic"]
       },
       {
         "id": "en-US-AmberNeural",
+        "engine": "edge-tts",
         "gender": "Female",
         "character": "Youthful, enthusiastic",
         "use_cases": ["social media", "retail", "app promo"]
@@ -38,12 +65,14 @@
     "en-GB": [
       {
         "id": "en-GB-SoniaNeural",
+        "engine": "edge-tts",
         "gender": "Female",
         "character": "Elegant, sophisticated",
         "use_cases": ["luxury", "fashion", "premium"]
       },
       {
         "id": "en-GB-RyanNeural",
+        "engine": "edge-tts",
         "gender": "Male",
         "character": "Refined, trustworthy",
         "use_cases": ["finance", "legal", "B2B"]
@@ -52,9 +81,45 @@
     "en-AU": [
       {
         "id": "en-AU-NatashaNeural",
+        "engine": "edge-tts",
         "gender": "Female",
         "character": "Approachable, friendly",
         "use_cases": ["travel", "outdoor", "casual"]
+      }
+    ],
+    "elevenlabs": [
+      {
+        "id": "21m00Tcm4TlvDq8ikWAM",
+        "engine": "elevenlabs",
+        "name": "Rachel",
+        "gender": "Female",
+        "character": "Warm, professional",
+        "use_cases": ["corporate", "explainer", "tech"],
+        "default": true
+      },
+      {
+        "id": "pNInz6obpgDQGcFmaJgB",
+        "engine": "elevenlabs",
+        "name": "Adam",
+        "gender": "Male",
+        "character": "Deep, authoritative",
+        "use_cases": ["trailer", "documentary", "dramatic"]
+      },
+      {
+        "id": "EXAVITQu4vr4xnSDxMaL",
+        "engine": "elevenlabs",
+        "name": "Bella",
+        "gender": "Female",
+        "character": "Friendly, youthful",
+        "use_cases": ["social media", "app promo", "retail"]
+      },
+      {
+        "id": "TxGEqnHWrfWFTfGW9XjX",
+        "engine": "elevenlabs",
+        "name": "Josh",
+        "gender": "Male",
+        "character": "Energetic, clear",
+        "use_cases": ["tech", "gaming", "hype"]
       }
     ]
   },
