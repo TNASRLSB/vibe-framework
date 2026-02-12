@@ -6,28 +6,23 @@ import type { Page } from 'playwright';
 // ─── Zoom Overlay ───────────────────────────────────────────
 
 /**
- * Inject a zoom wrapper <div> around the document body content.
- * Uses CSS transform: scale() for smooth zoom transitions.
+ * Mark the page's root element for zoom transforms.
+ * Applies styles directly to #__next (or first body child) — no DOM reparenting,
+ * which would break React 18 event delegation.
  */
 export async function injectZoomOverlay(page: Page): Promise<void> {
   await page.evaluate(() => {
-    if (document.getElementById('orson-zoom-wrapper')) return;
+    if (document.querySelector('[data-orson-zoom]')) return;
 
-    const wrapper = document.createElement('div');
-    wrapper.id = 'orson-zoom-wrapper';
-    wrapper.style.cssText = `
-      transform-origin: center center;
-      transform: scale(1);
-      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform-origin 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      width: 100%;
-      min-height: 100vh;
-    `;
-
-    // Wrap all body children
-    while (document.body.firstChild) {
-      wrapper.appendChild(document.body.firstChild);
+    const zoomTarget = document.getElementById('__next') || document.body.firstElementChild;
+    if (zoomTarget) {
+      (zoomTarget as HTMLElement).dataset.orsonZoom = '1';
+      (zoomTarget as HTMLElement).style.transformOrigin = 'center center';
+      (zoomTarget as HTMLElement).style.transform = 'scale(1)';
+      (zoomTarget as HTMLElement).style.transition = 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform-origin 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+      (zoomTarget as HTMLElement).style.width = '100%';
+      (zoomTarget as HTMLElement).style.minHeight = '100vh';
     }
-    document.body.appendChild(wrapper);
     document.body.style.overflow = 'hidden';
   });
 }
@@ -42,24 +37,22 @@ export async function applyZoom(
   transitionMs: number,
 ): Promise<void> {
   await page.evaluate(({ selector, scale, transitionMs }) => {
-    const wrapper = document.getElementById('orson-zoom-wrapper');
+    const zoomTarget = document.querySelector('[data-orson-zoom]') as HTMLElement | null;
     const target = document.querySelector(selector);
-    if (!wrapper || !target) return;
+    if (!zoomTarget || !target) return;
 
     const rect = target.getBoundingClientRect();
     const viewW = window.innerWidth;
     const viewH = window.innerHeight;
 
-    // Calculate transform-origin to center the target element
     const originX = ((rect.left + rect.width / 2) / viewW) * 100;
     const originY = ((rect.top + rect.height / 2) / viewH) * 100;
 
-    wrapper.style.transition = `transform ${transitionMs}ms cubic-bezier(0.4, 0, 0.2, 1), transform-origin ${transitionMs}ms cubic-bezier(0.4, 0, 0.2, 1)`;
-    wrapper.style.transformOrigin = `${originX}% ${originY}%`;
-    wrapper.style.transform = `scale(${scale})`;
+    zoomTarget.style.transition = `transform ${transitionMs}ms cubic-bezier(0.4, 0, 0.2, 1), transform-origin ${transitionMs}ms cubic-bezier(0.4, 0, 0.2, 1)`;
+    zoomTarget.style.transformOrigin = `${originX}% ${originY}%`;
+    zoomTarget.style.transform = `scale(${scale})`;
   }, { selector, scale, transitionMs });
 
-  // Wait for transition to complete
   await page.waitForTimeout(transitionMs + 50);
 }
 
@@ -68,11 +61,11 @@ export async function applyZoom(
  */
 export async function resetZoom(page: Page, transitionMs: number): Promise<void> {
   await page.evaluate((ms) => {
-    const wrapper = document.getElementById('orson-zoom-wrapper');
-    if (!wrapper) return;
+    const zoomTarget = document.querySelector('[data-orson-zoom]') as HTMLElement | null;
+    if (!zoomTarget) return;
 
-    wrapper.style.transition = `transform ${ms}ms cubic-bezier(0.4, 0, 0.2, 1)`;
-    wrapper.style.transform = 'scale(1)';
+    zoomTarget.style.transition = `transform ${ms}ms cubic-bezier(0.4, 0, 0.2, 1)`;
+    zoomTarget.style.transform = 'scale(1)';
   }, transitionMs);
 
   await page.waitForTimeout(transitionMs + 50);
@@ -134,6 +127,26 @@ export async function highlightElement(
     // Auto-remove after duration
     setTimeout(() => highlight.remove(), durationMs);
   }, { selector, durationMs });
+}
+
+// ─── Dev Overlay Removal ────────────────────────────────────
+
+/**
+ * Remove framework dev overlays that intercept pointer events.
+ * Covers Next.js (<nextjs-portal>), Vite error overlay, Nuxt dev tools.
+ */
+export async function removeDevOverlay(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const selectors = [
+      'nextjs-portal',
+      'vite-error-overlay',
+      '[data-nuxt-devtools]',
+      '#__next-build-indicator',
+    ];
+    for (const sel of selectors) {
+      document.querySelectorAll(sel).forEach(el => el.remove());
+    }
+  });
 }
 
 // ─── Animated Cursor ────────────────────────────────────────

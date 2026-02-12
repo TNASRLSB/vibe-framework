@@ -87,6 +87,23 @@
         "use_cases": ["travel", "outdoor", "casual"]
       }
     ],
+    "it-IT": [
+      {
+        "id": "it-IT-IsabellaNeural",
+        "engine": "edge-tts",
+        "gender": "Female",
+        "character": "Professionale, calda",
+        "use_cases": ["corporate", "tech"],
+        "default": true
+      },
+      {
+        "id": "it-IT-DiegoNeural",
+        "engine": "edge-tts",
+        "gender": "Male",
+        "character": "Energico, chiaro",
+        "use_cases": ["tech", "demo"]
+      }
+    ],
     "elevenlabs": [
       {
         "id": "21m00Tcm4TlvDq8ikWAM",
@@ -120,6 +137,14 @@
         "gender": "Male",
         "character": "Energetic, clear",
         "use_cases": ["tech", "gaming", "hype"]
+      },
+      {
+        "id": "onwK4e9ZLuTAKqWW03F9",
+        "engine": "elevenlabs",
+        "name": "Daniel",
+        "gender": "Male",
+        "character": "Steady broadcaster, news presenter pacing",
+        "use_cases": ["tech demo", "product walkthrough", "explainer"]
       }
     ]
   },

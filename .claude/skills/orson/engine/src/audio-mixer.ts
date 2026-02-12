@@ -113,7 +113,8 @@ export async function trimAndLoop(
 
 /**
  * Apply volume ducking to music track based on narration timing.
- * Uses FFmpeg volume filter with temporal automation.
+ * Uses FFmpeg volume filter with smooth linear ramps via clip().
+ * Fade-out (300ms) before voice starts, fade-in (500ms) after voice ends.
  */
 export async function applyDucking(
   musicPath: string,
@@ -122,18 +123,15 @@ export async function applyDucking(
   outputPath: string,
 ): Promise<void> {
   if (events.length === 0) {
-    // No ducking needed, just copy
     await ffmpeg(['-i', musicPath, '-c:a', 'copy', outputPath]);
     return;
   }
 
-  // Build volume filter expression using enable/between for each duck region
   // Group events into duck/release pairs
   const duckRegions: { startSec: number; endSec: number; gain: number }[] = [];
   for (let i = 0; i < events.length; i++) {
     const ev = events[i];
     if (ev.action === 'duck') {
-      // Find matching release
       const release = events.slice(i + 1).find(e => e.action === 'release');
       if (release) {
         duckRegions.push({
@@ -150,17 +148,24 @@ export async function applyDucking(
     return;
   }
 
-  // Build a complex volume expression
-  // volume='if(between(t,S1,E1),G1,if(between(t,S2,E2),G2,...,NORMAL))'
-  let expr = '';
-  for (let i = duckRegions.length - 1; i >= 0; i--) {
-    const r = duckRegions[i];
-    if (i === duckRegions.length - 1) {
-      expr = `if(between(t,${r.startSec.toFixed(3)},${r.endSec.toFixed(3)}),${r.gain},${normalGain})`;
-    } else {
-      expr = `if(between(t,${r.startSec.toFixed(3)},${r.endSec.toFixed(3)}),${r.gain},${expr})`;
-    }
-  }
+  const FADE_IN_SEC = 0.3;   // ramp down before voice
+  const FADE_OUT_SEC = 0.5;  // ramp up after voice
+
+  // Build smooth ramp expressions using clip() for each duck region
+  // di = min(clip((t - fadeInStart) / FADE_IN, 0, 1), clip((fadeOutEnd - t) / FADE_OUT, 0, 1))
+  // gain = normalGain + (duckGain - normalGain) * max(d1, d2, ..., dN)
+  const regionExprs = duckRegions.map(r => {
+    const fadeInStart = r.startSec - FADE_IN_SEC;
+    const fadeOutEnd = r.endSec + FADE_OUT_SEC;
+    return `min(clip((t-${fadeInStart.toFixed(3)})/${FADE_IN_SEC},0,1),clip((${fadeOutEnd.toFixed(3)}-t)/${FADE_OUT_SEC},0,1))`;
+  });
+
+  // Use the first region's gain (typically uniform across all regions)
+  const duckGain = duckRegions[0].gain;
+  const maxExpr = regionExprs.length === 1
+    ? regionExprs[0]
+    : `max(${regionExprs.join(',')})`;
+  const expr = `${normalGain}+(${duckGain}-${normalGain})*${maxExpr}`;
 
   await ffmpeg([
     '-i', musicPath,
@@ -243,7 +248,7 @@ export async function concatenateNarration(
 
   const mixInputs = filterParts.map((_, i) => `[a${i}]`).join('');
   const filterComplex = filterParts.join(';') +
-    `;${mixInputs}amix=inputs=${filterParts.length}:duration=longest[out]`;
+    `;${mixInputs}amix=inputs=${filterParts.length}:duration=longest:normalize=0[out]`;
 
   await ffmpeg([
     ...inputs,
