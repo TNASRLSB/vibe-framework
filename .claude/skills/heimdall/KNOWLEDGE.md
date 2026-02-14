@@ -1,6 +1,6 @@
-# Heimdall — Domain Knowledge
+# Heimdall — Knowledge Base
 
-Reference material preserved for human context. Claude uses the operational detection tables and enforcement rules in SKILL.md directly.
+Domain knowledge and reference material for the Heimdall security skill. This file is for human readers — Claude does not load it during skill execution.
 
 ## Research Findings
 
@@ -10,6 +10,43 @@ Reference material preserved for human context. Claude uses the operational dete
 | 2,000+ vulns in 5,600 vibe-coded apps | Escape.tech 2025 | Pattern detection critical |
 | 10.3% apps with Supabase misconfig | Escape.tech audit | BaaS audit essential |
 | 21.1% crypto errors from security prompts | arXiv:2506.11022 | Paradox awareness |
+
+## OWASP Top 10 Coverage
+
+| Category | Patterns | Example Detection |
+|----------|----------|-------------------|
+| A01: Broken Access Control | 8 | Role bypass, IDOR |
+| A02: Cryptographic Failures | 6 | MD5/SHA1, weak ciphers |
+| A03: Injection | 12 | SQLi, Command injection, XSS |
+| A04: Insecure Design | 4 | Missing validation |
+| A05: Security Misconfiguration | 10 | Debug mode, default creds |
+| A06: Vulnerable Components | 3 | Known CVEs in deps |
+| A07: Auth Failures | 6 | Weak passwords, session issues |
+| A08: Data Integrity | 4 | Insecure deserialization |
+| A09: Logging Failures | 3 | Missing audit logs |
+| A10: SSRF | 4 | Unvalidated redirects |
+| XSS (cross-category) | 6 | innerHTML, dangerouslySetInnerHTML, document.write |
+
+## Iteration Tracking Format
+
+Tracking data is stored in `.heimdall/state.json` with the following schema:
+
+```json
+{
+  "src/auth/login.ts": {
+    "iterations": 4,
+    "complexity_baseline": 12,
+    "complexity_current": 18,
+    "last_modified": "2026-01-17T10:45:00Z"
+  }
+}
+```
+
+Each tracked file records:
+- **iterations**: Number of AI-assisted edits since last reset
+- **complexity_baseline**: Cyclomatic complexity at first tracking
+- **complexity_current**: Current cyclomatic complexity
+- **last_modified**: Timestamp of most recent edit
 
 ## Examples
 
@@ -111,7 +148,7 @@ Heimdall v2 tracks when security patterns are removed during code changes. When 
 Detects potentially non-existent or typo'd package imports. Uses a static database of ~2000 common packages - no network calls required.
 
 **Detections**:
-- Known typos (`loadash` → `lodash`, `axois` → `axios`)
+- Known typos (`loadash` -> `lodash`, `axois` -> `axios`)
 - Unknown packages not in database
 - Fuzzy matching for similar package names
 
@@ -130,7 +167,44 @@ Location: src/auth/token.ts:45
 
 Did you mean?
   Use cryptographically secure random
-  → [javascript] crypto.randomUUID()
-  → [node] crypto.randomBytes(32).toString('hex')
-  → [python] import secrets; secrets.token_hex(32)
+  -> [javascript] crypto.randomUUID()
+  -> [node] crypto.randomBytes(32).toString('hex')
+  -> [python] import secrets; secrets.token_hex(32)
 ```
+
+## File Structure
+
+```
+heimdall/
+├── SKILL.md
+├── KNOWLEDGE.md
+├── hooks/
+│   ├── pre-tool-validator.py   # Saves original content, validates new code
+│   └── post-tool-scanner.py    # Diff analysis, import check, security scan
+├── scripts/
+│   ├── scanner.py              # Core scanning engine (path context, secure alternatives)
+│   ├── diff-analyzer.py        # Security pattern diff analysis
+│   ├── import-checker.py       # Import existence validation
+│   ├── iteration-tracker.py    # Iteration counting
+│   ├── baas-auditor.py         # BaaS configuration checks
+│   └── secret-detector.py      # Credential detection
+├── data/
+│   └── known-packages.json     # Package database for import checking
+├── patterns/
+│   ├── owasp-top-10.json       # Updated with secure_alternative
+│   ├── secrets.json            # Updated with path_contexts
+│   └── baas-misconfig.json     # Updated with path_contexts
+├── references/
+│   ├── hook-setup.md           # Hook and CI/CD configuration
+│   ├── baas-config.md          # BaaS provider audit details
+│   └── credential-guide.md    # Credential pattern details
+├── reference/
+│   ├── owasp-guide.md
+│   └── secure-patterns.md
+└── test/
+    └── vulnerable-samples/
+```
+
+## Hook Configuration
+
+For hook setup instructions and CI/CD integration, see `references/hook-setup.md`.

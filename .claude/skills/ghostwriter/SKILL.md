@@ -224,20 +224,6 @@ Detailed checklists and patterns are loaded on-demand to keep this skill lean:
 
 ---
 
-## File Structure
-
-```
-.ghostwriter/
-├── strategy.md           # Content strategy document
-├── keywords.md           # Keyword research and mapping
-├── content-calendar.md   # Production schedule
-├── personas/             # Buyer personas
-├── audits/               # Content audit reports
-└── schemas/              # Reusable schema templates
-```
-
----
-
 ## Operational Framework
 
 ### Generation System
@@ -348,18 +334,3 @@ reference/
 ---
 
 For the full dual-optimized content formula (Research → Structure → Write → Optimize → Validate → Publish), see `KNOWLEDGE.md`.
-
----
-
-## Resources
-
-For detailed documentation, explore the subdirectories:
-- `seo/` — Traditional SEO (fundamentals, technical, on-page, off-page)
-- `geo/` — GEO (fundamentals, content structure, AI bots, schema)
-- `copywriting/` — Frameworks, headlines, CTA, psychology
-- `generation/` — Content generation prompts (article, landing page, product, pillar-cluster, FAQ, meta)
-- `validation/` — 50 measurable validation rules
-- `templates/` — Article template + JSON-LD schema templates (article, FAQ, howto, product, local-business, person)
-- `checklists/` — Pre-publish, audit, technical SEO
-- `workflows/` — Content creation, interactive, optimization, audit flows
-- `reference/` — Brand guidelines, project context, product sheets (user-populated)

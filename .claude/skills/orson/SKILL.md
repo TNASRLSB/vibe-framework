@@ -310,17 +310,7 @@ Narration uses a pluggable TTS engine architecture. Any provider can be added; E
 | `edge-tts` (default) | Yes (rate, pitch) | 75+ incl. Italian | None | `edge-tts` |
 | `elevenlabs` | Partial (speed, style) | 70+ incl. Italian | `ELEVENLABS_API_KEY` | `elevenlabs` |
 
-**To add a new engine:**
-1. Create `engine/audio/engines/your_engine.py` implementing `TTSEngine`
-2. Register it in `engine/audio/engines/__init__.py` → `ENGINES` dict
-3. Add its entry in `engine/audio/presets/voices.json` → `engines` section
-4. Install: `engine/audio/.venv/bin/pip install your-package`
-5. Set env var or `ttsEngine` in script JSON
-
-**Environment variables:**
-- `ORSON_TTS_ENGINE` — default engine name (e.g. `edge-tts`, `elevenlabs`)
-- `ELEVENLABS_API_KEY` — ElevenLabs API key (get from elevenlabs.io)
-- Engine-specific API keys as documented by each engine
+To add a new TTS engine, read `references/tts-extension.md`.
 
 ### Narration Pipeline
 
@@ -344,18 +334,6 @@ python .claude/skills/orson/engine/audio/narration_generator.py --list-engines
 Tracks live in `engine/audio/tracks/` and SFX in `engine/audio/sfx/`. The catalog is in `engine/audio/presets/audio-library.json`.
 
 Run `engine/audio/download-library.sh` to bootstrap placeholder tracks. Replace with real CC0 audio from Pixabay, Mixkit, or similar.
-
-### Audio Reference Files
-
-- Coherence matrix (style→mode mapping): `engine/audio/presets/coherence-matrix.json`
-- Voice presets: `engine/audio/presets/voices.json`
-- Emphasis profiles: `engine/audio/presets/emphasis-profiles.json`
-- Templates (6): `engine/audio/presets/templates/`
-- TIR algorithm: `engine/audio/references/tir-algorithm.md`
-- TTS narration: `engine/audio/references/tts-narration.md`
-- Voiceover mode: `engine/audio/references/voiceover-mode.md`
-- Feel profiles: `engine/audio/references/feel-profiles.md`
-- Orchestration: `engine/audio/references/orchestration.md`
 
 ---
 
@@ -384,15 +362,9 @@ Run `engine/audio/download-library.sh` to bootstrap placeholder tracks. Replace 
 ## Key Concepts
 
 - **NOT a screen recorder** — generates original video content
-- **Frame-addressed rendering (v3)** — `window.__setFrame(n)` computes all element styles via `interpolate(frame, inputRange, outputRange)`. Deterministic `f(frame) → pixels`.
-- **Interpolation engine** — multi-stop ranges, 20+ easing functions, spring physics (damped harmonic oscillator)
 - **Static HTML + JS renderer** — HTML has layout only (no CSS animation properties). Injected JS frame renderer handles all motion.
 - **Content-driven timing** — duration computed from word count, converted to frame counts
-- **Four modes**: safe (corporate), chaos (experimental), hybrid (safe + one breaker), cocomelon (neuro-hijack)
-- **Design system integration** — reads tokens from seurat
 - **Format-aware layout** — CSS Grid per scene, card-column fills frame in vertical, hero/centered/stacked modes
-- **Source analysis** — can auto-extract content from project folders or URLs
-- **136+ animations**: 56 entrances, 30 exits, 30 transitions, 9 emphasis, 11 looping — all defined as interpolation property maps
 
 ## Demo Mode (`/orson demo`)
 
@@ -432,53 +404,7 @@ Write the script JSON and run:
 npx tsx .claude/skills/orson/engine/src/index.ts demo <script.json>
 ```
 
-### Demo Script Format
-
-```json
-{
-  "url": "https://example.com",
-  "format": "horizontal-16x9",
-  "fps": 30,
-  "codec": "h264",
-  "voice": "en-US-AriaNeural",
-  "lang": "en-US",
-  "narrationStyle": "neutral",
-  "music": { "enabled": true, "style": "auto", "volume": 0.3 },
-  "subtitles": { "enabled": true, "style": "bottom" },
-  "auth": [
-    { "action": "navigate", "url": "https://example.com/login" },
-    { "action": "fill", "selector": "#email", "value": "user@example.com" },
-    { "action": "fill", "selector": "#password", "value": "password" },
-    { "action": "click", "selector": "button[type=submit]" },
-    { "action": "wait", "waitFor": ".dashboard" }
-  ],
-  "steps": [
-    {
-      "narration": "Welcome to Example App. Let me show you the dashboard.",
-      "action": "none",
-      "zoom": 1
-    },
-    {
-      "narration": "Click the New Project button to create a project.",
-      "action": "click",
-      "selector": ".btn-new-project",
-      "zoom": 1.5,
-      "highlight": true
-    },
-    {
-      "narration": "Type your project name here.",
-      "action": "fill",
-      "selector": "#project-name",
-      "value": "My First Project",
-      "zoom": 2,
-      "highlight": true
-    }
-  ],
-  "output": "./output/demo.mp4",
-  "gapBetweenSteps": 800,
-  "zoomTransitionMs": 400
-}
-```
+For demo script JSON format and field reference, read `references/demo-format.md`.
 
 ### Demo Pipeline
 
@@ -549,41 +475,7 @@ npx tsx .claude/skills/orson/engine/src/index.ts formats
 npx tsx .claude/skills/orson/engine/src/index.ts entrances
 ```
 
-## Reference
-
-- Engine source: `.claude/skills/orson/engine/src/` (28 files)
-- Interpolation engine (core primitive): `.claude/skills/orson/engine/src/interpolate.ts`
-- Animation database (property-based definitions): `.claude/skills/orson/engine/src/actions.ts`
-- Frame renderer generator (injected JS): `.claude/skills/orson/engine/src/frame-renderer.ts`
-- Choreography (stagger, breathing, Disney principles): `.claude/skills/orson/engine/src/choreography.ts`
-- Composition (scene layout & visual structure): `.claude/skills/orson/engine/src/composition.ts`
-- Director (high-level video orchestration): `.claude/skills/orson/engine/src/director.ts`
-- HTML generation: `.claude/skills/orson/engine/src/html-generator.ts`
-- HTML parsing: `.claude/skills/orson/engine/src/html-parser.ts`
-- Scene templates: `.claude/skills/orson/engine/src/scene-templates.ts`
-- Industry profiles: `.claude/skills/orson/engine/src/industry-profiles.ts`
-- Layout profiles: `.claude/skills/orson/engine/src/layout-profiles.ts`
-- UX bridge: `.claude/skills/orson/engine/src/ux-bridge.ts`
-- Timeline: `.claude/skills/orson/engine/src/timeline.ts`
-- Timing algorithm: `.claude/skills/orson/engine/src/timing.ts`
-- Presets: `.claude/skills/orson/engine/src/presets.ts`
-- Config schema: `.claude/skills/orson/engine/src/config.ts`
-- Capture (Playwright frame capture): `.claude/skills/orson/engine/src/capture.ts`
-- Encode (FFmpeg): `.claude/skills/orson/engine/src/encode.ts`
-- Audio selector: `.claude/skills/orson/engine/src/audio-selector.ts`
-- Audio mixer: `.claude/skills/orson/engine/src/audio-mixer.ts`
-- Demo script parser: `.claude/skills/orson/engine/src/demo-script.ts`
-- Demo timeline: `.claude/skills/orson/engine/src/demo-timeline.ts`
-- Demo capture + orchestrator: `.claude/skills/orson/engine/src/demo-capture.ts`
-- Demo director (zoom + cursor): `.claude/skills/orson/engine/src/demo-director.ts`
-- Demo subtitles: `.claude/skills/orson/engine/src/demo-subtitles.ts`
-- Narration generator (Python): `.claude/skills/orson/engine/audio/narration_generator.py`
-- Folder analysis: `.claude/skills/orson/engine/src/analyze-folder.ts`
-- URL analysis: `.claude/skills/orson/engine/src/analyze-url.ts`
-- Config generation: `.claude/skills/orson/engine/src/autogen.ts`
-- Copy brief (narrative planning): `.claude/skills/orson/engine/src/copy-brief.ts`
-- Storyboard (text preview): `.claude/skills/orson/engine/src/storyboard.ts`
-- Composition patterns doc: `.claude/skills/orson/engine/composition-patterns.md`
+For full engine source code map, see `KNOWLEDGE.md`.
 
 ---
 
