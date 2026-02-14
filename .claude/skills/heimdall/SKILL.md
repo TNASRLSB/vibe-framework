@@ -195,19 +195,7 @@ Reset iteration tracking for a file after human review.
 
 ### OWASP Top 10 Coverage
 
-| Category | Patterns | Example Detection |
-|----------|----------|-------------------|
-| A01: Broken Access Control | 8 | Role bypass, IDOR |
-| A02: Cryptographic Failures | 6 | MD5/SHA1, weak ciphers |
-| A03: Injection | 12 | SQLi, Command injection, XSS |
-| A04: Insecure Design | 4 | Missing validation |
-| A05: Security Misconfiguration | 10 | Debug mode, default creds |
-| A06: Vulnerable Components | 3 | Known CVEs in deps |
-| A07: Auth Failures | 6 | Weak passwords, session issues |
-| A08: Data Integrity | 4 | Insecure deserialization |
-| A09: Logging Failures | 3 | Missing audit logs |
-| A10: SSRF | 4 | Unvalidated redirects |
-| XSS (cross-category) | 6 | innerHTML, dangerouslySetInnerHTML, document.write |
+Covers all OWASP Top 10 categories (60+ patterns). For per-category details, see `patterns/owasp-top-10.json`.
 
 ### AI-Specific Patterns
 
@@ -264,18 +252,7 @@ For MEDIUM/LOW issues:
 
 ### How It Works
 
-Every file modified through Claude Code is tracked:
-
-```json
-{
-  "src/auth/login.ts": {
-    "iterations": 4,
-    "complexity_baseline": 12,
-    "complexity_current": 18,
-    "last_modified": "2026-01-17T10:45:00Z"
-  }
-}
-```
+Every file modified through Claude Code is tracked. Tracking data is stored in `.heimdall/state.json`.
 
 ### Warning Escalation
 
@@ -301,53 +278,7 @@ After human review, reset iteration count:
 
 ### Hook Configuration
 
-Hooks are configured in `.claude/settings.json`:
-
-```json
-{
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/skills/heimdall/hooks/pre-tool-validator.py\"",
-            "timeout": 10000
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/skills/heimdall/hooks/post-tool-scanner.py\"",
-            "timeout": 10000
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-
-### CI/CD Integration
-
-GitHub Actions example:
-
-```yaml
-- name: Security Guardian Scan
-  run: |
-    python3 .claude/skills/heimdall/scripts/scanner.py --format sarif --output security-results.sarif .
-
-- name: Upload SARIF
-  uses: github/codeql-action/upload-sarif@v2
-  with:
-    sarif_file: security-results.sarif
-```
+Hooks validate code during Write/Edit operations. For setup instructions, read `references/hook-setup.md`.
 
 ---
 
@@ -444,33 +375,3 @@ Severity levels now adjust based on file location. A `service_role` key is CRITI
 ### "Did You Mean?" Suggestions
 
 When vulnerabilities are detected, Heimdall shows secure alternatives inline. For example output, see `KNOWLEDGE.md`.
-
----
-
-## v2.0 File Structure
-
-```
-heimdall/
-├── SKILL.md
-├── hooks/
-│   ├── pre-tool-validator.py   # Saves original content, validates new code
-│   └── post-tool-scanner.py    # Diff analysis, import check, security scan
-├── scripts/
-│   ├── scanner.py              # Core scanning engine (path context, secure alternatives)
-│   ├── diff-analyzer.py        # NEW: Security pattern diff analysis
-│   ├── import-checker.py       # NEW: Import existence validation
-│   ├── iteration-tracker.py    # Iteration counting
-│   ├── baas-auditor.py         # BaaS configuration checks
-│   └── secret-detector.py      # Credential detection
-├── data/
-│   └── known-packages.json     # NEW: Package database for import checking
-├── patterns/
-│   ├── owasp-top-10.json       # Updated with secure_alternative
-│   ├── secrets.json            # Updated with path_contexts
-│   └── baas-misconfig.json     # Updated with path_contexts
-├── reference/
-│   ├── owasp-guide.md
-│   └── secure-patterns.md
-└── test/
-    └── vulnerable-samples/
-```

@@ -59,20 +59,6 @@ When editing existing documents:
 - Keep formula references intact in Excel
 - Preserve slide masters and layouts in PowerPoint
 
-### 3. Professional Output
-
-- Use consistent typography and spacing
-- Apply color coding purposefully (not decoratively)
-- Ensure print-readiness (margins, page breaks, headers/footers)
-- Include metadata (title, author, creation date) when appropriate
-
-### 4. File Size Awareness
-
-- Compress images before embedding
-- Remove unused styles and themes
-- For Excel: avoid volatile formulas when possible
-- For PowerPoint: optimize media assets
-
 ---
 
 ## Available Scripts

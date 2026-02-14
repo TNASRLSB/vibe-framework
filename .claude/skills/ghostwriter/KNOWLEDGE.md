@@ -1,6 +1,6 @@
-# Ghostwriter — Domain Knowledge
+# Ghostwriter — Knowledge Base
 
-Context and statistics preserved for human reference. Claude already understands the SEO/GEO landscape.
+Domain knowledge and reference material for the Ghostwriter SEO/GEO/Copy skill. This file is for human readers — Claude does not load it during skill execution.
 
 ## The New Search Paradigm
 
@@ -72,3 +72,35 @@ GEO Optimization ─────────────────────
    - Track rankings + citations
    - Iterate based on data
 ```
+
+---
+
+## Output File Structure
+
+When Ghostwriter generates project artifacts, they are organized in this directory:
+
+```
+.ghostwriter/
+├── strategy.md           # Content strategy document
+├── keywords.md           # Keyword research and mapping
+├── content-calendar.md   # Production schedule
+├── personas/             # Buyer personas
+├── audits/               # Content audit reports
+└── schemas/              # Reusable schema templates
+```
+
+---
+
+## Resources Directory Guide
+
+For detailed documentation, explore the subdirectories within the Ghostwriter skill:
+
+- `seo/` — Traditional SEO (fundamentals, technical, on-page, off-page)
+- `geo/` — GEO (fundamentals, content structure, AI bots, schema)
+- `copywriting/` — Frameworks, headlines, CTA, psychology
+- `generation/` — Content generation prompts (article, landing page, product, pillar-cluster, FAQ, meta)
+- `validation/` — 50 measurable validation rules
+- `templates/` — Article template + JSON-LD schema templates (article, FAQ, howto, product, local-business, person)
+- `checklists/` — Pre-publish, audit, technical SEO
+- `workflows/` — Content creation, interactive, optimization, audit flows
+- `reference/` — Brand guidelines, project context, product sheets (user-populated)
