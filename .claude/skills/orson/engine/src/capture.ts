@@ -1,5 +1,6 @@
-// Playwright frame capture with Web Animations API time control
-// CSS animations are paused, then currentTime is set per frame for deterministic capture.
+// Frame-addressed capture (v3)
+// Calls window.__setFrame(n) for each frame — the frame renderer handles all animation state.
+// No CSS animation time control, no scroll computation, no currentTime hacks.
 
 import { chromium, type Page, type Browser, type BrowserContext } from 'playwright';
 
@@ -30,22 +31,22 @@ export async function initCapture(opts: CaptureOptions): Promise<CaptureSession>
   });
   const page = await context.newPage();
 
-  // Set render flag BEFORE page loads — this prevents the preview controller
-  // from executing (it checks window.__VIDEO_RENDER__ and skips if true)
+  // Set render flag BEFORE page loads — prevents the preview controller from executing
   await page.addInitScript(() => {
     (window as any).__VIDEO_RENDER__ = true;
   });
 
-  // Load the generated HTML
+  // Load the generated HTML (contains static layout + frame renderer JS)
   await page.goto(`file://${opts.htmlPath}`, { waitUntil: 'load' });
 
   // Let fonts/styles settle
   await page.waitForTimeout(100);
 
-  // Pause all CSS animations — we'll control time manually via Web Animations API
-  await page.evaluate(() => {
-    document.getAnimations().forEach(a => a.pause());
-  });
+  // Wait for frame renderer to be ready
+  await page.waitForFunction(() => (window as any).__frameRendererReady === true, { timeout: 5000 });
+
+  // Render frame 0 to initialize state
+  await page.evaluate(() => (window as any).__setFrame(0));
 
   return { browser, context, page };
 }
@@ -55,16 +56,13 @@ export async function captureFrames(
   opts: CaptureOptions,
   writeFn: (buffer: Buffer) => Promise<void>,
 ): Promise<void> {
-  const frameDurationMs = 1000 / opts.fps;
-
   for (let frame = 0; frame < opts.totalFrames; frame++) {
-    const timeMs = frame * frameDurationMs;
+    // Set frame — the renderer handles all scene visibility, element styles, transitions
+    await session.page.evaluate((f) => (window as any).__setFrame(f), frame);
 
-    // Set all animations to this point in time
-    // Also sync any PiP <video> elements to the same timestamp
+    // Sync PiP video elements (if any)
+    const timeMs = frame * 1000 / opts.fps;
     await session.page.evaluate((t) => {
-      document.getAnimations().forEach(a => { a.currentTime = t; });
-      // Sync PiP video elements
       document.querySelectorAll('video[data-pip]').forEach(v => {
         const video = v as HTMLVideoElement;
         const timeSec = t / 1000;
@@ -73,9 +71,6 @@ export async function captureFrames(
         }
       });
     }, timeMs);
-
-    // Brief wait for the browser to repaint
-    await session.page.waitForTimeout(5);
 
     const fmt = opts.captureFormat ?? 'jpeg';
     const buffer = await session.page.screenshot(

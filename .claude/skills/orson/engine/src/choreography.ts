@@ -36,28 +36,6 @@ export interface BreathingScene {
   showWatermark: boolean;
 }
 
-// ─── Easing Curves ──────────────────────────────────────────
-
-/** Named easing curves — never use 'linear' for element motion */
-export const EASING_CURVES = {
-  /** Standard entrance — decelerating, confident arrival */
-  entrance: 'cubic-bezier(0.0, 0.0, 0.2, 1)',
-  /** Standard exit — accelerating departure */
-  exit: 'cubic-bezier(0.4, 0.0, 1, 1)',
-  /** State change — smooth, elegant */
-  standard: 'cubic-bezier(0.4, 0.0, 0.2, 1)',
-  /** Spring — overshoot + settle, playful */
-  spring: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
-  /** Bounce — pronounced overshoot */
-  bounce: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)',
-  /** Snap — sharp deceleration, authoritative */
-  snap: 'cubic-bezier(0.0, 0.0, 0.1, 1)',
-  /** Gentle — very soft arrival */
-  gentle: 'cubic-bezier(0.25, 0.1, 0.25, 1)',
-} as const;
-
-export type EasingName = keyof typeof EASING_CURVES;
-
 // ─── Stagger Calculation ────────────────────────────────────
 
 /**
@@ -120,31 +98,31 @@ export function planChoreography(
     sceneType.staggerDelayMs,
   );
 
-  // Select easing based on scene-type character
+  // Select easing ID (from interpolate.ts easings) based on scene-type character
   let easing: string;
   switch (sceneType.id) {
     case 'rapid-text':
-      easing = EASING_CURVES.snap;
+      easing = 'snap';
       break;
     case 'product-intro':
     case 'cta-outro':
-      easing = EASING_CURVES.spring;
+      easing = 'easeOutBack';
       break;
     case 'social-proof':
     case 'data-visualization':
-      easing = EASING_CURVES.gentle;
+      easing = 'easeOutSine';
       break;
     case 'stat-callout':
     case 'problem-statement':
-      easing = EASING_CURVES.entrance;
+      easing = 'easeOutCubic';
       break;
     default:
-      easing = EASING_CURVES.standard;
+      easing = 'easeOutQuad';
   }
 
   // Chaos mode: random spring/bounce
   if (mode === 'chaos' && Math.random() < 0.4) {
-    easing = Math.random() < 0.5 ? EASING_CURVES.spring : EASING_CURVES.bounce;
+    easing = Math.random() < 0.5 ? 'easeOutBack' : 'easeOutBounce';
   }
 
   // Cocomelon mode: always high-energy easing, except Descend phase → gentle
@@ -152,10 +130,10 @@ export function planChoreography(
     const pos = totalScenes <= 1 ? 0.5 : sceneIndex / (totalScenes - 1);
     if (pos > 0.65 && pos < 0.95) {
       // Descend phase: gentle
-      easing = EASING_CURVES.gentle;
+      easing = 'easeOutSine';
     } else {
       // All other phases: spring or bounce
-      easing = Math.random() < 0.6 ? EASING_CURVES.spring : EASING_CURVES.bounce;
+      easing = Math.random() < 0.6 ? 'easeOutBack' : 'easeOutBounce';
     }
   }
 
@@ -221,37 +199,6 @@ export function shouldInsertBreathing(
     bgStyle: Math.random() < 0.5 ? 'brand-gradient' : 'dark-fade',
     showWatermark: Math.random() < 0.3,
   };
-}
-
-// ─── Anticipation Keyframes ─────────────────────────────────
-
-/**
- * Generate anticipation CSS: small reverse movement before main action.
- * Returns additional keyframe prefix (0%-15% of animation).
- */
-export function getAnticipationKeyframes(entranceType: string): string | null {
-  // Only add anticipation to movement-based entrances
-  if (entranceType.includes('slide') || entranceType.includes('fade-in-up') || entranceType.includes('fade-in-down')) {
-    return `0% { transform: translateY(5px); } 8% { transform: translateY(5px); }`;
-  }
-  if (entranceType.includes('grow') || entranceType.includes('zoom-in') || entranceType.includes('bounce')) {
-    return `0% { transform: scale(0.95); } 8% { transform: scale(0.95); }`;
-  }
-  return null;
-}
-
-/**
- * Generate follow-through CSS: slight overshoot after landing.
- * Returns keyframe suffix (85%-100% of animation).
- */
-export function getFollowThroughKeyframes(entranceType: string): string | null {
-  if (entranceType.includes('slide') || entranceType.includes('fade-in')) {
-    return `85% { transform: translateY(-2px); } 100% { transform: translateY(0); }`;
-  }
-  if (entranceType.includes('grow') || entranceType.includes('zoom')) {
-    return `85% { transform: scale(1.02); } 100% { transform: scale(1); }`;
-  }
-  return null;
 }
 
 // ─── Composition CSS ────────────────────────────────────────

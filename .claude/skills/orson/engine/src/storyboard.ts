@@ -19,7 +19,7 @@ export function generateStoryboard(config: Config, timeline: Timeline): string {
 
     for (let i = 0; i < scene.elements.length; i++) {
       const el = scene.elements[i];
-      const isLast = i === scene.elements.length - 1 && !scene.transitionOut;
+      const isLast = i === scene.elements.length - 1 && !scene.transition;
       const prefix = isLast && i === scene.elements.length - 1 ? '└─' : '├─';
       const timeStr = ((el.startMs - scene.startMs) / 1000).toFixed(1);
       const holdStr = (el.holdMs / 1000).toFixed(1);
@@ -35,9 +35,9 @@ export function generateStoryboard(config: Config, timeline: Timeline): string {
       }
     }
 
-    if (scene.transitionOut) {
+    if (scene.transition) {
       const transDurStr = (scene.transitionOutDurationMs / 1000).toFixed(1);
-      lines.push(`  └─ → ${scene.transitionOut.name.toUpperCase()} (${transDurStr}s) to Scene ${scene.sceneIndex + 2}`);
+      lines.push(`  └─ → ${scene.transition.type.toUpperCase()} (${transDurStr}s) to Scene ${scene.sceneIndex + 2}`);
     }
 
     lines.push('');

@@ -37,6 +37,10 @@ export interface SceneType {
   staggerDelayMs: number;
   /** Whether to insert a breathing pause after this scene type */
   breathingAfter: boolean;
+  /** Recommended entrance animation IDs for this scene type */
+  preferredEntrances: string[];
+  /** Recommended exit animation IDs for this scene type */
+  preferredExits: string[];
 }
 
 /** @deprecated Use SceneType */
@@ -70,6 +74,8 @@ export const SCENE_TYPES: Record<SceneTypeId, SceneType> = {
     staggerPattern: 'cascade-down',
     staggerDelayMs: 200,
     breathingAfter: false,
+    preferredEntrances: ['scale-word', 'slam', 'stamp', 'zoom-in', 'blur-in'],
+    preferredExits: ['fade-out', 'shrink', 'blur-out'],
   },
   'problem-statement': {
     id: 'problem-statement',
@@ -83,6 +89,8 @@ export const SCENE_TYPES: Record<SceneTypeId, SceneType> = {
     staggerPattern: 'cascade-down',
     staggerDelayMs: 120,
     breathingAfter: false,
+    preferredEntrances: ['clip-reveal-up', 'fade-in-up', 'text-reveal-mask', 'slide-up', 'rise-and-fade'],
+    preferredExits: ['fade-out-up', 'soft-hide', 'blur-out'],
   },
   'product-intro': {
     id: 'product-intro',
@@ -96,6 +104,8 @@ export const SCENE_TYPES: Record<SceneTypeId, SceneType> = {
     staggerPattern: 'cascade-down',
     staggerDelayMs: 300,
     breathingAfter: false,
+    preferredEntrances: ['spring-scale', 'zoom-in', 'blur-in', 'grow', 'spring-up'],
+    preferredExits: ['fade-out', 'zoom-out', 'shrink'],
   },
   'feature-showcase': {
     id: 'feature-showcase',
@@ -109,6 +119,8 @@ export const SCENE_TYPES: Record<SceneTypeId, SceneType> = {
     staggerPattern: 'cascade-down',
     staggerDelayMs: 100,
     breathingAfter: true,
+    preferredEntrances: ['slide-left', 'clip-reveal-left', 'spring-left', 'fade-in-left', 'bounce-in'],
+    preferredExits: ['slide-out-right', 'fade-out', 'clip-hide-right'],
   },
   'before-after': {
     id: 'before-after',
@@ -122,6 +134,8 @@ export const SCENE_TYPES: Record<SceneTypeId, SceneType> = {
     staggerPattern: 'paired',
     staggerDelayMs: 150,
     breathingAfter: false,
+    preferredEntrances: ['clip-reveal-up', 'split-reveal', 'fade-in-up', 'slide-up', 'morph-circle-in'],
+    preferredExits: ['clip-hide-down', 'fade-out-down', 'slide-out-down'],
   },
   'integration-hub': {
     id: 'integration-hub',
@@ -135,6 +149,8 @@ export const SCENE_TYPES: Record<SceneTypeId, SceneType> = {
     staggerPattern: 'origin-burst',
     staggerDelayMs: 80,
     breathingAfter: true,
+    preferredEntrances: ['bounce-in', 'spring-scale', 'morph-circle-in', 'morph-diamond-in', 'grow'],
+    preferredExits: ['bounce-out', 'shrink', 'morph-circle-out'],
   },
   'social-proof': {
     id: 'social-proof',
@@ -148,6 +164,8 @@ export const SCENE_TYPES: Record<SceneTypeId, SceneType> = {
     staggerPattern: 'wave',
     staggerDelayMs: 80,
     breathingAfter: false,
+    preferredEntrances: ['fade-in', 'soft-reveal', 'letter-spacing-in', 'rise-and-fade', 'blur-in'],
+    preferredExits: ['soft-hide', 'fade-out', 'blur-out'],
   },
   'cta-outro': {
     id: 'cta-outro',
@@ -161,6 +179,8 @@ export const SCENE_TYPES: Record<SceneTypeId, SceneType> = {
     staggerPattern: 'cascade-down',
     staggerDelayMs: 200,
     breathingAfter: false,
+    preferredEntrances: ['zoom-in', 'scale-word', 'spring-scale', 'blur-in', 'slam'],
+    preferredExits: ['fade-out', 'zoom-out'],
   },
   'rapid-text': {
     id: 'rapid-text',
@@ -174,6 +194,8 @@ export const SCENE_TYPES: Record<SceneTypeId, SceneType> = {
     staggerPattern: 'none',
     staggerDelayMs: 0,
     breathingAfter: false,
+    preferredEntrances: ['slam', 'stamp', 'kinetic-push', 'word-by-word', 'text-reveal-mask'],
+    preferredExits: ['fade-out', 'flash-out'],
   },
   'data-visualization': {
     id: 'data-visualization',
@@ -187,6 +209,8 @@ export const SCENE_TYPES: Record<SceneTypeId, SceneType> = {
     staggerPattern: 'cascade-down',
     staggerDelayMs: 120,
     breathingAfter: true,
+    preferredEntrances: ['clip-reveal-up', 'grow', 'slide-up', 'anticipate-scale', 'spring-up'],
+    preferredExits: ['clip-hide-up', 'shrink', 'fade-out-up'],
   },
   'sequential-product-parade': {
     id: 'sequential-product-parade',
@@ -200,6 +224,8 @@ export const SCENE_TYPES: Record<SceneTypeId, SceneType> = {
     staggerPattern: 'cascade-down',
     staggerDelayMs: 150,
     breathingAfter: false,
+    preferredEntrances: ['spring-scale', 'bounce-in', 'flip-in-x', 'morph-hexagon-in', 'elastic-in'],
+    preferredExits: ['spring-out-down', 'bounce-out', 'flip-out-x'],
   },
 };
 
@@ -582,12 +608,10 @@ export function selectBackground(
   mode: ModeId,
   useTokens: boolean = false,
 ): string {
-  // When using design tokens, avoid 'light' backgrounds because --color-text
-  // is typically light (for dark themes) and would create zero contrast.
-  // Design tokens define a single text color that can't adapt per-scene.
-  const safeHints: BackgroundHint[] = useTokens
-    ? ['dark', 'dark-glow', 'brand-bold', 'gradient', 'dark-grid']
-    : ['dark', 'dark-glow', 'light', 'brand-bold', 'gradient', 'dark-grid'];
+  // Never use 'light' backgrounds — the default text color is always white,
+  // which creates zero contrast on light backgrounds. There's no per-scene
+  // text color switching, so light bg = invisible text.
+  const safeHints: BackgroundHint[] = ['dark', 'dark-glow', 'brand-bold', 'gradient', 'dark-grid'];
 
   if (mode === 'chaos') {
     return generateBackground(pickRandom(safeHints), colors, useTokens);
@@ -599,14 +623,15 @@ export function selectBackground(
   }
 
   if (mode === 'hybrid' && Math.random() < 0.15) {
-    const surpriseHints: BackgroundHint[] = useTokens
-      ? ['gradient', 'brand-bold']
-      : ['gradient', 'light', 'brand-bold'];
+    const surpriseHints: BackgroundHint[] = ['gradient', 'brand-bold'];
     return generateBackground(pickRandom(surpriseHints), colors, useTokens);
   }
 
+  // Override 'light' hint to 'dark-glow' to prevent contrast issues
+  const effectiveHint: BackgroundHint = sceneType.backgroundHint === 'light' ? 'dark-glow' : sceneType.backgroundHint;
+
   if (sceneIndex === totalScenes - 1 && totalScenes > 2) {
-    return generateBackground(sceneType.backgroundHint, colors, useTokens);
+    return generateBackground(effectiveHint, colors, useTokens);
   }
 
   if (sceneType.id === 'feature-showcase' || sceneType.id === 'sequential-product-parade') {
@@ -614,11 +639,24 @@ export function selectBackground(
     const offset = sceneIndex % cycled.length;
     if (offset > 0 && cycled.length > 1) {
       const shifted = [...cycled.slice(offset), ...cycled.slice(0, offset)];
-      return generateBackground(sceneType.backgroundHint, shifted, useTokens);
+      return generateBackground(effectiveHint, shifted, useTokens);
     }
   }
 
-  return generateBackground(sceneType.backgroundHint, colors, useTokens);
+  // Hue-shift background for consecutive same-hint scenes to add variety
+  if (sceneIndex > 0 && !useTokens && colors.length >= 2) {
+    const hueShift = (sceneIndex * 15) % 360; // 15° per scene
+    if (hueShift > 0) {
+      const shifted = colors.map(c => {
+        const [h, s, l] = hexToHsl(c);
+        if (s < 0.05) return c; // skip near-grays
+        return hslToHex((h + hueShift) % 360, s, l);
+      });
+      return generateBackground(effectiveHint, shifted, useTokens);
+    }
+  }
+
+  return generateBackground(effectiveHint, colors, useTokens);
 }
 
 /**

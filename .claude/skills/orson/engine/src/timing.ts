@@ -5,9 +5,9 @@ import type { SpeedPreset } from './presets.js';
 import { MS_PER_WORD, INTER_ELEMENT_GAP, ENTRANCE_SPEED_MULTIPLIERS } from './presets.js';
 import { calculateStaggerDelays, type StaggerPattern } from './choreography.js';
 
-const MIN_HOLD_TIME = 500;
-const ENTRANCE_PADDING = 500;
-const EXIT_PADDING = 300;
+const MIN_HOLD_TIME = 800;       // even decorative elements need 800ms to register
+const ENTRANCE_PADDING = 700;    // time to "arrive" at the scene
+const EXIT_PADDING = 500;        // time to "digest" before exiting
 
 export function wordCount(text: string): number {
   return text.trim().split(/\s+/).filter(w => w.length > 0).length;
@@ -41,6 +41,8 @@ export interface ElementTimingInput {
   explicitHold?: number;         // manual override
   explicitDelay?: number;        // additional delay
   explicitDuration?: number;     // element-level duration override
+  /** Element role for timing adjustments (headings get 1.3x hold time) */
+  role?: string;
 }
 
 export interface SceneTimingOptions {
@@ -81,7 +83,8 @@ export function computeSceneTiming(
   for (let i = 0; i < elements.length; i++) {
     const el = elements[i];
     const entranceDuration = Math.round(el.entranceDurationBase * speedMult);
-    const holdTime = el.explicitHold ?? computeHoldTime(el.text, speed);
+    const isHeading = el.role === 'heading' || el.role === 'hero-heading' || el.role === 'cta';
+    const holdTime = el.explicitHold ?? Math.round(computeHoldTime(el.text, speed) * (isHeading ? 1.3 : 1.0));
     const exitDuration = Math.round(el.exitDurationBase * speedMult);
     const extraDelay = el.explicitDelay ?? 0;
 
@@ -150,4 +153,60 @@ export function parseDurationStr(str: string): number {
 
 export function totalVideoFrames(totalDurationMs: number, fps: number): number {
   return Math.ceil(totalDurationMs / 1000 * fps);
+}
+
+// ─── Frame-addressed timing (v3) ─────────────────────────────
+
+export function msToFrames(ms: number, fps: number): number {
+  return Math.round(ms * fps / 1000);
+}
+
+export function framesToMs(frames: number, fps: number): number {
+  return Math.round(frames * 1000 / fps);
+}
+
+export interface ElementTimingFrames {
+  entranceDurationFrames: number;
+  holdTimeFrames: number;
+  exitDurationFrames: number;
+  delayFrames: number;
+  startFrame: number;    // absolute frame within scene
+  endFrame: number;
+}
+
+export interface SceneTimingFrames {
+  elements: ElementTimingFrames[];
+  totalDurationFrames: number;
+  totalDurationMs: number;
+  transitionOutDurationFrames: number;
+}
+
+/**
+ * Compute scene timing and convert to frames.
+ * Wrapper around computeSceneTiming that adds frame conversions.
+ */
+export function computeSceneTimingFrames(
+  elements: ElementTimingInput[],
+  speed: SpeedPreset,
+  entranceSpeed: SpeedPreset,
+  transitionOutDuration: number,
+  fps: number,
+  explicitSceneDuration?: number,
+  options?: SceneTimingOptions,
+): SceneTimingFrames {
+  const msTiming = computeSceneTiming(elements, speed, entranceSpeed, transitionOutDuration, explicitSceneDuration, options);
+
+  return {
+    elements: msTiming.elements.map(e => ({
+      entranceDurationFrames: msToFrames(e.entranceDuration, fps),
+      holdTimeFrames: msToFrames(e.holdTime, fps),
+      exitDurationFrames: msToFrames(e.exitDuration, fps),
+      delayFrames: msToFrames(e.delay, fps),
+      startFrame: msToFrames(e.startTime, fps),
+      endFrame: msToFrames(e.endTime, fps),
+    })),
+    totalDurationFrames: msToFrames(msTiming.totalDuration, fps),
+    totalDurationMs: msTiming.totalDuration,
+    transitionOutDurationFrames: msToFrames(msTiming.transitionOutDuration, fps),
+  };
 }

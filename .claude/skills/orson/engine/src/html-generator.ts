@@ -1,21 +1,25 @@
-// Generates a self-contained HTML page from a timeline
-// CSS values are driven by layout profiles — no hardcoded dimensions
-// Layout philosophy: elements FILL the frame, not cluster at center
+// Generates a self-contained HTML page from a frame-addressed timeline (v3)
+// CSS handles layout only — NO @keyframes, NO animation properties on elements.
+// All animation state is driven by the frame renderer JS via window.__setFrame(n).
 
 import type { Timeline, TimelineScene, TimelineElement } from './timeline.js';
 import type { Config } from './config.js';
 import { FORMAT_PRESETS } from './presets.js';
-import { type AnimationDef, ENTRANCES, EXITS } from './actions.js';
 import type { DesignTokens } from './ux-bridge.js';
 import {
   getLayoutProfile, autoSelectLayout, computeCardGridColumns, computeEffectiveCardMaxWidth,
-  type LayoutProfile, type LayoutMode, type ElementInfo,
+  type LayoutProfile, type ElementInfo,
 } from './layout-profiles.js';
 import {
   getBgAnimationKeyframes, getBgAnimationCSS, getDepthLayerHTML,
   getCompositionCSS,
 } from './choreography.js';
 import { embedAsDataURI } from './asset-embed.js';
+import { generateFrameRendererJS, type RendererTimeline, type RendererScene, type RendererElement } from './frame-renderer.js';
+import { ENTRANCES } from './actions.js';
+import { selectDecoratives, getDecorativeKeyframes, type SceneEnrichmentHint } from './decorative.js';
+import { matchIcon } from './icon-library.js';
+import { detectMockupType, generateMockup } from './mockups.js';
 
 export function generateHTML(
   config: Config,
@@ -28,43 +32,12 @@ export function generateHTML(
   const height = preset?.height ?? 1920;
   const profile = getLayoutProfile(fmt);
 
-  const keyframesSet = new Set<string>();
-  const keyframesCss: string[] = [];
-
-  // Collect all unique keyframes needed
-  for (const scene of timeline.scenes) {
-    for (const el of scene.elements) {
-      addKeyframes(el.entranceId, el.entranceDef.keyframes, keyframesSet, keyframesCss);
-      if (el.exitId && el.exitDef) {
-        addKeyframes(el.exitId, el.exitDef.keyframes, keyframesSet, keyframesCss);
-      }
-      // Collect keyframes for multi-phase elements
-      const phases = el.element.phases;
-      if (phases && phases.length > 0) {
-        // Always need fade-out for phase exits (used in generateMultiPhaseHTML)
-        const fadeOutDef = EXITS['fade-out'];
-        if (fadeOutDef) {
-          addKeyframes('fade-out', fadeOutDef.keyframes, keyframesSet, keyframesCss);
-        }
-        // Collect phase-specific entrance keyframes
-        for (const phase of phases) {
-          if (phase.entrance) {
-            const phaseDef = ENTRANCES[phase.entrance];
-            if (phaseDef) {
-              addKeyframes(phase.entrance, phaseDef.keyframes, keyframesSet, keyframesCss);
-            }
-          }
-        }
-      }
-    }
-    if (scene.transitionOut) {
-      addKeyframes(`trans-a-${scene.transitionOut.id}`, scene.transitionOut.sceneAKeyframes, keyframesSet, keyframesCss);
-      addKeyframes(`trans-b-${scene.transitionOut.id}`, scene.transitionOut.sceneBKeyframes, keyframesSet, keyframesCss);
-    }
-  }
+  const isScroll = config.video.composition === 'scroll';
 
   // Build scene HTML
-  const scenesHtml = timeline.scenes.map(s => generateSceneHTML(s, config, profile, tokens)).join('\n');
+  const scenesHtml = timeline.scenes.map((s, i) =>
+    generateSceneHTML(s, config, profile, tokens, isScroll)
+  ).join('\n');
 
   // Design tokens as CSS custom properties
   const tokensCss = tokens ? generateTokensCss(tokens) : defaultTokensCss();
@@ -107,8 +80,13 @@ export function generateHTML(
   const headingTrackingCSS = dsLetterSpacing ? `letter-spacing: ${dsLetterSpacing};` : '';
   const wideTrackingCSS = dsLetterSpacingWide ? `letter-spacing: ${dsLetterSpacingWide};` : '';
 
-  // Named colors for cycling on cards
   const namedColors = tokens?.namedColors ?? [];
+
+  // Build the RendererTimeline for frame renderer injection
+  const rendererTimeline = buildRendererTimeline(timeline);
+  rendererTimeline.composition = isScroll ? 'scroll' : 'stack';
+  rendererTimeline.viewportHeight = height;
+  const frameRendererJS = generateFrameRendererJS(rendererTimeline);
 
   return `<!DOCTYPE html>
 <html>
@@ -124,20 +102,18 @@ ${tokensCss}
 }
 
 body {
-  position: relative; /* scenes use position: absolute and reference body */
-  width: ${width}px;
-  height: ${height}px;
-  overflow: hidden;
+  position: relative; width: ${width}px; ${isScroll ? '' : `height: ${height}px;`} overflow: hidden;
   font-family: var(--font-body, system-ui, -apple-system, sans-serif);
   background: var(--color-bg, #0f0f0f);
   color: var(--color-text, #ffffff);
+  ${isScroll ? `display: flex; flex-direction: column; min-height: ${height * timeline.scenes.length}px;` : ''}
 }
 
 /* ─── Base scene: CSS Grid for full-frame control ─── */
 .scene {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
+  ${isScroll
+    ? `position: relative; width: 100%; min-height: ${height}px;`
+    : `position: absolute; top: 0; left: 0; width: 100%; height: 100%;`}
   display: grid;
   grid-template-rows: 1fr auto 1fr;
   grid-template-columns: 1fr;
@@ -145,10 +121,8 @@ body {
   justify-items: center;
   padding: ${p.padding.top}px ${p.padding.right}px ${p.padding.bottom}px ${p.padding.left}px;
   background: var(--color-bg, #0f0f0f);
-  opacity: 0;
+  ${isScroll ? '' : 'display: none; /* Frame renderer controls visibility */'}
 }
-/* First scene visible immediately */
-.scene:first-child { opacity: 1; }
 
 /* Content wrapper sits in middle row */
 .scene > .scene-content {
@@ -164,24 +138,12 @@ body {
   max-height: calc(${height}px - ${p.padding.top + p.padding.bottom}px);
 }
 
-@keyframes scene-reveal {
-  from { opacity: 0; visibility: visible; }
-  to { opacity: 1; visibility: visible; }
-}
-
-@keyframes scene-hide {
-  from { opacity: 1; visibility: visible; }
-  to { opacity: 0; visibility: hidden; }
-}
-
 /* ═══════════════════════════════════════════
    LAYOUT MODES — each one controls how the
    scene grid distributes vertical space
    ═══════════════════════════════════════════ */
 
-/* ─── Layout: hero ───
-   Content in upper-center area with generous spacing.
-   Used for hook/opening scenes on vertical formats. */
+/* ─── Layout: hero ─── */
 .scene.layout-hero {
   grid-template-rows: ${isVert ? '1fr auto 1.4fr' : '1fr auto 1fr'};
 }
@@ -189,9 +151,7 @@ body {
   gap: ${Math.round(p.gap * 1.5)}px;
 }
 
-/* ─── Layout: centered ───
-   True center, good for horizontal/square or
-   scenes with balanced content. */
+/* ─── Layout: centered ─── */
 .scene.layout-centered {
   grid-template-rows: 1fr auto 1fr;
 }
@@ -199,14 +159,11 @@ body {
   gap: ${Math.round(p.gap * 1.2)}px;
   justify-content: center;
 }
-/* Sparse scenes (1-2 elements): extra breathing room */
 .scene.layout-centered > .scene-content.sparse {
   gap: ${Math.round(p.gap * 2)}px;
 }
 
-/* ─── Layout: stacked ───
-   Content starts from top, flows down.
-   Good for 3+ text elements. */
+/* ─── Layout: stacked ─── */
 .scene.layout-stacked {
   grid-template-rows: ${isVert ? '0.3fr auto 2fr' : '0.5fr auto 1.5fr'};
 }
@@ -217,8 +174,7 @@ body {
   justify-content: space-evenly;
 }
 
-/* ─── Layout: split ───
-   Side-by-side for horizontal formats. */
+/* ─── Layout: split ─── */
 .scene.layout-split {
   grid-template-rows: 1fr;
   grid-template-columns: 1fr 1fr;
@@ -238,9 +194,7 @@ body {
   min-width: 200px;
 }
 
-/* ─── Layout: card-column ───
-   Cards stacked vertically, filling the frame.
-   On vertical formats, scene-content fills all 3 rows. */
+/* ─── Layout: card-column ─── */
 .scene.layout-card-column {
   grid-template-rows: 1fr;
 }
@@ -267,8 +221,7 @@ body {
   justify-content: center;
 }
 
-/* ─── Layout: card-row ───
-   Cards side-by-side for horizontal formats. */
+/* ─── Layout: card-row ─── */
 .scene.layout-card-row {
   grid-template-rows: 1fr auto 1fr;
 }
@@ -300,8 +253,7 @@ body {
   justify-items: center;
 }
 
-/* ─── Layout: fullscreen-text ───
-   Single element fills the entire viewport. */
+/* ─── Layout: fullscreen-text ─── */
 .scene.layout-fullscreen-text {
   grid-template-rows: 1fr;
 }
@@ -337,6 +289,7 @@ body {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
+  text-overflow: ellipsis;
   overflow-wrap: break-word;
   word-break: break-word;
   max-width: 100%;
@@ -354,12 +307,13 @@ body {
 .el-text {
   font-size: ${p.textSize}px;
   line-height: ${p.textLineHeight};
-  opacity: 1;  /* Full opacity for better contrast (WCAG compliance) */
+  opacity: 1;
   max-width: ${isVert ? '95%' : '80%'};
   overflow: hidden;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 4;
+  text-overflow: ellipsis;
 }
 
 .el-button {
@@ -390,7 +344,6 @@ body {
 }
 ${namedColors.length > 0 ? namedColors.map((c, i) => `.el-card:nth-child(${namedColors.length}n+${i + 1}) { border-left: 8px solid ${c.value}; }`).join('\n') : ''}
 
-/* In card-row layout, cards share space — max-width from CSS var (set per-scene) */
 .scene.layout-card-row .el-card {
   flex: 1 1 0;
   ${p.cardMinWidth > 0 ? `min-width: ${p.cardMinWidth}px;` : ''}
@@ -399,7 +352,7 @@ ${namedColors.length > 0 ? namedColors.map((c, i) => `.el-card:nth-child(${named
 
 .el-card .card-icon { font-size: ${p.cardIconSize}px; margin-bottom: 12px; }
 .el-card .card-title { font-size: ${p.cardTitleSize}px; font-weight: 700; margin-bottom: 8px; }
-.el-card .card-text { font-size: ${p.cardTextSize}px; opacity: 1; line-height: 1.4; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+.el-card .card-text { font-size: ${p.cardTextSize}px; opacity: 1; line-height: 1.4; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; text-overflow: ellipsis; }
 
 .el-divider {
   width: ${p.dividerWidth}px;
@@ -414,12 +367,10 @@ ${namedColors.length > 0 ? namedColors.map((c, i) => `.el-card:nth-child(${named
   border-radius: ${p.imageRadius}px;
   object-fit: contain;
 }
-/* Image layout variants (set via element style attribute) */
 .el-image.image-hero img { max-height: 60%; width: 90%; object-fit: cover; border-radius: ${Math.round(p.imageRadius * 1.5)}px; }
 .el-image.image-bg { position: absolute; inset: 0; z-index: 0; }
 .el-image.image-bg img { width: 100%; height: 100%; object-fit: cover; opacity: 0.3; border-radius: 0; }
 
-/* Video PiP element */
 .el-video { position: relative; }
 .el-video video {
   max-width: 100%;
@@ -427,132 +378,110 @@ ${namedColors.length > 0 ? namedColors.map((c, i) => `.el-card:nth-child(${named
   border-radius: ${p.imageRadius}px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.4);
 }
-/* PiP position variants */
 .el-video.pip-corner { position: absolute; bottom: 5%; right: 5%; width: 35%; z-index: 10; }
 .el-video.pip-corner video { width: 100%; max-height: none; }
 .el-video.pip-center video { width: 80%; }
 
-${keyframesCss.join('\n')}
-
 /* ═══════════════════════════════════════════
-   BACKGROUND ANIMATIONS
+   BACKGROUND ANIMATIONS (decorative, CSS-driven)
    ═══════════════════════════════════════════ */
 ${getBgAnimationKeyframes()}
+${getDecorativeKeyframes()}
 </style>
 </head>
 <body>
 ${scenesHtml}
 <script>
-// Scene preview controller — shows one scene at a time
-// Skipped during video render (capture.ts sets __VIDEO_RENDER__ via addInitScript)
-(function() {
-  if (window.__VIDEO_RENDER__) return;
-  const scenes = document.querySelectorAll('.scene');
-  if (scenes.length === 0) return;
-  let current = 0;
-
-  // Store original animation values on first run
-  scenes.forEach(s => {
-    s.querySelectorAll('.el').forEach(el => {
-      el.setAttribute('data-anim', el.style.animation || '');
-    });
-  });
-
-  function show(idx) {
-    scenes.forEach((s, i) => {
-      if (i === idx) {
-        s.style.visibility = 'visible';
-        s.style.opacity = '1';
-        s.style.pointerEvents = 'auto';
-        s.style.animation = s.getAttribute('data-bg-anim') || 'none';
-        // Replay element animations: remove delay, force retrigger
-        s.querySelectorAll('.el').forEach(el => {
-          const orig = el.getAttribute('data-anim') || '';
-          // Strip animation completely
-          el.style.animation = 'none';
-          // Force reflow so browser registers removal
-          void el.offsetWidth;
-          // Re-apply with delay zeroed (replace last Nms before "both")
-          const zeroed = orig.replace(/(\\d+)ms(\\s+both)/, '0ms$2');
-          // Use requestAnimationFrame to ensure the 'none' has been painted
-          requestAnimationFrame(() => {
-            el.style.animation = zeroed;
-          });
-        });
-      } else {
-        s.style.visibility = 'hidden';
-        s.style.opacity = '0';
-        s.style.pointerEvents = 'none';
-        s.style.animation = 'none';
-      }
-    });
-    current = idx;
-    if (counter) counter.textContent = (idx + 1) + '/' + scenes.length;
-  }
-
-  // Controls
-  const nav = document.createElement('div');
-  nav.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;gap:12px;align-items:center;background:rgba(0,0,0,0.8);padding:8px 16px;border-radius:8px;font-family:system-ui;font-size:14px;color:#fff;';
-  const prev = document.createElement('button');
-  prev.textContent = '◀ Prev';
-  prev.style.cssText = 'background:none;border:1px solid #666;color:#fff;padding:4px 12px;cursor:pointer;border-radius:4px;';
-  prev.onclick = () => show((current - 1 + scenes.length) % scenes.length);
-  const next = document.createElement('button');
-  next.textContent = 'Next ▶';
-  next.style.cssText = prev.style.cssText;
-  next.onclick = () => show((current + 1) % scenes.length);
-  const counter = document.createElement('span');
-  const autoBtn = document.createElement('button');
-  autoBtn.textContent = '▶ Play';
-  autoBtn.style.cssText = prev.style.cssText;
-  let timer = null;
-  autoBtn.onclick = () => {
-    if (timer) { clearInterval(timer); timer = null; autoBtn.textContent = '▶ Play'; }
-    else { timer = setInterval(() => show((current + 1) % scenes.length), 2000); autoBtn.textContent = '⏸ Stop'; }
-  };
-  nav.append(prev, counter, next, autoBtn);
-  document.body.appendChild(nav);
-
-  show(0);
-  document.addEventListener('keydown', e => {
-    if (e.key === 'ArrowRight') show((current + 1) % scenes.length);
-    if (e.key === 'ArrowLeft') show((current - 1 + scenes.length) % scenes.length);
-  });
-})();
+${frameRendererJS}
 </script>
 </body>
 </html>`;
 }
 
+// ─── Build RendererTimeline from Timeline ─────────────────────
+
+function buildRendererTimeline(timeline: Timeline): RendererTimeline {
+  const scenes: RendererScene[] = timeline.scenes.map(scene => {
+    const elements: RendererElement[] = scene.elements.map(el => {
+      const entranceDef = ENTRANCES[el.entranceId];
+      const re: RendererElement = {
+        domSelector: el.domSelector,
+        animations: el.animations,
+      };
+      if (entranceDef?.textSplit) {
+        re.textSplit = entranceDef.textSplit;
+        const staggerMs = entranceDef.staggerMs ?? (entranceDef.textSplit === 'word' ? 80 : 30);
+        re.staggerFrames = Math.max(1, Math.round(staggerMs * timeline.fps / 1000));
+      }
+      return re;
+    });
+
+    const rs: RendererScene = {
+      id: `scene-${scene.sceneIndex}`,
+      startFrame: scene.startFrame,
+      endFrame: scene.endFrame,
+      elements,
+    };
+
+    if (scene.transition) {
+      rs.transition = {
+        type: scene.transition.type,
+        startFrame: scene.transition.startFrame,
+        endFrame: scene.transition.endFrame,
+        outgoing: scene.transition.outgoing,
+        incoming: scene.transition.incoming,
+      };
+    }
+
+    return rs;
+  });
+
+  return {
+    totalFrames: timeline.totalFrames,
+    fps: timeline.fps,
+    scenes,
+  };
+}
+
+// ─── Scene HTML Generation ────────────────────────────────────
+
+/** Map scene-type ID to decorative enrichment hint */
+function sceneEnrichmentHint(sceneTypeId?: string, sceneIndex?: number, totalScenes?: number): SceneEnrichmentHint {
+  if (sceneIndex === 0) return 'hero';
+  if (totalScenes && sceneIndex === totalScenes - 1) return 'cta';
+  switch (sceneTypeId) {
+    case 'stat-callout': case 'problem-statement': case 'product-intro': case 'rapid-text': return 'hero';
+    case 'feature-showcase': case 'before-after': case 'integration-hub': case 'sequential-product-parade': return 'feature';
+    case 'social-proof': return 'social';
+    case 'cta-outro': return 'cta';
+    case 'data-visualization': return 'data';
+    default: return 'default';
+  }
+}
+
 /** Infer cinematic composition from layout mode, element count, and scene position */
 function inferComposition(layoutMode: string, isSparse: boolean, sceneIndex: number, totalScenes: number): string {
-  // First and last scenes: centered (hook + CTA)
   if (sceneIndex === 0) return 'centered';
   if (sceneIndex === totalScenes - 1) return 'centered';
-  // Card layouts: centered (cards fill the space)
   if (layoutMode.startsWith('card-')) return 'centered';
   if (layoutMode === 'split') return 'asymmetric-split';
-  // Alternate compositions by scene index for variety
   const pool = ['off-center-focal', 'right-aligned', 'centered', 'bottom-anchored', 'top-anchored'];
   return pool[sceneIndex % pool.length];
 }
 
-/** Infer background animation type from scene characteristics and scene name */
+/** Infer background animation type from scene characteristics */
 function inferBgAnimation(layoutMode: string, elementCount: number, sceneIndex: number, mode?: string, totalScenes?: number, sceneName?: string): string {
-  // Cocomelon: every scene gets a phase-appropriate bgAnimation (never 'none')
   if (mode === 'cocomelon' && totalScenes) {
     const pos = totalScenes <= 1 ? 0.5 : sceneIndex / (totalScenes - 1);
-    if (pos < 0.05) return 'vignette';            // Arrest: dramatic
-    if (pos < 0.35) return 'gradient-drift';       // Escalate
-    if (pos < 0.65) return sceneIndex % 2 === 0 ? 'particle-float' : 'grid-pulse'; // Climax: alternating
-    if (pos < 0.95) return 'ambient-glow';         // Descend: calm
-    return 'gradient-drift';                       // Convert
+    if (pos < 0.05) return 'vignette';
+    if (pos < 0.35) return 'gradient-drift';
+    if (pos < 0.65) return sceneIndex % 2 === 0 ? 'particle-float' : 'grid-pulse';
+    if (pos < 0.95) return 'ambient-glow';
+    return 'gradient-drift';
   }
 
-  // First scene: vignette for focus
   if (sceneIndex === 0) return 'vignette';
 
-  // Scene-type aware background animation (from scene name heuristic)
   const name = (sceneName ?? '').toLowerCase();
   if (name.includes('stat') || name.includes('insight')) return 'gradient-drift';
   if (name.includes('feature') || name.includes('detail')) return 'grid-pulse';
@@ -560,21 +489,9 @@ function inferBgAnimation(layoutMode: string, elementCount: number, sceneIndex: 
   if (name.includes('proof') || name.includes('social')) return 'ambient-glow';
   if (name.includes('cta')) return 'gradient-drift';
 
-  // Layout-based fallbacks
   if (layoutMode === 'card-grid') return 'particle-float';
   if (layoutMode === 'stacked' && elementCount >= 4) return 'grid-pulse';
-  // Default: gradient-drift (more visible than vignette)
   return 'gradient-drift';
-}
-
-function addKeyframes(id: string, body: string, set: Set<string>, arr: string[]) {
-  if (set.has(id)) return;
-  set.add(id);
-  arr.push(`@keyframes ${cssIdSafe(id)} { ${body} }`);
-}
-
-function cssIdSafe(id: string): string {
-  return id.replace(/[^a-zA-Z0-9_-]/g, '_');
 }
 
 function generateSceneHTML(
@@ -582,6 +499,7 @@ function generateSceneHTML(
   config: Config,
   profile: LayoutProfile,
   tokens?: DesignTokens,
+  isScroll: boolean = false,
 ): string {
   // Gather element info for auto-layout
   const elementInfos: ElementInfo[] = scene.elements.map(el => ({
@@ -596,49 +514,34 @@ function generateSceneHTML(
     : '';
   const bg = bgValue ? `background: ${bgValue};` : '';
 
-  // Determine composition style: off-center for non-centered layouts with few elements
+  // Composition style
   const isSparse = scene.elements.length <= 2;
   const compositionId = inferComposition(layoutMode, isSparse, scene.sceneIndex, config.scenes?.length ?? 1);
   const isVert = profile.orientation === 'vertical';
   const compositionStyle = getCompositionCSS(compositionId, isVert);
 
-  // Determine background animation from scene characteristics
+  // Background animation (decorative CSS, not frame-addressed)
   const bgAnimType = inferBgAnimation(layoutMode, scene.elements.length, scene.sceneIndex, config.video?.mode, config.scenes?.length, scene.scene.name);
   const bgAnimCSS = getBgAnimationCSS(bgAnimType);
   const accentColor = tokens?.colorAccent ?? tokens?.colorPrimary ?? '#6366f1';
   const depthLayerHtml = getDepthLayerHTML(bgAnimType, accentColor);
 
-  // Do NOT set z-index inline — scenes use position: absolute and stacking is
-  // controlled by DOM order + the scene-reveal animation timing
-  const zIndex = '';
+  // Decorative enrichment (orbs, rings, grids — under content, z-index: 0)
+  const enrichHint = sceneEnrichmentHint(scene.scene.sceneTypeId, scene.sceneIndex, config.scenes?.length);
+  const decorativeHtml = selectDecoratives(enrichHint, accentColor, scene.sceneIndex, config.video?.mode ?? 'safe').join('\n    ');
 
-  // Extract animation value from bgAnimCSS and combine with scene-reveal/hide
-  // to avoid one overwriting the other
+  // Mockup detection: check if any text element references code/ui/mobile
+  const mockupText = scene.elements.map(el => el.element.text ?? el.element.title ?? '').join(' ');
+  const mockupType = detectMockupType(mockupText);
+  const mockupHtml = mockupType ? generateMockup(mockupType) : '';
+
+  // Extract bg animation CSS
   const bgAnimMatch = bgAnimCSS.match(/animation:\s*([^;]+);/);
   const bgAnimValue = bgAnimMatch?.[1]?.trim() ?? '';
   const bgAnimOther = bgAnimCSS.replace(/animation:\s*[^;]+;/, '').trim().replace(/;+$/, '');
-  const sceneRevealValue = scene.sceneIndex === 0
-    ? ''
-    : `scene-reveal 100ms ease ${scene.startMs}ms both`;
+  const bgAnimStyle = bgAnimValue ? `animation: ${bgAnimValue};` : '';
 
-  // Add scene-hide animation to ensure previous scene hides before next appears
-  // Cocomelon mode: instant switch (0 overlap) to prevent stacking on fast scenes
-  // Other modes: proportional overlap (3% of duration, 50-150ms range)
-  const totalScenes = config.scenes?.length ?? 1;
-  const isLastScene = scene.sceneIndex >= totalScenes - 1;
-  const isCocomelon = config.video?.mode === 'cocomelon';
-  const overlapMs = isCocomelon ? 0 : Math.max(50, Math.min(150, Math.round(scene.durationMs * 0.03)));
-  const hideDelay = scene.startMs + scene.durationMs - overlapMs;
-  const sceneHideValue = isLastScene
-    ? ''
-    : `scene-hide ${overlapMs}ms ease ${hideDelay}ms forwards`;
-
-  const animParts = [bgAnimValue, sceneRevealValue, sceneHideValue].filter(Boolean);
-  const combinedAnim = animParts.length > 0
-    ? `animation: ${animParts.join(', ')};`
-    : '';
-
-  // Separate card elements from non-card elements
+  // Card elements separation
   const cardElements = scene.elements.filter(el =>
     el.element.type === 'card' || el.element.type === 'card-group'
   );
@@ -646,7 +549,6 @@ function generateSceneHTML(
     el.element.type !== 'card' && el.element.type !== 'card-group'
   );
 
-  // For card layouts, wrap cards in a container with grid columns
   const isCardLayout = layoutMode === 'card-column' || layoutMode === 'card-row' || layoutMode === 'card-grid';
 
   let elementsHtml: string;
@@ -656,7 +558,6 @@ function generateSceneHTML(
 
     const cardHtml = cardElements.flatMap(el => generateCardElements(el, tokens)).join('\n        ');
 
-    // Count actual individual cards (card-group expands into N cards)
     const actualCardCount = cardElements.reduce((n, el) => {
       if (el.element.type === 'card-group') return n + (el.element.items?.length ?? 1);
       return n + 1;
@@ -666,7 +567,6 @@ function generateSceneHTML(
       ? `grid-template-columns: ${computeCardGridColumns(profile, actualCardCount)};`
       : '';
 
-    // Compute effective card max-width to prevent overflow
     const effectiveMaxW = computeEffectiveCardMaxWidth(profile, actualCardCount, config.video.format);
     const cardMaxWidthStyle = layoutMode === 'card-row'
       ? `--card-max-width: ${effectiveMaxW}px;`
@@ -680,39 +580,75 @@ function generateSceneHTML(
     elementsHtml = scene.elements.map(el => generateElementHTML(el, tokens)).join('\n      ');
   }
 
-  // Count visual elements (card-group expands into multiple cards)
+  // Sparse class
   const visualCount = scene.elements.reduce((n, el) => {
     if (el.element.type === 'card-group') return n + (el.element.items?.length ?? 1);
     return n + 1;
   }, 0);
   const sparseClass = visualCount <= 2 ? ' sparse' : '';
 
-  // Build @scene comment
+  // @scene comment
   const sceneAttrs: string[] = [`name="${scene.scene.name}"`];
   if (scene.durationMs) sceneAttrs.push(`duration="${scene.durationMs}ms"`);
-  if (scene.transitionOut) sceneAttrs.push(`transition-out="${scene.transitionOut.id}"`);
+  if (scene.transition) sceneAttrs.push(`transition-out="${scene.transition.type}"`);
   if (scene.transitionOutDurationMs) sceneAttrs.push(`transition-duration="${scene.transitionOutDurationMs}ms"`);
   const sceneComment = `<!-- @scene ${sceneAttrs.join(' ')} -->`;
 
-  // Store bg animation separately so preview controller can restore it
-  const bgOnlyAnim = bgAnimValue ? `${bgAnimValue}` : '';
+  // Wrap mockup with absolute positioning at bottom of scene (outside scene-content to avoid overflow clip)
+  const mockupWrapped = mockupHtml
+    ? `<div style="position:absolute;bottom:5%;left:50%;transform:translateX(-50%);z-index:1;opacity:0.85;">${mockupHtml}</div>`
+    : '';
 
   return `  ${sceneComment}
-  <div class="scene layout-${layoutMode}" id="scene-${scene.sceneIndex}" data-bg-anim="${bgOnlyAnim}" style="${bg}${bgAnimOther ? bgAnimOther + ';' : ''}${zIndex}${combinedAnim}">
+  <div class="scene layout-${layoutMode}" id="scene-${scene.sceneIndex}" style="${bg}${bgAnimOther ? bgAnimOther + ';' : ''}${bgAnimStyle}">
     ${depthLayerHtml}
+    ${decorativeHtml}
+    ${mockupWrapped}
     <div class="scene-content${sparseClass}" style="${compositionStyle}">
       ${elementsHtml}
     </div>
   </div>`;
 }
 
+// ─── Text Splitting for word-by-word / char-stagger ──────────
+
+/**
+ * Wrap text into word or character spans for stagger animations.
+ * Returns HTML string with spans containing data-wi or data-ci indices.
+ */
+function splitText(text: string, mode: 'word' | 'char'): string {
+  const escaped = escapeHtml(text);
+  if (mode === 'word') {
+    const words = escaped.split(/(\s+)/);
+    let wi = 0;
+    return words.map(part => {
+      if (/^\s+$/.test(part)) return `<span class="sp">&nbsp;</span>`;
+      return `<span class="w" data-wi="${wi++}" style="display:inline-block">${part}</span>`;
+    }).join('');
+  }
+  // char mode
+  let ci = 0;
+  return escaped.split('').map(ch => {
+    if (ch === ' ') return `<span class="sp">&nbsp;</span>`;
+    return `<span class="ch" data-ci="${ci++}" style="display:inline-block">${ch}</span>`;
+  }).join('');
+}
+
+/**
+ * Check if an entrance animation requires text splitting.
+ */
+function getTextSplitMode(entranceId: string): 'word' | 'char' | null {
+  const def = ENTRANCES[entranceId];
+  return def?.textSplit ?? null;
+}
+
+// ─── Element HTML Generation ──────────────────────────────────
+
 /** Generate card element(s) — card-group expands into multiple cards */
 function generateCardElements(el: TimelineElement, tokens?: DesignTokens): string[] {
-  const entranceName = cssIdSafe(el.entranceId);
-  const delayMs = el.startMs;
-  const dur = el.entranceDurationMs;
-  const easing = el.easing;
   const cfg = el.element;
+  const si = el.sceneIndex;
+  const ei = el.elementIndex;
 
   const colorStyle = cfg.color ? `color: ${resolveToken(cfg.color, tokens)};` : '';
   const fontStyle = cfg.font ? `font-family: ${resolveToken(cfg.font, tokens)};` : '';
@@ -721,12 +657,10 @@ function generateCardElements(el: TimelineElement, tokens?: DesignTokens): strin
 
   if (cfg.type === 'card-group') {
     const items = cfg.items ?? [];
-    const staggerDelay = cfg['stagger-delay'] ? parseDurInline(String(cfg['stagger-delay'])) : 200;
     return items.map((item, i) => {
-      const itemDelay = delayMs + (i * staggerDelay);
-      const itemAnimStyle = `animation: ${entranceName} ${dur}ms ${easing} ${itemDelay}ms both;`;
+      const dataEl = `data-el="s${si}-e${ei}-c${i}"`;
       const itemImgSrc = item.src ? embedAsDataURI(item.src) : '';
-      return `<div class="el el-card" style="${itemAnimStyle}${extraStyle}">
+      return `<div class="el el-card" ${dataEl} style="${extraStyle}">
         ${itemImgSrc ? `<img src="${escapeHtml(itemImgSrc)}" alt="" style="max-width:100%;border-radius:8px;margin-bottom:8px;">` : ''}
         ${item.icon ? `<div class="card-icon">${iconPlaceholder(item.icon)}</div>` : ''}
         ${item.title ? `<div class="card-title">${escapeHtml(item.title)}</div>` : ''}
@@ -736,8 +670,8 @@ function generateCardElements(el: TimelineElement, tokens?: DesignTokens): strin
   }
 
   // Single card
-  const animStyle = `animation: ${entranceName} ${dur}ms ${easing} ${delayMs}ms both;`;
-  return [`<div class="el el-card" style="${animStyle}${extraStyle}">
+  const dataEl = `data-el="s${si}-e${ei}"`;
+  return [`<div class="el el-card" ${dataEl} style="${extraStyle}">
     ${cfg.icon ? `<div class="card-icon">${iconPlaceholder(cfg.icon)}</div>` : ''}
     ${cfg.title ? `<div class="card-title">${escapeHtml(cfg.title)}</div>` : ''}
     ${cfg.text ? `<div class="card-text">${escapeHtml(cfg.text)}</div>` : ''}
@@ -745,22 +679,11 @@ function generateCardElements(el: TimelineElement, tokens?: DesignTokens): strin
 }
 
 function generateElementHTML(el: TimelineElement, tokens?: DesignTokens): string {
-  const entranceName = cssIdSafe(el.entranceId);
-  const delayMs = el.startMs;
-  const dur = el.entranceDurationMs;
-  const easing = el.easing;
-  const isContinuous = el.entranceDef.continuous === true;
-  const fillOrLoop = isContinuous ? 'infinite' : 'both';
+  const si = el.sceneIndex;
+  const ei = el.elementIndex;
+  const dataEl = `data-el="s${si}-e${ei}"`;
 
-  let animStyle = `animation: ${entranceName} ${dur}ms ${easing} ${delayMs}ms ${fillOrLoop};`;
-
-  if (el.exitId && el.exitDef && !isContinuous) {
-    const exitName = cssIdSafe(el.exitId);
-    const exitDelay = el.startMs + el.entranceDurationMs + el.holdMs;
-    animStyle = `animation: ${entranceName} ${dur}ms ${easing} ${delayMs}ms both, ${exitName} ${el.exitDurationMs}ms ${easing} ${exitDelay}ms forwards;`;
-  }
-
-  // Multi-phase rendering: stack multiple divs with sequential entrance/exit timing
+  // Multi-phase rendering
   const phases = el.element.phases;
   if (phases && phases.length > 0) {
     return generateMultiPhaseHTML(el, phases, tokens);
@@ -776,40 +699,55 @@ function generateElementHTML(el: TimelineElement, tokens?: DesignTokens): string
   switch (cfg.type) {
     case 'heading': {
       const size = cfg.size ?? 'lg';
-      return `<div class="el el-heading size-${size}" style="${animStyle}${extraStyle}">${escapeHtml(cfg.text ?? '')}</div>`;
+      const textLen = (cfg.text ?? '').length;
+      const sizeThresholds: Record<string, number> = { '2xl': 30, xl: 40, lg: 60, md: 80, sm: 100 };
+      const threshold = sizeThresholds[size] ?? 60;
+      let fontScale = '';
+      if (textLen > threshold * 1.5) {
+        fontScale = 'font-size: 0.7em;';
+      } else if (textLen > threshold) {
+        fontScale = 'font-size: 0.85em;';
+      }
+      const headingSplit = getTextSplitMode(el.entranceId);
+      const headingContent = headingSplit ? splitText(cfg.text ?? '', headingSplit) : escapeHtml(cfg.text ?? '');
+      return `<div class="el el-heading size-${size}" ${dataEl} style="${fontScale}${extraStyle}">${headingContent}</div>`;
     }
-    case 'text':
-      return `<div class="el el-text" style="${animStyle}${extraStyle}">${escapeHtml(cfg.text ?? '')}</div>`;
+    case 'text': {
+      const textSplit = getTextSplitMode(el.entranceId);
+      const bodyText = cfg.text ?? '';
+      const textContent = textSplit ? splitText(bodyText, textSplit) : escapeHtml(bodyText);
+      // Adaptive font scaling for long body text
+      let bodyScale = '';
+      if (bodyText.length > 200) bodyScale = 'font-size: 0.8em;';
+      else if (bodyText.length > 140) bodyScale = 'font-size: 0.9em;';
+      return `<div class="el el-text" ${dataEl} style="${bodyScale}${extraStyle}">${textContent}</div>`;
+    }
     case 'button':
-      return `<div class="el el-button" style="${animStyle}${extraStyle}">${escapeHtml(cfg.text ?? '')}</div>`;
+      return `<div class="el el-button" ${dataEl} style="${extraStyle}">${escapeHtml(cfg.text ?? '')}</div>`;
     case 'image': {
       const imgSrc = embedAsDataURI(cfg.src ?? '');
       const imgVariant = cfg.style ?? '';
       const variantClass = imgVariant ? ` ${imgVariant}` : '';
-      return `<div class="el el-image${variantClass}" style="${animStyle}"><img src="${escapeHtml(imgSrc)}" alt=""></div>`;
+      return `<div class="el el-image${variantClass}" ${dataEl}><img src="${escapeHtml(imgSrc)}" alt=""></div>`;
     }
     case 'video': {
-      // PiP video element — src must be a local file path, synced via currentTime in capture
       const videoSrc = cfg.src ?? '';
       const pipVariant = cfg.style ?? '';
       const pipClass = pipVariant ? ` ${pipVariant}` : '';
-      return `<div class="el el-video${pipClass}" style="${animStyle}"><video src="${escapeHtml(videoSrc)}" muted preload="auto" data-pip="true"></video></div>`;
+      return `<div class="el el-video${pipClass}" ${dataEl}><video src="${escapeHtml(videoSrc)}" muted preload="auto" data-pip="true"></video></div>`;
     }
     case 'divider':
-      return `<div class="el el-divider" style="${animStyle}"></div>`;
+      return `<div class="el el-divider" ${dataEl}></div>`;
     case 'card':
-      return `<div class="el el-card" style="${animStyle}${extraStyle}">
+      return `<div class="el el-card" ${dataEl} style="${extraStyle}">
         ${cfg.icon ? `<div class="card-icon">${iconPlaceholder(cfg.icon)}</div>` : ''}
         ${cfg.title ? `<div class="card-title">${escapeHtml(cfg.title)}</div>` : ''}
         ${cfg.text ? `<div class="card-text">${escapeHtml(cfg.text)}</div>` : ''}
       </div>`;
     case 'card-group': {
       const items = cfg.items ?? [];
-      const staggerDelay = cfg['stagger-delay'] ? parseDurInline(String(cfg['stagger-delay'])) : 200;
       return items.map((item, i) => {
-        const itemDelay = delayMs + (i * staggerDelay);
-        const itemAnimStyle = `animation: ${entranceName} ${dur}ms ${easing} ${itemDelay}ms both;`;
-        return `<div class="el el-card" style="${itemAnimStyle}${extraStyle}">
+        return `<div class="el el-card" data-el="s${si}-e${ei}-c${i}" style="${extraStyle}">
           ${item.icon ? `<div class="card-icon">${iconPlaceholder(item.icon)}</div>` : ''}
           ${item.title ? `<div class="card-title">${escapeHtml(item.title)}</div>` : ''}
           ${item.text ? `<div class="card-text">${escapeHtml(item.text)}</div>` : ''}
@@ -817,20 +755,21 @@ function generateElementHTML(el: TimelineElement, tokens?: DesignTokens): string
       }).join('\n      ');
     }
     default:
-      return `<div class="el" style="${animStyle}">${escapeHtml(cfg.text ?? '')}</div>`;
+      return `<div class="el" ${dataEl} style="${extraStyle}">${escapeHtml(cfg.text ?? '')}</div>`;
   }
 }
 
 /**
- * Multi-phase element: renders N stacked divs, each with its own entrance/exit timing.
- * Phase N exits as Phase N+1 enters, creating a text-swap effect.
+ * Multi-phase element: renders N stacked divs.
+ * Frame renderer handles phase visibility via animations.
  */
 function generateMultiPhaseHTML(
   el: TimelineElement,
   phases: Array<{ entrance?: string; delay?: string | number; duration?: string | number; text?: string; size?: string }>,
   tokens?: DesignTokens,
 ): string {
-  const baseDelay = el.startMs;
+  const si = el.sceneIndex;
+  const ei = el.elementIndex;
   const cfg = el.element;
   const colorStyle = cfg.color ? `color: ${resolveToken(cfg.color, tokens)};` : '';
   const fontStyle = cfg.font ? `font-family: ${resolveToken(cfg.font, tokens)};` : '';
@@ -838,54 +777,23 @@ function generateMultiPhaseHTML(
   const extraStyle = `${colorStyle}${fontStyle}${bgStyle}`;
 
   const size = cfg.size ?? 'lg';
-  const baseText = cfg.text ?? '';
-  let cursor = baseDelay;
   const phaseDivs: string[] = [];
-
-  // Phase 0: the base element (entrance only, exits when phase 1 starts)
-  const phase0Entrance = cssIdSafe(el.entranceId);
-  const phase0Dur = el.entranceDurationMs;
-  const easing = el.easing;
 
   for (let pi = 0; pi < phases.length; pi++) {
     const phase = phases[pi];
-    const phaseText = phase.text ?? baseText;
+    const phaseText = phase.text ?? cfg.text ?? '';
     const phaseSize = phase.size ?? size;
-    const phaseEntrance = phase.entrance ? cssIdSafe(phase.entrance) : phase0Entrance;
-    const phaseDur = phase.duration ? parseDurInline(String(phase.duration)) : phase0Dur;
-    const phaseDelay = phase.delay ? parseDurInline(String(phase.delay)) : 0;
-
-    const enterTime = cursor + phaseDelay;
-    // Default hold: 1500ms per phase unless it's the last phase
-    const holdTime = pi < phases.length - 1 ? 1500 : 0;
-    const exitDuration = 300;
-    const exitTime = enterTime + phaseDur + holdTime;
-
-    let animParts = `${phaseEntrance} ${phaseDur}ms ${easing} ${enterTime}ms both`;
-    if (pi < phases.length - 1) {
-      // Exit before next phase
-      animParts += `, fade-out ${exitDuration}ms ${easing} ${exitTime}ms forwards`;
-    }
-
     phaseDivs.push(
-      `<div class="el el-heading size-${phaseSize}" style="position:absolute;animation:${animParts};${extraStyle}">${escapeHtml(phaseText)}</div>`
+      `<div class="el el-heading size-${phaseSize}" data-el="s${si}-e${ei}-p${pi}" style="position:absolute;${extraStyle}">${escapeHtml(phaseText)}</div>`
     );
-
-    // Wait for fade-out to complete + buffer before next phase starts
-    cursor = exitTime + (pi < phases.length - 1 ? exitDuration + 100 : 0);
   }
 
-  // Wrap in a relative container
   return `<div class="el" style="position:relative;width:100%;display:flex;align-items:center;justify-content:center;min-height:1.2em;">
       ${phaseDivs.join('\n      ')}
     </div>`;
 }
 
-function parseDurInline(str: string): number {
-  if (str.endsWith('ms')) return parseFloat(str);
-  if (str.endsWith('s')) return parseFloat(str) * 1000;
-  return parseFloat(str);
-}
+// ─── Utilities ────────────────────────────────────────────────
 
 function resolveToken(value: string, tokens?: DesignTokens): string {
   if (!value.startsWith('--')) return value;
@@ -893,6 +801,11 @@ function resolveToken(value: string, tokens?: DesignTokens): string {
 }
 
 function iconPlaceholder(icon: string): string {
+  // Try SVG icon library first (renders at currentColor, scalable)
+  const svg = matchIcon(icon);
+  if (svg) return `<span style="display:inline-block;width:1em;height:1em;vertical-align:middle;">${svg}</span>`;
+
+  // Emoji fallback
   const map: Record<string, string> = {
     sync: '🔄', users: '👥', chart: '📊', star: '⭐', heart: '❤️',
     check: '✓', arrow: '→', bolt: '⚡', shield: '🛡️', globe: '🌍',
@@ -919,7 +832,6 @@ function generateTokensCss(tokens: DesignTokens): string {
   if (tokens.colorOnPrimary) lines.push(`  --color-on-primary: ${tokens.colorOnPrimary};`);
   if (tokens.colorOnAccent) lines.push(`  --color-on-accent: ${tokens.colorOnAccent};`);
   if (tokens.borderColor) lines.push(`  --color-border: ${tokens.borderColor};`);
-  // Named palette colors
   if (tokens.namedColors) {
     for (const c of tokens.namedColors) {
       lines.push(`  --color-${c.name}: ${c.value};`);

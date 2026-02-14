@@ -65,20 +65,20 @@ export const ENTRANCE_SPEED_MULTIPLIERS: Record<SpeedPreset, number> = {
 };
 
 export const MS_PER_WORD: Record<SpeedPreset, number> = {
-  slowest: 500,
-  slow: 350,
-  normal: 250,
-  fast: 180,
-  fastest: 120,
+  slowest: 600,   // 100 WPM (presentation)
+  slow: 400,      // 150 WPM (comfortable)
+  normal: 300,    // 200 WPM (natural reading)
+  fast: 220,      // ~270 WPM (scanning)
+  fastest: 160,   // ~375 WPM (flash)
   instant: 50,
 };
 
 export const INTER_ELEMENT_GAP: Record<SpeedPreset, number> = {
-  slowest: 600,
-  slow: 400,
-  normal: 250,
-  fast: 150,
-  fastest: 80,
+  slowest: 700,
+  slow: 500,
+  normal: 350,    // more breathing between elements
+  fast: 200,
+  fastest: 100,
   instant: 0,
 };
 

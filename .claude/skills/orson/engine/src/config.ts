@@ -63,6 +63,7 @@ const VideoSchema = z.object({
   mode: z.enum(['safe', 'chaos', 'hybrid', 'cocomelon']).default('safe'),
   speed: z.enum(['slowest', 'slow', 'normal', 'fast', 'fastest', 'instant']).default('normal'),
   'entrance-speed': z.enum(['slowest', 'slow', 'normal', 'fast', 'fastest', 'instant']).optional(),
+  composition: z.enum(['stack', 'scroll']).default('scroll'),
   output: z.string().default('./output/video.mp4'),
 });
 

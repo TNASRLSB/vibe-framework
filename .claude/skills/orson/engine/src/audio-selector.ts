@@ -1,7 +1,7 @@
 // Audio track selection from curated library based on video context
 // Uses coherence-matrix.json for style→mode mapping and feature profiles
 
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync, statSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -171,9 +171,29 @@ function pickBestByEnergy(tracks: TrackEntry[], targetEnergy?: number): TrackEnt
   );
 }
 
+/** Validate that a track file exists and is real audio (not a silence placeholder) */
+function isValidTrack(trackPath: string): boolean {
+  if (!existsSync(trackPath)) return false;
+  try {
+    const stats = statSync(trackPath);
+    // Silence placeholders are typically < 10KB
+    return stats.size > 10240;
+  } catch {
+    return false;
+  }
+}
+
 function toSelection(track: TrackEntry): TrackSelection {
+  const trackPath = resolve(AUDIO_DIR, track.file);
+  if (!isValidTrack(trackPath)) {
+    throw new Error(
+      `Audio track not found or silent: ${track.file}\n` +
+      `  Run: bash ${resolve(AUDIO_DIR, 'download-library.sh')}\n` +
+      `  Or place your own MP3 in: ${dirname(trackPath)}/`
+    );
+  }
   return {
-    trackPath: resolve(AUDIO_DIR, track.file),
+    trackPath,
     style: track.style,
     bpm: track.bpm,
     durationMs: track.durationMs,

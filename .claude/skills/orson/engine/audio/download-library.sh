@@ -61,6 +61,7 @@ download_track() {
   local output="$1"
   local url="$2"
   local name="$3"
+  local max_retries=3
 
   # Skip if file exists and is real audio (not silence)
   if [ -f "$output" ] && ! is_silence "$output"; then
@@ -69,14 +70,28 @@ download_track() {
   fi
 
   echo "  Downloading $name..."
-  if curl -sL --max-time 30 -o "$output" "$url" && [ -s "$output" ]; then
-    echo "  OK: $(basename "$output")"
-    return 0
-  else
-    echo "  Failed: $(basename "$output") — creating silence placeholder"
-    generate_silence "$output" "90"
-    return 1
-  fi
+  for attempt in $(seq 1 $max_retries); do
+    if curl -sL --max-time 30 --retry 2 -o "$output" "$url" && [ -s "$output" ]; then
+      # Validate downloaded file is real audio (> 10KB)
+      local filesize
+      filesize=$(stat -c%s "$output" 2>/dev/null || stat -f%z "$output" 2>/dev/null || echo 0)
+      if [ "$filesize" -gt 10240 ]; then
+        echo "  OK: $(basename "$output")"
+        return 0
+      else
+        echo "  Warning: $(basename "$output") too small (${filesize}B), retrying..."
+        rm -f "$output"
+      fi
+    fi
+    if [ "$attempt" -lt "$max_retries" ]; then
+      echo "  Retry $((attempt + 1))/$max_retries..."
+      sleep 2
+    fi
+  done
+
+  echo "  Failed: $(basename "$output") after $max_retries attempts — creating silence placeholder"
+  generate_silence "$output" "90"
+  return 1
 }
 
 # ─── Music Tracks ────────────────────────────────────────────

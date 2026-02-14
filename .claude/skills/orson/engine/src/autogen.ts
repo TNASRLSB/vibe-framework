@@ -194,21 +194,21 @@ function buildElements(
       // Add secondary text if we have room
       if (els.length < density.max) {
         const section = findBestSection(content, cursor, ['metric', 'stat', 'data', 'result', 'growth']);
-        if (section?.body) els.push({ type: 'text', text: truncate(section.body, 150) });
+        if (section?.body) els.push({ type: 'text', text: truncate(section.body, 120) });
       }
       break;
     }
 
     case 'problem-statement': {
       const heading = content.heroText || content.headings[0] || content.projectName;
-      els.push({ type: 'heading', text: truncate(heading, 120), size: st.headingSize });
+      els.push({ type: 'heading', text: truncate(heading, 60), size: st.headingSize });
       if (content.description) {
-        els.push({ type: 'text', text: truncate(content.description, 200) });
+        els.push({ type: 'text', text: truncate(content.description, 120) });
       }
       // Fill to density with section content and CTA
       if (els.length < density.max) {
         const section = findBestSection(content, cursor, ['problem', 'challenge', 'pain', 'issue', 'struggle']);
-        if (section?.body) els.push({ type: 'text', text: truncate(section.body, 200) });
+        if (section?.body) els.push({ type: 'text', text: truncate(section.body, 120) });
       }
       if (els.length < density.max && content.ctaText) {
         els.push({ type: 'button', text: content.ctaText });
@@ -219,13 +219,13 @@ function buildElements(
     case 'product-intro': {
       els.push({ type: 'heading', text: content.projectName || 'Untitled', size: 'xl' });
       if (content.description) {
-        els.push({ type: 'text', text: truncate(content.description, 200) });
+        els.push({ type: 'text', text: truncate(content.description, 120) });
       }
       if (els.length < density.max) els.push({ type: 'divider' });
       // Add a feature as supporting text
       if (els.length < density.max) {
         const feats = nextFeatures(content, cursor, 1);
-        if (feats.length > 0) els.push({ type: 'text', text: truncate(feats[0], 150) });
+        if (feats.length > 0) els.push({ type: 'text', text: truncate(feats[0], 120) });
       }
       break;
     }
@@ -235,8 +235,8 @@ function buildElements(
       // These should be displayed as text, not converted to feature cards
       const narrativeSection = findNarrativeSection(content, cursor);
       if (narrativeSection) {
-        els.push({ type: 'heading', text: truncate(narrativeSection.title, 120), size: 'lg' });
-        els.push({ type: 'text', text: truncate(narrativeSection.body, 250) });
+        els.push({ type: 'heading', text: truncate(narrativeSection.title, 60), size: 'lg' });
+        els.push({ type: 'text', text: truncate(narrativeSection.body, 120) });
         break;
       }
 
@@ -247,8 +247,8 @@ function buildElements(
         // Fallback to section content
         const section = nextSection(content, cursor);
         if (section) {
-          els.push({ type: 'heading', text: truncate(section.title, 120), size: 'lg' });
-          els.push({ type: 'text', text: truncate(section.body, 250) });
+          els.push({ type: 'heading', text: truncate(section.title, 60), size: 'lg' });
+          els.push({ type: 'text', text: truncate(section.body, 120) });
         } else {
           els.push({ type: 'heading', text: content.projectName || 'Features', size: 'lg' });
         }
@@ -261,11 +261,11 @@ function buildElements(
         els.push({ type: 'heading', text: isProblemTitle ? 'Key Features' : (sectionTitle?.title || 'Key Features'), size: 'lg' });
         els.push({
           type: 'card-group',
-          items: features.map(f => ({ title: truncate(f, 80) })),
+          items: features.map(f => ({ title: truncate(f, 50) })),
         });
       } else {
         for (const f of features) {
-          els.push({ type: 'heading', text: truncate(f, 120), size: 'lg' });
+          els.push({ type: 'heading', text: truncate(f, 60), size: 'lg' });
         }
       }
       break;
@@ -276,14 +276,14 @@ function buildElements(
       els.push({ type: 'heading', text: section?.title || 'The Transformation', size: 'lg' });
       // Before block
       if (section?.body) {
-        els.push({ type: 'text', text: truncate(section.body, 200) });
+        els.push({ type: 'text', text: truncate(section.body, 120) });
       } else {
         els.push({ type: 'text', text: content.description || 'Before' });
       }
       // After block
       const afterFeats = nextFeatures(content, cursor, 1);
       if (afterFeats.length > 0) {
-        els.push({ type: 'text', text: truncate(afterFeats[0], 200) });
+        els.push({ type: 'text', text: truncate(afterFeats[0], 120) });
       }
       if (els.length < density.max && content.ctaText) {
         els.push({ type: 'button', text: content.ctaText });
@@ -313,13 +313,13 @@ function buildElements(
         size: 'lg',
       });
       if (section?.body) {
-        els.push({ type: 'text', text: truncate(section.body, 250) });
+        els.push({ type: 'text', text: truncate(section.body, 120) });
       }
       // Add card-group from sections/features for social proof density
       if (els.length < density.max) {
         const proofItems = nextFeatures(content, cursor, Math.min(3, density.max - els.length));
         if (proofItems.length >= 2) {
-          els.push({ type: 'card-group', items: proofItems.map(f => ({ title: truncate(f, 80) })) });
+          els.push({ type: 'card-group', items: proofItems.map(f => ({ title: truncate(f, 50) })) });
         }
       }
       break;
@@ -328,7 +328,7 @@ function buildElements(
     case 'cta-outro': {
       els.push({ type: 'heading', text: content.ctaText || 'Try it now', size: 'xl' });
       if (content.description) {
-        els.push({ type: 'text', text: truncate(content.description, 150) });
+        els.push({ type: 'text', text: truncate(content.description, 120) });
       } else if (content.projectName) {
         els.push({ type: 'text', text: content.projectName });
       }
@@ -338,7 +338,7 @@ function buildElements(
 
     case 'rapid-text': {
       const heading = nextHeading(content, cursor) || content.heroText || content.projectName;
-      els.push({ type: 'heading', text: truncate(heading || 'Untitled', 80), size: '2xl' });
+      els.push({ type: 'heading', text: truncate(heading || 'Untitled', 60), size: '2xl' });
       // Add subtitle for density
       if (density.max >= 2 && content.description) {
         els.push({ type: 'text', text: truncate(content.description, 100) });
@@ -354,7 +354,7 @@ function buildElements(
         size: 'lg',
       });
       if (section?.body) {
-        els.push({ type: 'text', text: truncate(section.body, 250) });
+        els.push({ type: 'text', text: truncate(section.body, 120) });
       }
       // Add metric cards if we have features with numbers
       if (els.length < density.max) {
@@ -362,7 +362,7 @@ function buildElements(
           .filter(f => METRIC_PATTERN.test(f))
           .slice(0, Math.min(3, density.max - els.length));
         if (metricFeats.length >= 2) {
-          els.push({ type: 'card-group', items: metricFeats.map(f => ({ title: truncate(f, 80) })) });
+          els.push({ type: 'card-group', items: metricFeats.map(f => ({ title: truncate(f, 50) })) });
         }
       }
       break;
@@ -374,7 +374,7 @@ function buildElements(
         els.push({ type: 'heading', text: 'Our Solutions', size: 'lg' });
         els.push({
           type: 'card-group',
-          items: features.map(f => ({ title: truncate(f, 80) })),
+          items: features.map(f => ({ title: truncate(f, 50) })),
         });
       } else {
         els.push({ type: 'heading', text: content.projectName || 'Solutions', size: 'lg' });
@@ -602,8 +602,9 @@ export function generateConfig(content: ExtractedContent, options: AutogenOption
       codec: (options.codec ?? 'h265') as 'h264' | 'h265' | 'av1',
       mode: options.mode,
       speed: options.speed,
+      composition: 'scroll',
       output: options.output ?? './output/video.mp4',
-    },
+    } as any,
     'design-system': options.designTokens ? '.seurat/system.md' : undefined,
     scenes: scenes as SceneConfig[],
   };

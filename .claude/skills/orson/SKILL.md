@@ -1,6 +1,6 @@
 ---
 name: orson
-description: "Programmatic video generation from design system + content. Creates HTML-based videos with CSS animations, rendered via Playwright + FFmpeg. Use when creating product videos, social media promos, explainers, or any video content. Triggers on 'video', 'render', 'animation', 'promo video', 'social media video'. Integrates with Seurat for design and Ghostwriter for copy."
+description: "Programmatic video generation from design system + content. Creates HTML-based videos with frame-addressed animations, rendered via Playwright + FFmpeg. Use when creating product videos, social media promos, explainers, or any video content. Triggers on 'video', 'render', 'animation', 'promo video', 'social media video'. Integrates with Seurat for design and Ghostwriter for copy."
 allowed-tools:
   - Read
   - Write
@@ -14,7 +14,7 @@ allowed-tools:
 
 # orson
 
-Programmatic video generation from design system + content. Generates purpose-built HTML pages with CSS animations, captures frame-by-frame via Web Animations API, and encodes to video with FFmpeg.
+Programmatic video generation from design system + content. Generates purpose-built HTML pages with static layouts and frame-addressed animations (`window.__setFrame(n)`), captures frame-by-frame via Playwright, and encodes to video with FFmpeg.
 
 ## Commands
 
@@ -376,20 +376,23 @@ Run `engine/audio/download-library.sh` to bootstrap placeholder tracks. Replace 
 2. Claude writes screenplay (scene structure + copy, optionally via ghostwriter)
 3. Claude builds content JSON matching the screenplay
 4. `autogen` generates HTML (calls director internally for animations)
-5. Playwright captures frames via Web Animations API
-6. FFmpeg encodes to MP4 (h264/h265/av1)
+5. Timeline compiler converts config → frame-addressed animations (interpolation-based)
+6. Frame renderer JS is injected into HTML — implements `window.__setFrame(n)`
+7. Playwright calls `__setFrame(f)` for each frame, screenshots
+8. FFmpeg encodes to MP4 (h264/h265/av1)
 
 ## Key Concepts
 
 - **NOT a screen recorder** — generates original video content
-- **HTML-based config** — self-contained HTML with embedded CSS animations and `<!-- @video ... -->` metadata
-- **Web Animations API** — deterministic frame capture (NOT frozen clock — `page.clock.fastForward()` does not advance CSS animation time)
-- **Content-driven timing** — duration computed from word count
+- **Frame-addressed rendering (v3)** — `window.__setFrame(n)` computes all element styles via `interpolate(frame, inputRange, outputRange)`. Deterministic `f(frame) → pixels`.
+- **Interpolation engine** — multi-stop ranges, 20+ easing functions, spring physics (damped harmonic oscillator)
+- **Static HTML + JS renderer** — HTML has layout only (no CSS animation properties). Injected JS frame renderer handles all motion.
+- **Content-driven timing** — duration computed from word count, converted to frame counts
 - **Four modes**: safe (corporate), chaos (experimental), hybrid (safe + one breaker), cocomelon (neuro-hijack)
 - **Design system integration** — reads tokens from seurat
 - **Format-aware layout** — CSS Grid per scene, card-column fills frame in vertical, hero/centered/stacked modes
 - **Source analysis** — can auto-extract content from project folders or URLs
-- **132 animations**: 56 entrances, 30 exits, 26 transitions, 9 emphasis, 11 looping
+- **136+ animations**: 56 entrances, 30 exits, 30 transitions, 9 emphasis, 11 looping — all defined as interpolation property maps
 
 ## Demo Mode (`/orson demo`)
 
@@ -549,8 +552,10 @@ npx tsx .claude/skills/orson/engine/src/index.ts entrances
 ## Reference
 
 - Engine source: `.claude/skills/orson/engine/src/` (28 files)
-- Animation database: `.claude/skills/orson/engine/src/actions.ts`
-- Choreography (animation selection & sequencing): `.claude/skills/orson/engine/src/choreography.ts`
+- Interpolation engine (core primitive): `.claude/skills/orson/engine/src/interpolate.ts`
+- Animation database (property-based definitions): `.claude/skills/orson/engine/src/actions.ts`
+- Frame renderer generator (injected JS): `.claude/skills/orson/engine/src/frame-renderer.ts`
+- Choreography (stagger, breathing, Disney principles): `.claude/skills/orson/engine/src/choreography.ts`
 - Composition (scene layout & visual structure): `.claude/skills/orson/engine/src/composition.ts`
 - Director (high-level video orchestration): `.claude/skills/orson/engine/src/director.ts`
 - HTML generation: `.claude/skills/orson/engine/src/html-generator.ts`

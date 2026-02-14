@@ -11,10 +11,10 @@ import type { CodecId } from './presets.js';
 import { analyzeFolder } from './analyze-folder.js';
 import { analyzeUrl } from './analyze-url.js';
 import { generateConfig } from './autogen.js';
-import { parseHTMLFile, type HTMLConfig } from './html-parser.js';
+import { parseHTMLFile, extractNarrationBrief, type HTMLConfig } from './html-parser.js';
 import { computeSceneTiming, type ElementTimingInput } from './timing.js';
 import { selectTrack, type VideoMeta } from './audio-selector.js';
-import { trimAndLoop, fadeInOut, mergeAudioVideo } from './audio-mixer.js';
+import { trimAndLoop, fadeInOut, mergeAudioVideo, applyDucking, concatenateNarration, type DuckingEvent } from './audio-mixer.js';
 import { generateSRT, generateVTT } from './subtitles.js';
 
 async function main() {
@@ -26,8 +26,9 @@ async function main() {
     console.log(`orson — Programmatic video from web elements
 
 Commands:
-  render <file.html>        Render video from HTML config
-  render <file.html> --no-audio  Render video without audio
+  render <file.html>             Render video from HTML config
+  render <file.html> --no-audio  Render without audio
+  render <file.html> --narrate   Render with TTS narration (requires TTS engine)
   render <file.html> --draft     Fast preview (half res, 15fps, ultrafast)
   render <file.html> --parallel  Render scenes in parallel (multi-core)
   demo <script.json>        Record demo video from script
@@ -114,10 +115,12 @@ Commands:
 
   if (command === 'render') {
     const noAudio = args.includes('--no-audio');
+    const narrate = args.includes('--narrate') || args.includes('--tts');
     const draft = args.includes('--draft');
     const parallel = args.includes('--parallel');
+    const voice = args.find(a => a.startsWith('--voice='))?.split('=')[1];
     const htmlConfig = parseHTMLFile(fullPath);
-    await renderHTML(htmlConfig, fullPath, noAudio, draft, parallel);
+    await renderHTML(htmlConfig, fullPath, noAudio, draft, parallel, narrate, voice);
     return;
   }
 
@@ -141,7 +144,7 @@ Commands:
 
 // ─── HTML render ────────────────────────────────────────────
 
-async function renderHTML(htmlConfig: HTMLConfig, htmlPath: string, noAudio: boolean = false, draft: boolean = false, parallel: boolean = false) {
+async function renderHTML(htmlConfig: HTMLConfig, htmlPath: string, noAudio: boolean = false, draft: boolean = false, parallel: boolean = false, narrate: boolean = false, voice?: string) {
   const fmt = FORMAT_PRESETS[htmlConfig.video.format];
   let width = fmt?.width ?? 1080;
   let height = fmt?.height ?? 1920;
@@ -298,9 +301,95 @@ async function renderHTML(htmlConfig: HTMLConfig, htmlPath: string, noAudio: boo
       const fadedTrack = resolve(audioDir, 'music-faded.mp3');
       await fadeInOut(processedTrack, 500, 2000, fadedTrack);
 
+      let finalAudioPath = fadedTrack;
+
+      // ─── TTS Narration (opt-in via --narrate) ─────────────
+      if (narrate) {
+        console.log('  Generating TTS narration...');
+        const brief = extractNarrationBrief(htmlConfig, sceneDurations);
+
+        if (brief.length > 0) {
+          // Write narration brief JSON for narration_generator.py
+          const { writeFileSync: writeBrief } = await import('fs');
+          const briefPath = resolve(audioDir, 'narration-brief.json');
+          const narrationOutputDir = resolve(audioDir, 'narration');
+          if (!existsSync(narrationOutputDir)) mkdirSync(narrationOutputDir, { recursive: true });
+
+          const briefData = {
+            narration: {
+              voice: voice ?? 'en-US-AriaNeural',
+              scenes: brief.map(b => ({
+                scene_index: b.sceneIndex,
+                elements: [{
+                  id: `scene-${b.sceneIndex}`,
+                  narration_text: b.text,
+                  element_type: 'combined',
+                  timing: { startMs: b.startMs, endMs: b.endMs },
+                }],
+              })),
+            },
+          };
+          writeBrief(briefPath, JSON.stringify(briefData, null, 2));
+
+          // Run narration generator
+          const narrationScript = resolve(dirname(outputPath), '..', '.claude/skills/orson/engine/audio/narration_generator.py');
+          const altScript = resolve(dirname(import.meta.url.replace('file://', '')), '..', 'audio', 'narration_generator.py');
+          const scriptPath = existsSync(narrationScript) ? narrationScript : altScript;
+
+          if (existsSync(scriptPath)) {
+            const { execSync } = await import('child_process');
+            try {
+              execSync(`python3 "${scriptPath}" "${briefPath}" "${narrationOutputDir}"`, {
+                stdio: ['pipe', 'pipe', 'pipe'],
+                timeout: 120000,
+              });
+
+              // Collect generated narration files
+              const { readdirSync } = await import('fs');
+              const narrationFiles = readdirSync(narrationOutputDir)
+                .filter(f => f.endsWith('.mp3'))
+                .map(f => ({
+                  path: resolve(narrationOutputDir, f),
+                  startMs: brief.find(b => f.includes(`scene-${b.sceneIndex}`))?.startMs ?? 0,
+                }));
+
+              if (narrationFiles.length > 0) {
+                // Concatenate narration clips at their timestamps
+                const narrationTrack = resolve(audioDir, 'narration-combined.mp3');
+                await concatenateNarration(narrationFiles, totalDurationMs, narrationTrack);
+
+                // Apply ducking to music during narration
+                const duckEvents: DuckingEvent[] = [];
+                for (const b of brief) {
+                  duckEvents.push({ time_ms: b.startMs, action: 'duck', target_gain: 0.15 });
+                  duckEvents.push({ time_ms: b.endMs, action: 'release', target_gain: 1.0 });
+                }
+                const duckedMusic = resolve(audioDir, 'music-ducked.mp3');
+                await applyDucking(fadedTrack, duckEvents, 1.0, duckedMusic);
+
+                // Mix ducked music + narration
+                const { mixTracks } = await import('./audio-mixer.js');
+                const mixedAudio = resolve(audioDir, 'audio-mixed.mp3');
+                await mixTracks([
+                  { path: duckedMusic, gain: 1.0 },
+                  { path: narrationTrack, gain: 1.2 },
+                ], mixedAudio);
+
+                finalAudioPath = mixedAudio;
+                console.log(`  Narration: ${narrationFiles.length} clips mixed`);
+              }
+            } catch (ttsErr: any) {
+              console.log(`  Narration skipped: ${ttsErr.message?.slice(0, 100)}`);
+            }
+          } else {
+            console.log('  Narration skipped: narration_generator.py not found');
+          }
+        }
+      }
+
       // Merge audio into video
       const finalOutput = outputPath.replace(/\.mp4$/, '-audio.mp4');
-      await mergeAudioVideo(outputPath, fadedTrack, finalOutput);
+      await mergeAudioVideo(outputPath, finalAudioPath, finalOutput);
 
       // Replace original with audio version
       const { renameSync, unlinkSync } = await import('fs');
@@ -309,8 +398,9 @@ async function renderHTML(htmlConfig: HTMLConfig, htmlPath: string, noAudio: boo
 
       console.log(`  Audio merged: ${outputPath}`);
     } catch (err: any) {
-      console.log(`  Audio skipped: ${err.message}`);
-      console.log('  (video rendered successfully without audio)');
+      console.log(`\n  ⚠ WARNING: ${err.message}`);
+      console.log('  Video rendered without music. To fix:');
+      console.log('    bash .claude/skills/orson/engine/audio/download-library.sh');
     } finally {
       // Clean up temp files
       const { rmSync } = await import('fs');

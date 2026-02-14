@@ -153,6 +153,50 @@ export function parseHTMLString(html: string): HTMLConfig {
   return { video, designSystemPath, scenes, html };
 }
 
+// ─── Narration brief extraction ──────────────────────────────
+
+export interface NarrationBriefItem {
+  sceneIndex: number;
+  text: string;
+  startMs: number;
+  endMs: number;
+}
+
+/**
+ * Extract narration-ready text from an HTMLConfig.
+ * Combines heading + body text from each scene into a narration brief
+ * that can be fed to narration_generator.py.
+ */
+export function extractNarrationBrief(
+  config: HTMLConfig,
+  sceneDurations: number[],
+): NarrationBriefItem[] {
+  const items: NarrationBriefItem[] = [];
+  let cursor = 0;
+
+  for (let i = 0; i < config.scenes.length; i++) {
+    const scene = config.scenes[i];
+    const dur = sceneDurations[i] ?? 3000;
+    const text = scene.elementTexts
+      .filter(t => t.length > 3) // skip tiny fragments
+      .join('. ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    if (text.length > 5) {
+      items.push({
+        sceneIndex: i,
+        text,
+        startMs: cursor,
+        endMs: cursor + dur,
+      });
+    }
+    cursor += dur;
+  }
+
+  return items;
+}
+
 // ─── Resolve design tokens from parsed config ───────────────
 
 export function resolveTokensFromHTMLConfig(
