@@ -56,7 +56,7 @@ Due componenti che lavorano insieme:
    - **heimdall** — Sicurezza AI-specific: OWASP, credential detection, BaaS audit, diff-aware analysis
    - **ghostwriter** — SEO tradizionale + GEO (AI search) + copywriting persuasivo
    - **baptist** — CRO orchestrator: diagnosi conversioni (Fogg B=MAP), A/B test design, funnel analysis, coordina Ghostwriter e Seurat
-   - **orson** — Generazione video + demo recording con audio integrato (CSS animations + Playwright + FFmpeg + Edge-TTS)
+   - **orson** — Generazione video + demo recording con audio integrato (frame-addressed animations via interpolate/spring + Playwright + FFmpeg + Edge-TTS)
    - **scribe** — Creazione e editing documenti Office (xlsx, docx, pptx) e PDF, routing automatico per tipo file
    - **forge** — Meta-skill: creazione, manutenzione, audit e miglioramento skill Claude Code
 
@@ -522,7 +522,7 @@ Generazione video programmatica + demo recording. Segue un workflow cinematograf
 
 **Workflow:** Claude fa lo sceneggiatore (analizza source, struttura scene, scrive copy con ghostwriter), poi autogen genera HTML, director assegna animazioni, capture engine produce MP4 con audio.
 
-**Caratteristiche:** 132 animazioni, 4 modi (safe/chaos/hybrid/cocomelon), timing automatico, integrazione seurat + ghostwriter, director system (content-aware animation). Audio integrato: selezione tracce automatica, TTS narration (Edge-TTS), ducking, mixing FFmpeg. Demo mode: Playwright recording con zoom, cursor animato, narrazione, sottotitoli WebVTT.
+**Caratteristiche:** Architettura frame-addressed (v3) con `interpolate()`, `spring()`, `window.__setFrame(n)`. 136+ animazioni (property-based interpolation maps), 4 modi (safe/chaos/hybrid/cocomelon), content-driven timing, integrazione seurat + ghostwriter, director system (content-aware animation). Audio integrato: selezione tracce automatica, TTS narration (Edge-TTS), ducking, mixing FFmpeg. Demo mode: Playwright recording con zoom, cursor animato, narrazione, sottotitoli WebVTT.
 
 **Requisiti di sistema:** FFmpeg installato (`ffmpeg` nel PATH). Opzionale: `pip install edge-tts` per narrazione TTS.
 
