@@ -14,11 +14,13 @@ Un framework operativo per lavorare con Claude su progetti software, con skill s
 | **Esistente**, solo backend | → [Progetto esistente](#progetto-esistente-con-codice-già-scritto) |
 | **Esistente**, con UI | → [Progetto esistente](#progetto-esistente-con-codice-già-scritto) + [con UI](#progetto-esistente-con-ui) |
 
-### Setup minimo (copia e incolla)
+### Setup minimo
 
-**1. Copia il framework** nella root del progetto:
-- `CLAUDE.md`
-- `.claude/` (intera cartella)
+**1. Installa il framework** nel tuo progetto:
+```bash
+./framework.sh /path/to/tuo-progetto
+```
+Lo script copia `CLAUDE.md` + `.claude/`, crea `settings.local.json`, directory output e aggiorna `.gitignore`.
 
 **2. Popola il registry** (se progetto esistente):
 ```
@@ -41,6 +43,21 @@ Salta le sezioni che non si applicano.
 /seurat extract
 /seurat analyze-project
 ```
+
+### Aggiornamento
+
+Per aggiornare il framework mantenendo i tuoi dati (registry, decisions, specs, session-notes):
+```bash
+cd ~/path/to/framework-source
+git pull
+./framework.sh /path/to/tuo-progetto
+```
+
+Lo script:
+- Sovrascrive i file framework (skill, workflow, checklist, ecc.)
+- Preserva i file utente (registry, decisions, request-log, specs, session-notes, ecc.)
+- Crea un backup dei file sovrascritti in `.framework-backup-[timestamp]/`
+- Usa `--dry-run` per vedere le modifiche senza applicarle
 
 ---
 
@@ -154,9 +171,10 @@ progetto/
 
 ### Nuovo progetto (senza codice esistente)
 
-1. Copia nella root del progetto:
-   - `CLAUDE.md`
-   - `.claude/` (intera cartella)
+1. Installa il framework:
+   ```bash
+   ./framework.sh /path/to/tuo-progetto
+   ```
 
 2. **Configura le skill in base al tipo di progetto:**
 
@@ -189,9 +207,10 @@ Analizza lo stack (Node, Python, Go, etc.) e genera pattern specifici.
 
 ### Progetto esistente (con codice già scritto)
 
-1. Copia nella root del progetto:
-   - `CLAUDE.md`
-   - `.claude/` (intera cartella)
+1. Installa il framework:
+   ```bash
+   ./framework.sh /path/to/tuo-progetto
+   ```
 
 2. **Obbligatorio:** Fai popolare il registry:
 

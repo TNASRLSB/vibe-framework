@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
 #
-# framework-update.sh — Update the Claude Development Framework in a target project
+# framework.sh — Install or update the Claude Development Framework in a target project
 #
-# Usage: ./framework-update.sh /path/to/target/project [--dry-run]
+# Usage: ./framework.sh /path/to/target/project [--dry-run]
 #
-# Framework files (.claude/) are overwritten.
-# User data files (registry, decisions, etc.) are preserved if they exist.
-# A backup of overwritten files is created before any changes.
+# Install (no .claude/ in target): copies everything, creates settings, output dirs, .gitignore
+# Update (.claude/ exists in target): overwrites framework files, preserves user data, creates backup
 #
 
 set -euo pipefail
@@ -18,9 +17,35 @@ PROTECTED_FILES=(
   ".claude/docs/decisions.md"
   ".claude/docs/glossary.md"
   ".claude/docs/request-log.md"
+  ".claude/docs/checklist.md"
   ".claude/docs/bugs/bugs.md"
   ".claude/settings.local.json"
   ".claude/morpheus/config.json"
+)
+
+OUTPUT_DIRS=(
+  ".emmet"
+  ".forge"
+  ".seurat"
+  ".orson"
+  ".scribe"
+  ".ghostwriter"
+)
+
+GITIGNORE_ENTRIES=(
+  ".claude/settings.local.json"
+  ".claude/docs/session-notes/*.md"
+  "!.claude/docs/session-notes/.gitkeep"
+  ".emmet/"
+  ".forge/"
+  ".seurat/"
+  ".orson/"
+  ".scribe/"
+  ".ghostwriter/"
+  ".heimdall/state.json"
+  ".heimdall/findings.json"
+  "node_modules/"
+  "__pycache__/"
 )
 
 PROTECTED_DIRS=(
@@ -84,6 +109,13 @@ if [ "$SOURCE_DIR" = "$TARGET_DIR" ]; then
   exit 1
 fi
 
+# --- Detect install vs update ---
+
+IS_INSTALL=false
+if [ ! -d "$TARGET_DIR/.claude" ]; then
+  IS_INSTALL=true
+fi
+
 # --- Counters ---
 
 updated=0
@@ -139,7 +171,7 @@ backup_file() {
       mkdir -p "$backup_dir"
       cp "$target_file" "$backup_file"
     fi
-    ((backed_up++))
+    backed_up=$((backed_up + 1))
   fi
 }
 
@@ -230,17 +262,17 @@ scan_changes() {
     local target_file="$TARGET_DIR/$rel_path"
 
     if is_framework_in_protected_dir "$rel_path"; then
-      ((scan_updated++))
+      scan_updated=$((scan_updated + 1))
       [ "$mode" = "print" ] && echo "  OVERWRITE  $rel_path"
       continue
     fi
 
     if is_in_protected_dir "$rel_path"; then
       if [ -f "$target_file" ]; then
-        ((scan_preserved++))
+        scan_preserved=$((scan_preserved + 1))
         [ "$mode" = "print" ] && echo "  PRESERVE   $rel_path"
       else
-        ((scan_initialized++))
+        scan_initialized=$((scan_initialized + 1))
         [ "$mode" = "print" ] && echo "  INIT       $rel_path"
       fi
       continue
@@ -248,20 +280,20 @@ scan_changes() {
 
     if is_protected_file "$rel_path"; then
       if [ -f "$target_file" ]; then
-        ((scan_preserved++))
+        scan_preserved=$((scan_preserved + 1))
         [ "$mode" = "print" ] && echo "  PRESERVE   $rel_path"
       else
-        ((scan_initialized++))
+        scan_initialized=$((scan_initialized + 1))
         [ "$mode" = "print" ] && echo "  INIT       $rel_path"
       fi
       continue
     fi
 
     if [ -f "$target_file" ]; then
-      ((scan_updated++))
+      scan_updated=$((scan_updated + 1))
       [ "$mode" = "print" ] && echo "  OVERWRITE  $rel_path"
     else
-      ((scan_initialized++))
+      scan_initialized=$((scan_initialized + 1))
       [ "$mode" = "print" ] && echo "  INIT       $rel_path"
     fi
 
@@ -271,13 +303,13 @@ scan_changes() {
   for root_file in CLAUDE.md .claude-project; do
     if [ -f "$SOURCE_DIR/$root_file" ]; then
       if [ "$root_file" = "CLAUDE.md" ] && [ "$CLAUDE_MD_ACTION" = "keep" ]; then
-        ((scan_preserved++))
+        scan_preserved=$((scan_preserved + 1))
         [ "$mode" = "print" ] && echo "  KEEP       $root_file (user choice)"
       elif [ -f "$TARGET_DIR/$root_file" ]; then
-        ((scan_updated++))
+        scan_updated=$((scan_updated + 1))
         [ "$mode" = "print" ] && echo "  OVERWRITE  $root_file"
       else
-        ((scan_initialized++))
+        scan_initialized=$((scan_initialized + 1))
         [ "$mode" = "print" ] && echo "  INIT       $root_file"
       fi
     fi
@@ -291,8 +323,13 @@ scan_changes() {
 # --- Main ---
 
 echo ""
-echo "Claude Development Framework — Update"
-echo "======================================"
+if [ "$IS_INSTALL" = true ]; then
+  echo "Claude Development Framework — Install"
+  echo "======================================="
+else
+  echo "Claude Development Framework — Update"
+  echo "======================================"
+fi
 echo "Source: $SOURCE_DIR"
 echo "Target: $TARGET_DIR"
 
@@ -300,9 +337,11 @@ if [ "$DRY_RUN" = true ]; then
   echo "Mode:   DRY RUN (no files will be modified)"
 fi
 
-# Step 0: Safety checks
-check_git_status
-check_claude_md
+# Step 0: Safety checks (skip git/CLAUDE.md checks on fresh install)
+if [ "$IS_INSTALL" = false ]; then
+  check_git_status
+  check_claude_md
+fi
 
 echo ""
 
@@ -357,31 +396,31 @@ while IFS= read -r -d '' file; do
     backup_file "$rel_path"
     mkdir -p "$target_dir"
     cp "$file" "$target_file"
-    ((updated++))
+    updated=$((updated + 1))
     continue
   fi
 
   # Skip user files in protected directories (don't overwrite user specs, session notes)
   if is_in_protected_dir "$rel_path"; then
     if [ -f "$target_file" ]; then
-      ((preserved++))
+      preserved=$((preserved + 1))
       continue
     fi
     # New file in protected dir — copy it
     mkdir -p "$target_dir"
     cp "$file" "$target_file"
-    ((initialized++))
+    initialized=$((initialized + 1))
     continue
   fi
 
   # Protected files: skip if exists, initialize if missing
   if is_protected_file "$rel_path"; then
     if [ -f "$target_file" ]; then
-      ((preserved++))
+      preserved=$((preserved + 1))
     else
       mkdir -p "$target_dir"
       cp "$file" "$target_file"
-      ((initialized++))
+      initialized=$((initialized + 1))
     fi
     continue
   fi
@@ -390,7 +429,7 @@ while IFS= read -r -d '' file; do
   backup_file "$rel_path"
   mkdir -p "$target_dir"
   cp "$file" "$target_file"
-  ((updated++))
+  updated=$((updated + 1))
 
 done < <(find "$SOURCE_DIR/.claude" -type f -print0)
 
@@ -398,18 +437,18 @@ done < <(find "$SOURCE_DIR/.claude" -type f -print0)
 for root_file in CLAUDE.md .claude-project; do
   if [ -f "$SOURCE_DIR/$root_file" ]; then
     if [ "$root_file" = "CLAUDE.md" ] && [ "$CLAUDE_MD_ACTION" = "keep" ]; then
-      ((preserved++))
+      preserved=$((preserved + 1))
       echo "  Kept CLAUDE.md (user choice)"
       continue
     fi
     backup_file "$root_file"
     cp "$SOURCE_DIR/$root_file" "$TARGET_DIR/$root_file"
-    ((updated++))
+    updated=$((updated + 1))
   fi
 done
 
 # Step 3: Ensure output directories exist
-for dir in .emmet .forge; do
+for dir in "${OUTPUT_DIRS[@]}"; do
   if [ ! -d "$TARGET_DIR/$dir" ]; then
     mkdir -p "$TARGET_DIR/$dir"
     echo "  Created $dir/"
@@ -422,7 +461,38 @@ if [ ! -d "$TARGET_DIR/.claude/morpheus" ]; then
   echo "  Created .claude/morpheus/"
 fi
 
-# Step 5: Clean up empty backup dir
+# Step 5: Create settings.local.json from template if missing
+if [ ! -f "$TARGET_DIR/.claude/settings.local.json" ] && [ -f "$SOURCE_DIR/.claude/settings.template.json" ]; then
+  cp "$SOURCE_DIR/.claude/settings.template.json" "$TARGET_DIR/.claude/settings.local.json"
+  echo "  Created .claude/settings.local.json (from template)"
+fi
+
+# Step 6: Update target .gitignore
+gitignore_file="$TARGET_DIR/.gitignore"
+if [ ! -f "$gitignore_file" ]; then
+  touch "$gitignore_file"
+  echo "  Created .gitignore"
+fi
+
+gitignore_added=0
+for entry in "${GITIGNORE_ENTRIES[@]}"; do
+  if ! grep -qxF "$entry" "$gitignore_file" 2>/dev/null; then
+    echo "$entry" >> "$gitignore_file"
+    gitignore_added=$((gitignore_added + 1))
+  fi
+done
+if [ "$gitignore_added" -gt 0 ]; then
+  echo "  Added $gitignore_added entries to .gitignore"
+fi
+
+# Step 7: Check jq (required by Morpheus)
+if ! command -v jq &>/dev/null; then
+  echo ""
+  echo "  WARNING: jq not found. Morpheus context awareness requires jq."
+  echo "  Install it: sudo apt install jq (Debian/Ubuntu) or brew install jq (macOS)"
+fi
+
+# Step 8: Clean up empty backup dir
 if [ -d "$BACKUP_DIR" ] && [ -z "$(ls -A "$BACKUP_DIR" 2>/dev/null)" ]; then
   rmdir "$BACKUP_DIR"
   backed_up=0
@@ -439,4 +509,28 @@ if [ "$backed_up" -gt 0 ]; then
   echo ""
   echo "  Backup: $BACKUP_DIR ($backed_up files)"
   echo "  To restore: cp -r $BACKUP_DIR/.claude/ $TARGET_DIR/.claude/"
+fi
+
+# --- Post-install instructions ---
+
+if [ "$IS_INSTALL" = true ]; then
+  echo ""
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "  Next steps:"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo ""
+  echo "  1. Open Claude Code in your project"
+  echo ""
+  echo "  2. Populate the registry (existing projects):"
+  echo "     Analizza questo codebase e popola .claude/docs/registry.md"
+  echo ""
+  echo "  3. Generate stack-specific patterns:"
+  echo "     /adapt-framework"
+  echo ""
+  echo "  4. (Optional) For projects with UI:"
+  echo "     /seurat extract"
+  echo "     /seurat analyze-project"
+  echo ""
+  echo "  Full docs: .claude/README.md"
+  echo ""
 fi

@@ -10,14 +10,7 @@ This is my memory. I update it as I learn. I check it before making claims.
 
 | Name | Location | Purpose |
 |------|----------|---------|
-| emmet | `.claude/skills/emmet/` | Testing, QA, functional mapping, tech debt audit. Comandi: `/emmet map`, `/emmet test` (`--static`/`--browser`), `/emmet report`, `/emmet techdebt`, `/emmet checklist`, `/adapt-framework`. Dual backend: Playwright + BrowserMCP. Visual QA. Integrazione Heimdall |
-| seurat | `.claude/skills/seurat/` | UI design system generation, wireframing, page layout |
-| heimdall | `.claude/skills/heimdall/` | AI-specific security analysis |
-| ghostwriter | `.claude/skills/ghostwriter/` | SEO + GEO optimization, persuasive copywriting |
-| orson | `.claude/skills/orson/` | Video + audio production |
-| baptist | `.claude/skills/baptist/` | CRO orchestrator |
-| scribe | `.claude/skills/scribe/` | Document creation: xlsx, docx, pptx, pdf |
-| forge | `.claude/skills/forge/` | Meta-skill: creazione, manutenzione, miglioramento skill |
+| | | |
 
 ---
 
@@ -25,7 +18,6 @@ This is my memory. I update it as I learn. I check it before making claims.
 
 | Name | Type | Location | Purpose |
 |------|------|----------|---------|
-| morpheus | System | `.claude/morpheus/` | Context awareness: statusLine sensor + PreToolUse injector + SessionStart reset. 3 tiers (60/80/93%), jq-only, flag files in /tmp |
 | | | | |
 
 ---

@@ -1,0 +1,65 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wc:*)",
+      "Bash(find:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git config:*)",
+      "Bash(git push:*)",
+      "Bash(git status:*)",
+      "Bash(gh auth status:*)",
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(test:*)",
+      "Bash(du -sh:*)",
+      "Bash(pkill:*)",
+      "Bash(npx tsx:*)",
+      "Bash(node -e:*)",
+      "Skill(orson)",
+      "Skill(orson:*)",
+      "Skill(ghostwriter)",
+      "Skill(ghostwriter:*)",
+      "Skill(forge)",
+      "Skill(forge:*)",
+      "Skill(emmet)",
+      "Skill(emmet:*)",
+      "Skill(heimdall)",
+      "Skill(heimdall:*)",
+      "Skill(seurat)",
+      "Skill(seurat:*)",
+      "Skill(baptist)",
+      "Skill(baptist:*)",
+      "Skill(scribe)",
+      "Skill(scribe:*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/morpheus/injector.sh"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/morpheus/reset.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "$CLAUDE_PROJECT_DIR/.claude/morpheus/sensor.sh"
+  }
+}
