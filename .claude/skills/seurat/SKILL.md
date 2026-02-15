@@ -69,6 +69,15 @@ Apply visual polish:
 - [ ] Motion: staggered reveals, eased transitions
 - [ ] Details: micro-interactions, hover states
 
+### Phase 4.5: THE MANDATE
+Pre-delivery qualitative gate (see full version in [validation.md](validation.md)):
+1. **Swap Test** — Would it look equally "right" with any font/layout? If yes → generic
+2. **Squint Test** — Blur mentally: are 3 hierarchy levels distinguishable?
+3. **Signature Test** — Name 3 specific design choices a generic wouldn't make
+4. **Token Test** — Do CSS property names reflect the domain?
+
+If any test fails: return to Phase 3 and rebuild the generic part (don't patch).
+
 ---
 
 ## Primary Commands
@@ -78,6 +87,11 @@ Apply visual polish:
 Generate a design system from scratch. Unifies the old generate + establish into one flow.
 
 **Process:**
+0. **Intent Exploration** (skip in Chaos mode, or if user provides type/industry/target directly, or if `.seurat/tokens.css` exists):
+   - **Chi e cosa?** — Chi usa il prodotto e cosa deve raggiungere? (una frase)
+   - **Mondo visivo?** — 3+ associazioni visive (es: "Bloomberg terminal, fogli Excel, grafici scuri")
+   - **Cosa NON deve sembrare?** — 2+ anti-riferimenti
+   - Risposte: Q1 guida selezione profilo, Q2 salvato come commento in tokens.css (`/* Visual world: ... */`), Q3 aggiunto come anti-pattern locale per la sessione
 1. Ask for: project type, industry, target audience, generation mode (safe/chaos/hybrid)
 2. Load profiles from [matrices/](matrices/)
 3. Calculate combined weights via [generation/combination-logic.md](generation/combination-logic.md)
@@ -85,7 +99,7 @@ Generate a design system from scratch. Unifies the old generate + establish into
 5. Check against [generation/anti-patterns.md](generation/anti-patterns.md)
 6. (Hybrid only) Apply Factor X from [factor-x/](factor-x/)
 7. Select wireframe variants per archetype via [wireframes/variant-selection.md](wireframes/variant-selection.md)
-8. Generate `.seurat/tokens.css` with all CSS custom properties
+8. Generate `.seurat/tokens.css` with all CSS custom properties (include Intent comments at top)
 9. Generate `.seurat/design-system.html` — self-contained preview page showing all elements
 
 **Modes:**
@@ -288,16 +302,16 @@ Extracted reusable patterns.
 
 ## Integration with Baptist (CRO)
 
-Quando Baptist identifica problemi UI/UX che impattano le conversioni, delega a Seurat:
+When Baptist identifies UI/UX problems impacting conversions, it delegates to Seurat:
 
-| Baptist identifica... | Seurat implementa... |
+| Baptist identifies... | Seurat implements... |
 |---|---|
-| Form con troppi campi / layout confuso | Redesign form: single column, field reduction, multi-step |
-| CTA poco visibile / basso contrasto | Redesign CTA: sizing, contrast, whitespace, positioning |
-| Popup intrusivo / mobile-unfriendly | Redesign popup: sizing, close button, mobile slide-up |
-| Visual hierarchy rotta | Ristrutturazione layout con gerarchia chiara |
-| Paywall screen inefficace | Redesign paywall: value demonstration, plan comparison |
-| Mobile experience degradata | Mobile-specific layout optimization |
+| Form with too many fields / confusing layout | Redesign form: single column, field reduction, multi-step |
+| CTA low visibility / low contrast | Redesign CTA: sizing, contrast, whitespace, positioning |
+| Intrusive / mobile-unfriendly popup | Redesign popup: sizing, close button, mobile slide-up |
+| Broken visual hierarchy | Layout restructure with clear hierarchy |
+| Ineffective paywall screen | Redesign paywall: value demonstration, plan comparison |
+| Degraded mobile experience | Mobile-specific layout optimization |
 
 ---
 

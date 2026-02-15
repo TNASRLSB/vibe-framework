@@ -25,6 +25,13 @@ Tre modalità per generare UI, dal prevedibile all'imprevedibile.
 ### Processo
 
 ```
+0. INTENT EXPLORATION (skip se user fornisce già type/industry/target, o se tokens.css esiste)
+   Poni 3 domande:
+   - Chi usa il prodotto e cosa deve raggiungere? (una frase)
+   - In che mondo visivo vive? (3+ associazioni)
+   - Cosa NON deve sembrare? (2+ anti-riferimenti)
+   → Q1 guida selezione profilo, Q2 → commento in tokens.css, Q3 → anti-pattern locale
+
 1. INPUT
    User fornisce:
    - Type (es: SaaS)
@@ -129,6 +136,9 @@ Lo stesso seed produce la stessa estrazione random.
 ### Processo
 
 ```
+0. INTENT EXPLORATION (skip se user fornisce già type/industry/target, o se tokens.css esiste)
+   Come Safe mode Step 0: 3 domande (chi/cosa, mondo visivo, anti-riferimenti)
+
 1. INPUT
    User fornisce:
    - Type, Industry, Target (come Safe mode)

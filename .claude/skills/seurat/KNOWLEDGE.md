@@ -27,6 +27,26 @@ Breakpoint conventions are defined in `wireframes/primitives.md`.
 
 ---
 
+## The Mandate — Design Quality Gate
+
+The Mandate is a pre-delivery qualitative check that prevents generic UI from reaching users. It runs after Phase 4 (REFINE) and before Visual QA.
+
+### The 4 Tests
+
+1. **SWAP TEST** — Change typeface and layout mentally. If output looks equally "right" with any combination, it's generic. Typeface and layout must be *chosen*, not interchangeable.
+
+2. **SQUINT TEST** — Blur your vision mentally. If visual hierarchy disappears, structure is missing. With blurred vision, 3 hierarchy levels must be distinguishable.
+
+3. **SIGNATURE TEST** — Name 3 specific elements that make this output recognizable. If you can't, it's generic. Example: "mono font for data, border-left accent on cards, asymmetric header spacing."
+
+4. **TOKEN TEST** — Read CSS custom property names. If they sound generic (`--color-primary`, `--spacing-md`), they don't belong to the product. Names should reflect the domain. Example: `--color-chart-positive`, `--spacing-data-cell`, `--radius-metric-card`.
+
+**If a test fails:** return to Phase 3 (BUILD) and rebuild the generic part. Don't patch — reconstruct the decision.
+
+See `validation.md` for full version with examples.
+
+---
+
 ## Resources Directory Guide
 
 For detailed documentation, explore the subdirectories:

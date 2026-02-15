@@ -12,7 +12,7 @@ export interface CaptureOptions {
   fps: number;
   totalFrames: number;
   htmlPath: string;
-  /** Frame capture format: 'jpeg' is ~2x faster than 'png' (default: 'jpeg') */
+  /** Frame capture format: 'png' is lossless (default), 'jpeg' is ~2x faster but lossy */
   captureFormat?: CaptureFormat;
   onFrame?: (frame: number, total: number) => void;
 }
@@ -72,7 +72,7 @@ export async function captureFrames(
       });
     }, timeMs);
 
-    const fmt = opts.captureFormat ?? 'jpeg';
+    const fmt = opts.captureFormat ?? 'png';
     const buffer = await session.page.screenshot(
       fmt === 'jpeg' ? { type: 'jpeg', quality: 100 } : { type: 'png' },
     );

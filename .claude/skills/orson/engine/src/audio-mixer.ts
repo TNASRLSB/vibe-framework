@@ -19,20 +19,37 @@ interface TrackInput {
 
 // ─── FFmpeg Runner ──────────────────────────────────────────
 
-function ffmpeg(args: string[]): Promise<void> {
+const FFMPEG_TIMEOUT_MS = 120_000; // 120s default timeout
+
+function ffmpeg(args: string[], timeoutMs: number = FFMPEG_TIMEOUT_MS): Promise<void> {
   return new Promise((resolve, reject) => {
     const proc = spawn('ffmpeg', ['-y', ...args], { stdio: ['pipe', 'pipe', 'pipe'] });
 
     let stderr = '';
+    let settled = false;
     proc.stderr?.on('data', (data: Buffer) => { stderr += data.toString(); });
 
+    const timer = setTimeout(() => {
+      if (!settled) {
+        settled = true;
+        proc.kill('SIGKILL');
+        reject(new Error(`[audio] FFmpeg timed out after ${timeoutMs / 1000}s`));
+      }
+    }, timeoutMs);
+
     proc.on('close', (code) => {
+      clearTimeout(timer);
+      if (settled) return;
+      settled = true;
       if (code === 0) resolve();
-      else reject(new Error(`FFmpeg exited with code ${code}: ${stderr.slice(-500)}`));
+      else reject(new Error(`[audio] FFmpeg exited with code ${code}: ${stderr.slice(-500)}`));
     });
 
     proc.on('error', (err) => {
-      reject(new Error(`FFmpeg spawn error: ${err.message}`));
+      clearTimeout(timer);
+      if (settled) return;
+      settled = true;
+      reject(new Error(`[audio] FFmpeg spawn error: ${err.message}`));
     });
   });
 }
@@ -114,13 +131,16 @@ export async function trimAndLoop(
 /**
  * Apply volume ducking to music track based on narration timing.
  * Uses FFmpeg volume filter with smooth linear ramps via clip().
- * Fade-out (300ms) before voice starts, fade-in (500ms) after voice ends.
+ * fadeInSec: ramp down before voice (default 0.3s).
+ * fadeOutSec: ramp up after voice (default 0.5s).
  */
 export async function applyDucking(
   musicPath: string,
   events: DuckingEvent[],
   normalGain: number,
   outputPath: string,
+  fadeInSec: number = 0.3,
+  fadeOutSec: number = 0.5,
 ): Promise<void> {
   if (events.length === 0) {
     await ffmpeg(['-i', musicPath, '-c:a', 'copy', outputPath]);
@@ -148,23 +168,23 @@ export async function applyDucking(
     return;
   }
 
-  const FADE_IN_SEC = 0.3;   // ramp down before voice
-  const FADE_OUT_SEC = 0.5;  // ramp up after voice
-
   // Build smooth ramp expressions using clip() for each duck region
   // di = min(clip((t - fadeInStart) / FADE_IN, 0, 1), clip((fadeOutEnd - t) / FADE_OUT, 0, 1))
   // gain = normalGain + (duckGain - normalGain) * max(d1, d2, ..., dN)
   const regionExprs = duckRegions.map(r => {
-    const fadeInStart = r.startSec - FADE_IN_SEC;
-    const fadeOutEnd = r.endSec + FADE_OUT_SEC;
-    return `min(clip((t-${fadeInStart.toFixed(3)})/${FADE_IN_SEC},0,1),clip((${fadeOutEnd.toFixed(3)}-t)/${FADE_OUT_SEC},0,1))`;
+    const fadeInStart = Math.max(0, r.startSec - fadeInSec);
+    const fadeOutEnd = r.endSec + fadeOutSec;
+    const fadeInDur = Math.max(0.01, r.startSec - fadeInStart) || fadeInSec;
+    return `min(clip((t-${fadeInStart.toFixed(3)})/${fadeInDur.toFixed(3)},0,1),clip((${fadeOutEnd.toFixed(3)}-t)/${fadeOutSec},0,1))`;
   });
 
   // Use the first region's gain (typically uniform across all regions)
   const duckGain = duckRegions[0].gain;
-  const maxExpr = regionExprs.length === 1
-    ? regionExprs[0]
-    : `max(${regionExprs.join(',')})`;
+  // FFmpeg max() only takes 2 args — nest for 3+ regions
+  let maxExpr = regionExprs[0];
+  for (let i = 1; i < regionExprs.length; i++) {
+    maxExpr = `max(${maxExpr},${regionExprs[i]})`;
+  }
   const expr = `${normalGain}+(${duckGain}-${normalGain})*${maxExpr}`;
 
   await ffmpeg([
@@ -296,6 +316,24 @@ export async function mixTracks(
     ...inputs,
     '-filter_complex', filterComplex,
     '-map', '[out]',
+    '-q:a', '2',
+    outputPath,
+  ]);
+}
+
+/**
+ * Normalize audio loudness to broadcast/streaming standards.
+ * Target: -14 LUFS (YouTube/streaming), true peak -1.0 dBTP.
+ */
+export async function normalizeLoudness(
+  audioPath: string,
+  outputPath: string,
+  targetLUFS: number = -14,
+  truePeak: number = -1.0,
+): Promise<void> {
+  await ffmpeg([
+    '-i', audioPath,
+    '-af', `loudnorm=I=${targetLUFS}:TP=${truePeak}:LRA=11`,
     '-q:a', '2',
     outputPath,
   ]);

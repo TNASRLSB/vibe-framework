@@ -121,9 +121,9 @@ function getNarrationDuration(
     return element.audio_duration_ms;
   }
 
-  // Fallback: estimate ~150ms per word
+  // Fallback: estimate ~400ms per word (= 150 WPM, natural speech pace)
   const wordCount = step.narration.split(/\s+/).length;
-  return wordCount * 150;
+  return wordCount * 400;
 }
 
 function getActionDuration(step: DemoStep): number {

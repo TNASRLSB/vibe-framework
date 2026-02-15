@@ -162,14 +162,27 @@ export interface NarrationBriefItem {
   endMs: number;
 }
 
+export interface NarrationBriefOptions {
+  /** Voice preset ID from voice-presets.json (e.g. 'explainer', 'promo') */
+  voicePreset?: string;
+  /** Language code for locale voice override (e.g. 'it-IT') */
+  lang?: string;
+  /** Target words-per-minute for speech rate control */
+  targetWpm?: number;
+}
+
 /**
  * Extract narration-ready text from an HTMLConfig.
  * Combines heading + body text from each scene into a narration brief
  * that can be fed to narration_generator.py.
+ *
+ * Options allow specifying a voice preset, language, and WPM target
+ * for the `/orson create` pipeline.
  */
 export function extractNarrationBrief(
   config: HTMLConfig,
   sceneDurations: number[],
+  options?: NarrationBriefOptions,
 ): NarrationBriefItem[] {
   const items: NarrationBriefItem[] = [];
   let cursor = 0;

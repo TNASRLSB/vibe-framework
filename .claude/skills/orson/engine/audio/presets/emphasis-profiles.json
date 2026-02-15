@@ -3,43 +3,43 @@
 
   "profiles": {
     "heading": {
-      "rate": "-15%",
+      "rate": "-25%",
       "pitch": "+5Hz",
       "suffix": "!!",
       "description": "Slower, higher pitch for emphasis on headlines"
     },
     "subheading": {
-      "rate": "-10%",
+      "rate": "-20%",
       "pitch": "+3Hz",
       "suffix": "!",
       "description": "Moderate emphasis for secondary headings"
     },
     "text": {
-      "rate": "+0%",
+      "rate": "-10%",
       "pitch": "+0Hz",
       "suffix": "",
-      "description": "Normal reading speed for body text"
+      "description": "Natural reading speed for body text (~150 WPM)"
     },
     "button": {
-      "rate": "-10%",
+      "rate": "-20%",
       "pitch": "+8Hz",
       "suffix": "!!",
       "description": "Call-to-action emphasis"
     },
     "cta": {
-      "rate": "-15%",
+      "rate": "-25%",
       "pitch": "+10Hz",
       "suffix": "!!",
       "description": "Strong emphasis for final CTA"
     },
     "stat": {
-      "rate": "-5%",
+      "rate": "-15%",
       "pitch": "+2Hz",
       "suffix": "",
       "description": "Slight emphasis for statistics"
     },
     "quote": {
-      "rate": "-5%",
+      "rate": "-15%",
       "pitch": "-2Hz",
       "suffix": "",
       "description": "Slightly slower, lower pitch for quotes"
@@ -48,22 +48,22 @@
 
   "styles": {
     "enthusiastic": {
-      "base_rate": "+5%",
+      "base_rate": "-5%",
       "base_pitch": "+3Hz",
-      "description": "Upbeat, energetic delivery"
+      "description": "Upbeat, energetic delivery (still within natural pace)"
     },
     "neutral": {
-      "base_rate": "+0%",
+      "base_rate": "-10%",
       "base_pitch": "+0Hz",
-      "description": "Standard professional delivery"
+      "description": "Standard professional delivery (~150 WPM)"
     },
     "calm": {
-      "base_rate": "-10%",
+      "base_rate": "-20%",
       "base_pitch": "-2Hz",
       "description": "Relaxed, measured delivery"
     },
     "dramatic": {
-      "base_rate": "-15%",
+      "base_rate": "-25%",
       "base_pitch": "+0Hz",
       "description": "Slow, impactful delivery"
     }

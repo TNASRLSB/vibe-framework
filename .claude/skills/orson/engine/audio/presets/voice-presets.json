@@ -1,0 +1,66 @@
+{
+  "presets": {
+    "tech-demo": {
+      "voice": "en-US-GuyNeural",
+      "style": "neutral",
+      "wpm": 150,
+      "prosody": { "rate": "-10%", "pitch": "+0Hz" },
+      "rationale": "Male mid-pitch → perceived competence (Nass 1997, Dou 2022). 150 WPM: balanced for technical content."
+    },
+    "explainer": {
+      "voice": "en-US-AriaNeural",
+      "style": "neutral",
+      "wpm": 140,
+      "prosody": { "rate": "-12%", "pitch": "+0Hz" },
+      "rationale": "Female → perceived trustworthiness in explainer video (CXL/Labay n=202). 140 WPM: standard explainer pace, allows complex content absorption."
+    },
+    "promo": {
+      "voice": "en-US-AriaNeural",
+      "style": "enthusiastic",
+      "wpm": 160,
+      "prosody": { "rate": "-5%", "pitch": "+2Hz" },
+      "rationale": "Female enthusiastic → warmth + engagement (Reinares-Lara 2016). 160 WPM: upper comfortable range for energy (Rodero 2016)."
+    },
+    "tutorial": {
+      "voice": "en-US-GuyNeural",
+      "style": "calm",
+      "wpm": 130,
+      "prosody": { "rate": "-20%", "pitch": "-1Hz" },
+      "rationale": "Male calm → authority without intimidation (Nass 1997). 130 WPM: slower pace for step-by-step comprehension."
+    },
+    "sales": {
+      "voice": "en-US-GuyNeural",
+      "style": "neutral",
+      "wpm": 150,
+      "prosody": { "rate": "-10%", "pitch": "+0Hz" },
+      "rationale": "Male controlled pitch → sales performance (Du et al. 2022, IEEE). 150 WPM: balanced for persuasive content."
+    },
+    "onboarding": {
+      "voice": "en-US-AriaNeural",
+      "style": "calm",
+      "wpm": 130,
+      "prosody": { "rate": "-20%", "pitch": "-2Hz" },
+      "rationale": "Female calm → empathy, anxiety reduction (convergence healthcare studies). 130 WPM: slow for comfort."
+    }
+  },
+  "locales": {
+    "it-IT": {
+      "tech-demo": { "voice": "it-IT-DiegoNeural" },
+      "explainer": { "voice": "it-IT-ElsaNeural" },
+      "promo": { "voice": "it-IT-ElsaNeural" },
+      "tutorial": { "voice": "it-IT-DiegoNeural" },
+      "sales": { "voice": "it-IT-DiegoNeural" },
+      "onboarding": { "voice": "it-IT-IsabellaNeural" }
+    }
+  },
+  "speechRateGuidelines": {
+    "source": "Rodero 2016, Media Psychology; Murphy & Castel 2022, Applied Cognitive Psychology",
+    "ranges": {
+      "slow": { "wpm": 120, "use": "dramatic, emotional, complex technical" },
+      "moderate": { "wpm": 140, "use": "explainer, tutorial, onboarding" },
+      "natural": { "wpm": 160, "use": "promo, social media, energetic" },
+      "fast": { "wpm": 180, "use": "ceiling — beyond this comprehension drops (Rodero 2016)" },
+      "max-comprehension": { "wpm": 300, "use": "2x speed ceiling — retention degrades beyond (Murphy & Castel 2022)" }
+    }
+  }
+}

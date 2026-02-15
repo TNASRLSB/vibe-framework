@@ -267,15 +267,7 @@ Available generation prompts:
 
 ### Validation System
 
-Every piece of generated content is validated against 50 measurable rules:
-
-| Category | Rules | File |
-|----------|-------|------|
-| SEO | 12 rules | `validation/rules.md` |
-| GEO | 14 rules | `validation/rules.md` |
-| Copywriting | 10 rules | `validation/rules.md` |
-| Schema | 5 rules | `validation/rules.md` |
-| Technical | 9 rules | `validation/rules.md` |
+Every piece of generated content is validated against `validation/rules.md` (50 rules across SEO, GEO, copywriting, schema, and technical categories).
 
 **Scoring thresholds:**
 - 90-100%: Production ready

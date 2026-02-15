@@ -70,7 +70,7 @@ npx tsx .claude/skills/orson/engine/src/index.ts <command> [args]
 
 ## Guided Flow (`/orson create`)
 
-The workflow follows a filmmaking process: **Pre-production → Screenplay → Storyboard → Direction → Production**.
+The workflow follows a filmmaking process: **Pre-production → Screenplay → Storyboard → Production**.
 
 Use `AskUserQuestion` for each interactive step.
 
@@ -142,6 +142,28 @@ Collect in sequence:
 - **normal** — Balanced
 - **fast** — Punchy, quick cuts
 
+#### Step 1.5: Voice
+
+Ask the user about narration:
+
+1. **Narration enabled?** — Yes (default) / No
+2. **Voice preset** — Based on intent from Step 1.4:
+   - Product launch → `promo`
+   - Feature showcase → `tech-demo`
+   - Social media promo → `promo`
+   - Explainer → `explainer`
+   - Tutorial teaser → `tutorial`
+   - Portfolio / case study → `explainer`
+
+   Suggest the preset but let the user override. Available presets: `tech-demo`, `explainer`, `promo`, `tutorial`, `sales`, `onboarding`.
+
+   Each preset specifies voice, style, speech rate (WPM), and prosody based on peer-reviewed research. See `engine/audio/presets/voice-presets.json`.
+
+3. **Language** — Auto-detect from content, confirm with user.
+   If non-English, use locale override from voice-presets.json.
+
+Include the chosen preset in the narration brief so `narration_generator.py` uses the correct voice and speech rate.
+
 ---
 
 ### PHASE 2: SCREENPLAY (Sceneggiatura)
@@ -206,77 +228,65 @@ Ask: "Happy with the screenplay? Any text changes?"
 
 ---
 
-### PHASE 3: STORYBOARD
+### PHASE 3: STORYBOARD — Write HTML Directly
 
-#### Step 3.1: Generate HTML
+Claude writes the video HTML directly — no intermediate JSON, no autogen. This produces higher quality output because Claude controls the exact layout, styling, and animations.
 
-Build the content JSON from the approved screenplay:
-```json
-{
-  "source": "manual",
-  "projectName": "...",
-  "description": "...",
-  "features": ["feature 1 as string", "feature 2 as string", ...],
-  "headings": ["scene 1 heading", "scene 2 heading", ...],
-  "heroText": "hook headline",
-  "ctaText": "CTA text",
-  "techStack": [...],
-  "colors": [...],
-  "fonts": [],
-  "images": [],
-  "sections": [
-    {"title": "scene title", "body": "scene body text"},
-    ...
-  ],
-  "raw": {}
-}
-```
+#### Step 3.0: Choose Aesthetic
 
-**CRITICAL:** The content JSON must contain ALL the scenes from the screenplay. If you wrote 8 scenes, the JSON must have enough features/sections/headings to generate 8 scenes.
+Before writing any HTML, read `references/visual-recipes.md` and decide:
 
-Run autogen:
+1. **Visual recipe** — Pick one of the 24 recipes based on brand tone and intent. Apply its palette, typography, layout, animation energy, decoratives, camera, and signature CSS holistically.
+2. **Color arc** — Pick an arc type (cold→warm, dark→bright, mono→chromatic, complementary shift, brand crescendo). Shift CSS custom properties per scene.
+3. **Camera motion** — Pick the recipe's default camera move. Wrap scene content in `<div class="cam" data-el="sN-cam">` with `overflow:hidden`.
+4. **Kinetic typography** — Pick 1-2 hero scenes for kinetic text. Use the `S()` runtime helper to split text into word/character spans, then stagger A() calls.
+5. **Secondary animation** — Add CSS `@keyframes` ambient motion per the recipe's recommendations (or none if recipe says so).
+6. **Negative space** — Follow occupancy targets per scene type. Never exceed 60% fill.
+
+Tell the user which recipe and arc you chose before writing HTML.
+
+#### Step 3.1: Write the HTML
+
+Create `<output-dir>/video.html`. Read `references/html-contract.md` for the full HTML format specification (comment syntax, scene structure, animation script, available easings/properties, format-specific CSS).
+
+#### Step 3.2: Preview & Verify
+
+Use the interactive preview to check the HTML before rendering:
 ```bash
-npx tsx .claude/skills/orson/engine/src/index.ts autogen <content.json> \
-  --format=<format> \
-  --mode=<mode> \
-  --speed=<speed> \
-  --intent=<intent> \
-  --design-system=<path-to-tokens.css> \
-  > <output-dir>/video-config.html
+npx tsx .claude/skills/orson/engine/src/index.ts render <output-dir>/video.html --preview
 ```
 
-#### Step 3.2: Verify Storyboard
+Verify:
+- All scenes display correctly (no text overflow, no overlapping elements)
+- Animations play smoothly (scrub through frames)
+- Scene transitions look good (crossfades)
+- Colors and typography match the design system
 
-Parse the generated HTML to verify it matches the screenplay:
-- Count scenes (look for `<!-- @scene name="..." -->` comments)
-- Extract headings and text from each scene div
-- Compare with approved screenplay
+If issues found, fix the HTML directly and re-preview.
 
-If autogen produced fewer scenes than the screenplay:
-- The content JSON was insufficient
-- Add more features/sections to match the screenplay
-- Re-run autogen
-
-Show the user the storyboard summary:
+Show the user a summary:
 ```
-Generated 7 scenes (21.3s total):
-  1. "Hook" (4.0s) — "What if 100 AI agents..."
-  2. "The Problem" (4.0s) — "One task. One agent..."
+Video HTML ready (7 scenes, 28.5s total):
+  1. "Hook" (3.5s) — "Frame-Perfect Video"
+  2. "The Problem" (4.5s) — "Screen Recording Is Dead"
   [...]
 ```
 
-Ask: "Storyboard matches the screenplay. Ready to render?"
+Ask: "Ready to render?"
 
 ---
 
-### PHASE 4: DIRECTION & PRODUCTION
+### PHASE 4: PRODUCTION
 
 #### Step 4.1: Render
 
-The director (internal to autogen) has already assigned animations. Now render:
-
 ```bash
-npx tsx .claude/skills/orson/engine/src/index.ts render <output-dir>/video-config.html
+npx tsx .claude/skills/orson/engine/src/index.ts render <output-dir>/video.html
+```
+
+For faster rendering on multi-core systems:
+```bash
+npx tsx .claude/skills/orson/engine/src/index.ts render <output-dir>/video.html --parallel
 ```
 
 Report output path and stats when done.
@@ -337,35 +347,6 @@ Run `engine/audio/download-library.sh` to bootstrap placeholder tracks. Replace 
 
 ---
 
-## How It Works
-
-**Filmmaking workflow:**
-
-| Phase | What happens | Who does it |
-|-------|--------------|-------------|
-| **Pre-production** | Analyze source, collect video params | Claude + user |
-| **Screenplay** | Design scene structure, write copy | Claude + ghostwriter |
-| **Storyboard** | Generate HTML, verify scenes | autogen |
-| **Direction** | Assign animations, timing, easing | director.ts (internal) |
-| **Production** | Render frame-by-frame | Playwright + FFmpeg |
-
-**Technical flow:**
-1. Claude reads 100% of source material, identifies key messages
-2. Claude writes screenplay (scene structure + copy, optionally via ghostwriter)
-3. Claude builds content JSON matching the screenplay
-4. `autogen` generates HTML (calls director internally for animations)
-5. Timeline compiler converts config → frame-addressed animations (interpolation-based)
-6. Frame renderer JS is injected into HTML — implements `window.__setFrame(n)`
-7. Playwright calls `__setFrame(f)` for each frame, screenshots
-8. FFmpeg encodes to MP4 (h264/h265/av1)
-
-## Key Concepts
-
-- **NOT a screen recorder** — generates original video content
-- **Static HTML + JS renderer** — HTML has layout only (no CSS animation properties). Injected JS frame renderer handles all motion.
-- **Content-driven timing** — duration computed from word count, converted to frame counts
-- **Format-aware layout** — CSS Grid per scene, card-column fills frame in vertical, hero/centered/stacked modes
-
 ## Demo Mode (`/orson demo`)
 
 Record a live website demo with narration, zoom, cursor animation, and background music.
@@ -379,7 +360,12 @@ Use `AskUserQuestion` for each step.
 1. **URL** — Ask for the website URL to demo
 2. **Auth** — Does the site require login? If yes, collect auth steps (URL, selectors, credentials)
 3. **Format** — `horizontal-16x9` (default for demos), or other
-4. **Voice** — Select from `engine/audio/presets/voices.json` based on brand tone
+4. **Voice** — Use a voice preset from `engine/audio/presets/voice-presets.json` based on demo type:
+   - Product demo → `tech-demo`
+   - Feature explainer → `explainer`
+   - Marketing demo → `promo`
+   - Tutorial walkthrough → `tutorial`
+   - Or specify an explicit voice name (overrides preset)
 5. **Music** — Enabled? Style auto or specific? Volume (default 0.3)?
 
 #### Screenplay
@@ -409,7 +395,7 @@ For demo script JSON format and field reference, read `references/demo-format.md
 ### Demo Pipeline
 
 1. Parse + validate script (Zod)
-2. Generate narration brief → run `narration_generator.py` → MP3 files (loudness-normalized to -16 LUFS)
+2. Generate narration brief → run `narration_generator.py` → MP3 files (loudness normalized to -14 LUFS by audio-mixer.ts)
 3. Build narration-first timeline (zoom → narration → action)
 4. Launch Playwright, pre-flight selector validation, execute auth, record frames
 5. Encode frames to video (FFmpeg)
@@ -465,30 +451,16 @@ The engine loads `storageState` into the browser context before navigating to th
 /orson demo
 
 # Direct CLI (from project root)
-npx tsx .claude/skills/orson/engine/src/index.ts render video-config.html
-npx tsx .claude/skills/orson/engine/src/index.ts render video-config.html --no-audio
+npx tsx .claude/skills/orson/engine/src/index.ts render video.html
+npx tsx .claude/skills/orson/engine/src/index.ts render video.html --no-audio
+npx tsx .claude/skills/orson/engine/src/index.ts render video.html --parallel
+npx tsx .claude/skills/orson/engine/src/index.ts render video.html --preview
+npx tsx .claude/skills/orson/engine/src/index.ts render video.html --draft
 npx tsx .claude/skills/orson/engine/src/index.ts demo demo-script.json
 npx tsx .claude/skills/orson/engine/src/index.ts analyze-folder ./my-project
 npx tsx .claude/skills/orson/engine/src/index.ts analyze-url https://example.com
-npx tsx .claude/skills/orson/engine/src/index.ts autogen content.json --format=horizontal-16x9 --mode=hybrid
 npx tsx .claude/skills/orson/engine/src/index.ts formats
 npx tsx .claude/skills/orson/engine/src/index.ts entrances
 ```
 
 For full engine source code map, see `KNOWLEDGE.md`.
-
----
-
-The director assigns animations based on content signals. For recipe details and mode-specific animation pools, read `references/director-recipes.md`.
-
----
-
-## Preview Frame (Opus 4.6)
-
-Before the full render, verify storyboard HTML visually:
-
-1. Open the HTML config in the browser
-2. Screenshot the first frame of each scene
-3. Verify: layout integrity, typography rendering, color accuracy, animation key elements visible
-4. Check text fits containers (no overflow or truncation)
-5. If issues found, fix the HTML before proceeding to video render

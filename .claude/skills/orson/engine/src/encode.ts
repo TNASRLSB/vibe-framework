@@ -55,7 +55,7 @@ export function startEncoder(opts: EncodeOptions): Encoder {
     }
   }
 
-  const inputFmt = opts.inputFormat ?? 'jpeg';
+  const inputFmt = opts.inputFormat ?? 'png';
   const isHwEncoder = hwAccel !== null;
   const args = [
     '-y',

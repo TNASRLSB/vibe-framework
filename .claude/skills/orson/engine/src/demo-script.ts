@@ -2,7 +2,56 @@
 // Converts demo JSON → validated DemoScript + NarrationBrief
 
 import { z } from 'zod';
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+// ─── Voice Preset Types ─────────────────────────────────────
+
+export const VOICE_PRESET_IDS = ['tech-demo', 'explainer', 'promo', 'tutorial', 'sales', 'onboarding'] as const;
+export type VoicePresetId = typeof VOICE_PRESET_IDS[number];
+
+interface VoicePresetEntry {
+  voice: string;
+  style: string;
+  wpm: number;
+  prosody: { rate: string; pitch: string };
+}
+
+interface VoicePresetsFile {
+  presets: Record<string, VoicePresetEntry>;
+  locales: Record<string, Record<string, { voice: string }>>;
+}
+
+let _cachedPresets: VoicePresetsFile | null = null;
+
+function loadVoicePresets(): VoicePresetsFile {
+  if (_cachedPresets) return _cachedPresets;
+  const presetsPath = resolve(__dirname, '..', 'audio', 'presets', 'voice-presets.json');
+  if (existsSync(presetsPath)) {
+    _cachedPresets = JSON.parse(readFileSync(presetsPath, 'utf-8'));
+    return _cachedPresets!;
+  }
+  throw new Error(`[tts] voice-presets.json not found at ${presetsPath}`);
+}
+
+/**
+ * Resolve a voice preset with optional locale override.
+ * Returns voice, style, wpm, prosody for the given preset + lang.
+ */
+export function resolveVoicePreset(presetId: VoicePresetId, lang?: string): VoicePresetEntry {
+  const presets = loadVoicePresets();
+  const base = presets.presets[presetId];
+  if (!base) throw new Error(`[tts] Unknown voice preset: ${presetId}`);
+
+  // Locale override
+  if (lang && lang !== 'en-US' && presets.locales[lang]?.[presetId]) {
+    return { ...base, voice: presets.locales[lang][presetId].voice };
+  }
+  return { ...base };
+}
 
 // ─── Schema ─────────────────────────────────────────────────
 
@@ -35,7 +84,7 @@ const MusicConfigSchema = z.object({
 
 const SubtitleConfigSchema = z.object({
   enabled: z.boolean().default(true),
-  style: z.enum(['bottom', 'top', 'none']).default('bottom'),
+  style: z.enum(['bottom', 'top', 'center', 'none']).default('bottom'),
 });
 
 export const DemoScriptSchema = z.object({
@@ -47,6 +96,7 @@ export const DemoScriptSchema = z.object({
   voice: z.string().default('en-US-AriaNeural'),
   lang: z.string().default('en-US'),
   narrationStyle: z.enum(['enthusiastic', 'neutral', 'calm', 'dramatic']).default('neutral'),
+  voicePreset: z.enum(['tech-demo', 'explainer', 'promo', 'tutorial', 'sales', 'onboarding']).optional().describe('Voice preset — overrides voice, narrationStyle, and prosody from voice-presets.json. Explicit voice field takes priority.'),
   ttsEngine: z.string().optional().describe('TTS engine name (e.g. "edge-tts"). If omitted, uses ORSON_TTS_ENGINE env var or auto-detect'),
 
   music: MusicConfigSchema.default({}),
@@ -72,6 +122,7 @@ export interface NarrationBrief {
     enabled: boolean;
     voice: string;
     style: string;
+    target_wpm?: number;
     tts_engine?: string;
     scenes: Array<{
       scene_index: number;
@@ -103,16 +154,35 @@ export function parseDemoScript(scriptPath: string): DemoScript {
  * Generate a narration brief compatible with narration_generator.py
  * The brief is generated with placeholder timings — actual timings
  * are set by demo-timeline.ts after narration audio is generated.
+ *
+ * If voicePreset is set, resolves voice, style, prosody, and wpm from presets.
+ * Explicit voice field in script takes priority over preset.
  */
 export function generateNarrationBrief(script: DemoScript): NarrationBrief {
   const styleProfiles: Record<string, { rate: string; pitch: string }> = {
-    enthusiastic: { rate: '+5%', pitch: '+3Hz' },
-    neutral: { rate: '+0%', pitch: '+0Hz' },
-    calm: { rate: '-10%', pitch: '-2Hz' },
-    dramatic: { rate: '-15%', pitch: '+0Hz' },
+    enthusiastic: { rate: '-5%', pitch: '+3Hz' },
+    neutral: { rate: '-10%', pitch: '+0Hz' },
+    calm: { rate: '-20%', pitch: '-2Hz' },
+    dramatic: { rate: '-25%', pitch: '+0Hz' },
   };
 
-  const prosody = styleProfiles[script.narrationStyle] ?? styleProfiles.neutral;
+  // Resolve voice preset if specified
+  let voice = script.voice;
+  let style = script.narrationStyle;
+  let prosody = styleProfiles[style] ?? styleProfiles.neutral;
+  let wpm: number | undefined;
+
+  if (script.voicePreset) {
+    const preset = resolveVoicePreset(script.voicePreset, script.lang);
+    // Explicit voice in script takes priority over preset
+    const hasExplicitVoice = voice !== 'en-US-AriaNeural'; // non-default = explicit
+    if (!hasExplicitVoice) {
+      voice = preset.voice;
+    }
+    style = preset.style as DemoScript['narrationStyle'];
+    prosody = preset.prosody;
+    wpm = preset.wpm;
+  }
 
   // Each step becomes a scene with one narration element
   const scenes = script.steps.map((step, i) => ({
@@ -130,8 +200,9 @@ export function generateNarrationBrief(script: DemoScript): NarrationBrief {
   return {
     narration: {
       enabled: true,
-      voice: script.voice,
-      style: script.narrationStyle,
+      voice,
+      style,
+      ...(wpm !== undefined ? { target_wpm: wpm } : {}),
       ...(script.ttsEngine ? { tts_engine: script.ttsEngine } : {}),
       scenes,
       emphasis_by_element_type: {

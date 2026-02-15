@@ -79,7 +79,7 @@ Comprehensive CRO audit across 7 dimensions, ordered by impact:
 |---|---|
 | **Problem** | What is not working |
 | **Evidence** | Why it's a problem (data, principles, research) |
-| **Impact** | Alto / Medio / Basso |
+| **Impact** | High / Medium / Low |
 | **Fix** | Concrete recommendation |
 | **Owner** | Baptist (experiment) / Ghostwriter (copy) / Seurat (UI) |
 | **ICE** | Impact (1-10) × Confidence (1-10) × Ease (1-10) / 3 |

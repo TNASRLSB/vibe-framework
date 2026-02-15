@@ -36,39 +36,47 @@ export async function applyZoom(
   scale: number,
   transitionMs: number,
 ): Promise<void> {
-  await page.evaluate(({ selector, scale, transitionMs }) => {
-    const zoomTarget = document.querySelector('[data-orson-zoom]') as HTMLElement | null;
-    const target = document.querySelector(selector);
-    if (!zoomTarget || !target) return;
+  try {
+    await page.evaluate(({ selector, scale, transitionMs }) => {
+      const zoomTarget = document.querySelector('[data-orson-zoom]') as HTMLElement | null;
+      const target = document.querySelector(selector);
+      if (!zoomTarget || !target) return;
 
-    const rect = target.getBoundingClientRect();
-    const viewW = window.innerWidth;
-    const viewH = window.innerHeight;
+      const rect = target.getBoundingClientRect();
+      const viewW = window.innerWidth;
+      const viewH = window.innerHeight;
 
-    const originX = ((rect.left + rect.width / 2) / viewW) * 100;
-    const originY = ((rect.top + rect.height / 2) / viewH) * 100;
+      const originX = ((rect.left + rect.width / 2) / viewW) * 100;
+      const originY = ((rect.top + rect.height / 2) / viewH) * 100;
 
-    zoomTarget.style.transition = `transform ${transitionMs}ms cubic-bezier(0.4, 0, 0.2, 1), transform-origin ${transitionMs}ms cubic-bezier(0.4, 0, 0.2, 1)`;
-    zoomTarget.style.transformOrigin = `${originX}% ${originY}%`;
-    zoomTarget.style.transform = `scale(${scale})`;
-  }, { selector, scale, transitionMs });
+      zoomTarget.style.transition = `transform ${transitionMs}ms cubic-bezier(0.4, 0, 0.2, 1), transform-origin ${transitionMs}ms cubic-bezier(0.4, 0, 0.2, 1)`;
+      zoomTarget.style.transformOrigin = `${originX}% ${originY}%`;
+      zoomTarget.style.transform = `scale(${scale})`;
+    }, { selector, scale, transitionMs });
 
-  await page.waitForTimeout(transitionMs + 50);
+    await page.waitForTimeout(transitionMs + 50);
+  } catch (err: any) {
+    console.warn(`  [capture] WARN: applyZoom failed for ${selector}: ${err.message}`);
+  }
 }
 
 /**
  * Reset zoom to 1x.
  */
 export async function resetZoom(page: Page, transitionMs: number): Promise<void> {
-  await page.evaluate((ms) => {
-    const zoomTarget = document.querySelector('[data-orson-zoom]') as HTMLElement | null;
-    if (!zoomTarget) return;
+  try {
+    await page.evaluate((ms) => {
+      const zoomTarget = document.querySelector('[data-orson-zoom]') as HTMLElement | null;
+      if (!zoomTarget) return;
 
-    zoomTarget.style.transition = `transform ${ms}ms cubic-bezier(0.4, 0, 0.2, 1)`;
-    zoomTarget.style.transform = 'scale(1)';
-  }, transitionMs);
+      zoomTarget.style.transition = `transform ${ms}ms cubic-bezier(0.4, 0, 0.2, 1)`;
+      zoomTarget.style.transform = 'scale(1)';
+    }, transitionMs);
 
-  await page.waitForTimeout(transitionMs + 50);
+    await page.waitForTimeout(transitionMs + 50);
+  } catch (err: any) {
+    console.warn(`  [capture] WARN: resetZoom failed: ${err.message}`);
+  }
 }
 
 // ─── Highlight ──────────────────────────────────────────────
@@ -81,6 +89,7 @@ export async function highlightElement(
   selector: string,
   durationMs: number,
 ): Promise<void> {
+  try {
   await page.evaluate(({ selector, durationMs }) => {
     const target = document.querySelector(selector);
     if (!target) return;
@@ -127,6 +136,9 @@ export async function highlightElement(
     // Auto-remove after duration
     setTimeout(() => highlight.remove(), durationMs);
   }, { selector, durationMs });
+  } catch (err: any) {
+    console.warn(`  [capture] WARN: highlightElement failed for ${selector}: ${err.message}`);
+  }
 }
 
 // ─── Dev Overlay Removal ────────────────────────────────────
@@ -197,35 +209,39 @@ export async function animateCursor(
   selector: string,
   durationMs: number,
 ): Promise<void> {
-  await page.evaluate(({ selector, durationMs }) => {
-    const cursor = document.getElementById('orson-cursor');
-    const target = document.querySelector(selector);
-    if (!cursor || !target) return;
+  try {
+    await page.evaluate(({ selector, durationMs }) => {
+      const cursor = document.getElementById('orson-cursor');
+      const target = document.querySelector(selector);
+      if (!cursor || !target) return;
 
-    const rect = target.getBoundingClientRect();
-    const targetX = rect.left + rect.width / 2;
-    const targetY = rect.top + rect.height / 2;
+      const rect = target.getBoundingClientRect();
+      const targetX = rect.left + rect.width / 2;
+      const targetY = rect.top + rect.height / 2;
 
-    // Move cursor
-    cursor.style.transition = `top ${durationMs}ms cubic-bezier(0.4, 0, 0.2, 1), left ${durationMs}ms cubic-bezier(0.4, 0, 0.2, 1)`;
-    cursor.style.top = `${targetY}px`;
-    cursor.style.left = `${targetX}px`;
-  }, { selector, durationMs });
+      // Move cursor
+      cursor.style.transition = `top ${durationMs}ms cubic-bezier(0.4, 0, 0.2, 1), left ${durationMs}ms cubic-bezier(0.4, 0, 0.2, 1)`;
+      cursor.style.top = `${targetY}px`;
+      cursor.style.left = `${targetX}px`;
+    }, { selector, durationMs });
 
-  // Wait for movement
-  await page.waitForTimeout(durationMs);
+    // Wait for movement
+    await page.waitForTimeout(durationMs);
 
-  // Click press animation
-  await page.evaluate(() => {
-    const cursor = document.getElementById('orson-cursor');
-    if (!cursor) return;
-    cursor.style.transition = 'transform 0.1s ease-in';
-    cursor.style.transform = 'scale(0.85)';
-    setTimeout(() => {
-      cursor.style.transition = 'transform 0.1s ease-out';
-      cursor.style.transform = 'scale(1)';
-    }, 100);
-  });
+    // Click press animation
+    await page.evaluate(() => {
+      const cursor = document.getElementById('orson-cursor');
+      if (!cursor) return;
+      cursor.style.transition = 'transform 0.1s ease-in';
+      cursor.style.transform = 'scale(0.85)';
+      setTimeout(() => {
+        cursor.style.transition = 'transform 0.1s ease-out';
+        cursor.style.transform = 'scale(1)';
+      }, 100);
+    });
 
-  await page.waitForTimeout(200);
+    await page.waitForTimeout(200);
+  } catch (err: any) {
+    console.warn(`  [capture] WARN: animateCursor failed for ${selector}: ${err.message}`);
+  }
 }

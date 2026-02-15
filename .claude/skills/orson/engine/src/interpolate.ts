@@ -4,7 +4,8 @@
 
 // ─── Animatable Properties ──────────────────────────────────
 
-export type AnimatableProperty =
+/** Known animatable properties with semantic mapping to CSS */
+export type KnownAnimatableProperty =
   | 'opacity'          // 0-1
   | 'x'                // translateX in px
   | 'y'                // translateY in px
@@ -20,6 +21,8 @@ export type AnimatableProperty =
   | 'skewY'            // degrees
   | 'blur'             // px
   | 'brightness'       // 0-2
+  | 'saturate'         // 0-2 (v4: CSS filter)
+  | 'contrast'         // 0-2 (v4: CSS filter)
   | 'hueRotate'        // degrees
   | 'clipTop'          // clip-path inset top %
   | 'clipRight'        // clip-path inset right %
@@ -28,7 +31,16 @@ export type AnimatableProperty =
   | 'clipCircle'       // clip-path circle radius %
   | 'letterSpacing'    // em
   | 'maxWidthPercent'  // %
-  | 'backgroundSizeX'; // %
+  | 'backgroundSizeX'  // %
+  | 'perspective'      // px (v4: CSS 3D)
+  | 'translateZ';      // px (v4: CSS 3D)
+
+/**
+ * v4: AnimatableProperty accepts both known property names AND arbitrary CSS
+ * property names prefixed with 'css:' (e.g. 'css:backdrop-filter-blur').
+ * Arbitrary CSS properties are passed through to element.style directly.
+ */
+export type AnimatableProperty = KnownAnimatableProperty | `css:${string}`;
 
 // ─── Easing Functions ────────────────────────────────────────
 

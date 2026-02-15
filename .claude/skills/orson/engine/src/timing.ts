@@ -3,7 +3,36 @@
 
 import type { SpeedPreset } from './presets.js';
 import { MS_PER_WORD, INTER_ELEMENT_GAP, ENTRANCE_SPEED_MULTIPLIERS } from './presets.js';
-import { calculateStaggerDelays, type StaggerPattern } from './choreography.js';
+
+// ─── Stagger (inlined from removed choreography.ts) ─────────
+
+export type StaggerPattern =
+  | 'cascade-down' | 'cascade-up' | 'origin-burst'
+  | 'wave' | 'paired' | 'none';
+
+function calculateStaggerDelays(
+  pattern: StaggerPattern,
+  elementCount: number,
+  baseDelayMs: number,
+): number[] {
+  if (elementCount <= 0) return [];
+  if (elementCount === 1 || pattern === 'none') return new Array(elementCount).fill(0);
+  switch (pattern) {
+    case 'cascade-down':
+    case 'wave':
+      return Array.from({ length: elementCount }, (_, i) => i * baseDelayMs);
+    case 'cascade-up':
+      return Array.from({ length: elementCount }, (_, i) => (elementCount - 1 - i) * baseDelayMs);
+    case 'origin-burst': {
+      const center = Math.floor(elementCount / 2);
+      return Array.from({ length: elementCount }, (_, i) => Math.abs(i - center) * baseDelayMs);
+    }
+    case 'paired':
+      return Array.from({ length: elementCount }, (_, i) => Math.floor(i / 2) * baseDelayMs);
+    default:
+      return new Array(elementCount).fill(0);
+  }
+}
 
 const MIN_HOLD_TIME = 800;       // even decorative elements need 800ms to register
 const ENTRANCE_PADDING = 700;    // time to "arrive" at the scene

@@ -190,17 +190,32 @@ async function recordDemo(opts: RecordingOptions): Promise<void> {
         actionExecuted.add(activeStep.stepIndex);
         const step = script.steps[activeStep.stepIndex];
         const urlBefore = page.url();
-        await executeAction(page, step.action, step.selector, step.value, step.typingSpeed);
+
+        try {
+          await executeAction(page, step.action, step.selector, step.value, step.typingSpeed);
+        } catch (err: any) {
+          console.warn(`  [capture] WARN: action failed at step ${activeStep.stepIndex + 1}: ${err.message}`);
+          // Continue recording — don't crash on a single failed action
+        }
 
         // After action: re-inject overlays only if page navigated
         const urlAfter = page.url();
         if (urlAfter !== urlBefore) {
           await page.waitForTimeout(300);
-          await removeDevOverlay(page);
-          const cursorLost = await page.evaluate(() => !document.getElementById('orson-cursor'));
-          if (cursorLost) {
-            await injectCursor(page);
-            await injectZoomOverlay(page);
+          try { await removeDevOverlay(page); } catch {}
+
+          // Retry overlay injection up to 2 times
+          for (let retry = 0; retry < 2; retry++) {
+            try {
+              const cursorLost = await page.evaluate(() => !document.getElementById('orson-cursor'));
+              if (cursorLost) {
+                await injectCursor(page);
+                await injectZoomOverlay(page);
+              }
+              break;
+            } catch {
+              await page.waitForTimeout(500);
+            }
           }
         } else if (step.action === 'click') {
           // Non-navigational click: wait for re-render (e.g. dark mode toggle)
@@ -286,13 +301,15 @@ async function encodeFrames(
  */
 export async function runDemo(scriptPath: string): Promise<void> {
   const startTime = Date.now();
+  let warningCount = 0;
+  let fallbackCount = 0;
 
   // Step 1: Parse script
-  console.log('Step 1: Parsing demo script...');
+  console.log('[demo] Step 1: Parsing demo script...');
   const script = parseDemoScript(scriptPath);
-  console.log(`  URL: ${script.url}`);
-  console.log(`  Steps: ${script.steps.length}`);
-  console.log(`  Voice: ${script.voice}`);
+  console.log(`  [demo] URL: ${script.url}`);
+  console.log(`  [demo] Steps: ${script.steps.length}`);
+  console.log(`  [demo] Voice: ${script.voice}${script.voicePreset ? ` (preset: ${script.voicePreset})` : ''}`);
 
   // Resolve paths
   const outputPath = resolve(dirname(scriptPath), script.output);
@@ -305,7 +322,7 @@ export async function runDemo(scriptPath: string): Promise<void> {
   mkdirSync(narrationDir, { recursive: true });
 
   // Step 2: Generate narration
-  console.log('\nStep 2: Generating narration...');
+  console.log('\n[demo] Step 2: Generating narration...');
   const brief = generateNarrationBrief(script);
   const briefPath = resolve(workDir, 'narration-brief.json');
   writeFileSync(briefPath, JSON.stringify(brief, null, 2));
@@ -319,7 +336,7 @@ export async function runDemo(scriptPath: string): Promise<void> {
 
     // Auto-create venv if missing
     if (!existsSync(venvPython)) {
-      console.log('  Setting up Python venv for TTS...');
+      console.log('  [tts] Setting up Python venv for TTS...');
       await new Promise<void>((res, rej) => {
         const proc = spawn('python3', ['-m', 'venv', venvDir], { stdio: 'inherit' });
         proc.on('close', (code) => code === 0 ? res() : rej(new Error(`venv creation failed with ${code}`)));
@@ -344,7 +361,7 @@ export async function runDemo(scriptPath: string): Promise<void> {
         const engineInfo = presets.engines?.[ttsEngine];
         if (engineInfo?.pip_package) {
           const pip = resolve(venvDir, 'bin', 'pip');
-          console.log(`  Installing TTS engine: ${engineInfo.pip_package}...`);
+          console.log(`  [tts] Installing TTS engine: ${engineInfo.pip_package}...`);
           await new Promise<void>((res, rej) => {
             const proc = spawn(pip, ['install', '-q', engineInfo.pip_package], { stdio: 'inherit' });
             proc.on('close', (code) => code === 0 ? res() : rej(new Error(`pip install ${engineInfo.pip_package} failed`)));
@@ -356,8 +373,15 @@ export async function runDemo(scriptPath: string): Promise<void> {
 
     if (existsSync(narrationScript)) {
       const pythonBin = existsSync(venvPython) ? venvPython : 'python3';
+
+      // Build CLI args — pass --wpm if voice preset specifies a target
+      const cliArgs = [narrationScript, briefPath, narrationDir];
+      if (brief.narration.target_wpm) {
+        cliArgs.push('--wpm', String(brief.narration.target_wpm));
+      }
+
       await new Promise<void>((res, rej) => {
-        const proc = spawn(pythonBin, [narrationScript, briefPath, narrationDir], {
+        const proc = spawn(pythonBin, cliArgs, {
           stdio: ['pipe', 'inherit', 'inherit'],
         });
         proc.on('close', (code) => code === 0 ? res() : rej(new Error(`Narration generator exited with ${code}`)));
@@ -371,23 +395,27 @@ export async function runDemo(scriptPath: string): Promise<void> {
         manifest = JSON.parse(readFileSync(manifestPath, 'utf-8'));
       }
     } else {
-      console.log('  narration_generator.py not found, using estimated durations');
+      console.log('  [tts] WARN: narration_generator.py not found, using estimated durations');
+      warningCount++;
+      fallbackCount++;
     }
   } catch (err: any) {
-    console.log(`  Narration generation failed: ${err.message}`);
-    console.log('  Using estimated durations');
+    console.log(`  [tts] WARN: narration generation failed: ${err.message}`);
+    console.log('  [tts] Using estimated durations');
+    warningCount++;
+    fallbackCount++;
   }
 
   // Step 3: Build timeline
-  console.log('\nStep 3: Building timeline...');
+  console.log('\n[demo] Step 3: Building timeline...');
   const timeline = buildDemoTimeline(script, manifest);
-  console.log(`  Total duration: ${(timeline.totalDurationMs / 1000).toFixed(1)}s`);
+  console.log(`  [demo] Total duration: ${(timeline.totalDurationMs / 1000).toFixed(1)}s`);
   for (const step of timeline.steps) {
-    console.log(`  Step ${step.stepIndex + 1}: ${(step.stepStart / 1000).toFixed(1)}s → ${(step.stepEnd / 1000).toFixed(1)}s`);
+    console.log(`  [demo] Step ${step.stepIndex + 1}: ${(step.stepStart / 1000).toFixed(1)}s → ${(step.stepEnd / 1000).toFixed(1)}s`);
   }
 
   // Step 4: Record video
-  console.log('\nStep 4: Recording demo...');
+  console.log('\n[demo] Step 4: Recording demo...');
   const fmt = FORMAT_PRESETS[script.format];
   const width = fmt?.width ?? 1920;
   const height = fmt?.height ?? 1080;
@@ -398,30 +426,31 @@ export async function runDemo(scriptPath: string): Promise<void> {
 
   // Execute auth if present
   if (script.auth && script.auth.length > 0) {
-    console.log('  Running auth steps...');
+    console.log('  [demo] Running auth steps...');
     await executeAuth(session.page, script.auth);
-    console.log('  Auth complete');
+    console.log('  [demo] Auth complete');
   }
 
   // Navigate to demo URL (may have changed during auth)
   await session.page.goto(script.url, { waitUntil: 'load', timeout: 30000 });
 
   // Pre-flight: validate selectors on initial page
-  console.log('  Pre-flight: validating selectors...');
+  console.log('  [capture] Pre-flight: validating selectors...');
   let selectorWarnings = 0;
   for (const [i, step] of script.steps.entries()) {
     if (step.selector) {
       const found = await session.page.locator(step.selector).count();
       if (found === 0) {
-        console.warn(`  WARNING: Step ${i + 1} selector not found: ${step.selector}`);
+        console.warn(`  [capture] WARN: Step ${i + 1} selector not found: ${step.selector}`);
         selectorWarnings++;
+        warningCount++;
       }
     }
   }
   if (selectorWarnings > 0) {
-    console.warn(`  ${selectorWarnings} selector(s) not found (may appear after navigation)`);
+    console.warn(`  [capture] ${selectorWarnings} selector(s) not found (may appear after navigation)`);
   } else {
-    console.log('  All initial selectors found');
+    console.log('  [capture] All initial selectors found');
   }
 
   await recordDemo({
@@ -434,13 +463,13 @@ export async function runDemo(scriptPath: string): Promise<void> {
   await closeDemoCapture(session);
 
   // Step 5: Encode video
-  console.log('\nStep 5: Encoding video...');
+  console.log('\n[demo] Step 5: Encoding video...');
   const silentVideoPath = resolve(workDir, 'video-silent.mp4');
   await encodeFrames(framesDir, script.fps, script.codec, silentVideoPath);
-  console.log('  Video encoded');
+  console.log('  [demo] Video encoded');
 
   // Step 6: Process audio
-  console.log('\nStep 6: Processing audio...');
+  console.log('\n[demo] Step 6: Processing audio...');
 
   // 6a: Concatenate narration files at correct timestamps
   const narrationFiles = timeline.steps.map((step, i) => {
@@ -455,7 +484,7 @@ export async function runDemo(scriptPath: string): Promise<void> {
   let finalAudioPath = concatenatedNarration;
 
   if (script.music.enabled) {
-    console.log('  Processing music...');
+    console.log('  [audio] Processing music...');
 
     const videoMeta: VideoMeta = {
       mode: 'safe',
@@ -463,7 +492,7 @@ export async function runDemo(scriptPath: string): Promise<void> {
       styleHint: script.music.style !== 'auto' ? script.music.style : undefined,
     };
     const track = selectTrack(videoMeta);
-    console.log(`  Track: ${track.style} (${track.bpm} BPM)`);
+    console.log(`  [audio] Track: ${track.style} (${track.bpm} BPM)`);
 
     // Trim/loop music to video duration
     const processedMusic = resolve(workDir, 'music-processed.mp3');
@@ -472,8 +501,8 @@ export async function runDemo(scriptPath: string): Promise<void> {
     // Apply ducking based on narration timing
     const duckingEvents: DuckingEvent[] = [];
     for (const step of timeline.steps) {
-      duckingEvents.push({ time_ms: Math.max(0, step.narrationStart - 50), action: 'duck', target_gain: 0.15 });
-      duckingEvents.push({ time_ms: step.narrationEnd + 200, action: 'release', target_gain: script.music.volume });
+      duckingEvents.push({ time_ms: Math.max(0, step.narrationStart - 300), action: 'duck', target_gain: 0.12 });
+      duckingEvents.push({ time_ms: step.narrationEnd + 500, action: 'release', target_gain: Math.min(script.music.volume, 0.35) });
     }
 
     const duckedMusic = resolve(workDir, 'music-ducked.mp3');
@@ -494,15 +523,15 @@ export async function runDemo(scriptPath: string): Promise<void> {
   // 6c: Merge audio into video
   mkdirSync(dirname(outputPath), { recursive: true });
   await mergeAudioVideo(silentVideoPath, finalAudioPath, outputPath);
-  console.log(`  Audio merged`);
+  console.log('  [audio] Audio merged');
 
   // Step 7: Generate subtitles
   if (script.subtitles.enabled) {
-    console.log('\nStep 7: Generating subtitles...');
+    console.log('\n[demo] Step 7: Generating subtitles...');
     const vtt = generateWebVTT(timeline, script);
     const vttPath = outputPath.replace(/\.mp4$/, '.vtt');
     writeFileSync(vttPath, vtt);
-    console.log(`  Subtitles: ${vttPath}`);
+    console.log(`  [demo] Subtitles: ${vttPath}`);
   }
 
   // Cleanup work directory
@@ -510,5 +539,6 @@ export async function runDemo(scriptPath: string): Promise<void> {
   try { rmSync(workDir, { recursive: true }); } catch {}
 
   const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
-  console.log(`\nDone: ${outputPath} (${totalTime}s)`);
+  console.log(`\n[demo] Done: ${outputPath} (${totalTime}s)`);
+  console.log(`[demo] Summary: ${script.steps.length} steps completed, ${warningCount} warnings, ${fallbackCount} fallbacks`);
 }

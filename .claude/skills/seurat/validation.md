@@ -168,6 +168,41 @@ background: linear-gradient(
 --color-surface-elevated: hsl(220 30% 99%);
 ```
 
+#### Surface Elevation Guide
+
+Surfaces must be barely different but distinguishable. Recommended lightness progression (delta from background):
+
+**Light Mode** (bg ~96% lightness):
+
+| Surface | Lightness | Delta | Use |
+|---------|-----------|-------|-----|
+| Background | 96% | base | Page background |
+| Surface (cards) | 100% | +4% | Cards, panels |
+| Surface raised | 100% | +4% (+ shadow) | Dropdown, tooltip |
+| Overlay | 100% | +4% (+ scrim 50%) | Modal, dialog |
+
+**Dark Mode** (bg ~10% lightness):
+
+| Surface | Lightness | Delta | Use |
+|---------|-----------|-------|-----|
+| Background | 10% | base | Page background |
+| Surface (cards) | 13% | +3% | Cards, panels |
+| Surface raised | 16% | +6% | Dropdown, tooltip |
+| Overlay | 19% | +9% | Modal, dialog |
+
+Dark mode notes: larger deltas (perception is non-linear), borders > shadows (shadows near-invisible on dark), text hierarchy via white at 90% → 70% → 50% → 35% opacity.
+
+**Border opacity progression:**
+
+| Level | Opacity | Use |
+|-------|---------|-----|
+| Subtle | 5-7% | Internal separators |
+| Default | 8-12% | Card borders |
+| Strong | 15-20% | Input borders |
+| Stronger | 25-30% | Focus rings, dividers |
+
+**Principle:** Adjacent layer difference must exceed the **perception threshold** (~3% lightness) but stay below the **distraction threshold** (~8% in light, ~12% in dark). "Barely perceptible" = correct. "Obviously different" = too much. "Identical" = useless.
+
 ### Shadow Refinement
 
 | Issue | Problem | Fix |
@@ -248,6 +283,50 @@ p {
   text-wrap: pretty; /* Avoid orphans */
 }
 ```
+
+---
+
+## The Mandate (Qualitative Gate)
+
+After 雕花 polish and before Visual QA. These are self-evaluations Claude performs internally before showing output to the user.
+
+### 1. SWAP TEST
+Change the typeface and layout mentally. If the output looks equally "right" with any font/layout combination → it's generic.
+
+**Must pass:** the typeface and layout must be *chosen*, not interchangeable.
+
+Example fail: "This dashboard would look the same in Roboto with a different grid."
+Example pass: "The mono font for numerical data and the tight 4-column grid are specific to a financial terminal."
+
+### 2. SQUINT TEST
+Blur the output mentally. If the visual hierarchy disappears → missing structure.
+
+**Must pass:** with blurred vision, 3 hierarchy levels must be distinguishable.
+
+Example fail: "Everything is the same size and weight — can't tell heading from body."
+Example pass: "Dark bold header, medium weight section titles, light body text — clear even blurred."
+
+### 3. SIGNATURE TEST
+Identify 3 specific elements that make this output recognizable. If you can't name 3 → it's generic.
+
+**Must pass:** 3 design choices that a generic template wouldn't have made.
+
+Example: "mono font for data, border-left accent on cards, asymmetric header spacing"
+
+### 4. TOKEN TEST
+Read the CSS custom property names. If they sound generic → they don't belong to the product.
+
+**Must pass:** names should reflect the domain when possible.
+
+| Generic (fail) | Domain-specific (pass) |
+|---|---|
+| `--color-primary` | `--color-chart-positive` |
+| `--spacing-md` | `--spacing-data-cell` |
+| `--radius-lg` | `--radius-metric-card` |
+
+### On Failure
+
+If any test fails: return to Phase 3 (BUILD) and rebuild the generic part. Don't patch — reconstruct the decision.
 
 ---
 

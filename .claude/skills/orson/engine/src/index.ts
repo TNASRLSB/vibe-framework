@@ -5,16 +5,14 @@ import { resolve, dirname } from 'path';
 import { readFileSync, mkdirSync, existsSync } from 'fs';
 import { initCapture, captureFrames, closeCapture } from './capture.js';
 import { startEncoder } from './encode.js';
-import { readDesignTokens } from './ux-bridge.js';
 import { FORMAT_PRESETS, DRAFT_OVERRIDES } from './presets.js';
 import type { CodecId } from './presets.js';
 import { analyzeFolder } from './analyze-folder.js';
 import { analyzeUrl } from './analyze-url.js';
-import { generateConfig } from './autogen.js';
 import { parseHTMLFile, extractNarrationBrief, type HTMLConfig } from './html-parser.js';
 import { computeSceneTiming, type ElementTimingInput } from './timing.js';
 import { selectTrack, type VideoMeta } from './audio-selector.js';
-import { trimAndLoop, fadeInOut, mergeAudioVideo, applyDucking, concatenateNarration, type DuckingEvent } from './audio-mixer.js';
+import { trimAndLoop, fadeInOut, mergeAudioVideo, applyDucking, concatenateNarration, normalizeLoudness, type DuckingEvent } from './audio-mixer.js';
 import { generateSRT, generateVTT } from './subtitles.js';
 
 async function main() {
@@ -30,11 +28,11 @@ Commands:
   render <file.html> --no-audio  Render without audio
   render <file.html> --narrate   Render with TTS narration (requires TTS engine)
   render <file.html> --draft     Fast preview (half res, 15fps, ultrafast)
-  render <file.html> --parallel  Render scenes in parallel (multi-core)
+  render <file.html> --parallel  Render frames in parallel (multi-core)
+  render <file.html> --preview   Open interactive preview in browser (no render)
   demo <script.json>        Record demo video from script
   analyze-folder <path>     Analyze project folder, output extracted content as JSON
   analyze-url <url>         Analyze URL, output extracted content as JSON
-  autogen <json> [options]  Generate HTML from extracted content JSON
   batch <config.json>       Batch render variants from template + variables
   formats                   List format presets
   entrances                 List available entrances
@@ -83,29 +81,6 @@ Commands:
     return;
   }
 
-  if (command === 'autogen') {
-    const jsonPath = args[1];
-    if (!jsonPath) { console.error('Error: content JSON path required'); process.exit(1); }
-    const content = JSON.parse(readFileSync(resolve(jsonPath), 'utf-8'));
-    const format = args.find(a => a.startsWith('--format='))?.split('=')[1] ?? 'vertical-9x16';
-    if (!FORMAT_PRESETS[format]) {
-      console.error(`Error: unknown format "${format}". Use "formats" to list presets.`);
-      process.exit(1);
-    }
-    const dsPath = args.find(a => a.startsWith('--design-system='))?.split('=')[1];
-    const designTokens = dsPath ? readDesignTokens(resolve(dsPath)) ?? undefined : undefined;
-    const options = {
-      format,
-      mode: (args.find(a => a.startsWith('--mode='))?.split('=')[1] ?? 'safe') as 'safe' | 'chaos' | 'hybrid',
-      speed: (args.find(a => a.startsWith('--speed='))?.split('=')[1] ?? 'normal') as any,
-      intent: args.find(a => a.startsWith('--intent='))?.split('=')[1] ?? 'promo',
-      designTokens,
-    };
-    const html = generateConfig(content, options);
-    console.log(html);
-    return;
-  }
-
   if (!configPath) {
     console.error('Error: file path required');
     process.exit(1);
@@ -118,8 +93,15 @@ Commands:
     const narrate = args.includes('--narrate') || args.includes('--tts');
     const draft = args.includes('--draft');
     const parallel = args.includes('--parallel');
+    const preview = args.includes('--preview');
     const voice = args.find(a => a.startsWith('--voice='))?.split('=')[1];
     const htmlConfig = parseHTMLFile(fullPath);
+
+    if (preview) {
+      await previewHTML(htmlConfig, fullPath);
+      return;
+    }
+
     await renderHTML(htmlConfig, fullPath, noAudio, draft, parallel, narrate, voice);
     return;
   }
@@ -140,6 +122,140 @@ Commands:
 
   console.error(`Unknown command: ${command}`);
   process.exit(1);
+}
+
+// ─── Preview mode ───────────────────────────────────────────
+
+async function previewHTML(htmlConfig: HTMLConfig, htmlPath: string) {
+  const { createServer } = await import('http');
+  const { writeFileSync } = await import('fs');
+  const { exec } = await import('child_process');
+
+  console.log('Generating preview...');
+
+  // Re-read the original HTML file and inject the player overlay
+  const originalHtml = readFileSync(htmlPath, 'utf-8');
+
+  // Inject player overlay before </body>
+  const totalDurationMs = htmlConfig.scenes.reduce((sum, s) => sum + (s.duration ?? 5000), 0);
+  const fps = htmlConfig.video.fps;
+  const totalFrames = Math.ceil(totalDurationMs / 1000 * fps);
+
+  // Build the player overlay HTML+JS
+  const playerHtml = generatePreviewPlayerHtml(totalFrames, fps);
+  const previewHtml = originalHtml.replace('</body>', playerHtml + '\n</body>');
+
+  // Write to temp file
+  const previewPath = htmlPath.replace(/\.html$/, '-preview.html');
+  writeFileSync(previewPath, previewHtml);
+
+  // Serve via HTTP
+  const server = createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+    res.end(readFileSync(previewPath, 'utf-8'));
+  });
+
+  const port = 9876;
+  server.listen(port, () => {
+    const url = `http://localhost:${port}`;
+    console.log(`Preview: ${url}`);
+    console.log('Press Ctrl+C to stop\n');
+
+    // Open browser
+    const cmd = process.platform === 'darwin' ? 'open' : process.platform === 'win32' ? 'start' : 'xdg-open';
+    exec(`${cmd} "${url}"`);
+  });
+
+  // Keep alive until Ctrl+C
+  await new Promise(() => {});
+}
+
+function generatePreviewPlayerHtml(totalFrames: number, fps: number): string {
+  return `<div id="orson-player" style="position:fixed;bottom:0;left:0;right:0;z-index:99999;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:12px 20px;font-family:system-ui,sans-serif;color:#fff;display:flex;align-items:center;gap:12px;font-size:13px;user-select:none;">
+  <button id="orson-play" style="background:none;border:none;color:#fff;font-size:18px;cursor:pointer;padding:4px 8px;border-radius:4px;" title="Play/Pause (Space)">&#9654;</button>
+  <span id="orson-frame" style="min-width:90px;font-variant-numeric:tabular-nums;">0/${totalFrames}</span>
+  <input id="orson-slider" type="range" min="0" max="${totalFrames - 1}" value="0" style="flex:1;height:6px;cursor:pointer;accent-color:#6366f1;">
+  <select id="orson-speed" style="background:#222;color:#fff;border:1px solid #444;border-radius:4px;padding:2px 6px;font-size:12px;cursor:pointer;">
+    <option value="0.25">0.25x</option>
+    <option value="0.5">0.5x</option>
+    <option value="1" selected>1x</option>
+    <option value="2">2x</option>
+  </select>
+  <span style="opacity:0.5;font-size:11px;">Space: play &middot; &larr;&rarr;: step &middot; Shift: &times;10</span>
+</div>
+<script>
+(function() {
+  if (window.__VIDEO_RENDER__) return;
+  var TOTAL = ${totalFrames};
+  var FPS = ${fps};
+  var slider = document.getElementById('orson-slider');
+  var frameLabel = document.getElementById('orson-frame');
+  var playBtn = document.getElementById('orson-play');
+  var speedSel = document.getElementById('orson-speed');
+  var playing = false;
+  var currentFrame = 0;
+  var speed = 1;
+
+  function updateDisplay() {
+    frameLabel.textContent = Math.floor(currentFrame) + '/' + TOTAL;
+    slider.value = Math.floor(currentFrame);
+    window.__setFrame(Math.floor(currentFrame));
+  }
+
+  slider.addEventListener('input', function(e) {
+    currentFrame = parseInt(e.target.value);
+    playing = false;
+    playBtn.textContent = '\\u25B6';
+    updateDisplay();
+  });
+
+  playBtn.addEventListener('click', function() {
+    playing = !playing;
+    playBtn.textContent = playing ? '\\u23F8' : '\\u25B6';
+  });
+
+  speedSel.addEventListener('change', function() {
+    speed = parseFloat(speedSel.value);
+  });
+
+  var lastTime = performance.now();
+  function tick(now) {
+    if (playing) {
+      var dt = (now - lastTime) / 1000;
+      currentFrame += dt * FPS * speed;
+      if (currentFrame >= TOTAL) currentFrame = 0;
+      updateDisplay();
+    }
+    lastTime = now;
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+
+  document.addEventListener('keydown', function(e) {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+    if (e.code === 'Space') {
+      playing = !playing;
+      playBtn.textContent = playing ? '\\u23F8' : '\\u25B6';
+      e.preventDefault();
+    }
+    var step = e.shiftKey ? 10 : 1;
+    if (e.code === 'ArrowRight') {
+      currentFrame = Math.min(currentFrame + step, TOTAL - 1);
+      playing = false;
+      playBtn.textContent = '\\u25B6';
+      updateDisplay();
+      e.preventDefault();
+    }
+    if (e.code === 'ArrowLeft') {
+      currentFrame = Math.max(currentFrame - step, 0);
+      playing = false;
+      playBtn.textContent = '\\u25B6';
+      updateDisplay();
+      e.preventDefault();
+    }
+  });
+})();
+</script>`;
 }
 
 // ─── HTML render ────────────────────────────────────────────
@@ -203,23 +319,15 @@ async function renderHTML(htmlConfig: HTMLConfig, htmlPath: string, noAudio: boo
   const startTime = Date.now();
 
   // ─── Parallel or Sequential Render ─────────────────────────
-  if (parallel && htmlConfig.scenes.length >= 2) {
-    const { renderParallel, buildSceneSegments } = await import('./parallel-render.js');
-    let cursor = 0;
-    const sceneTimings = sceneDurations.map((dur) => {
-      const s = { startMs: cursor, durationMs: dur };
-      cursor += dur;
-      return s;
-    });
-    const segments = buildSceneSegments(sceneTimings, fps);
+  if (parallel) {
+    const { renderParallel } = await import('./parallel-render.js');
     await renderParallel({
       htmlPath, width, height, fps, totalFrames, totalDurationMs,
       codec: htmlConfig.video.codec as CodecId,
       outputPath,
-      scenes: segments,
       ...(draft ? { codecOverride: DRAFT_OVERRIDES.codec } : {}),
       onProgress: (done, total) => {
-        console.log(`  Segment ${done}/${total} complete`);
+        console.log(`  Chunk ${done}/${total} complete`);
       },
     });
   } else {
@@ -229,11 +337,13 @@ async function renderHTML(htmlConfig: HTMLConfig, htmlPath: string, noAudio: boo
       codec: htmlConfig.video.codec as CodecId,
       outputPath,
       onLog: (msg) => process.stderr.write(msg + '\n'),
+      inputFormat: draft ? 'jpeg' : 'png',
       ...(draft ? { codecOverride: DRAFT_OVERRIDES.codec } : {}),
     });
 
     const session = await initCapture({
       width, height, fps, totalFrames, htmlPath,
+      ...(draft ? { captureFormat: 'jpeg' as const } : {}),
     });
 
     await captureFrames(session, {
@@ -331,17 +441,43 @@ async function renderHTML(htmlConfig: HTMLConfig, htmlPath: string, noAudio: boo
           };
           writeBrief(briefPath, JSON.stringify(briefData, null, 2));
 
-          // Run narration generator
+          // Run narration generator (with venv auto-setup for edge-tts)
           const narrationScript = resolve(dirname(outputPath), '..', '.claude/skills/orson/engine/audio/narration_generator.py');
           const altScript = resolve(dirname(import.meta.url.replace('file://', '')), '..', 'audio', 'narration_generator.py');
           const scriptPath = existsSync(narrationScript) ? narrationScript : altScript;
 
           if (existsSync(scriptPath)) {
-            const { execSync } = await import('child_process');
+            const { spawn: spawnProc } = await import('child_process');
             try {
-              execSync(`python3 "${scriptPath}" "${briefPath}" "${narrationOutputDir}"`, {
-                stdio: ['pipe', 'pipe', 'pipe'],
-                timeout: 120000,
+              // Resolve venv: same directory as narration_generator.py
+              const audioScriptDir = dirname(scriptPath);
+              const venvDir = resolve(audioScriptDir, '.venv');
+              const venvPython = resolve(venvDir, 'bin', 'python3');
+
+              // Auto-create venv + install edge-tts if missing
+              if (!existsSync(venvPython)) {
+                console.log('  Setting up Python venv for TTS...');
+                await new Promise<void>((res, rej) => {
+                  const proc = spawnProc('python3', ['-m', 'venv', venvDir], { stdio: 'inherit' });
+                  proc.on('close', (code) => code === 0 ? res() : rej(new Error(`venv creation failed with ${code}`)));
+                  proc.on('error', rej);
+                });
+                await new Promise<void>((res, rej) => {
+                  const pip = resolve(venvDir, 'bin', 'pip');
+                  const proc = spawnProc(pip, ['install', '-q', 'edge-tts'], { stdio: 'inherit' });
+                  proc.on('close', (code) => code === 0 ? res() : rej(new Error(`pip install failed with ${code}`)));
+                  proc.on('error', rej);
+                });
+              }
+
+              const pythonBin = existsSync(venvPython) ? venvPython : 'python3';
+              await new Promise<void>((res, rej) => {
+                const proc = spawnProc(pythonBin, [scriptPath, briefPath, narrationOutputDir], {
+                  stdio: ['pipe', 'pipe', 'pipe'],
+                  timeout: 120000,
+                } as any);
+                proc.on('close', (code) => code === 0 ? res() : rej(new Error(`Narration generator exited with ${code}`)));
+                proc.on('error', rej);
               });
 
               // Collect generated narration files
@@ -361,18 +497,18 @@ async function renderHTML(htmlConfig: HTMLConfig, htmlPath: string, noAudio: boo
                 // Apply ducking to music during narration
                 const duckEvents: DuckingEvent[] = [];
                 for (const b of brief) {
-                  duckEvents.push({ time_ms: b.startMs, action: 'duck', target_gain: 0.15 });
-                  duckEvents.push({ time_ms: b.endMs, action: 'release', target_gain: 1.0 });
+                  duckEvents.push({ time_ms: b.startMs, action: 'duck', target_gain: 0.12 });
+                  duckEvents.push({ time_ms: b.endMs, action: 'release', target_gain: 0.35 });
                 }
                 const duckedMusic = resolve(audioDir, 'music-ducked.mp3');
-                await applyDucking(fadedTrack, duckEvents, 1.0, duckedMusic);
+                await applyDucking(fadedTrack, duckEvents, 0.35, duckedMusic);
 
                 // Mix ducked music + narration
                 const { mixTracks } = await import('./audio-mixer.js');
                 const mixedAudio = resolve(audioDir, 'audio-mixed.mp3');
                 await mixTracks([
                   { path: duckedMusic, gain: 1.0 },
-                  { path: narrationTrack, gain: 1.2 },
+                  { path: narrationTrack, gain: 1.8 },
                 ], mixedAudio);
 
                 finalAudioPath = mixedAudio;
@@ -387,9 +523,14 @@ async function renderHTML(htmlConfig: HTMLConfig, htmlPath: string, noAudio: boo
         }
       }
 
+      // Normalize loudness to -14 LUFS before merge (prevents clipping)
+      const normalizedAudio = resolve(audioDir, 'audio-normalized.mp3');
+      await normalizeLoudness(finalAudioPath, normalizedAudio);
+      console.log('  Loudness normalized to -14 LUFS');
+
       // Merge audio into video
       const finalOutput = outputPath.replace(/\.mp4$/, '-audio.mp4');
-      await mergeAudioVideo(outputPath, finalAudioPath, finalOutput);
+      await mergeAudioVideo(outputPath, normalizedAudio, finalOutput);
 
       // Replace original with audio version
       const { renameSync, unlinkSync } = await import('fs');

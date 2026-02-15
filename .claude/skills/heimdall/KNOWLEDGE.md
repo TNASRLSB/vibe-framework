@@ -205,6 +205,26 @@ heimdall/
     └── vulnerable-samples/
 ```
 
+## Troubleshooting
+
+### Hook Not Triggering
+
+1. Verify hooks are in `.claude/settings.json`
+2. Check Python path: `which python3`
+3. Test script manually: `python3 .claude/skills/heimdall/hooks/pre-tool-validator.py`
+
+### False Positives
+
+1. Add to ignore list: `/heimdall config --ignore "test/**"`
+2. Use inline suppression: `// heimdall-ignore: SEC-001`
+3. Report pattern issue for tuning
+
+### Performance Issues
+
+1. Hooks timeout after 10 seconds
+2. For large projects, use targeted scans: `/heimdall scan src/auth/`
+3. Exclude generated files in config
+
 ## Hook Configuration
 
 For hook setup instructions and CI/CD integration, see `references/hook-setup.md`.
