@@ -1,6 +1,6 @@
 ---
 name: emmet
-description: Testing, debugging, tech debt audit, and code quality checklists. Complete testing cycle with static analysis and dynamic Playwright tests. Use when running tests, finding bugs, debugging code, auditing code quality, checking tech debt, doing code review, or pre-deploy checks. Triggers on 'test', 'debug', 'QA', 'tech debt', 'code review', 'pre-deploy', 'checklist'.
+description: Testing, debugging, tech debt audit, and code quality checklists. Complete testing cycle with static analysis, dynamic Playwright tests, and unit tests for pure functions. Use when running tests, finding bugs, debugging code, auditing code quality, checking tech debt, doing code review, or pre-deploy checks. Triggers on 'test', 'debug', 'QA', 'tech debt', 'code review', 'pre-deploy', 'checklist', 'unit test'.
 allowed-tools:
   - Read
   - Write
@@ -22,7 +22,7 @@ Skill completa per testing, debugging e quality assurance con ciclo:
 MAP → ANALISI → ESECUZIONE → REPORT
 ```
 
-La **functional map** e la fonte di verita: descrive cosa fa l'app, chi la usa, e quali flussi testare. Il testing usa la map per sapere **cosa** verificare.
+La **functional map** e la fonte di verita: descrive cosa fa l'app, chi la usa, quali flussi testare e quali funzioni pure verificare con unit test. Il testing usa la map per sapere **cosa** verificare.
 
 ## Commands
 
@@ -30,9 +30,10 @@ La **functional map** e la fonte di verita: descrive cosa fa l'app, chi la usa, 
 |---------|-------------|
 | `/emmet map` | Analizza codebase, genera mappa funzionale completa |
 | `/emmet map --update` | Rigenera la mappa funzionale |
-| `/emmet test` | Ciclo QA completo: analisi statica + test browser |
+| `/emmet test` | Ciclo QA completo: analisi statica + test browser + unit test |
 | `/emmet test --static` | Solo analisi statica (veloce, no browser) |
 | `/emmet test --browser` | Solo test browser (Playwright o BrowserMCP) |
+| `/emmet test --unit` | Solo unit test funzioni pure (da map) |
 | `/emmet report` | Genera report bug da ultimo test |
 | `/emmet techdebt [path]` | Audit tech debt (duplicazioni, export orfani, ecc.) |
 | `/emmet checklist [type]` | Carica checklist (code-review, pre-deploy, refactoring, security) |
@@ -52,7 +53,8 @@ Analizza il 100% della codebase e produce una mappa funzionale strutturata.
 - **Personas** — Derivate dalla complessita dei flussi
 - **Use Cases** — Flussi principali e alternativi con stato test
 - **Workflow Diagrams** — Diagrammi dei flussi complessi
-- **Coverage Summary** — Conteggio use cases testati/non testati
+- **Pure Functions** — Funzioni pure catalogate per priorita (P1/P2/P3) con firma, dipendenze e edge case
+- **Coverage Summary** — Conteggio use cases e pure functions testati/non testati
 
 **Workflow:**
 1. Scansiona HTML/JSX per screen/container
@@ -64,7 +66,9 @@ Analizza il 100% della codebase e produce una mappa funzionale strutturata.
 7. Genera personas dalla complessita dei flussi
 8. Genera use cases con flussi principali e alternativi
 9. Genera workflow diagrams
-10. Assembla map con template
+10. Scansiona funzioni pure esportate (utility, validatori, parser, calcoli)
+11. Classifica per priorita (P1/P2/P3) e deriva edge case dalla firma
+12. Assembla map con template
 
 **Aggiornamento:** `/emmet map --update` rigenera la map mantenendo lo stato test esistente.
 
@@ -80,9 +84,10 @@ Ciclo QA completo. Usa la functional map come guida per sapere cosa testare.
 
 | Comando | Cosa esegue |
 |---------|-------------|
-| `/emmet test` | Ciclo completo: static + browser |
+| `/emmet test` | Ciclo completo: static + browser + unit |
 | `/emmet test --static` | Solo analisi statica (veloce, no browser) |
 | `/emmet test --browser` | Solo test browser (Playwright o BrowserMCP) |
+| `/emmet test --unit` | Solo unit test funzioni pure |
 
 ### Flusso completo
 
@@ -94,7 +99,12 @@ Ciclo QA completo. Usa la functional map come guida per sapere cosa testare.
    b. Esegue test (Playwright o BrowserMCP)
    c. Cattura evidenze (screenshot, log, errori)
    d. Aggiorna stato test nella map
-4. Genera report finale in .emmet/test-report.md
+4. Per ogni pure function nella map (P1 → P2 → P3):
+   a. Genera unit test (framework auto-detected)
+   b. Esegue test
+   c. Cattura risultati
+   d. Aggiorna stato test nella map
+5. Genera report finale in .emmet/test-report.md
 ```
 
 ### Backend browser
@@ -117,6 +127,12 @@ Cerca: bug logici, pattern problematici, type errors, error handling incompleto,
 Simula utente reale basandosi sugli use cases della map. Ogni use case diventa uno o piu test script.
 
 **Riferimento completo:** `testing/dynamic.md`
+
+### Unit test
+
+Genera ed esegue unit test per le pure functions catalogate nella map. Auto-detect del framework (Jest/Vitest/pytest/go test/cargo test). Mock solo dipendenze esterne. Edge case derivati automaticamente dalla firma.
+
+**Riferimento completo:** `testing/unit.md`
 
 ### Aggiornamento map
 
@@ -277,6 +293,12 @@ Non c'e sovrapposizione: seurat descrive **come appare**, emmet descrive **cosa 
 ## Directory Structure
 
 Skill files are organized in: `prompts/`, `templates/`, `testing/`, and `checklists/`. Stack-specific patterns generated by `/adapt-framework` are saved to `.emmet/stacks/`.
+
+Key testing reference files:
+- `testing/static.md` — Rules for static code analysis
+- `testing/dynamic.md` — Rules for Playwright browser testing
+- `testing/unit.md` — Rules for unit test generation (pure functions)
+- `testing/report-template.md` — Output template for test reports
 
 ---
 

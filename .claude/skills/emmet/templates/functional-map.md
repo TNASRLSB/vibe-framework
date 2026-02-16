@@ -135,6 +135,50 @@ graph TD
 
 ---
 
+## Pure Functions
+
+<!--
+Funzioni pure e quasi-pure catalogate dal codebase.
+Divise per priorita di test (P1 = alta, P2 = media, P3 = bassa).
+
+Criteri di priorita:
+- P1: Logica condizionale complessa, calcoli, validazione, parsing
+- P2: Trasformazione dati, formatting, mapping
+- P3: Wrapper semplici, utility minimali
+
+Formato:
+
+### P1 — High Priority
+
+#### `functionName`
+- **File:** path/to/file.ext:line
+- **Firma:** (param1: type, param2: type) => returnType
+- **Dipendenze esterne:** [lista dipendenze da mockare, o "nessuna"]
+- **Complessita:** Bassa / Media / Alta
+- **Edge case:**
+  - param1: null, stringa vuota
+  - param2: 0, negativo, NaN
+- **Ultimo test:** mai — NON TESTATO
+-->
+
+### P1 — High Priority
+
+#### `functionName`
+- **File:** `path:line`
+- **Firma:** `(param1: type, param2: type) => returnType`
+- **Dipendenze esterne:** [dipendenze da mockare]
+- **Complessita:** Bassa / Media / Alta
+- **Edge case:**
+  - param1: [edge case derivati dal tipo]
+  - param2: [edge case derivati dal tipo]
+- **Ultimo test:** mai — NON TESTATO
+
+### P2 — Medium Priority
+
+### P3 — Low Priority
+
+---
+
 ## Coverage Summary
 
 | Metrica | Valore |
@@ -146,3 +190,9 @@ graph TD
 | Use cases testati | 0 |
 | Use cases NON testati | 0 |
 | Workflow diagrams | 0 |
+| Pure functions trovate | 0 |
+| Pure functions testate | 0 |
+| Pure functions NON testate | 0 |
+| Unit test totali | 0 |
+| Unit test PASS | 0 |
+| Unit test FAIL | 0 |

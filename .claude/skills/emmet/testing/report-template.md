@@ -76,6 +76,33 @@ Template per generare report bug con `/emmet report`.
 
 ---
 
+## Unit Test Results
+
+### Summary
+
+| Metrica | Valore |
+|---------|--------|
+| Funzioni testate | N |
+| Test totali | N |
+| PASS | N |
+| FAIL | N |
+| Coverage | X% (se disponibile) |
+
+### Risultati per funzione
+
+| Funzione | File | Test | Pass | Fail | Stato |
+|----------|------|------|------|------|-------|
+| functionA | src/utils.ts:12 | 5 | 5 | 0 | PASS |
+| functionB | src/calc.ts:45 | 4 | 3 | 1 | FAIL |
+
+### Failed Unit Tests
+
+| ID | Funzione | Test | Input | Expected | Actual |
+|----|----------|------|-------|----------|--------|
+| UNI-001 | functionB | negative input | `-5` | `Error` | `NaN` |
+
+---
+
 ## Bug Details
 
 ### [BUG-001] Title
@@ -206,6 +233,7 @@ Template per generare report bug con `/emmet report`.
 - `QUA-XXX` - Code quality
 - `PER-XXX` - Performance
 - `JRN-XXX` - Journey/UI bugs
+- `UNI-XXX` - Unit test failures
 - `INT-XXX` - Integration issues
 
 ---

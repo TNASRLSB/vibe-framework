@@ -147,7 +147,66 @@ Includere:
 - Branching per errori/fallback
 - Punti di integrazione esterna (API, DB)
 
-### Step 8: Assemble Map
+### Step 8: Scan Pure Functions
+
+Identifica tutte le funzioni esportate che contengono logica pura (non componenti UI, non route handler, non middleware).
+
+#### 8a. Trova candidati
+
+Cerca funzioni esportate:
+
+| Pattern | Linguaggio |
+|---------|------------|
+| `export function`, `export const ... = (` | JS/TS |
+| `module.exports.`, `exports.` | CommonJS |
+| `def` (top-level, non in classe view/handler) | Python |
+| `pub fn` (non in `impl Handler/Router`) | Rust |
+| `func` (esportata, non `Handler`) | Go |
+
+#### 8b. Escludi non-pure
+
+Scarta funzioni che:
+- Ritornano JSX/template (componenti UI)
+- Hanno parametri `req`/`res`/`ctx`/`request`/`response` (route handler)
+- Sono middleware (`next` parameter)
+- Sono hook React/Vue (`use` prefix con state/effect)
+- Sono solo re-export o alias
+- Sono in file di tipo/interfaccia (`.d.ts`, type-only)
+- Sono in file di test (`*.test.*`, `*.spec.*`)
+- Sono in file generati (`dist/`, `build/`, `*.generated.*`)
+- Sono file di configurazione pura (solo costanti senza logica)
+
+#### 8c. Per ogni funzione, cataloga
+
+- **name** — Nome funzione
+- **file:line** — Posizione esatta
+- **signature** — Parametri e tipo ritorno (inferiti se non tipizzati)
+- **dependencies** — Import usati nel corpo, divisi in:
+  - *Interne:* funzioni dello stesso progetto
+  - *Esterne:* librerie/moduli esterni (queste vanno mockate nei test)
+  - *Side-effect:* filesystem, network, DB, env, time, random
+- **complexity** — Bassa (lineare, no branching) / Media (if/else, switch) / Alta (loop nested, ricorsione, multiple branches)
+- **pure** — Si (nessun side effect) / Quasi-pura (side effect mockabile) / No (esclusa dal catalogo)
+
+#### 8d. Classifica per priorita test
+
+| Priorita | Criteri | Esempi |
+|----------|---------|--------|
+| **P1 (High)** | Logica condizionale complessa, calcoli, validazione, parsing | `validateEmail()`, `calculateTotal()`, `parseCSV()` |
+| **P2 (Medium)** | Trasformazione dati, formatting, mapping | `formatDate()`, `mapUserToDTO()`, `slugify()` |
+| **P3 (Low)** | Wrapper semplici, utility minimali | `getFullName()`, `isEven()`, `capitalize()` |
+
+#### 8e. Deriva edge case per funzione
+
+Dalla firma e dal corpo della funzione, genera edge case usando la tabella in `testing/unit.md` (sezione "Edge Case per Tipo").
+
+#### 8f. Output
+
+Popola la sezione `## Pure Functions` nel template con le funzioni trovate, divise per priorita (P1/P2/P3).
+
+Stato iniziale per tutte: `Ultimo test: mai — NON TESTATO`
+
+### Step 9: Assemble Map
 
 Usa il template in `templates/functional-map.md` per assemblare il documento finale.
 
@@ -160,9 +219,10 @@ Salva in: `.emmet/functional-map.md`
 1. **Scan completo** — Non fermarsi ai file "principali". Scansionare TUTTI i file del progetto (escludendo node_modules, .git, build artifacts).
 2. **Evidenza nel codice** — Ogni elemento nella map deve avere un riferimento `file:line` verificabile.
 3. **Non inventare** — Se un flusso non e chiaro dal codice, segnalarlo come `[DA VERIFICARE]` piuttosto che indovinare.
-4. **Stato test iniziale** — Alla prima generazione, tutti gli use case hanno `Ultimo test: mai — NON TESTATO`.
+4. **Stato test iniziale** — Alla prima generazione, tutti gli use case e le pure functions hanno `Ultimo test: mai — NON TESTATO`.
 5. **Mermaid valido** — I diagrammi Mermaid devono essere sintatticamente corretti.
-6. **Aggiornamento incrementale** — Con `--update`, mantenere lo stato test esistente per use case non modificati. Solo i nuovi use case hanno stato `NON TESTATO`.
+6. **Aggiornamento incrementale** — Con `--update`, mantenere lo stato test esistente per use case e pure functions non modificati. Solo i nuovi hanno stato `NON TESTATO`.
+7. **Pure functions complete** — Scansionare TUTTI i file per funzioni esportate. Non fermarsi a `src/` — controllare anche `lib/`, `utils/`, `helpers/`, `services/`, e qualsiasi altra directory con logica.
 
 ---
 
@@ -171,9 +231,11 @@ Salva in: `.emmet/functional-map.md`
 Dopo aver generato/aggiornato la map, informare l'utente:
 
 > Map funzionale generata in `.emmet/functional-map.md`.
-> Trovate N schermate, N use cases, N personas.
+> Trovate N schermate, N use cases, N personas, N pure functions.
 > Use cases non testati: N
+> Pure functions non testate: N
 >
 > Per eseguire il ciclo QA completo: `/emmet test`
 > Per solo analisi statica: `/emmet test --static`
 > Per solo test browser: `/emmet test --browser`
+> Per solo unit test: `/emmet test --unit`
