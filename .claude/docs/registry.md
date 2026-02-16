@@ -10,7 +10,14 @@ This is my memory. I update it as I learn. I check it before making claims.
 
 | Name | Location | Purpose |
 |------|----------|---------|
-| | | |
+| Seurat | `.claude/skills/seurat/` | UI design system, wireframing, page layout, WCAG accessibility |
+| Emmet | `.claude/skills/emmet/` | Testing, QA, tech debt audit, functional mapping, unit tests |
+| Heimdall | `.claude/skills/heimdall/` | AI-specific security analysis, OWASP Top 10, credential detection |
+| Ghostwriter | `.claude/skills/ghostwriter/` | SEO + GEO dual optimization, persuasive copywriting |
+| Baptist | `.claude/skills/baptist/` | CRO orchestrator, A/B testing, funnel analysis |
+| Orson | `.claude/skills/orson/` | Programmatic video generation, demo recording with audio |
+| Scribe | `.claude/skills/scribe/` | Office documents (xlsx, docx, pptx) and PDF handling |
+| Forge | `.claude/skills/forge/` | Meta-skill for creating, auditing, and maintaining skills |
 
 ---
 

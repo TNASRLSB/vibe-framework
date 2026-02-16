@@ -41,7 +41,7 @@ Salta le sezioni che non si applicano.
 **4. (Opzionale) Per progetti con UI:**
 ```
 /seurat extract
-/seurat analyze-project
+/seurat map
 ```
 
 ### Aggiornamento
@@ -130,8 +130,7 @@ progetto/
         │   ├── data/         # Known packages database (2000+)
         │   ├── hooks/        # PreToolUse + PostToolUse validators
         │   ├── scripts/      # Scanner, diff-analyzer, import-checker
-        │   ├── references/   # Guide BaaS e credenziali (on-demand)
-        │   └── reference/    # OWASP guide, secure patterns
+        │   └── references/   # Guide BaaS, credenziali, OWASP, secure patterns (on-demand)
         ├── ghostwriter/      # Skill SEO + GEO + Copywriting
         │   ├── SKILL.md
         │   ├── seo/          # Fondamenti SEO tradizionale
@@ -264,32 +263,31 @@ Se il progetto ha già componenti UI, segui i passi sopra più:
 ```
 Analizza CSS/SCSS, estrae token, genera `.seurat/tokens.css` + `.seurat/design-system.html` + report inconsistenze.
 
-2. **Analizza lo stato attuale della UI:**
+2. **Mappa la struttura UI:**
 
 ```
-/seurat analyze-project
+/seurat map
 ```
 Crea `.seurat/project-map.md` con:
 - Pagine mappate agli archetipi (Entry, Discovery, Detail, Action, Management, System)
 - Inventario elementi per pagina
-- Stato compliance design system
-- Violazioni e priorità migrazione
+- Routes → archetypes
 
 3. **Revisiona il project map** in `.seurat/project-map.md`:
 - Verifica che le classificazioni siano corrette
-- Controlla le priorità delle violazioni
 
-4. **Avvia la migrazione sistematica:**
-
-```
-/seurat migrate-project
-```
-
-5. **Controlla lo stato migrazione in qualsiasi momento:**
+4. **Audit UX/UI (opzionale):**
 
 ```
-/seurat migration-status
+/seurat audit
 ```
+
+5. **Avvia la migrazione sistematica:**
+
+```
+/seurat migrate
+```
+Include status check automatico del progresso.
 
 ### Cosa va popolato/configurato per-progetto
 
@@ -303,7 +301,7 @@ Crea `.seurat/project-map.md` con:
 | `/emmet map` | Consigliato | Genera functional map del codebase per testing |
 | `/seurat setup` | Consigliato | Per nuovi progetti con UI |
 | `/seurat extract` | Consigliato | Per progetti esistenti con UI (estrae token dal codice) |
-| `/seurat analyze-project` | Consigliato | Per progetti esistenti con UI da migrare |
+| `/seurat map` | Consigliato | Per progetti esistenti con UI (mappa archetipi per pagina) |
 | `checklist.md` | Opzionale | Se ci sono check specifici del progetto |
 | `workflows.md` | No | Diagrammi universali, non modificare |
 | `specs/*.md` | Automatico | Claude li crea durante lo sviluppo |
@@ -413,16 +411,13 @@ Si attiva automaticamente quando il contesto riguarda UI/UX, oppure manualmente:
 | `/seurat preview` | Apri design-system.html per validazione visiva |
 | `/seurat build [type]` | Genera pagina completa (entry/discovery/detail/action/management/system) |
 | `/seurat apply` | Applica il design system durante la generazione |
-| `/seurat audit` | Verifica accessibilità e coerenza |
+| `/seurat audit` | Audit UX/UI completo (tutte le pagine) o singolo file |
+| `/seurat map` | Mappa strutturale UI del codebase (archetipi per pagina) |
+| `/seurat migrate` | Migrazione sistematica al design system (progetto o pattern singolo) |
 | `/seurat research [topic]` | Ricerca prima di progettare |
 | `/seurat polish` | Rifinitura finale |
 | `/seurat save-pattern [name]` | Salva un pattern riutilizzabile |
 | `/seurat reference [pattern]` | Consulta riferimenti visivi curati |
-| `/seurat compliance` | Audit compliance design system su tutto il codebase |
-| `/seurat migrate [pattern]` | Migrazione sistematica di un pattern |
-| `/seurat analyze-project` | Analizza codebase esistente, crea project-map.md |
-| `/seurat migrate-project` | Guida migrazione sistematica al design system |
-| `/seurat migration-status` | Stato migrazione in corso |
 
 **Generative System:** La skill include un sistema di generazione stili basato su:
 - **Matrici fuzzy weights** — Profili per tipo (25), industria (40+), target (7 dimensioni)

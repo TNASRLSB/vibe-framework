@@ -556,7 +556,7 @@ if [ "$IS_INSTALL" = true ]; then
   echo ""
   echo "  4. (Optional) For projects with UI:"
   echo "     /seurat extract"
-  echo "     /seurat analyze-project"
+  echo "     /seurat map"
   echo ""
   echo "  Full docs: .claude/README.md"
   echo ""

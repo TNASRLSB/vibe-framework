@@ -30,7 +30,6 @@ Registro incrementale di tutte le richieste gestite dal framework.
 
 | # | Data | Ora | Tipologia | Descrizione | Doc riferimento | Stato |
 |---|------|-----|-----------|-------------|-----------------|-------|
-| 1 | 2026-02-16 | - | Refactoring | Riorganizzare comandi audit/map/migrate di Seurat: rinominare, consolidare, definire processo audit completo | [seurat-audit-map-refactor.md](specs/seurat-audit-map-refactor.md) | completato |
 
 ---
 

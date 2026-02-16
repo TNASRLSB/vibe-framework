@@ -54,7 +54,7 @@ Use `--dry-run` to preview changes without modifying anything.
 3. **(Optional) For projects with UI:**
    ```
    /seurat extract
-   /seurat analyze-project
+   /seurat map
    ```
 
 ## Requirements

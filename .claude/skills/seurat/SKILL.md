@@ -262,8 +262,6 @@ Report in `.seurat/audit-report.md` (completo) o `.seurat/audit-[filename].md` (
 10. **Limitazioni** — Cosa NON è stato verificato e perché
 11. **Prossimi passi** — Spec per i fix → implementazione via `/seurat migrate` o fix manuali
 
-See [audit reference example](../../docs/specs/references/audit-esempio.md) for format.
-
 ### `/seurat research [topic]`
 Research modern implementations before building:
 1. Research how [topic] is implemented in top apps

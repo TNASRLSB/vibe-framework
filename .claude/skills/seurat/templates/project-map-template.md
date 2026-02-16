@@ -160,6 +160,6 @@ Ordine suggerito per la migrazione al design system.
 
 ## How to Update This File
 
-1. Run `/seurat analyze-project` to regenerate
+1. Run `/seurat map` to regenerate
 2. Or manually update after significant UI changes
 3. Keep `Last analyzed` date current
