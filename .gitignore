@@ -10,5 +10,4 @@ __pycache__/
 .orson/
 .scribe/
 .ghostwriter/
-.heimdall/state.json
-.heimdall/findings.json
+.heimdall/

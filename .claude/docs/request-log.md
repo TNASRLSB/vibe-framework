@@ -30,7 +30,6 @@ Registro incrementale di tutte le richieste gestite dal framework.
 
 | # | Data | Ora | Tipologia | Descrizione | Doc riferimento | Stato |
 |---|------|-----|-----------|-------------|-----------------|-------|
-| 1 | 2026-02-16 | - | Feature | Estendere Emmet con unit testing per funzioni pure: map cataloga funzioni, test --unit genera ed esegue unit test | `.claude/docs/specs/emmet-unit-testing.md` | completato |
 
 ---
 
