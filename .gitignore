@@ -11,3 +11,5 @@ __pycache__/
 .scribe/
 .ghostwriter/
 .heimdall/
+*.preview.html
+video-preview.html
