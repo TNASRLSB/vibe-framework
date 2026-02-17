@@ -57,6 +57,36 @@ var anims = {
 - **4:5** (1080x1350): Mix vertical/centered
 - Use design tokens from seurat (if available) for colors, fonts, spacing
 
+## Video Scale Requirements
+
+This is NOT a website. This is a video. Every element must be legible at typical viewing distances: mobile in hand, desktop monitor, TV across room. Sizes below these minimums are rendering bugs — fix them before preview.
+
+### Minimum Typography (MANDATORY)
+
+| Element | 16:9 (1920×1080) | 9:16 (1080×1920) | 1:1 (1080×1080) |
+|---------|-------------------|-------------------|-------------------|
+| Headline | 64px+ | 72px+ | 56px+ |
+| Body text | 28px+ | 32px+ | 26px+ |
+| Label / tag | 20px+ | 24px+ | 18px+ |
+| Caption / dim text | 18px+ | 20px+ | 16px+ |
+
+Below these = rendering bug. Fix immediately.
+
+### Minimum Component Sizing (MANDATORY)
+
+- **Card min-width:** 40% of viewport (e.g. 768px on 1920px wide)
+- **Tag / badge min font-size:** 18px, min padding: 12px 28px
+- **Progress bar min height:** 12px
+
+A card at 320px on a 1920px viewport is a web component, not a video component.
+
+### Contrast Floor (MANDATORY)
+
+- Any visible text: minimum **4.5:1** contrast ratio against its background
+- Practical rule: on dark backgrounds (#000–#1a1a1a), the dimmest allowed text is **#808080**
+- Label / dim text: **#999999** minimum on dark backgrounds
+- "Elegant" low-contrast text is illegible in video — bump it up
+
 ## Resources for Writing HTML
 
 - Read `references/visual-recipes.md` for the visual recipe catalog, color arcs, camera motion, kinetic typography, secondary animation, and negative space rules

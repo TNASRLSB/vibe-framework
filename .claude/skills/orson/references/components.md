@@ -2,6 +2,8 @@
 
 Copy-paste CSS patterns for video scenes. Adapt colors, sizes, and fonts to the project's design tokens.
 
+> **All sizes below are VIDEO-SCALE minimums — NOT web sizes.** These must be legible at typical viewing distances (mobile in hand, desktop monitor, TV across room). See `html-contract.md` → "Video Scale Requirements" for the full minimum typography and component sizing tables.
+
 ---
 
 ## Hero Layouts
@@ -34,8 +36,8 @@ Copy-paste CSS patterns for video scenes. Adapt colors, sizes, and fonts to the 
 .features { display:flex; gap:48px; padding:0 80px; }
 .feature-card { flex:1; padding:40px 32px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:20px; backdrop-filter:blur(12px); display:flex; flex-direction:column; gap:16px; }
 .feature-icon { font-size:48px; }
-.feature-title { font-size:22px; font-weight:600; }
-.feature-desc { font-size:17px; color:var(--dim); line-height:1.5; }
+.feature-title { font-size:28px; font-weight:600; }
+.feature-desc { font-size:24px; color:var(--dim); line-height:1.5; }
 ```
 
 ### Vertical Feature Stack (9:16)
@@ -55,7 +57,7 @@ Copy-paste CSS patterns for video scenes. Adapt colors, sizes, and fonts to the 
 
 ### Syntax-Highlighted Code
 ```css
-.code-block { font-family:'JetBrains Mono',monospace; font-size:17px; line-height:1.7; color:var(--dim); background:rgba(0,0,0,0.4); padding:28px 32px; border-radius:12px; border:1px solid rgba(255,255,255,0.08); }
+.code-block { font-family:'JetBrains Mono',monospace; font-size:22px; line-height:1.7; color:var(--dim); background:rgba(0,0,0,0.4); padding:28px 32px; border-radius:12px; border:1px solid rgba(255,255,255,0.08); }
 .code-block .kw { color:#c4b5fd; }
 .code-block .str { color:#a78bfa; }
 .code-block .fn { color:#f0abfc; }
@@ -69,7 +71,7 @@ Copy-paste CSS patterns for video scenes. Adapt colors, sizes, and fonts to the 
 .terminal-bar { height:36px; background:#1f2937; display:flex; align-items:center; padding:0 16px; gap:8px; }
 .terminal-dot { width:12px; height:12px; border-radius:50%; }
 .dot-r { background:#ef4444; } .dot-y { background:#eab308; } .dot-g { background:#22c55e; }
-.terminal-body { padding:24px; font-family:'JetBrains Mono',monospace; font-size:15px; line-height:1.8; }
+.terminal-body { padding:24px; font-family:'JetBrains Mono',monospace; font-size:20px; line-height:1.8; }
 .terminal-prompt { color:#22c55e; }
 .terminal-output { color:#94a3b8; }
 ```
@@ -83,7 +85,7 @@ Copy-paste CSS patterns for video scenes. Adapt colors, sizes, and fonts to the 
 .comparison { display:grid; grid-template-columns:1fr 1fr; gap:0; border-radius:20px; overflow:hidden; }
 .compare-before { background:rgba(239,68,68,0.08); padding:40px; }
 .compare-after { background:rgba(34,197,94,0.08); padding:40px; }
-.compare-label { font-size:14px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:16px; }
+.compare-label { font-size:20px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:16px; }
 ```
 
 ### Before/After (Stacked, for 9:16)
@@ -149,7 +151,7 @@ Copy-paste CSS patterns for video scenes. Adapt colors, sizes, and fonts to the 
 
 ### Phone Frame
 ```css
-.phone { width:320px; border-radius:36px; border:3px solid #333; overflow:hidden; background:#111; }
+.phone { width:400px; /* 400px minimum — increase for split layouts */ border-radius:36px; border:3px solid #333; overflow:hidden; background:#111; }
 .phone-notch { width:120px; height:24px; background:#333; border-radius:0 0 12px 12px; margin:0 auto; }
 .phone-content { padding:20px; min-height:500px; }
 .phone-home { width:120px; height:5px; background:#444; border-radius:3px; margin:12px auto; }
@@ -161,7 +163,7 @@ Copy-paste CSS patterns for video scenes. Adapt colors, sizes, and fonts to the 
 
 ### Animated Progress Bar
 ```css
-.progress-bar { height:8px; background:rgba(255,255,255,0.1); border-radius:4px; overflow:hidden; }
+.progress-bar { height:12px; background:rgba(255,255,255,0.1); border-radius:4px; overflow:hidden; }
 .progress-fill { height:100%; border-radius:4px; background:linear-gradient(90deg,var(--accent),var(--accent-alt)); }
 ```
 
@@ -169,7 +171,7 @@ Copy-paste CSS patterns for video scenes. Adapt colors, sizes, and fonts to the 
 ```css
 .bar-chart { display:flex; flex-direction:column; gap:16px; }
 .bar-row { display:flex; align-items:center; gap:16px; }
-.bar-label { font-size:14px; color:var(--dim); width:100px; text-align:right; }
+.bar-label { font-size:20px; color:var(--dim); width:100px; text-align:right; }
 .bar { height:36px; border-radius:8px; background:linear-gradient(90deg,var(--accent),var(--accent-alt)); }
 ```
 
@@ -204,7 +206,7 @@ Copy-paste CSS patterns for video scenes. Adapt colors, sizes, and fonts to the 
 ## Badges / Pills
 
 ```css
-.badge { font-size:14px; font-weight:600; letter-spacing:0.15em; text-transform:uppercase; color:var(--accent); background:rgba(var(--accent-rgb),0.12); padding:8px 24px; border-radius:100px; border:1px solid rgba(var(--accent-rgb),0.25); }
+.badge { font-size:18px; font-weight:600; letter-spacing:0.15em; text-transform:uppercase; color:var(--accent); background:rgba(var(--accent-rgb),0.12); padding:12px 28px; border-radius:100px; border:1px solid rgba(var(--accent-rgb),0.25); }
 ```
 
 ---

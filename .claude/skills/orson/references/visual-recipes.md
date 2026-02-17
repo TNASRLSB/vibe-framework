@@ -598,6 +598,8 @@ Color arcs create emotional narrative across scenes. Choose an arc based on vide
 
 Pick the arc in Phase 3 before writing HTML. Set CSS custom properties in each scene's `<div class="scene" style="...">` to follow the arc. Background, text, and accent should all shift coherently.
 
+> **REQUIRED.** Every video with 4+ scenes MUST apply a color arc. The background, accent, or text must shift perceptibly at least twice across the video. "Imperceptible" shifts (e.g., #0A0A0A → #0C0B0A) do NOT count — the viewer must be able to tell two scenes apart by color alone.
+
 ---
 
 ## Camera Motion
@@ -790,3 +792,19 @@ Rules for frame occupancy. Strategic emptiness creates focus and premium feel.
 | 9:16 (1080x1920) | 1.4x | -30% |
 | 1:1 (1080x1080) | 0.9x | -15% |
 | 4:5 (1080x1350) | 1.1x | -10% |
+
+---
+
+## Scene Visual Variety (MANDATORY)
+
+In a video with 5+ scenes:
+
+1. **Maximum 3 consecutive text-only scenes allowed.** If scene 2, 3, and 4 are all text-only, scene 5 MUST include a non-text visual element.
+2. **At least 1 scene must contain a non-text visual element** — mockup, card, data viz, chart, comparison, progress bar, or decorative component from `components.md`.
+3. **Split layouts and centered layouts must alternate** — never use the same layout type for 3+ consecutive scenes.
+
+---
+
+## Decoratives Global Rule
+
+> Recipes that specify "None" for decoratives MAY use zero decoratives. All other recipes MUST include at least one ambient decorative element (orb, grid, gradient, grain, pattern) in at least 2 scenes.

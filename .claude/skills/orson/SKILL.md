@@ -249,6 +249,22 @@ Tell the user which recipe and arc you chose before writing HTML.
 
 Create `<output-dir>/video.html`. Read `references/html-contract.md` for the full HTML format specification (comment syntax, scene structure, animation script, available easings/properties, format-specific CSS). For reusable CSS layout snippets (hero, cards, code blocks, mockups, stats), see `references/components.md`.
 
+#### Step 3.1b: Scale Validation (mandatory)
+
+Before previewing, self-check the HTML against these hard rules:
+
+1. **Typography** — No text element below the format's minimum sizes (see `html-contract.md` → "Video Scale Requirements"). If any label, body, or caption is below minimum, increase it NOW.
+
+2. **Contrast** — No text color with contrast ratio < 4.5:1 against its background. Quick check: on dark backgrounds (#000–#1a1a1a), the dimmest allowed text is ~#808080. If using dimmer colors for "elegance", bump them up.
+
+3. **Component sizing** — Cards, tags, and badges must meet minimum widths (see `html-contract.md`). A card at 320px on a 1920px viewport is a web component, not a video component.
+
+4. **Visual variety** — Count text-only scenes. If more than 3 consecutive, add a visual element to at least one. Check that layout types (centered vs split vs grid) alternate.
+
+5. **Color arc** — Verify the chosen arc produces visible color shifts. Open two scenes side-by-side mentally — can you tell the backgrounds apart? If not, increase the shift.
+
+If ANY rule fails, fix it before proceeding to preview.
+
 #### Step 3.2: Preview & Verify
 
 Use the interactive preview to check the HTML before rendering:
