@@ -10,21 +10,23 @@ Copy-paste CSS patterns for video scenes. Adapt colors, sizes, and fonts to the 
 
 ### Centered Hero
 ```css
-.scene { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:24px; }
-.hero-title { font-size:120px; font-weight:700; letter-spacing:-0.04em; text-align:center; line-height:1.05; }
-.hero-sub { font-size:28px; color:var(--dim); text-align:center; max-width:700px; }
+.scene { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:40px; }
+.hero-title { font-size:140px; font-weight:700; letter-spacing:-0.04em; text-align:center; line-height:1.05; max-width:1400px; }
+.hero-sub { font-size:32px; color:var(--dim); text-align:center; max-width:1000px; line-height:1.5; }
 ```
+The title at 140px on 1920px wide ≈ 8-12 words fill 60%+ of viewport width. Subtitle `max-width:1000px` ensures readable line lengths without being a tiny strip.
 
 ### Split Hero (Text Left, Visual Right)
 ```css
-.scene.split { flex-direction:row; padding:0 120px; gap:100px; }
-.split-left { flex:1; display:flex; flex-direction:column; justify-content:center; gap:28px; }
+.scene.split { flex-direction:row; padding:80px 120px; gap:100px; align-items:center; }
+.split-left { flex:1; display:flex; flex-direction:column; justify-content:center; gap:36px; }
 .split-right { flex:1; display:flex; align-items:center; justify-content:center; }
 ```
+Note `padding:80px 120px` — top/bottom padding keeps content away from edges while vertical padding ensures the content zone spans most of the viewport height.
 
 ### Asymmetric Hero (60/40)
 ```css
-.scene.asym { display:grid; grid-template-columns:3fr 2fr; padding:0 80px; gap:80px; align-items:center; }
+.scene.asym { display:grid; grid-template-columns:3fr 2fr; padding:80px 100px; gap:80px; align-items:center; min-height:100%; }
 ```
 
 ---
@@ -33,22 +35,22 @@ Copy-paste CSS patterns for video scenes. Adapt colors, sizes, and fonts to the 
 
 ### Horizontal Feature Row
 ```css
-.features { display:flex; gap:48px; padding:0 80px; }
-.feature-card { flex:1; padding:40px 32px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:20px; backdrop-filter:blur(12px); display:flex; flex-direction:column; gap:16px; }
-.feature-icon { font-size:48px; }
-.feature-title { font-size:28px; font-weight:600; }
+.features { display:flex; gap:48px; padding:60px 100px; }
+.feature-card { flex:1; min-width:380px; padding:48px 40px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:20px; backdrop-filter:blur(12px); display:flex; flex-direction:column; gap:20px; }
+.feature-icon { font-size:52px; }
+.feature-title { font-size:32px; font-weight:600; }
 .feature-desc { font-size:24px; color:var(--dim); line-height:1.5; }
 ```
 
 ### Vertical Feature Stack (9:16)
 ```css
-.features-stack { display:flex; flex-direction:column; gap:32px; padding:0 60px; width:100%; }
-.feature-card { padding:32px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:16px; }
+.features-stack { display:flex; flex-direction:column; gap:36px; padding:60px 60px; width:100%; }
+.feature-card { padding:40px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); border-radius:16px; }
 ```
 
 ### Feature Grid (2×2)
 ```css
-.feature-grid { display:grid; grid-template-columns:1fr 1fr; gap:32px; padding:0 80px; max-width:1400px; }
+.feature-grid { display:grid; grid-template-columns:1fr 1fr; gap:40px; padding:60px 100px; max-width:1600px; }
 ```
 
 ---
@@ -82,16 +84,16 @@ Copy-paste CSS patterns for video scenes. Adapt colors, sizes, and fonts to the 
 
 ### Before/After (Side by Side)
 ```css
-.comparison { display:grid; grid-template-columns:1fr 1fr; gap:0; border-radius:20px; overflow:hidden; }
-.compare-before { background:rgba(239,68,68,0.08); padding:40px; }
-.compare-after { background:rgba(34,197,94,0.08); padding:40px; }
-.compare-label { font-size:20px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:16px; }
+.comparison { display:grid; grid-template-columns:1fr 1fr; gap:0; border-radius:20px; overflow:hidden; margin:0 80px; }
+.compare-before { background:rgba(239,68,68,0.08); padding:56px 48px; }
+.compare-after { background:rgba(34,197,94,0.08); padding:56px 48px; }
+.compare-label { font-size:22px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:20px; }
 ```
 
 ### Before/After (Stacked, for 9:16)
 ```css
-.comparison-stack { display:flex; flex-direction:column; gap:24px; padding:0 48px; }
-.compare-card { padding:32px; border-radius:16px; }
+.comparison-stack { display:flex; flex-direction:column; gap:32px; padding:60px 56px; }
+.compare-card { padding:40px; border-radius:16px; }
 .compare-bad { background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.15); }
 .compare-good { background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.15); }
 ```
@@ -102,16 +104,17 @@ Copy-paste CSS patterns for video scenes. Adapt colors, sizes, and fonts to the 
 
 ### Stat Row
 ```css
-.stats { display:flex; gap:60px; justify-content:center; }
-.stat { text-align:center; }
-.stat-value { font-size:72px; font-weight:700; letter-spacing:-0.03em; }
-.stat-label { font-size:18px; color:var(--dim); margin-top:8px; }
+.stats { display:flex; gap:80px; justify-content:center; padding:60px 100px; }
+.stat { text-align:center; min-width:220px; }
+.stat-value { font-size:96px; font-weight:700; letter-spacing:-0.03em; }
+.stat-label { font-size:22px; color:var(--dim); margin-top:12px; text-transform:uppercase; letter-spacing:0.1em; }
 ```
+Stat values at 96px are visually dominant on a 1920px canvas. Below 72px, stats look timid.
 
 ### Stat Cards
 ```css
-.stat-cards { display:flex; gap:32px; }
-.stat-card { flex:1; padding:32px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:16px; text-align:center; }
+.stat-cards { display:flex; gap:40px; padding:60px 100px; }
+.stat-card { flex:1; min-width:280px; padding:48px 40px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:16px; text-align:center; }
 ```
 
 ---
@@ -120,11 +123,12 @@ Copy-paste CSS patterns for video scenes. Adapt colors, sizes, and fonts to the 
 
 ### Centered CTA
 ```css
-.cta-section { display:flex; flex-direction:column; align-items:center; gap:48px; }
-.cta-title { font-size:80px; font-weight:700; text-align:center; letter-spacing:-0.03em; }
-.cta-sub { font-size:26px; color:var(--dim); text-align:center; }
-.cta-button { display:inline-flex; align-items:center; gap:12px; font-size:22px; font-weight:600; background:linear-gradient(135deg,var(--accent),var(--accent-alt)); padding:20px 48px; border-radius:16px; box-shadow:0 0 40px rgba(var(--accent-rgb),0.4); }
+.cta-section { display:flex; flex-direction:column; align-items:center; gap:56px; }
+.cta-title { font-size:96px; font-weight:700; text-align:center; letter-spacing:-0.03em; max-width:1300px; line-height:1.1; }
+.cta-sub { font-size:28px; color:var(--dim); text-align:center; max-width:900px; }
+.cta-button { display:inline-flex; align-items:center; gap:16px; font-size:26px; font-weight:600; background:linear-gradient(135deg,var(--accent),var(--accent-alt)); padding:24px 64px; border-radius:16px; box-shadow:0 0 40px rgba(var(--accent-rgb),0.4); }
 ```
+CTA title at 96px with max-width 1300px fills the screen with authority. Button at 26px with generous padding (24px 64px) is clearly tappable even in a phone-sized video preview.
 
 ---
 
@@ -206,7 +210,7 @@ Copy-paste CSS patterns for video scenes. Adapt colors, sizes, and fonts to the 
 ## Badges / Pills
 
 ```css
-.badge { font-size:18px; font-weight:600; letter-spacing:0.15em; text-transform:uppercase; color:var(--accent); background:rgba(var(--accent-rgb),0.12); padding:12px 28px; border-radius:100px; border:1px solid rgba(var(--accent-rgb),0.25); }
+.badge { font-size:20px; font-weight:600; letter-spacing:0.15em; text-transform:uppercase; color:var(--accent); background:rgba(var(--accent-rgb),0.12); padding:14px 36px; border-radius:100px; border:1px solid rgba(var(--accent-rgb),0.25); }
 ```
 
 ---
@@ -240,11 +244,13 @@ The `overflow:hidden` on the cam div prevents edge reveal during pans and scale-
 
 ## Format-Specific Tips
 
-| Format | Viewport | Layout Notes |
-|--------|----------|-------------|
-| 16:9 (1920×1080) | Wide | Split layouts work great. 120px side padding. |
-| 9:16 (1080×1920) | Tall | Stack everything vertically. 60px side padding. Larger text (headline 80px+). |
-| 1:1 (1080×1080) | Square | Centered layouts. Compact elements. 48px padding. |
-| 4:5 (1080×1350) | Tall-ish | Mix of vertical stacking and centered. 56px padding. |
-| 4:3 (1440×1080) | Classic | Similar to 16:9 but less side space. 80px padding. |
-| 21:9 (2560×1080) | Ultra-wide | Lots of horizontal space. Split layouts shine. 200px padding. |
+| Format | Viewport | Layout Notes | Min headline |
+|--------|----------|-------------|-------------|
+| 16:9 (1920×1080) | Wide | Split layouts work great. 100-120px side padding. Content zone: 80% of width. | 80px |
+| 9:16 (1080×1920) | Tall | Stack vertically. 60px side padding. Larger text. | 96px |
+| 1:1 (1080×1080) | Square | Centered layouts. 48-60px padding. | 72px |
+| 4:5 (1080×1350) | Tall-ish | Mix vertical/centered. 56px padding. | 80px |
+| 4:3 (1440×1080) | Classic | Similar to 16:9 but less side space. 80px padding. | 72px |
+| 21:9 (2560×1080) | Ultra-wide | Lots of horizontal space. Split layouts shine. 200px padding. | 96px |
+
+**Remember:** These are MINIMUM values. On a 1920px canvas, a 80px headline is modest — 120-160px is the impactful range for hero/CTA scenes.

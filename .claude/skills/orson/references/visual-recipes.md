@@ -759,39 +759,59 @@ Continuous ambient motion via CSS `@keyframes` — runs independently of `__setF
 
 ---
 
-## Negative Space Intelligence
+## Spatial Presence — Fill Floor & Ceiling
 
-Rules for frame occupancy. Strategic emptiness creates focus and premium feel.
+This is a VIDEO, not a website. Content must command the viewport. A 72px headline floating in a 1080px-tall canvas is a rendering bug — the viewer sees a dot on screen.
 
-### Occupancy Targets
+The #1 failure mode is **under-filling**: content that occupies 15-20% of the frame, creating a "postage stamp on a billboard" effect. This looks amateurish, not elegant. Strategic emptiness requires the content itself to be bold and substantial — the negative space around it becomes intentional only when the content has real visual weight.
 
-| Scene type | Target fill | Max elements | Min padding |
-|-----------|-------------|-------------|-------------|
-| Hook/Hero | 25-35% | 1-2 | 200px |
-| Problem | 30-45% | 2-3 | 120px |
-| Solution | 35-50% | 2-4 | 100px |
-| Feature | 40-55% | 3-5 | 80px |
-| Data/Stats | 45-60% | 3-6 | 80px |
-| CTA | 20-30% | 1-2 | 200px |
+### Occupancy Targets (Floor AND Ceiling)
+
+| Scene type | Fill FLOOR | Fill CEILING | Max elements | Content zone |
+|-----------|------------|-------------|-------------|--------------|
+| Hook/Hero | **35%** | 50% | 1-2 | Headline must span ≥60% of viewport width |
+| Problem | **35%** | 55% | 2-3 | Content must reach both halves of viewport height |
+| Solution | **40%** | 60% | 2-4 | Primary element ≥50% viewport width |
+| Feature | **45%** | 65% | 3-5 | Cards/elements spread across ≥70% of viewport width |
+| Data/Stats | **45%** | 65% | 3-6 | Stat values must be visually dominant (96px+) |
+| CTA | **30%** | 45% | 1-2 | Headline must span ≥60% of viewport width |
+
+**Below the floor = rendering bug. Fix immediately.** The floor is the MINIMUM — aim for the middle of the range.
+
+### Spatial Sizing Rules (MANDATORY)
+
+These rules prevent the "tiny island of content" problem:
+
+1. **Headline width rule**: On 16:9, a headline must be **at least 900px wide** (47% of 1920px). If the text is short, increase `font-size` until it reaches this width. On centered layouts, `max-width` on headlines should be 1200-1400px, NOT 700px.
+
+2. **Vertical spread rule**: Content must not cluster in the center third of the viewport. In split layouts, the content zone must span from **≤25% to ≥75%** of viewport height (i.e., content starts in the top quarter and extends to the bottom quarter). In centered layouts, the content block (including all elements and gaps) must occupy **≥40%** of viewport height.
+
+3. **Element sizing rule**: Body text containers must be **≥500px wide** on 16:9. Cards must be **≥40% of viewport width** (768px on 1920). Stat values must use **96px+ font-size**. Feature icons must be **48px+**.
+
+4. **Gap scaling rule**: Gaps between elements must scale with viewport — use **32-60px** between elements, **48-80px** between sections. A 24px gap on a 1080px viewport is web-scale, not video-scale.
+
+5. **Never ceiling-only**: Having a maximum fill rule without a minimum causes under-filling. Both floor AND ceiling are mandatory checkpoints.
 
 ### Rules
 
-1. **Never exceed 60% fill** in any scene
-2. **Headlines need air** — minimum 80px clear space above and below
-3. **Card gutters** — minimum 32px between cards
-4. **One focal point** — if 5 elements exist, one dominates (2x+ size of others)
-5. **9:16 vertical** — reduce element count by 30% vs 16:9, increase padding by 40%
-6. **1:1 square** — reduce element count by 15%, center everything
-7. **Breathing room scales with importance** — CTA and Hero get the MOST space, feature scenes get the least
+1. **Never exceed the ceiling** for the scene type
+2. **Never go below the floor** for the scene type — under-filling is as bad as over-filling
+3. **Headlines need air** — minimum 80px clear space above and below, but the headline itself must be LARGE
+4. **Card gutters** — minimum 40px between cards (not 32px — that's web-scale)
+5. **One focal point** — if 5 elements exist, one dominates (2x+ size of others)
+6. **9:16 vertical** — reduce element count by 30% vs 16:9, increase padding by 40%, increase font sizes by 20%
+7. **1:1 square** — reduce element count by 15%, center everything
+8. **Breathing room scales with importance** — CTA and Hero get the MOST space, feature scenes get the least
+9. **Split layout balance** — In a 60/40 or 50/50 split, BOTH sides must have content. Never leave one side with tiny text and the other 70% empty
 
 ### Format Adjustments
 
-| Format | Padding multiplier | Element count modifier |
-|--------|--------------------|----------------------|
-| 16:9 (1920x1080) | 1x (baseline) | Baseline |
-| 9:16 (1080x1920) | 1.4x | -30% |
-| 1:1 (1080x1080) | 0.9x | -15% |
-| 4:5 (1080x1350) | 1.1x | -10% |
+| Format | Padding multiplier | Element count modifier | Min headline font-size |
+|--------|--------------------|----------------------|----------------------|
+| 16:9 (1920x1080) | 1x (baseline) | Baseline | 80px |
+| 9:16 (1080x1920) | 1.4x | -30% | 96px |
+| 1:1 (1080x1080) | 0.9x | -15% | 72px |
+| 4:5 (1080x1350) | 1.1x | -10% | 80px |
 
 ---
 
@@ -802,6 +822,68 @@ In a video with 5+ scenes:
 1. **Maximum 3 consecutive text-only scenes allowed.** If scene 2, 3, and 4 are all text-only, scene 5 MUST include a non-text visual element.
 2. **At least 1 scene must contain a non-text visual element** — mockup, card, data viz, chart, comparison, progress bar, or decorative component from `components.md`.
 3. **Split layouts and centered layouts must alternate** — never use the same layout type for 3+ consecutive scenes.
+
+---
+
+## Animation Diversity (MANDATORY)
+
+The #1 animation failure mode is **fade-in-up monotony**: every element in every scene uses `opacity 0→1 + y 20→0 + outQuart`. This makes a 30-second video feel like a 5-minute PowerPoint. The `actions.ts` catalog has 47 entrance types, 28 transitions, 10 emphasis effects, and 11 looping animations — USE THEM.
+
+### Entrance Diversity Rules
+
+1. **No two consecutive elements in the same scene** may use the same entrance animation. If element 0 uses `fade-in-up`, element 1 MUST use something different (e.g., `clip-reveal-left`, `spring-scale`, `bounce-in`).
+
+2. **Each scene must use at least 2 different entrance types.** A scene with 4 elements should have 3-4 different entrance animations across them.
+
+3. **Across the entire video, use at least 5 distinct entrance animations.** Count them before finalizing. If you only used `fade-in-up`, `fade-in-left`, and `soft-reveal` — that's only 3, add more variety.
+
+4. **Hero/CTA scenes must use a "statement" entrance** for the headline: `slam`, `stamp`, `scale-word`, `impact-word`, `drop`, or `kinetic-push`. Never open a video with a timid `fade-in-up`.
+
+5. **At least one scene must use directional entrances**: elements entering from different directions (`fade-in-left` vs `fade-in-right`, `slide-up` vs `clip-reveal-left`) to create spatial dynamism.
+
+### Transition Diversity Rules
+
+1. **Never use the same transition for all scenes.** In a 7-scene video, use at least 3 different transition types.
+
+2. **Crossfade is not the only option.** Mix in: `wipe-left`, `slide-up`, `blur`, `circle-reveal`, `push-left`, `scale-reveal`, `morph-layout`. Pick 2-3 and alternate.
+
+3. **Energy escalation**: early scenes can use gentle transitions (`crossfade`, `fade`, `blur`), later scenes can use energetic ones (`flash`, `push-left`, `wipe-right`).
+
+### Camera Motion Diversity
+
+1. **Never use the same camera motion for all scenes.** Vary between: push-in, pull-out, pan-left, drift, dolly-up, settle, static.
+
+2. **At least 2 different camera moves** across a 6+ scene video.
+
+3. **Static scenes are valid** — not every scene needs camera motion. But at least 3 scenes must have camera animation.
+
+### Kinetic Typography Rules
+
+1. **At least 2 scenes** must use kinetic text (word-by-word, char-stagger, impact-word, or typewriter). Not optional.
+
+2. **Hero scene headline** should use word-by-word or impact-word reveal — this is the first thing the viewer sees.
+
+3. **CTA headline** should use a kinetic technique (stamp-per-word, scale-word) for emphasis.
+
+### Exit Animation Rules
+
+1. **Elements must exit, not just disappear.** In at least half of the scenes, the main content element should have an explicit exit animation (not just scene crossfade).
+
+2. **Exit animations should complement entrances**: if an element enters from the left, it should exit to the right (or up, or via clip-hide).
+
+### Emphasis & Looping Rules
+
+1. **At least 1 emphasis animation** per video on a key data point, stat, or CTA button (e.g., `pulse`, `heartbeat`, `rubber-band`).
+
+2. **Decorative elements should loop**: floating orbs use `float`, shimmer on metallic elements, `breathe` on background glows. These run via CSS `@keyframes` independently of frame-addressed animation.
+
+### Easing Diversity
+
+1. **Never use the same easing for all animations.** Mix: `outCubic` (smooth), `outBack` (overshoot), `outExpo` (snappy), `outElastic` (bouncy), `outBounce`, `snap` (aggressive).
+
+2. **Match easing to energy**: headlines get `outBack` or `outExpo`, body text gets `outCubic`, CTAs get `outElastic` or `outBounce`, data/stats get `outQuart`.
+
+3. **Spring easings (`outBack`, `outElastic`)** add life. Use them on at least 2 elements per video.
 
 ---
 
