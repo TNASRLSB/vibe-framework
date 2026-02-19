@@ -90,6 +90,14 @@ done
 
 SOURCE_DIR="$(cd "$(dirname "$0")" && pwd)"
 
+# --- Read framework version ---
+
+if [ -f "$SOURCE_DIR/VERSION" ]; then
+  FRAMEWORK_VERSION="$(tr -d '[:space:]' < "$SOURCE_DIR/VERSION")"
+else
+  FRAMEWORK_VERSION="unknown"
+fi
+
 if [ -z "$TARGET_DIR" ]; then
   PARENT_DIR="$(cd "$SOURCE_DIR/.." && pwd)"
   echo ""
@@ -335,11 +343,27 @@ scan_changes() {
 
 echo ""
 if [ "$IS_INSTALL" = true ]; then
-  echo "Claude Development Framework — Install"
-  echo "======================================="
+  echo "Claude Development Framework v${FRAMEWORK_VERSION} — Install"
+  echo "================================================="
 else
-  echo "Claude Development Framework — Update"
-  echo "======================================"
+  # Read installed version from target
+  TARGET_VERSION=""
+  if [ -f "$TARGET_DIR/.claude/.framework-version" ]; then
+    TARGET_VERSION="$(tr -d '[:space:]' < "$TARGET_DIR/.claude/.framework-version")"
+  fi
+
+  echo "Claude Development Framework v${FRAMEWORK_VERSION} — Update"
+  echo "================================================="
+
+  if [ -n "$TARGET_VERSION" ]; then
+    if [ "$TARGET_VERSION" = "$FRAMEWORK_VERSION" ]; then
+      echo "Version: v${TARGET_VERSION} (already up to date)"
+    else
+      echo "Version: v${TARGET_VERSION} → v${FRAMEWORK_VERSION}"
+    fi
+  else
+    echo "Version: (unknown) → v${FRAMEWORK_VERSION}"
+  fi
 fi
 echo "Source: $SOURCE_DIR"
 echo "Target: $TARGET_DIR"
@@ -350,6 +374,16 @@ fi
 
 # Step 0: Safety checks (skip git/CLAUDE.md checks on fresh install)
 if [ "$IS_INSTALL" = false ]; then
+  # Check if already up to date
+  if [ -n "${TARGET_VERSION:-}" ] && [ "$TARGET_VERSION" = "$FRAMEWORK_VERSION" ] && [ "$DRY_RUN" = false ]; then
+    echo ""
+    read -rp "Target is already at v${FRAMEWORK_VERSION}. Re-install anyway? [y/N] " answer
+    if [[ ! "$answer" =~ ^[Yy]$ ]]; then
+      echo "Aborted."
+      exit 0
+    fi
+  fi
+
   check_git_status
   check_claude_md
 fi
@@ -519,7 +553,10 @@ if ! command -v jq &>/dev/null; then
   fi
 fi
 
-# Step 8: Clean up empty backup dir
+# Step 8: Write framework version to target
+echo "$FRAMEWORK_VERSION" > "$TARGET_DIR/.claude/.framework-version"
+
+# Step 9: Clean up empty backup dir
 if [ -d "$BACKUP_DIR" ] && [ -z "$(ls -A "$BACKUP_DIR" 2>/dev/null)" ]; then
   rmdir "$BACKUP_DIR"
   backed_up=0
@@ -528,7 +565,7 @@ fi
 # --- Report ---
 
 echo ""
-echo "Done."
+echo "Done. (v${FRAMEWORK_VERSION})"
 echo "  Updated:     $updated files"
 echo "  Preserved:   $preserved files (user data)"
 echo "  Initialized: $initialized files (new templates)"
