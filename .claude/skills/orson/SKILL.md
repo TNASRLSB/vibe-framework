@@ -238,32 +238,62 @@ Before writing any HTML, read `references/visual-recipes.md` and decide:
 
 1. **Visual recipe** — Pick one of the 24 recipes based on brand tone and intent. Apply its palette, typography, layout, animation energy, decoratives, camera, and signature CSS holistically.
 2. **Color arc** — Pick an arc type (cold→warm, dark→bright, mono→chromatic, complementary shift, brand crescendo). Shift CSS custom properties per scene.
-3. **Camera motion** — Pick the recipe's default camera move. Wrap scene content in `<div class="cam" data-el="sN-cam">` with `overflow:hidden`.
-4. **Kinetic typography** — Pick 1-2 hero scenes for kinetic text. Use the `S()` runtime helper to split text into word/character spans, then stagger A() calls.
-5. **Secondary animation** — Add CSS `@keyframes` ambient motion per the recipe's recommendations (or none if recipe says so).
-6. **Negative space** — Follow occupancy targets per scene type. Never exceed 60% fill.
+3. **Camera motion plan** — Plan a DIFFERENT camera motion for at least 3 scenes (e.g., scene 0 = push-in, scene 2 = settle, scene 4 = drift, scene 6 = static). Wrap scene content in `<div class="cam" data-el="sN-cam">` with `overflow:hidden`.
+4. **Animation plan** — Before writing any A() calls, plan which entrance animations you'll use. Choose at least 5 DISTINCT entrance types from `actions.ts` (e.g., `slam` for hero, `clip-reveal-left` for body, `spring-scale` for icons, `bounce-in-up` for stats, `blur-in` for taglines). Hero/CTA scenes MUST use a "statement" entrance (`slam`, `stamp`, `scale-word`, `impact-word`, `drop`, `kinetic-push`).
+5. **Kinetic typography** — Pick at least 2 scenes for kinetic text. Hero headline MUST use word-by-word or impact-word reveal. CTA scene should use kinetic emphasis.
+6. **Transition plan** — Choose at least 3 different scene transition types (e.g., `crossfade`, `wipe-left`, `blur`, `scale-reveal`). Never use the same transition for all scenes.
+7. **Secondary animation** — Add CSS `@keyframes` ambient motion per the recipe's recommendations (or none if recipe says so).
+8. **Spatial fill** — Follow the fill FLOOR and CEILING targets per scene type. Under-filling (content too small) is as bad as over-filling. Headlines must span ≥60% of viewport width.
 
-Tell the user which recipe and arc you chose before writing HTML.
+Tell the user which recipe, arc, and animation approach you chose before writing HTML.
 
 #### Step 3.1: Write the HTML
 
 Create `<output-dir>/video.html`. Read `references/html-contract.md` for the full HTML format specification (comment syntax, scene structure, animation script, available easings/properties, format-specific CSS). For reusable CSS layout snippets (hero, cards, code blocks, mockups, stats), see `references/components.md`.
 
-#### Step 3.1b: Scale Validation (mandatory)
+#### Step 3.1b: Quality Validation (MANDATORY — run every check before preview)
 
-Before previewing, self-check the HTML against these hard rules:
+Before previewing, self-check the HTML against ALL of these rules. This is a checklist, not a suggestion.
 
-1. **Typography** — No text element below the format's minimum sizes (see `html-contract.md` → "Video Scale Requirements"). If any label, body, or caption is below minimum, increase it NOW.
+**A. SPATIAL FILL (see `visual-recipes.md` → "Spatial Presence")**
 
-2. **Contrast** — No text color with contrast ratio < 4.5:1 against its background. Quick check: on dark backgrounds (#000–#1a1a1a), the dimmest allowed text is ~#808080. If using dimmer colors for "elegance", bump them up.
+1. **Headline width** — Is every headline ≥60% of viewport width? (≥1152px on 16:9). If not, increase `font-size` or `max-width`.
+2. **Vertical spread** — In centered layouts, does the content block (all elements + gaps) span ≥40% of viewport height (≥432px on 1080)? If it's a tiny island in the center, increase font sizes and gaps.
+3. **Split layout balance** — In split layouts, does content extend from ≤25% to ≥75% of viewport height? No half-empty sides.
+4. **Body text width** — Are body text containers ≥500px wide on 16:9?
+5. **Gap sizing** — Are gaps between elements ≥32px? Between sections ≥48px? Gaps of 16-24px are web-scale bugs in video.
 
-3. **Component sizing** — Cards, tags, and badges must meet minimum widths (see `html-contract.md`). A card at 320px on a 1920px viewport is a web component, not a video component.
+**B. TYPOGRAPHY (see `html-contract.md` → "Video Scale Requirements")**
 
-4. **Visual variety** — Count text-only scenes. If more than 3 consecutive, add a visual element to at least one. Check that layout types (centered vs split vs grid) alternate.
+6. **Hero headline** — ≥80px on 16:9, ≥96px on 9:16, ≥72px on 1:1.
+7. **Body text** — ≥28px on 16:9.
+8. **Stat values** — ≥96px on 16:9.
+9. **Contrast** — No text with contrast < 4.5:1. On dark BG (#000–#1a1a1a), dimmest text is #808080.
 
-5. **Color arc** — Verify the chosen arc produces visible color shifts. Open two scenes side-by-side mentally — can you tell the backgrounds apart? If not, increase the shift.
+**C. COMPONENT SIZING**
 
-If ANY rule fails, fix it before proceeding to preview.
+10. **Cards** — min-width ≥40% of viewport (≥768px on 1920).
+11. **CTA button** — font-size ≥24px, padding ≥20px 56px.
+12. **Icons** — ≥48px.
+
+**D. ANIMATION DIVERSITY (see `visual-recipes.md` → "Animation Diversity")**
+
+13. **Entrance variety** — Count distinct entrance animation types across the entire video. Minimum: **5 different types**. If you only used `fade-in-up` and `fade-in-left`, ADD MORE. Check: `slam`, `clip-reveal-*`, `spring-*`, `bounce-in-*`, `blur-in`, `zoom-in`, `elastic-in`, `stamp`, `drop`, `kinetic-push`, `impact-word`, `word-by-word`.
+14. **No consecutive duplicates** — In each scene, no two consecutive elements may use the same entrance animation.
+15. **Hero/CTA statement entrance** — Scene 0 headline and final CTA must use a "statement" animation (`slam`, `stamp`, `scale-word`, `impact-word`, `drop`, `kinetic-push`), NOT `fade-in-up`.
+16. **Transition variety** — Count distinct scene transitions. Minimum: **3 different types** in a 6+ scene video. Not all crossfade.
+17. **Camera variety** — Count distinct camera motions. Minimum: **2 different types**. At least 3 scenes must have camera animation.
+18. **Kinetic typography** — At least **2 scenes** use kinetic text (word-by-word, char-stagger, impact-word, typewriter).
+19. **Easing variety** — Are you using at least 3 different easings? Mix: `outCubic`, `outBack`, `outExpo`, `outElastic`, `outBounce`.
+20. **Exit animations** — In at least half the scenes, the main content element has an explicit exit animation (not just scene crossfade).
+
+**E. VISUAL VARIETY**
+
+21. **Layout alternation** — No more than 2 consecutive scenes with the same layout type (centered/centered/centered = bug).
+22. **Text-only limit** — Max 3 consecutive text-only scenes. At least 1 scene must have a non-text visual.
+23. **Color arc** — Can you visually tell scenes apart by color? If the shift is imperceptible, increase it.
+
+**If ANY check fails, fix it BEFORE proceeding to preview.** This is the difference between a video and a slideshow.
 
 #### Step 3.2: Preview & Verify
 
@@ -274,8 +304,11 @@ npx tsx .claude/skills/orson/engine/src/index.ts render <output-dir>/video.html 
 
 Verify:
 - All scenes display correctly (no text overflow, no overlapping elements)
-- Animations play smoothly (scrub through frames)
-- Scene transitions look good (crossfades)
+- Content fills the viewport adequately (no "tiny island in vast darkness" scenes)
+- Animations are diverse (each scene feels distinct, not the same fade-in-up repeated)
+- Scene transitions vary (not all crossfade)
+- Kinetic typography plays correctly on hero/CTA scenes
+- Camera motions differ between scenes
 - Colors and typography match the design system
 
 If issues found, fix the HTML directly and re-preview.
