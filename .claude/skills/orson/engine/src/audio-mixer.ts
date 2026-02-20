@@ -251,7 +251,9 @@ export async function concatenateNarration(
     return;
   }
 
-  // Build filter graph: each input delayed, then amixed
+  // Build filter graph: each input delayed, then amixed.
+  // CRITICAL: normalize=0 on amix — without it FFmpeg divides volume by input
+  // count, making the output progressively quieter as inputs increase.
   const inputs: string[] = [];
   const filterParts: string[] = [];
 
@@ -310,7 +312,9 @@ export async function concatenateSfx(
     return;
   }
 
-  // For each event, build an input with delay and optional looping
+  // For each event, build an input with delay and optional looping.
+  // CRITICAL: normalize=0 on amix — without it FFmpeg divides volume by input
+  // count, making the output progressively quieter as inputs increase.
   const inputs: string[] = [];
   const filterParts: string[] = [];
   let inputIdx = 0;
@@ -374,6 +378,8 @@ export async function mixTracks(
     return;
   }
 
+  // CRITICAL: normalize=0 on amix — without it FFmpeg divides volume by input
+  // count, making the output progressively quieter as inputs increase.
   const inputs: string[] = [];
   const filterParts: string[] = [];
 

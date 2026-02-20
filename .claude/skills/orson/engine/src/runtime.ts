@@ -143,9 +143,15 @@ const RUNTIME_JS = `(function() {
       var localFrame = n - sc.start;
       var scAnims = anims[sc.id] || [];
       var els = animEls[sc.id];
+      // Reset all animated elements to defaults before applying animations.
+      // _o defaults to 1 (visible): elements with opacity animations will be
+      // overwritten by applyAnim (e.g. fade-in starts at from=0). Elements WITHOUT
+      // opacity animations (camera wrappers, structural containers) stay visible.
+      // Previously _o=0 caused camera wrappers to be invisible when they only had
+      // scale/position animations.
       for (var j = 0; j < scAnims.length; j++) {
         var el = els[j]; if (!el) continue;
-        el._o = 0; el._x = 0; el._y = 0; el._s = 1; el._sx = 1; el._sy = 1;
+        el._o = 1; el._x = 0; el._y = 0; el._s = 1; el._sx = 1; el._sy = 1;
         el._blur = 0; el._rot = 0; el._bright = 1;
         el._clipR = undefined; el._clipL = undefined; el._clipT = undefined; el._clipB = undefined;
       }

@@ -106,6 +106,22 @@ For instructions on adding a new TTS engine provider, see `references/tts-extens
 
 ---
 
+## Known Gotchas
+
+### Opacity default for animated elements
+
+The runtime resets all animated element properties each frame before applying animations. The opacity default is `_o = 1` (visible). This is intentional: camera wrappers (`s0-cam`, `s1-cam`, etc.) typically have scale/position animations but NO opacity animation. If the default were `_o = 0`, these wrappers would be invisible and hide all their children — causing a fully black video. Elements that need to fade in use explicit `A(sel, 'opacity', offset, dur, 0, 1, ease)` which overwrites the default correctly (applyAnim sets `_o = from = 0` before the animation starts).
+
+**Rule:** Never change the `_o = 1` default in `runtime.ts`. If an element should start invisible, add an explicit opacity animation with `from=0`.
+
+### FFmpeg amix normalize parameter
+
+FFmpeg's `amix` filter defaults to normalizing audio by dividing volume by the number of inputs. With 3 inputs, each gets 1/3 volume — making everything too quiet. All `amix` calls in `audio-mixer.ts` use `normalize=0` to disable this behavior. Volume is controlled explicitly via the `volume` filter on each input.
+
+**Rule:** Every `amix` usage MUST include `normalize=0`. Never remove it. If adding new amix calls, always include `:normalize=0`.
+
+---
+
 ## v5.2 Changes (Voice Intelligence + Audio Robustness)
 
 ### Bug fixes
