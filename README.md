@@ -1,4 +1,4 @@
-# Claude Development Framework
+# VIBE Framework
 
 An operating system for Claude Code with 8 specialized skills and context awareness (Morpheus). It defines *how* Claude works (process rules, memory, verification) and *what* it knows (domain-specific skills).
 
@@ -20,8 +20,8 @@ An operating system for Claude Code with 8 specialized skills and context awaren
 ### Install (new project)
 
 ```bash
-git clone <this-repo> ~/claude-framework
-cd ~/claude-framework
+git clone <this-repo> ~/vibe-framework
+cd ~/vibe-framework
 ./framework.sh /path/to/your/project
 ```
 
@@ -30,7 +30,7 @@ The script copies `CLAUDE.md` + `.claude/` into your project, creates `settings.
 ### Update (existing project)
 
 ```bash
-cd ~/claude-framework
+cd ~/vibe-framework
 git pull
 ./framework.sh /path/to/your/project
 ```

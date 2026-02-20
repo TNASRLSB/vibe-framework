@@ -30,7 +30,7 @@ Questo file:
 1. **Legge `VERSION`** dal source dir all'avvio
 2. **Header:** mostra la versione nell'output
    ```
-   Claude Development Framework v0.1.0 — Install
+   VIBE Framework v0.1.0 — Install
    ```
 3. **Su update:** legge `.claude/.framework-version` dal target, mostra:
    ```

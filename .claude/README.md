@@ -1,4 +1,4 @@
-# Claude Development Framework
+# VIBE Framework
 
 Un framework operativo per lavorare con Claude su progetti software, con skill specializzate integrate.
 

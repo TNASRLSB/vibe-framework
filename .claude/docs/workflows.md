@@ -1,6 +1,6 @@
 # Workflow Diagrams
 
-Visual decision flows for the Claude Operating System framework. Reference these diagrams to understand gate logic, severity levels, and process sequences.
+Visual decision flows for the VIBE Framework. Reference these diagrams to understand gate logic, severity levels, and process sequences.
 
 ---
 

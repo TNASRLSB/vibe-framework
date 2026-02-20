@@ -65,7 +65,7 @@ ls .claude/docs/specs/
 ### If first run detected:
 
 **1. Greet and introduce:**
-> "Ciao! Questo progetto usa il **Claude Development Framework** — un sistema operativo che mi aiuta a lavorare meglio.
+> "Ciao! Questo progetto usa il **VIBE Framework** — un sistema operativo che mi aiuta a lavorare meglio.
 >
 > Il framework include skill specializzate per UI, testing, sicurezza, SEO/copywriting, CRO, video, documenti Office/PDF e manutenzione skill.
 >

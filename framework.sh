@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# framework.sh — Install or update the Claude Development Framework in a target project
+# framework.sh — Install or update the VIBE Framework in a target project
 #
 # Usage: ./framework.sh /path/to/target/project [--dry-run]
 #
@@ -343,7 +343,7 @@ scan_changes() {
 
 echo ""
 if [ "$IS_INSTALL" = true ]; then
-  echo "Claude Development Framework v${FRAMEWORK_VERSION} — Install"
+  echo "VIBE Framework v${FRAMEWORK_VERSION} — Install"
   echo "================================================="
 else
   # Read installed version from target
@@ -352,7 +352,7 @@ else
     TARGET_VERSION="$(tr -d '[:space:]' < "$TARGET_DIR/.claude/.framework-version")"
   fi
 
-  echo "Claude Development Framework v${FRAMEWORK_VERSION} — Update"
+  echo "VIBE Framework v${FRAMEWORK_VERSION} — Update"
   echo "================================================="
 
   if [ -n "$TARGET_VERSION" ]; then
