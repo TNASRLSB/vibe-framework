@@ -181,6 +181,57 @@ CTA title at 96px with max-width 1300px fills the screen with authority. Button 
 
 ---
 
+## SVG Path Draw
+
+Animated path drawing using `D()` — progressively reveals SVG paths via `strokeDashoffset`. Works with any `<path>`, `<circle>`, `<line>`, or `<polyline>` element.
+
+### Curved Underline
+```html
+<svg viewBox="0 0 400 20" style="position:absolute;bottom:0;left:0;width:400px;height:20px;overflow:visible;">
+  <path d="M 0 10 Q 100 0, 200 10 T 400 10" stroke="var(--accent)" fill="none"
+        stroke-width="3" stroke-linecap="round" data-draw="s0-underline" />
+</svg>
+```
+```javascript
+D('[data-draw="s0-underline"]', 50, 40, 0, 1, 'outExpo');
+```
+
+### Connector Line (Between Elements)
+```html
+<svg viewBox="0 0 200 100" style="position:absolute;top:50%;left:25%;width:200px;height:100px;">
+  <path d="M 0 0 C 50 0, 50 100, 200 100" stroke="rgba(255,255,255,0.3)" fill="none"
+        stroke-width="2" stroke-dasharray="6 4" data-draw="s0-connector" />
+</svg>
+```
+```javascript
+D('[data-draw="s0-connector"]', 30, 50, 0, 1, 'outCubic');
+```
+
+### Shape Outline (Circle)
+```html
+<svg viewBox="0 0 200 200" style="width:200px;height:200px;">
+  <circle cx="100" cy="100" r="90" stroke="var(--accent)" fill="none"
+          stroke-width="2" data-draw="s0-circle" />
+</svg>
+```
+```javascript
+D('[data-draw="s0-circle"]', 20, 60, 0, 1, 'outCubic');
+```
+
+### Logo Draw-On
+```html
+<svg viewBox="0 0 300 100" style="width:300px;height:100px;">
+  <path d="M 10 50 L 50 10 L 90 50 L 130 10 M 150 10 L 150 50 M 170 10 C 200 10, 200 50, 170 50"
+        stroke="#fff" fill="none" stroke-width="3" stroke-linecap="round"
+        stroke-linejoin="round" data-draw="s0-logo" />
+</svg>
+```
+```javascript
+D('[data-draw="s0-logo"]', 0, 50, 0, 1, 'outQuart');
+```
+
+---
+
 ## Background Patterns
 
 ### Dot Grid

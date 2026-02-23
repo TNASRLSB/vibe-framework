@@ -44,6 +44,18 @@ When I make a choice that affects future work, I record it here. This prevents m
 **Why:** Disambiguates the framework (a product) from "Claude Code" (Anthropic's tool). References to "Claude Code" in skill files are intentional and unchanged — they refer to the Anthropic product.
 **Affects:** All docs, banner output, example paths use "VIBE Framework". "Claude Operating System" in CLAUDE.md stays as-is (conceptual metaphor for Claude's process rules, not a product name).
 
+### Orson v6 Runtime: Parallel Spring Solver in Inline JS
+**Date:** 2026-02-23
+**Decision:** The runtime inline JS has its own lightweight spring solver (~25 lines, Euler integration) rather than importing from `interpolate.ts`. Same for Perlin noise (~40 lines) vs. an npm package.
+**Why:** The runtime is a self-contained JS string embedded in video HTML. It cannot import modules. The inline implementations are intentionally minimal — just enough for frame-by-frame rendering in the browser. `interpolate.ts` has a server-side spring with caching; the runtime solver is simpler but functionally equivalent.
+**Affects:** `runtime.ts` has `SP()` and `__noise2D()` that duplicate concepts from `interpolate.ts` and `@remotion/noise`. This is by design — not technical debt.
+
+### Orson v6: Auto-Start is Backward Compatible
+**Date:** 2026-02-23
+**Decision:** Auto-start only activates when `scenes[0].start === undefined`. Existing videos with explicit `start` values are unaffected.
+**Why:** Zero risk of regression. Claude can adopt auto-start gradually.
+**Affects:** New videos should omit `start` from scenes (simpler, less error-prone). Old videos work unchanged.
+
 ---
 
 *When I'm about to make an architectural choice, I check here first to stay consistent.*

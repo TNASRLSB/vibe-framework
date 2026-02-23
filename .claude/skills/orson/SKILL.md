@@ -239,7 +239,7 @@ Before writing any HTML, read `references/visual-recipes.md` and decide:
 1. **Visual recipe** — Pick one of the 24 recipes based on brand tone and intent. Apply its palette, typography, layout, animation energy, decoratives, camera, and signature CSS holistically.
 2. **Color arc** — Pick an arc type (cold→warm, dark→bright, mono→chromatic, complementary shift, brand crescendo). Shift CSS custom properties per scene.
 3. **Camera motion plan** — Plan a DIFFERENT camera motion for at least 3 scenes (e.g., scene 0 = push-in, scene 2 = settle, scene 4 = drift, scene 6 = static). Wrap scene content in `<div class="cam" data-el="sN-cam">` with `overflow:hidden`.
-4. **Animation plan** — Before writing any A() calls, plan which entrance animations you'll use. Choose at least 5 DISTINCT entrance types from `actions.ts` (e.g., `slam` for hero, `clip-reveal-left` for body, `spring-scale` for icons, `bounce-in-up` for stats, `blur-in` for taglines). Hero/CTA scenes MUST use a "statement" entrance (`slam`, `stamp`, `scale-word`, `impact-word`, `drop`, `kinetic-push`).
+4. **Animation plan** — Before writing any A() calls, plan which entrance animations you'll use. Choose at least 5 DISTINCT entrance types from `actions.ts` (e.g., `slam` for hero, `clip-reveal-left` for body, `spring-scale` for icons, `bounce-in-up` for stats, `blur-in` for taglines). Hero/CTA scenes MUST use a "statement" entrance (`slam`, `stamp`, `scale-word`, `impact-word`, `drop`, `kinetic-push`). Consider `SP()` spring physics for bouncy/elastic entrances — it produces more natural motion than `outBack`/`outElastic`.
 5. **Kinetic typography** — Pick at least 2 scenes for kinetic text. Hero headline MUST use word-by-word or impact-word reveal. CTA scene should use kinetic emphasis.
 6. **Transition plan** — Choose at least 3 different scene transition types (e.g., `crossfade`, `wipe-left`, `blur`, `scale-reveal`). Never use the same transition for all scenes.
 7. **Secondary animation** — Add CSS `@keyframes` ambient motion per the recipe's recommendations (or none if recipe says so).
@@ -249,7 +249,24 @@ Tell the user which recipe, arc, and animation approach you chose before writing
 
 #### Step 3.1: Write the HTML
 
-Create `<output-dir>/video.html`. Read `references/html-contract.md` for the full HTML format specification (comment syntax, scene structure, animation script, available easings/properties, format-specific CSS). For reusable CSS layout snippets (hero, cards, code blocks, mockups, stats), see `references/components.md`.
+Create `<output-dir>/video.html`. Read `references/html-contract.md` for the full HTML format specification (comment syntax, scene structure, animation script, available easings/properties, format-specific CSS). For reusable CSS layout snippets (hero, cards, code blocks, mockups, stats, SVG draw patterns), see `references/components.md`.
+
+**Scene timing: auto-start (recommended).** Omit `start` from scenes — the runtime computes it automatically from `frames` + `XFADE`:
+```javascript
+var scenes = [
+  { id: 'scene-0', frames: 210 },
+  { id: 'scene-1', frames: 270 },
+];
+var XFADE = 30;
+// Runtime auto-computes: scene-0.start=0, scene-1.start=180
+```
+
+**New animation functions** (see `html-contract.md` → "New Animation Functions"):
+- `SP()` — Spring physics (replaces `outBack`/`outElastic` for more natural motion)
+- `N()` — Perlin noise (organic drift, camera shake)
+- `D()` — SVG path draw (animated underlines, connectors, logo draw-on)
+- `P()` — Particle system (noise-driven animated particles)
+- `R()` — Seeded random (deterministic positions)
 
 #### Step 3.1b: Quality Validation (MANDATORY — run every check before preview)
 
@@ -278,20 +295,27 @@ Before previewing, self-check the HTML against ALL of these rules. This is a che
 
 **D. ANIMATION DIVERSITY (see `visual-recipes.md` → "Animation Diversity")**
 
-13. **Entrance variety** — Count distinct entrance animation types across the entire video. Minimum: **5 different types**. If you only used `fade-in-up` and `fade-in-left`, ADD MORE. Check: `slam`, `clip-reveal-*`, `spring-*`, `bounce-in-*`, `blur-in`, `zoom-in`, `elastic-in`, `stamp`, `drop`, `kinetic-push`, `impact-word`, `word-by-word`.
+13. **Entrance variety** — Count distinct entrance animation types across the entire video. Minimum: **5 different types from at least 3 different categories**. Categories: fade-family (fade-in-*), slide-family (slide-*), clip-family (clip-reveal-*), spring-family (spring-*, SP()), bounce-family (bounce-in-*), kinetic (word-by-word, char-stagger, impact-word), statement (slam, stamp, drop, kinetic-push), special (blur-in, zoom-in, elastic-in). If all 5 are from the same category (e.g. all fade variants), that's NOT variety — ADD from other categories.
 14. **No consecutive duplicates** — In each scene, no two consecutive elements may use the same entrance animation.
-15. **Hero/CTA statement entrance** — Scene 0 headline and final CTA must use a "statement" animation (`slam`, `stamp`, `scale-word`, `impact-word`, `drop`, `kinetic-push`), NOT `fade-in-up`.
+15. **Hero/CTA statement entrance** — Scene 0 headline and final CTA must use a "statement" animation (`slam`, `stamp`, `scale-word`, `impact-word`, `drop`, `kinetic-push`, or `SP()` with scale 3→1), NOT `fade-in-up`.
 16. **Transition variety** — Count distinct scene transitions. Minimum: **3 different types** in a 6+ scene video. Not all crossfade.
 17. **Camera variety** — Count distinct camera motions. Minimum: **2 different types**. At least 3 scenes must have camera animation.
 18. **Kinetic typography** — At least **2 scenes** use kinetic text (word-by-word, char-stagger, impact-word, typewriter).
 19. **Easing variety** — Are you using at least 3 different easings? Mix: `outCubic`, `outBack`, `outExpo`, `outElastic`, `outBounce`.
 20. **Exit animations** — In at least half the scenes, the main content element has an explicit exit animation (not just scene crossfade).
 
+**D2. v6 FUNCTION USAGE (MANDATORY — prevents A()-only monotony)**
+
+21. **SP() usage** — At least **1 element** must use `SP()` spring physics instead of A() with outBack/outElastic. Best candidates: hero headline slam, CTA button pop, icon bounce-in, card drop. Count your SP() calls — if zero, add one.
+22. **N() usage** — At least **1 decorative element or camera** must use `N()` noise. Best candidates: background orb drift (x+y), camera shake on hero/impact scene, floating badge/pill. Count your N() calls — if zero, add one.
+23. **D() usage** — At least **1 SVG element** must use `D()` path draw. Best candidates: underline under heading, connector between features, circle outline, logo draw-on. If the video has no SVG elements, add a curved underline SVG under the hero or CTA headline.
+24. **P() or N()-decorative** — At least **1 scene** must have ambient organic motion: either P() particles or N() on decorative elements (orbs, blobs). Static backgrounds with no ambient motion = slideshow.
+
 **E. VISUAL VARIETY**
 
-21. **Layout alternation** — No more than 2 consecutive scenes with the same layout type (centered/centered/centered = bug).
-22. **Text-only limit** — Max 3 consecutive text-only scenes. At least 1 scene must have a non-text visual.
-23. **Color arc** — Can you visually tell scenes apart by color? If the shift is imperceptible, increase it.
+25. **Layout alternation** — No more than 2 consecutive scenes with the same layout type (centered/centered/centered = bug).
+26. **Text-only limit** — Max 3 consecutive text-only scenes. At least 1 scene must have a non-text visual.
+27. **Color arc** — Can you visually tell scenes apart by color? If the shift is imperceptible, increase it.
 
 **If ANY check fails, fix it BEFORE proceeding to preview.** This is the difference between a video and a slideshow.
 

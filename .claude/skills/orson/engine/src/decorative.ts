@@ -86,17 +86,15 @@ function generateAnimatedGradient(accentColor: string, index: number): string {
   return `<div class="deco deco-anim-grad" style="position:absolute;inset:0;pointer-events:none;z-index:0;opacity:0.12;background:linear-gradient(${angle}deg,${accentColor}44,transparent 40%,${accentColor}22,transparent 80%);background-size:200% 200%;animation:deco-grad-shift 8s ease-in-out infinite alternate;"></div>`;
 }
 
-/** Particle dots — scattered small circles */
+/** Particle dots — animated via P() runtime function (noise-driven drift)
+ *  Falls back to static dots if P() is unavailable (backward compatible). */
 function generateParticleDots(accentColor: string, index: number): string {
-  const dots: string[] = [];
-  for (let i = 0; i < 12; i++) {
-    const x = ((i * 37 + index * 17) % 90) + 5;
-    const y = ((i * 53 + index * 23) % 85) + 5;
-    const size = 2 + (i % 3);
-    const opacity = 0.15 + (i % 4) * 0.05;
-    dots.push(`<div style="position:absolute;top:${y}%;left:${x}%;width:${size}px;height:${size}px;border-radius:50%;background:${accentColor};opacity:${opacity};"></div>`);
-  }
-  return `<div class="deco deco-particles" style="position:absolute;inset:0;pointer-events:none;z-index:0;">${dots.join('')}</div>`;
+  return `<div data-particles="scene-${index}" class="deco deco-particles" style="position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden;"></div>`;
+}
+
+/** Returns the JS P() call for a scene's particle system. Add to the scene's script block. */
+export function getParticleScript(accentColor: string, sceneIndex: number, count: number = 30): string {
+  return `P('[data-particles="scene-${sceneIndex}"]', ${count}, { color: '${accentColor}', sizeRange: [2, 6], driftSpeed: 0.015, driftAmp: 20 });`;
 }
 
 /** Light leak — warm diagonal gradient streak */

@@ -1141,7 +1141,7 @@ const SAFE_TRANSITION_IDS = [
   'morph-reveal', 'scale-reveal', 'wipe-left', 'wipe-right',
 ];
 
-const SAFE_EMPHASIS_IDS = ['pulse', 'color-pop', 'heartbeat'];
+const SAFE_EMPHASIS_IDS = ['pulse', 'color-pop', 'heartbeat', 'wiggle', 'rubber-band', 'tada', 'shake'];
 const SAFE_LOOPING_IDS = ['float', 'breathe', 'shimmer', 'bob', 'drift-horizontal', 'shadow-breathe'];
 
 // ─── Pool functions ─────────────────────────────────────────
@@ -1221,7 +1221,17 @@ export function getTransitionPoolForProfile(
 
 // ─── Role-based animation mapping ───────────────────────────
 
-/** Maps element roles to semantically appropriate entrance animations */
+/**
+ * Maps element roles to semantically appropriate entrance animations.
+ *
+ * v6 alternatives (Claude should mix these with A()-based presets):
+ * - hero-heading: SP(sel,'scale',0,3,1,{k:200,c:26,m:1}) — slam with real spring overshoot
+ * - heading:      SP(sel,'y',0,40,0,{k:120,c:14,m:0.4}) — bouncy rise, more natural than outBack
+ * - cta:          SP(sel,'scale',0,0.5,1,{k:150,c:6,m:0.5}) — elastic pop, better than bounce-in
+ * - icon:         SP(sel,'scale',0,0,1,{k:120,c:14,m:0.4}) — bouncy scale-up
+ * - decorative:   N(sel,'x','drift-x',0.01,30,0) + N(sel,'y','drift-y',0.015,20,0) — organic drift
+ * - any heading:  D() on an SVG underline path under the text
+ */
 export const ROLE_ANIMATION_MAP: Record<string, { primary: string[]; secondary: string[] }> = {
   'hero-heading':  { primary: ['stamp', 'slam', 'scale-word'], secondary: ['drop', 'kinetic-push'] },
   'heading':       { primary: ['spring-up', 'clip-reveal-up', 'text-reveal-mask'], secondary: ['fade-in-up', 'slide-up'] },

@@ -629,19 +629,37 @@ Wrap scene content in a `<div class="cam" data-el="sN-cam">` inside each scene. 
 | **Settle** | `A('[data-el="sN-cam"]','scale',0,f/3,1.03,1,'outCubic')`, `A('[data-el="sN-cam"]','y',0,f/3,5,0,'outCubic')` | Opening scenes, landing |
 | **Breathe** | Use CSS `@keyframes` with `scale(1)→scale(1.015)→scale(1)` looping | Background scenes |
 
+### Camera Shake via N()
+
+Overlay `N()` noise on the cam wrapper for cinematic micro-vibrations. Combines with `A()` camera motion — shake runs on top of push-in/pan/drift.
+
+```javascript
+// Camera push-in + organic shake
+A('[data-el="s0-cam"]', 'scale', 0, 210, 1, 1.06, 'inOutSine');
+N('[data-el="s0-cam"]', 'x', 'cam0-sx', 0.05, 2, 0);
+N('[data-el="s0-cam"]', 'y', 'cam0-sy', 0.04, 1.5, 0);
+```
+
+| Intensity | speed x | speed y | amp x | amp y | When |
+|-----------|---------|---------|-------|-------|------|
+| Subtle | 0.03 | 0.025 | 1px | 0.8px | Normal scenes, subtle tension |
+| Medium | 0.05 | 0.04 | 2px | 1.5px | Action scenes, dramatic moments |
+| Heavy | 0.08 | 0.07 | 4px | 3px | Impact, glitch, chaos mode |
+
 ### Per-Recipe Camera Defaults
 
-| Recipe | Default camera |
-|--------|---------------|
-| Editorial, Art Deco, Holographic | Slow push-in |
-| Film Noir, Neon Noir | Slow push-in or pull-out |
-| Organic, Liquid, Vaporwave | Drift |
-| Paper Cutout, Polaroid | Settle |
-| Brutalist, Swiss, Bauhaus, Blueprint, Data Viz | Static |
-| Cyberpunk, Isometric | Static or slow pan |
-| Kinetic Minimalism | Static (element motion only) |
-| CRT, Glitch, Acid, Stencil, Collage | Static |
-| Newspaper | Static or subtle push-in |
+| Recipe | Default camera | Shake |
+|--------|---------------|-------|
+| Editorial, Art Deco, Holographic | Slow push-in | None |
+| Film Noir, Neon Noir | Slow push-in or pull-out | Subtle |
+| Organic, Liquid, Vaporwave | Drift | None |
+| Paper Cutout, Polaroid | Settle | None |
+| Brutalist, Swiss, Bauhaus, Blueprint, Data Viz | Static | None |
+| Cyberpunk, Isometric | Static or slow pan | Subtle-Medium |
+| Kinetic Minimalism | Static (element motion only) | None |
+| CRT, Glitch Art, Acid Graphic | Static | Medium-Heavy |
+| Stencil, Collage | Static | None |
+| Newspaper | Static or subtle push-in | None |
 
 ---
 
@@ -741,21 +759,38 @@ Continuous ambient motion via CSS `@keyframes` — runs independently of `__setF
 .breathe-border { animation:breathe-border 5s ease-in-out infinite; }
 ```
 
+### Noise-Driven Alternatives (v6)
+
+For richer organic motion, replace CSS `@keyframes` float/drift with `N()` noise animations:
+
+```javascript
+// Instead of CSS @keyframes float:
+N('[data-el="s0-orb"]', 'x', 'orb-x', 0.01, 30, 0);
+N('[data-el="s0-orb"]', 'y', 'orb-y', 0.008, 20, 0);
+// Instead of CSS pulse:
+N('[data-el="s0-glow"]', 'scale', 'glow-s', 0.02, 0.05, 1);
+```
+
+**Animated particles** — Use `P()` instead of static particle-dots for organic, noise-driven particle fields:
+```javascript
+P('[data-particles="scene-0"]', 30, { color: 'rgba(255,255,255,0.3)', driftSpeed: 0.015, driftAmp: 20 });
+```
+
 ### Per-Recipe Recommendations
 
-| Recipe | Recommended secondary animation |
-|--------|-------------------------------|
-| Editorial, Swiss, Bauhaus, Kinetic Min, Newspaper | None — stillness is the aesthetic |
-| Cyberpunk, CRT, Glitch | Shimmer, scan sweep |
-| Organic, Liquid, Vaporwave | Float drift, pulse glow |
-| Film Noir, Neon Noir | Pulse glow (on light sources) |
-| Holographic | Gradient shift, shimmer |
-| Art Deco | Subtle pulse glow on gold elements |
-| Paper Cutout, Polaroid, Collage | None or very subtle float |
-| Data Viz, Blueprint | None — precision aesthetic |
-| Acid Graphic | Gradient shift (aggressive), orbit |
-| Brutalist, Stencil | None |
-| Isometric | Float drift on platform elements |
+| Recipe | Recommended secondary animation | Particles | Noise drift |
+|--------|-------------------------------|-----------|-------------|
+| Editorial, Swiss, Bauhaus, Kinetic Min, Newspaper | None — stillness is the aesthetic | No | No |
+| Cyberpunk, CRT, Glitch | Shimmer, scan sweep | Yes (30+, fast drift) | Yes |
+| Organic, Liquid, Vaporwave | Float drift, pulse glow | Yes (20-30, slow drift) | Yes |
+| Film Noir, Neon Noir | Pulse glow (on light sources) | Optional (sparse) | Subtle |
+| Holographic | Gradient shift, shimmer | Yes (40+, medium drift) | Yes |
+| Art Deco | Subtle pulse glow on gold elements | No | No |
+| Paper Cutout, Polaroid, Collage | None or very subtle float | No | No |
+| Data Viz, Blueprint | None — precision aesthetic | No | No |
+| Acid Graphic | Gradient shift (aggressive), orbit | Yes (50+, fast drift) | Yes |
+| Brutalist, Stencil | None | No | No |
+| Isometric | Float drift on platform elements | Optional (sparse) | Optional |
 
 ---
 
@@ -827,7 +862,7 @@ In a video with 5+ scenes:
 
 ## Animation Diversity (MANDATORY)
 
-The #1 animation failure mode is **fade-in-up monotony**: every element in every scene uses `opacity 0→1 + y 20→0 + outQuart`. This makes a 30-second video feel like a 5-minute PowerPoint. The `actions.ts` catalog has 47 entrance types, 28 transitions, 10 emphasis effects, and 11 looping animations — USE THEM.
+The #1 animation failure mode is **fade-in-up monotony**: every element in every scene uses `opacity 0→1 + y 20→0 + outQuart`. This makes a 30-second video feel like a 5-minute PowerPoint. Orson v6 has **8 animation systems** — A(), SP(), N(), D(), P(), S(), R(), CSS @keyframes — USE THEM. The `actions.ts` catalog alone has 47 entrance types, 28 transitions, 10 emphasis effects, and 11 looping animations.
 
 ### Entrance Diversity Rules
 
@@ -835,11 +870,23 @@ The #1 animation failure mode is **fade-in-up monotony**: every element in every
 
 2. **Each scene must use at least 2 different entrance types.** A scene with 4 elements should have 3-4 different entrance animations across them.
 
-3. **Across the entire video, use at least 5 distinct entrance animations.** Count them before finalizing. If you only used `fade-in-up`, `fade-in-left`, and `soft-reveal` — that's only 3, add more variety.
+3. **Across the entire video, use at least 5 distinct entrance animations from at least 3 different families.** Families: fade (fade-in-*), slide (slide-*), clip (clip-reveal-*), spring (spring-*, SP()), bounce (bounce-in-*), kinetic (word-by-word, char-stagger), statement (slam, stamp, drop), special (blur-in, zoom-in, elastic-in). Five variants of fade-in = 1 family, NOT 5 types. Count families.
 
-4. **Hero/CTA scenes must use a "statement" entrance** for the headline: `slam`, `stamp`, `scale-word`, `impact-word`, `drop`, or `kinetic-push`. Never open a video with a timid `fade-in-up`.
+4. **Hero/CTA scenes must use a "statement" entrance** for the headline: `slam`, `stamp`, `scale-word`, `impact-word`, `drop`, `kinetic-push`, or `SP()` with scale 3→1. Never open a video with a timid `fade-in-up`.
 
 5. **At least one scene must use directional entrances**: elements entering from different directions (`fade-in-left` vs `fade-in-right`, `slide-up` vs `clip-reveal-left`) to create spatial dynamism.
+
+### v6 Function Minimums (MANDATORY)
+
+These ensure every video uses the full v6 engine, not just A() calls:
+
+1. **SP() — at least 1 element** must use spring physics. Replace one `outBack`/`outElastic` entrance with `SP()`. Best candidates: hero slam, CTA pop, icon bounce.
+
+2. **N() — at least 1 element** must use Perlin noise. Best candidates: background orb/blob drift (x + y), camera shake on impact scene, floating badge. This replaces static CSS `@keyframes float/breathe` with organic, non-looping motion.
+
+3. **D() — at least 1 SVG element** must use path draw. If no SVG exists in the design, add a curved underline SVG under the hero or CTA heading and animate it with D(). This adds a layer of visual refinement that distinguishes video from slideshow.
+
+4. **P() or N()-ambient — at least 1 scene** must have ambient organic motion (particles or noise-driven decorative drift). Static backgrounds = slideshow. Even subtle dust particles (30 dots, low opacity) add cinematic depth.
 
 ### Transition Diversity Rules
 
@@ -857,6 +904,8 @@ The #1 animation failure mode is **fade-in-up monotony**: every element in every
 
 3. **Static scenes are valid** — not every scene needs camera motion. But at least 3 scenes must have camera animation.
 
+4. **Camera shake via N()** — add subtle noise shake (`N()` on x + y, speed 0.04, amp 1-2px) to at least 1 high-energy scene (hero slam, impact moment). This adds cinematic vibration that A() alone cannot produce.
+
 ### Kinetic Typography Rules
 
 1. **At least 2 scenes** must use kinetic text (word-by-word, char-stagger, impact-word, or typewriter). Not optional.
@@ -873,9 +922,9 @@ The #1 animation failure mode is **fade-in-up monotony**: every element in every
 
 ### Emphasis & Looping Rules
 
-1. **At least 1 emphasis animation** per video on a key data point, stat, or CTA button (e.g., `pulse`, `heartbeat`, `rubber-band`).
+1. **At least 1 emphasis animation** per video on a key data point, stat, or CTA button (e.g., `pulse`, `heartbeat`, `rubber-band`, `wiggle`, `tada`, `shake`).
 
-2. **Decorative elements should loop**: floating orbs use `float`, shimmer on metallic elements, `breathe` on background glows. These run via CSS `@keyframes` independently of frame-addressed animation.
+2. **Decorative elements should use N() or CSS @keyframes**: orbs drift via `N()` (x + y noise), shimmer on metallic elements via `N()` (scale noise, center=1), or CSS `@keyframes` for simple looping. `N()` is preferred over `@keyframes` because it produces organic, non-repeating motion.
 
 ### Easing Diversity
 
@@ -883,10 +932,10 @@ The #1 animation failure mode is **fade-in-up monotony**: every element in every
 
 2. **Match easing to energy**: headlines get `outBack` or `outExpo`, body text gets `outCubic`, CTAs get `outElastic` or `outBounce`, data/stats get `outQuart`.
 
-3. **Spring easings (`outBack`, `outElastic`)** add life. Use them on at least 2 elements per video.
+3. **SP() replaces outBack/outElastic** for more natural motion. Use SP() on at least 1 element where you'd normally use outBack or outElastic.
 
 ---
 
 ## Decoratives Global Rule
 
-> Recipes that specify "None" for decoratives MAY use zero decoratives. All other recipes MUST include at least one ambient decorative element (orb, grid, gradient, grain, pattern) in at least 2 scenes.
+> Recipes that specify "None" for decoratives MAY use zero decoratives. All other recipes MUST include at least one ambient decorative element (orb, grid, gradient, grain, pattern, particles) in at least 2 scenes. **Prefer P() particles or N() noise-driven orbs over static CSS decoratives** — moving ambient elements add cinematic depth.

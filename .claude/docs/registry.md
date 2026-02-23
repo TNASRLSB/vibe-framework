@@ -1,6 +1,6 @@
 # Codebase Registry
 
-**Last updated:** -
+**Last updated:** 2026-02-23
 
 This is my memory. I update it as I learn. I check it before making claims.
 
@@ -33,7 +33,15 @@ This is my memory. I update it as I learn. I check it before making claims.
 
 | Function | Location | Lines | What it does |
 |----------|----------|-------|--------------|
-| | | | |
+| `getAnimationRuntime()` | `orson/engine/src/runtime.ts` | 18-393 | Returns the v6 inline JS runtime string |
+| `window.SP()` | runtime (inline) | — | Spring physics animation (damped harmonic oscillator) |
+| `window.N()` | runtime (inline) | — | Perlin noise-driven organic movement |
+| `window.D()` | runtime (inline) | — | SVG path draw animation (strokeDashoffset) |
+| `window.P()` | runtime (inline) | — | Particle system with noise-driven drift |
+| `window.R()` | runtime (inline) | — | Deterministic seeded random |
+| `getParticleScript()` | `orson/engine/src/decorative.ts` | — | Returns P() call for scene particle setup |
+| `setProp()` | runtime (inline) | — | Shared property setter (13 props), used by applyAnim/applySpring |
+| `selectEntranceByRole()` | `orson/engine/src/actions.ts` | 1239-1260 | Role-based animation selection (with v6 hints in JSDoc) |
 
 ---
 
@@ -83,7 +91,7 @@ This is my memory. I update it as I learn. I check it before making claims.
 
 ## Notes
 
-*Anything else I've learned that doesn't fit above.*
+**Orson v6 anti-monotonia rules:** Every video MUST use at least 1x SP(), 1x N(), 1x D(), 1x P()/N()-ambient. Checklist in SKILL.md §3.1b checks D2.21-24. Safe emphasis pool expanded to 7 (was 3). ROLE_ANIMATION_MAP has v6 hints in JSDoc. Entrance diversity requires 5 types from ≥3 families (not 5 variants of fade).
 
 
 ---
