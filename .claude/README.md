@@ -73,7 +73,7 @@ Due componenti che lavorano insieme:
    - **heimdall** — Sicurezza AI-specific: OWASP, credential detection, BaaS audit, diff-aware analysis
    - **ghostwriter** — SEO tradizionale + GEO (AI search) + copywriting persuasivo
    - **baptist** — CRO orchestrator: diagnosi conversioni (Fogg B=MAP), A/B test design, funnel analysis, coordina Ghostwriter e Seurat
-   - **orson** — Generazione video + demo recording con audio integrato (frame-addressed animations via interpolate/spring + Playwright + FFmpeg + Edge-TTS)
+   - **orson** — Generazione video + demo recording con audio integrato (frame-addressed animations v6 con SP/N/D/P primitives + Playwright + FFmpeg + Edge-TTS)
    - **scribe** — Creazione e editing documenti Office (xlsx, docx, pptx) e PDF, routing automatico per tipo file
    - **forge** — Meta-skill: creazione, manutenzione, audit e miglioramento skill Claude Code
 
@@ -150,7 +150,7 @@ progetto/
         ├── orson/            # Skill video + demo + audio integrato
         │   ├── SKILL.md      # Definizione skill e comandi
         │   └── engine/       # Engine TypeScript + audio (auto-setup)
-        │       ├── src/      # 28 file TS (render, demo, audio, capture, encode)
+        │       ├── src/      # 26 file TS (render, demo, audio, capture, encode)
         │       └── audio/    # TTS, presets, tracks, SFX, references
         ├── scribe/           # Skill documenti Office + PDF
         │   ├── SKILL.md      # Routing automatico per tipo file
@@ -453,7 +453,7 @@ Testing, QA, tech debt audit, functional mapping e checklist di sviluppo. Includ
 - **Dual testing backend** — Auto-rileva Playwright (CI) vs BrowserMCP (visual regression)
 - **Static analysis** — Sicurezza, errori logici, performance, qualità codice
 - **Dynamic testing** — Test con Playwright (API, UI, E2E)
-- **Visual QA** — Confronto screenshot per regressioni UI (Opus 4.6)
+- **Visual QA** — Confronto screenshot per regressioni UI (multimodal)
 - **Tech debt audit** — Duplicazioni, export orfani, import inutilizzati, file oversized (>300 righe)
 - **Checklists** — Pre-deploy, refactoring, code-review, security
 - **Integrazione Heimdall** — Security pre-check automatico su file sensibili
@@ -540,7 +540,7 @@ Generazione video programmatica + demo recording. Segue un workflow cinematograf
 
 **Workflow:** Claude fa lo sceneggiatore (analizza source, struttura scene, scrive copy con ghostwriter), poi autogen genera HTML, director assegna animazioni, capture engine produce MP4 con audio.
 
-**Caratteristiche:** Architettura frame-addressed (v3) con `interpolate()`, `spring()`, `window.__setFrame(n)`. 136+ animazioni (property-based interpolation maps), 4 modi (safe/chaos/hybrid/cocomelon), content-driven timing, integrazione seurat + ghostwriter, director system (content-aware animation). Audio integrato: selezione tracce automatica, TTS narration (Edge-TTS), ducking, mixing FFmpeg. Demo mode: Playwright recording con zoom, cursor animato, narrazione, sottotitoli WebVTT.
+**Caratteristiche:** Architettura frame-addressed (v6) con `window.__setFrame(n)` e 4 primitive di animazione inline: SP() (spring physics), N() (Perlin noise), D() (SVG path draw), P() (particle system). Supporta anche R() (seeded random) e auto-start scene. 4 modi (safe/chaos/hybrid/cocomelon), content-driven timing, integrazione seurat + ghostwriter, director system (content-aware animation), anti-monotonia rules (ogni video richiede almeno 1x SP, 1x N, 1x D, 1x P). Audio integrato: selezione tracce automatica, TTS narration (Edge-TTS/ElevenLabs), ducking, mixing FFmpeg. Demo mode: Playwright recording con zoom, cursor animato, narrazione, sottotitoli WebVTT.
 
 **Requisiti di sistema:** FFmpeg installato (`ffmpeg` nel PATH). Opzionale: `pip install edge-tts` per narrazione TTS. Opzionale: `pip install elevenlabs` per ElevenLabs TTS engine.
 
@@ -633,6 +633,8 @@ Terminologia condivisa tra le skill. Il file `glossary.md` nel progetto utente �
 |---------|------------|
 | **capture engine** | Il componente che trasforma il webvideo (.html) in video (.mp4). Non va confuso con la generazione del webvideo. |
 | **narrative pattern** | Sequenza predefinita di scene-type che struttura il webvideo (es. problem-solution, hook-parade, neuro-hijack). |
+| **SP/N/D/P** | Le 4 primitive di animazione del runtime v6: SP() spring physics, N() Perlin noise, D() SVG path draw, P() particle system. Ogni video deve usarne almeno una per tipo. |
+| **auto-start** | Scene senza `start` esplicito: il runtime calcola automaticamente gli offset in base alla durata delle scene precedenti. |
 
 ---
 

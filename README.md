@@ -11,7 +11,7 @@ An operating system for Claude Code with 8 specialized skills and context awaren
 | **heimdall** | AI-specific security analysis. OWASP Top 10, credential detection, BaaS audit, iteration tracking |
 | **ghostwriter** | SEO + GEO (AI search) optimization and persuasive copywriting. 50 validation rules |
 | **baptist** | CRO orchestrator. Fogg B=MAP diagnostics, A/B test design, funnel analysis |
-| **orson** | Programmatic video + demo recording. 136+ animations, frame-addressed rendering, TTS narration, audio mixing |
+| **orson** | Programmatic video + demo recording. Frame-addressed v6 engine with SP/N/D/P animation primitives, TTS narration, audio mixing |
 | **scribe** | Office document creation and editing (xlsx, docx, pptx, pdf). Auto-routing by file type |
 | **forge** | Meta-skill for creating, auditing, and improving Claude Code skills |
 

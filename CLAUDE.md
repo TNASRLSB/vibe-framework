@@ -18,7 +18,7 @@
 
 | I need to... | I do... |
 |--------------|---------|
-| Understand codebase | Read registry (loaded via @import above) |
+| Understand codebase | Read registry (loaded at session startup below) |
 | Find where something lives | `grep "name" .claude/docs/registry.md` |
 | Understand decision flows | Read `.claude/docs/workflows.md` |
 | Start a new feature | Create spec → wait for PROCEED |
@@ -26,6 +26,9 @@
 | Record why I chose X over Y | Add to `.claude/docs/decisions.md` |
 | Verify before commit | Run through `.claude/docs/checklist.md` |
 | Fix bugs | Read `.claude/docs/bugs/bugs.md` → fix → add `**Sistemato:**` |
+| Create a video | Run `/orson create` → guided flow |
+| Write optimized content | Run `/ghostwriter write [type]` → dual SEO+GEO |
+| Optimize conversions | Run `/baptist audit` → CRO diagnosis |
 | Audit tech debt | Run `/emmet techdebt` → review report |
 | Map codebase for testing | Run `/emmet map` → review functional map |
 | Run QA cycle | Run `/emmet test` (or `--static` / `--browser`) |
