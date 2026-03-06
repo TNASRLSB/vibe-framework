@@ -1,0 +1,21 @@
+# Exclude dev-only files from GitHub release tarballs
+# These stay in the repo for development but are not shipped to users
+
+# Dev specs (template.md is kept — it's framework, not dev-specific)
+.claude/docs/specs/emmet-test-polyglot-patterns.md export-ignore
+.claude/docs/specs/orson-css-ambient.md export-ignore
+.claude/docs/specs/skill-update-system.md export-ignore
+.claude/docs/specs/references/.gitkeep export-ignore
+
+# Dev bugs tracking
+.claude/docs/bugs/bugs.md export-ignore
+.claude/docs/bugs/screenshots/.gitkeep export-ignore
+
+# Dev session notes
+.claude/docs/session-notes/.gitkeep export-ignore
+
+# Internal docs
+RELEASING.md export-ignore
+
+# CI/CD (not needed by users)
+.github/** export-ignore
