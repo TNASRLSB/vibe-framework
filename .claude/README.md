@@ -16,11 +16,12 @@ Un framework operativo per lavorare con Claude su progetti software, con skill s
 
 ### Setup minimo
 
-**1. Installa il framework** nel tuo progetto:
+**1. Copia `vibe-framework.sh`** nella root del tuo progetto ed eseguilo:
 ```bash
-./vibe-framework.sh /path/to/tuo-progetto
+cp /path/to/vibe-framework.sh ./
+./vibe-framework.sh
 ```
-Lo script copia `CLAUDE.md` + `.claude/`, crea `settings.local.json`, directory output e aggiorna `.gitignore`.
+Lo script scarica l'ultima release da GitHub e installa tutto: `CLAUDE.md`, `.claude/`, skills, `settings.local.json`, directory output e `.gitignore`.
 
 **2. Popola il registry** (se progetto esistente):
 ```
@@ -46,18 +47,24 @@ Salta le sezioni che non si applicano.
 
 ### Aggiornamento
 
-Per aggiornare il framework mantenendo i tuoi dati (registry, decisions, specs, session-notes):
+Per aggiornare basta rieseguire lo script:
 ```bash
-cd ~/path/to/framework-source
-git pull
-./vibe-framework.sh /path/to/tuo-progetto
+./vibe-framework.sh
 ```
 
 Lo script:
+- Scarica l'ultima release da GitHub
 - Sovrascrive i file framework (skill, workflow, checklist, ecc.)
 - Preserva i file utente (registry, decisions, request-log, specs, session-notes, ecc.)
 - Crea un backup dei file sovrascritti in `.framework-backup-[timestamp]/`
-- Usa `--dry-run` per vedere le modifiche senza applicarle
+- Aggiorna se stesso se disponibile una versione piu' recente
+
+Comandi utili:
+```bash
+./vibe-framework.sh --version    # Mostra versione installata vs disponibile
+./vibe-framework.sh --dry-run    # Preview senza modificare
+./vibe-framework.sh --help       # Aiuto
+```
 
 ---
 

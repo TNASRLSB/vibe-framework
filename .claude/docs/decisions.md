@@ -56,6 +56,12 @@ When I make a choice that affects future work, I record it here. This prevents m
 **Why:** Zero risk of regression. Claude can adopt auto-start gradually.
 **Affects:** New videos should omit `start` from scenes (simpler, less error-prone). Old videos work unchanged.
 
+### Self-contained installer (download from GitHub)
+**Date:** 2026-03-06
+**Decision:** `vibe-framework.sh` is now a self-contained installer that downloads the latest release tarball from GitHub. No local clone of the framework repo is required — the user only needs the script file.
+**Why:** Previously the user needed to clone the repo, `git pull`, then run the script pointing to a target project. Now it's one file, one command. The script handles download, extraction, install/update, and self-update.
+**Affects:** The script no longer uses a local SOURCE_DIR from the repo — it downloads to a temp dir and uses that. `VIBE_LOCAL_SOURCE` env var available for development/testing. The `VERSION` file in the repo is still the source of truth for versioning.
+
 ---
 
 *When I'm about to make an architectural choice, I check here first to stay consistent.*

@@ -5,6 +5,18 @@ All notable changes to the VIBE Framework are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-03-06
+
+### Changed
+- **Self-contained installer** — `vibe-framework.sh` now downloads the latest release directly from GitHub. No local clone required; the user only needs the script file.
+- Installer self-updates to the latest version from the release tarball
+- Orson engine `npm install` offered interactively after install (if node_modules missing)
+
+### Added
+- `--version` flag: show installed vs available version
+- `--help` flag: usage documentation
+- `VIBE_LOCAL_SOURCE` env var for development/testing with a local repo
+
 ## [0.3.0] - 2026-02-23
 
 ### Added
