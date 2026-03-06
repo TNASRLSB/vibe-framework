@@ -1,0 +1,24 @@
+VIBE Framework — Proprietary License
+
+Copyright (c) 2026 DKHBSFA. All rights reserved.
+
+Permission is hereby granted to use this software for personal and
+commercial projects, subject to the following conditions:
+
+1. ALLOWED:
+   - Use the framework in your own projects (personal or commercial)
+   - Modify the framework files within your projects
+   - Share the installer script (vibe-framework.sh) with your team
+
+2. NOT ALLOWED:
+   - Redistribute the framework or its components as a standalone product
+   - Sell, sublicense, or offer the framework as a service
+   - Remove or modify this license notice
+   - Create derivative frameworks based on this work
+
+3. NO WARRANTY:
+   This software is provided "as is", without warranty of any kind,
+   express or implied. In no event shall the authors be liable for any
+   claim, damages, or other liability arising from the use of this software.
+
+For questions or commercial licensing: https://github.com/DKHBSFA/vibe-framework
