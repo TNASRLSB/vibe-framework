@@ -459,6 +459,55 @@ Content must command the viewport, not float as a tiny island in the center.
 - Label / dim text: **#999999** minimum on dark backgrounds
 - "Elegant" low-contrast text is illegible in video — bump it up
 
+## CSS Ambient Animations
+
+The runtime automatically syncs CSS `@keyframes` animations to the frame capture clock via the Web Animations API. All CSS animations are paused on load, then advanced to the exact frame timestamp during `__setFrame(n)`. This makes CSS animations deterministic and frame-perfect.
+
+**Available ambient keyframes** (from `getDecorativeKeyframes()` in `decorative.ts`):
+
+| Keyframe | Effect | Typical Duration | Use |
+|----------|--------|-----------------|-----|
+| `amb-float` | Vertical oscillation ±20px | 6s | Orbs, decorative cards |
+| `amb-float-slow` | Multi-axis drift + scale 0.95-1.05 | 10s | Background blobs |
+| `amb-float-reverse` | Counter-direction of amb-float | 8s | Second orb (diversity) |
+| `amb-shimmer` | Sweep background-position -200% → 200% | 3s | Headline gradient, buttons |
+| `amb-pulse-glow` | Box-shadow 0→30px blur expansion | 4s | CTA, active cards |
+| `amb-shine` | Light streak left -75% → 125% | 2.5s | Buttons, premium cards |
+| `amb-breathe` | Scale 0.98→1.02 oscillation | 5s | Cards, containers |
+| `amb-border-glow` | Border-color opacity pulse | 3s | Glassmorphism cards |
+| `amb-ripple` | Concentric ring expansion | 4s | Badges, indicators |
+| `amb-grid-fade` | Opacity 0.03→0.07 pulse | 6s | Grid patterns |
+| `amb-drift` | TranslateX 0→40px + rotate 0→2deg | 12s | Horizontal decoratives |
+| `amb-gradient-text` | Background-position sweep on gradient text | 4s | Gradient text headlines |
+
+**Usage in HTML:**
+```css
+/* Animated gradient text */
+.gradient-text {
+  background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent));
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: amb-gradient-text 4s ease-in-out infinite alternate;
+}
+
+/* Shimmer button */
+.shimmer-btn { position: relative; overflow: hidden; }
+.shimmer-btn::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -75%; width: 50%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  animation: amb-shine 2.5s ease-in-out infinite;
+}
+```
+
+**Stagger:** When multiple instances of the same decorative exist, use `animation-delay` with negative offsets (e.g., `-2s`, `-4s`) to desynchronize them.
+
+**Built-in animated decoratives:** Orb (float), ring (float-reverse), bokeh (float, staggered), glow (pulse-glow), grid-pattern (grid-fade), mesh-gradient (drift), light-leak (breathe). These are animated by default — no extra CSS needed.
+
+---
+
 ## Resources for Writing HTML
 
 - Read `references/visual-recipes.md` for:

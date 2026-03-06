@@ -7,7 +7,8 @@ export type DecorativeType =
   | 'orb' | 'ring' | 'grid-pattern' | 'scan-line'
   | 'glow' | 'grain' | 'noise' | 'mesh-gradient'
   | 'animated-gradient' | 'particle-dots' | 'light-leak'
-  | 'bokeh' | 'vignette' | 'aurora';
+  | 'bokeh' | 'vignette' | 'aurora'
+  | 'shimmer-surface' | 'glass-card';
 
 export interface DecorativeElement {
   type: DecorativeType;
@@ -29,7 +30,8 @@ function generateOrb(accentColor: string, index: number): string {
   const size = 200 + (index % 3) * 100;
   const opacity = 0.25 + (index % 3) * 0.08;
 
-  return `<div class="deco deco-orb" style="position:absolute;top:${pos.top};left:${pos.left};width:${size}px;height:${size}px;border-radius:50%;background:${accentColor};filter:blur(${Math.round(size * 0.35)}px);opacity:${opacity};pointer-events:none;z-index:0;"></div>`;
+  const delay = -(index * 2);
+  return `<div class="deco deco-orb" style="position:absolute;top:${pos.top};left:${pos.left};width:${size}px;height:${size}px;border-radius:50%;background:${accentColor};filter:blur(${Math.round(size * 0.35)}px);opacity:${opacity};pointer-events:none;z-index:0;animation:amb-float 6s ease-in-out infinite alternate;animation-delay:${delay}s;"></div>`;
 }
 
 function generateRing(accentColor: string, index: number): string {
@@ -44,11 +46,12 @@ function generateRing(accentColor: string, index: number): string {
     ? `top:${pos.top};right:${pos.right}`
     : `top:${pos.top};left:${pos.left}`;
 
-  return `<div class="deco deco-ring" style="position:absolute;${posStyle};width:${size}px;height:${size}px;border:2px solid ${accentColor};border-radius:50%;opacity:0.18;pointer-events:none;z-index:0;"></div>`;
+  const delay = -(index * 2.5);
+  return `<div class="deco deco-ring" style="position:absolute;${posStyle};width:${size}px;height:${size}px;border:2px solid ${accentColor};border-radius:50%;opacity:0.18;pointer-events:none;z-index:0;animation:amb-float-reverse 8s ease-in-out infinite alternate;animation-delay:${delay}s;"></div>`;
 }
 
 function generateGridPattern(): string {
-  return `<div class="deco deco-grid" style="position:absolute;inset:0;pointer-events:none;z-index:0;opacity:0.08;background-image:radial-gradient(circle,rgba(255,255,255,0.5) 1px,transparent 1px);background-size:30px 30px;mask-image:radial-gradient(ellipse at 50% 50%,black 30%,transparent 70%);-webkit-mask-image:radial-gradient(ellipse at 50% 50%,black 30%,transparent 70%);"></div>`;
+  return `<div class="deco deco-grid" style="position:absolute;inset:0;pointer-events:none;z-index:0;opacity:0.05;background-image:radial-gradient(circle,rgba(255,255,255,0.5) 1px,transparent 1px);background-size:30px 30px;mask-image:radial-gradient(ellipse at 50% 50%,black 30%,transparent 70%);-webkit-mask-image:radial-gradient(ellipse at 50% 50%,black 30%,transparent 70%);animation:amb-grid-fade 6s ease-in-out infinite;"></div>`;
 }
 
 function generateScanLine(accentColor: string): string {
@@ -61,7 +64,7 @@ function generateScanLine(accentColor: string): string {
 function generateGlow(accentColor: string, index: number): string {
   const corners = ['top left', 'top right', 'bottom left', 'bottom right'];
   const corner = corners[index % corners.length];
-  return `<div class="deco deco-glow" style="position:absolute;inset:0;pointer-events:none;z-index:0;opacity:0.2;background:radial-gradient(ellipse at ${corner},${accentColor} 0%,transparent 60%);"></div>`;
+  return `<div class="deco deco-glow" style="position:absolute;inset:0;pointer-events:none;z-index:0;opacity:0.2;background:radial-gradient(ellipse at ${corner},${accentColor} 0%,transparent 60%);animation:amb-pulse-glow 4s ease-in-out infinite;"></div>`;
 }
 
 /** Film grain noise overlay — CSS random dot pattern */
@@ -77,7 +80,7 @@ function generateNoise(): string {
 /** Mesh gradient — multi-stop conic gradient creating a fluid color field */
 function generateMeshGradient(accentColor: string, index: number): string {
   const angle = (index * 45) % 360;
-  return `<div class="deco deco-mesh" style="position:absolute;inset:0;pointer-events:none;z-index:0;opacity:0.15;background:conic-gradient(from ${angle}deg at 30% 70%,${accentColor},transparent 40%,${accentColor}33,transparent 70%,${accentColor}22,transparent);filter:blur(60px);"></div>`;
+  return `<div class="deco deco-mesh" style="position:absolute;inset:0;pointer-events:none;z-index:0;opacity:0.15;background:conic-gradient(from ${angle}deg at 30% 70%,${accentColor},transparent 40%,${accentColor}33,transparent 70%,${accentColor}22,transparent);filter:blur(60px);animation:amb-drift 12s ease-in-out infinite alternate;"></div>`;
 }
 
 /** Animated gradient — slow-shifting CSS gradient */
@@ -102,7 +105,7 @@ function generateLightLeak(index: number): string {
   const positions = ['top left', 'top right', 'bottom left'];
   const pos = positions[index % positions.length];
   const hue = 30 + (index * 20) % 40; // warm tones (30-70)
-  return `<div class="deco deco-leak" style="position:absolute;inset:0;pointer-events:none;z-index:0;opacity:0.08;background:radial-gradient(ellipse at ${pos},hsla(${hue},80%,60%,0.4) 0%,transparent 50%);mix-blend-mode:screen;"></div>`;
+  return `<div class="deco deco-leak" style="position:absolute;inset:0;pointer-events:none;z-index:0;opacity:0.08;background:radial-gradient(ellipse at ${pos},hsla(${hue},80%,60%,0.4) 0%,transparent 50%);mix-blend-mode:screen;animation:amb-breathe 5s ease-in-out infinite;"></div>`;
 }
 
 /** Bokeh — large blurred circles at varied positions */
@@ -113,7 +116,8 @@ function generateBokeh(accentColor: string, index: number): string {
     const y = ((i * 61 + index * 31) % 70) + 15;
     const size = 40 + (i % 3) * 30;
     const opacity = 0.06 + (i % 3) * 0.03;
-    circles.push(`<div style="position:absolute;top:${y}%;left:${x}%;width:${size}px;height:${size}px;border-radius:50%;background:${accentColor};filter:blur(${Math.round(size * 0.4)}px);opacity:${opacity};"></div>`);
+    const delay = -(i * 1.5);
+    circles.push(`<div style="position:absolute;top:${y}%;left:${x}%;width:${size}px;height:${size}px;border-radius:50%;background:${accentColor};filter:blur(${Math.round(size * 0.4)}px);opacity:${opacity};animation:amb-float 6s ease-in-out infinite alternate;animation-delay:${delay}s;"></div>`);
   }
   return `<div class="deco deco-bokeh" style="position:absolute;inset:0;pointer-events:none;z-index:0;">${circles.join('')}</div>`;
 }
@@ -127,6 +131,20 @@ function generateVignette(): string {
 function generateAurora(accentColor: string, index: number): string {
   const hueShift = (index * 40) % 360;
   return `<div class="deco deco-aurora" style="position:absolute;top:0;left:-20%;width:140%;height:40%;pointer-events:none;z-index:0;opacity:0.1;background:linear-gradient(90deg,transparent,${accentColor}66,hsla(${hueShift},70%,50%,0.3),transparent);filter:blur(40px);animation:deco-aurora-drift 12s ease-in-out infinite alternate;transform:skewY(-5deg);"></div>`;
+}
+
+/** Shimmer surface — sweep highlight overlay */
+function generateShimmerSurface(): string {
+  return `<div class="deco deco-shimmer" style="position:absolute;inset:0;pointer-events:none;z-index:1;overflow:hidden;"><div style="position:absolute;top:0;left:-75%;width:50%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.08),transparent);animation:amb-shine 2.5s ease-in-out infinite;"></div></div>`;
+}
+
+/** Glass card — frosted glass with pulsing border */
+function generateGlassCard(index: number): string {
+  const tops = ['20%', '35%', '50%'];
+  const lefts = ['15%', '55%', '30%'];
+  const top = tops[index % tops.length];
+  const left = lefts[index % lefts.length];
+  return `<div class="deco deco-glass" style="position:absolute;top:${top};left:${left};width:280px;height:180px;pointer-events:none;z-index:0;background:rgba(255,255,255,0.05);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.1);border-radius:16px;animation:amb-border-glow 3s ease-in-out infinite;"></div>`;
 }
 
 // ─── Scene enrichment ─────────────────────────────────────────
@@ -205,5 +223,54 @@ export function getDecorativeKeyframes(): string {
 @keyframes deco-aurora-drift {
   0% { transform: skewY(-5deg) translateX(-10%); }
   100% { transform: skewY(-3deg) translateX(10%); }
+}
+@keyframes amb-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+}
+@keyframes amb-float-slow {
+  0%, 100% { transform: translate(0, 0) scale(0.95); }
+  33% { transform: translate(10px, -15px) scale(1.05); }
+  66% { transform: translate(-8px, 10px) scale(1.0); }
+}
+@keyframes amb-float-reverse {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  50% { transform: translateY(15px) translateX(-10px); }
+}
+@keyframes amb-shimmer {
+  0% { background-position: -200% 50%; }
+  100% { background-position: 200% 50%; }
+}
+@keyframes amb-pulse-glow {
+  0%, 100% { box-shadow: 0 0 0 rgba(255,255,255,0); }
+  50% { box-shadow: 0 0 30px rgba(255,255,255,0.15); }
+}
+@keyframes amb-shine {
+  0% { left: -75%; }
+  100% { left: 125%; }
+}
+@keyframes amb-breathe {
+  0%, 100% { transform: scale(0.98); }
+  50% { transform: scale(1.02); }
+}
+@keyframes amb-border-glow {
+  0%, 100% { border-color: rgba(255,255,255,0.1); }
+  50% { border-color: rgba(255,255,255,0.3); }
+}
+@keyframes amb-ripple {
+  0% { box-shadow: 0 0 0 0 rgba(255,255,255,0.2), 0 0 0 0 rgba(255,255,255,0.1); }
+  100% { box-shadow: 0 0 0 15px rgba(255,255,255,0), 0 0 0 30px rgba(255,255,255,0); }
+}
+@keyframes amb-grid-fade {
+  0%, 100% { opacity: 0.03; }
+  50% { opacity: 0.07; }
+}
+@keyframes amb-drift {
+  0% { transform: translateX(0) rotate(0deg); }
+  100% { transform: translateX(40px) rotate(2deg); }
+}
+@keyframes amb-gradient-text {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
 }`;
 }

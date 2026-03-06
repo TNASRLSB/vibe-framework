@@ -242,7 +242,7 @@ Before writing any HTML, read `references/visual-recipes.md` and decide:
 4. **Animation plan** — Before writing any A() calls, plan which entrance animations you'll use. Choose at least 5 DISTINCT entrance types from `actions.ts` (e.g., `slam` for hero, `clip-reveal-left` for body, `spring-scale` for icons, `bounce-in-up` for stats, `blur-in` for taglines). Hero/CTA scenes MUST use a "statement" entrance (`slam`, `stamp`, `scale-word`, `impact-word`, `drop`, `kinetic-push`). Consider `SP()` spring physics for bouncy/elastic entrances — it produces more natural motion than `outBack`/`outElastic`.
 5. **Kinetic typography** — Pick at least 2 scenes for kinetic text. Hero headline MUST use word-by-word or impact-word reveal. CTA scene should use kinetic emphasis.
 6. **Transition plan** — Choose at least 3 different scene transition types (e.g., `crossfade`, `wipe-left`, `blur`, `scale-reveal`). Never use the same transition for all scenes.
-7. **Secondary animation** — Add CSS `@keyframes` ambient motion per the recipe's recommendations (or none if recipe says so).
+7. **CSS ambient motion** — Decorative elements are now animated by default (orb float, glow pulse, grid fade, etc.) via CSS @keyframes synced to frame capture. Add shimmer/shine on CTA buttons and premium cards. For gradient text headlines, add `amb-gradient-text` animation.
 8. **Spatial fill** — Follow the fill FLOOR and CEILING targets per scene type. Under-filling (content too small) is as bad as over-filling. Headlines must span ≥60% of viewport width.
 
 Tell the user which recipe, arc, and animation approach you chose before writing HTML.
@@ -310,12 +310,14 @@ Before previewing, self-check the HTML against ALL of these rules. This is a che
 22. **N() usage** — At least **1 decorative element or camera** must use `N()` noise. Best candidates: background orb drift (x+y), camera shake on hero/impact scene, floating badge/pill. Count your N() calls — if zero, add one.
 23. **D() usage** — At least **1 SVG element** must use `D()` path draw. Best candidates: underline under heading, connector between features, circle outline, logo draw-on. If the video has no SVG elements, add a curved underline SVG under the hero or CTA headline.
 24. **P() or N()-decorative** — At least **1 scene** must have ambient organic motion: either P() particles or N() on decorative elements (orbs, blobs). Static backgrounds with no ambient motion = slideshow.
+25. **CSS ambient motion** — At least **2 decorative elements** must have CSS ambient animation (float, pulse-glow, breathe, grid-fade). Static decoratives with no ambient motion = flat. The runtime syncs CSS animations to frame capture automatically.
+26. **Shimmer/shine** — At least **1 CTA button or premium card** should have a `amb-shine` or `amb-shimmer` effect for premium feel.
 
 **E. VISUAL VARIETY**
 
-25. **Layout alternation** — No more than 2 consecutive scenes with the same layout type (centered/centered/centered = bug).
-26. **Text-only limit** — Max 3 consecutive text-only scenes. At least 1 scene must have a non-text visual.
-27. **Color arc** — Can you visually tell scenes apart by color? If the shift is imperceptible, increase it.
+27. **Layout alternation** — No more than 2 consecutive scenes with the same layout type (centered/centered/centered = bug).
+28. **Text-only limit** — Max 3 consecutive text-only scenes. At least 1 scene must have a non-text visual.
+29. **Color arc** — Can you visually tell scenes apart by color? If the shift is imperceptible, increase it.
 
 **If ANY check fails, fix it BEFORE proceeding to preview.** This is the difference between a video and a slideshow.
 

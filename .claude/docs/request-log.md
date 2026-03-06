@@ -30,6 +30,7 @@ Registro incrementale di tutte le richieste gestite dal framework.
 
 | # | Data | Ora | Tipologia | Descrizione | Doc riferimento | Stato |
 |---|------|-----|-----------|-------------|-----------------|-------|
+| 1 | 2026-03-06 | — | Feature | CSS ambient animations + Web Animations API sync per Orson video | `.claude/docs/specs/orson-css-ambient.md` | completato |
 
 ---
 

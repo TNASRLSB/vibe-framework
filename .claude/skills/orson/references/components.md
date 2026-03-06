@@ -305,3 +305,58 @@ The `overflow:hidden` on the cam div prevents edge reveal during pans and scale-
 | 21:9 (2560×1080) | Ultra-wide | Lots of horizontal space. Split layouts shine. 200px padding. | 96px |
 
 **Remember:** These are MINIMUM values. On a 1920px canvas, a 80px headline is modest — 120-160px is the impactful range for hero/CTA scenes.
+
+---
+
+## CSS Ambient Effects
+
+### Animated Gradient Text
+Moving gradient on headlines for premium feel. Requires `amb-gradient-text` keyframe (included in `getDecorativeKeyframes()`).
+```css
+.gradient-text {
+  background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent));
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: amb-gradient-text 4s ease-in-out infinite alternate;
+}
+```
+
+### Glassmorphism Card
+Frosted glass card with pulsing luminous border.
+```css
+.glass-card {
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  animation: amb-border-glow 3s ease-in-out infinite;
+}
+```
+
+### Shimmer Button
+CTA with a light streak sweeping across. Use on primary action buttons for premium feel.
+```css
+.shimmer-btn {
+  position: relative;
+  overflow: hidden;
+}
+.shimmer-btn::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -75%; width: 50%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  animation: amb-shine 2.5s ease-in-out infinite;
+}
+```
+
+### Stagger Animation Delay
+For CSS entrance animations on lists/grids. Generate dynamically based on child count.
+```css
+[data-stagger] > *:nth-child(1) { animation-delay: 0s; }
+[data-stagger] > *:nth-child(2) { animation-delay: 0.1s; }
+[data-stagger] > *:nth-child(3) { animation-delay: 0.2s; }
+[data-stagger] > *:nth-child(4) { animation-delay: 0.3s; }
+[data-stagger] > *:nth-child(5) { animation-delay: 0.4s; }
+[data-stagger] > *:nth-child(6) { animation-delay: 0.5s; }
+```

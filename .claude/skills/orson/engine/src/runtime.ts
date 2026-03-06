@@ -361,6 +361,11 @@ const RUNTIME_JS = `(function() {
     }
     // Update particle systems
     if (__particles.length > 0) __updateParticles(n);
+
+    // Sync CSS animations to current frame timestamp
+    var fps = (typeof FPS !== 'undefined') ? FPS : 30;
+    var t = n / fps * 1000;
+    document.getAnimations().forEach(function(a) { a.currentTime = t; });
   };
 
   // ─── Text splitter (kinetic typography) ───────
@@ -375,6 +380,9 @@ const RUNTIME_JS = `(function() {
         (mode === 'w' && i > 0 ? '&nbsp;' : '') + p + '</span>';
     }).join('');
   };
+
+  // Pause all CSS animations — __setFrame controls their time
+  document.getAnimations().forEach(function(a) { a.pause(); });
 
   window.__setFrame(0);
   window.__frameRendererReady = true;
