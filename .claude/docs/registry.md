@@ -95,7 +95,10 @@ This is my memory. I update it as I learn. I check it before making claims.
 
 **Orson v6 anti-monotonia rules:** Every video MUST use at least 1x SP(), 1x N(), 1x D(), 1x P()/N()-ambient. Checklist in SKILL.md §3.1b checks D2.21-24. Safe emphasis pool expanded to 7 (was 3). ROLE_ANIMATION_MAP has v6 hints in JSDoc. Entrance diversity requires 5 types from ≥3 families (not 5 variants of fade).
 
-**Emmet browser testing (v2 — 2026-03-06):** `/emmet test --browser` genera test con architettura single-window (worker-scoped fixture, page riusata, sequential, no retries). Pattern: scaffold e2e/ structure (fixtures.ts, helpers.ts, global-setup.ts, playwright.config.ts) adattata allo stack del progetto target. Helpers: `waitForPage()` (hydration check), `apiFetch()` (API dal browser context), `screenshot()`. Report real-time via afterEach/afterAll hooks. Map resta source of truth per cosa testare. Ref: `testing/dynamic.md`, `prompts/test.md`.
+**Emmet testing (v3 — 2026-03-09):** Due modalità separate:
+- `--functions`: Playwright runner automatizzato. Principi P1-P9 (profondità min 3 assertions, copertura esaustiva entità, flow multi-step, data integrity API ~30%, graceful timeout, bug regression, report hooks obbligatori, costanti tipizzate, naming convention). Ref: `testing/dynamic.md`.
+- `--personas`: Claude naviga via `@playwright/mcp`, si immedesima nelle personas della map, valuta UX/UI/workflow con scoring 1-5. Report qualitativo. Ref: `testing/experiential.md`.
+Architettura single-window confermata. Helpers: `waitForPage()`, `apiFetch()`, `screenshot()`, `setupReportHooks()`. Map resta source of truth.
 
 
 ---

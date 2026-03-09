@@ -237,5 +237,6 @@ Dopo aver generato/aggiornato la map, informare l'utente:
 >
 > Per eseguire il ciclo QA completo: `/emmet test`
 > Per solo analisi statica: `/emmet test --static`
-> Per solo test browser: `/emmet test --browser`
+> Per test funzionali: `/emmet test --functions`
+> Per test esperienziale UX: `/emmet test --personas`
 > Per solo unit test: `/emmet test --unit`

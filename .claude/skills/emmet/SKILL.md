@@ -1,15 +1,6 @@
 ---
 name: emmet
 description: Testing, debugging, tech debt audit, and code quality checklists. Complete testing cycle with static analysis, dynamic Playwright tests, and unit tests for pure functions. Use when running tests, finding bugs, debugging code, auditing code quality, checking tech debt, doing code review, or pre-deploy checks. Triggers on 'test', 'debug', 'QA', 'tech debt', 'code review', 'pre-deploy', 'checklist', 'unit test'.
-allowed-tools:
-  - Read
-  - Write
-  - Edit
-  - Grep
-  - Glob
-  - Bash
-  - TodoWrite
-  - AskUserQuestion
 ---
 
 # Emmet Skill
@@ -30,9 +21,10 @@ La **functional map** e la fonte di verita: descrive cosa fa l'app, chi la usa, 
 |---------|-------------|
 | `/emmet map` | Analizza codebase, genera mappa funzionale completa |
 | `/emmet map --update` | Rigenera la mappa funzionale |
-| `/emmet test` | Ciclo QA completo: analisi statica + test browser + unit test |
+| `/emmet test` | Ciclo QA completo: analisi statica + test funzionali + unit test |
 | `/emmet test --static` | Solo analisi statica (veloce, no browser) |
-| `/emmet test --browser` | Solo test browser (Playwright o BrowserMCP) |
+| `/emmet test --functions` | Test funzionali automatizzati (Playwright runner, assertions, CI-friendly) |
+| `/emmet test --personas` | Test esperienziale (Claude naviga via @playwright/mcp, giudica UX/UI) |
 | `/emmet test --unit` | Solo unit test funzioni pure (da map) |
 | `/emmet report` | Genera report bug da ultimo test |
 | `/emmet techdebt [path]` | Audit tech debt (duplicazioni, export orfani, ecc.) |
@@ -86,7 +78,8 @@ Ciclo QA completo. Usa la functional map come guida per sapere cosa testare.
 |---------|-------------|
 | `/emmet test` | Ciclo completo: static + browser + unit |
 | `/emmet test --static` | Solo analisi statica (veloce, no browser) |
-| `/emmet test --browser` | Solo test browser (Playwright o BrowserMCP) |
+| `/emmet test --functions` | Test funzionali automatizzati (Playwright runner) |
+| `/emmet test --personas` | Test esperienziale (Claude naviga via @playwright/mcp) |
 | `/emmet test --unit` | Solo unit test funzioni pure |
 
 ### Flusso completo
@@ -96,7 +89,7 @@ Ciclo QA completo. Usa la functional map come guida per sapere cosa testare.
 2. Esegue analisi statica (security, logic, performance, code quality)
 3. Per ogni use case nella map:
    a. Genera/aggiorna test script
-   b. Esegue test (Playwright o BrowserMCP)
+   b. Esegue test (Playwright runner)
    c. Cattura evidenze (screenshot, log, errori)
    d. Aggiorna stato test nella map
 4. Per ogni pure function nella map (P1 → P2 → P3):
@@ -107,14 +100,12 @@ Ciclo QA completo. Usa la functional map come guida per sapere cosa testare.
 5. Genera report finale in .emmet/test-report.md
 ```
 
-### Backend browser
+### Due modalità di test browser
 
-| Backend | Caratteristiche | Uso ideale |
-|---------|-----------------|------------|
-| **Playwright** (default) | Headless, veloce, CI-friendly | Regression, CI/CD, test automatizzati |
-| **BrowserMCP** | Browser reale, Claude "vede" la pagina | Visual regression, UX validation |
-
-Auto-detection: se BrowserMCP e configurato come MCP server, lo usa; altrimenti Playwright.
+| Modalità | Backend | Scopo |
+|----------|---------|-------|
+| **`--functions`** | Playwright runner (`npx playwright test`) | Le funzionalità funzionano? Assertions programmatiche, CI/CD |
+| **`--personas`** | `@playwright/mcp` (Claude naviga) | Com'è l'esperienza utente? Claude vede, giudica UX/UI/workflow |
 
 ### Analisi statica
 
@@ -122,11 +113,17 @@ Cerca: bug logici, pattern problematici, type errors, error handling incompleto,
 
 **Riferimento completo:** `testing/static.md`
 
-### Test browser
+### Test funzionali (`--functions`)
 
-Simula utente reale basandosi sugli use cases della map. Ogni use case diventa uno o piu test script.
+Test automatizzati Playwright. Principi P1-P9: profondità (min 3 assertions), copertura esaustiva entità, flow multi-step, data integrity via API, report hooks obbligatori.
 
 **Riferimento completo:** `testing/dynamic.md`
+
+### Test esperienziale (`--personas`)
+
+Claude naviga il browser via `@playwright/mcp`, si immedesima nelle personas della map, valuta UX/UI/workflow con scoring 1-5 per area.
+
+**Riferimento completo:** `testing/experiential.md`
 
 ### Unit test
 
@@ -267,7 +264,8 @@ Analizza il progetto e genera pattern stack-specific.
 | Comando | Sostituito da | Motivo |
 |---------|---------------|--------|
 | `/emmet plan` | `/emmet map` | La map include il test plan implicitamente (ogni UC = un test) |
-| `/emmet journey [flow]` | `/emmet test --browser` | Il test browser usa la map come source of truth |
+| `/emmet journey [flow]` | `/emmet test --functions` | Il test funzionale usa la map come source of truth |
+| `/emmet test --browser` | `--functions` / `--personas` | Separato in due modalità distinte |
 
 ---
 
@@ -296,7 +294,8 @@ Skill files are organized in: `prompts/`, `templates/`, `testing/`, and `checkli
 
 Key testing reference files:
 - `testing/static.md` — Rules for static code analysis
-- `testing/dynamic.md` — Rules for Playwright browser testing
+- `testing/dynamic.md` — Rules for `--functions` (Playwright automated testing, principles P1-P9)
+- `testing/experiential.md` — Rules for `--personas` (Claude navigates via @playwright/mcp, UX evaluation)
 - `testing/unit.md` — Rules for unit test generation (pure functions)
 - `testing/report-template.md` — Output template for test reports
 
@@ -304,7 +303,9 @@ Key testing reference files:
 
 ## Visual Testing
 
-Use screenshot comparison for visual regression: capture before/after screenshots via Playwright (headless) or BrowserMCP (visual), compare for layout shifts, missing elements, broken styling, and color changes. Flag unintended regressions in the test report.
+Two complementary approaches:
+- **`--functions`**: Playwright captures screenshots on failure. Programmatic assertions on DOM state.
+- **`--personas`**: Claude navigates via `@playwright/mcp`, sees pages visually, judges UX/UI/workflow as a human would. Produces qualitative report with scores.
 
 For full functional map and testing knowledge base, see `KNOWLEDGE.md`.
 

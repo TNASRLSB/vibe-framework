@@ -2,16 +2,17 @@
 
 ## Purpose
 
-Comando unico per il ciclo completo di test e QA. Combina analisi statica, test browser e unit test, usando la functional map come source of truth per sapere **cosa** testare.
+Comando unico per il ciclo completo di test e QA. Combina analisi statica, test funzionali automatizzati, test esperienziali per persona, e unit test, usando la functional map come source of truth.
 
 ---
 
 ## Trigger
 
 ```
-/emmet test              → Ciclo completo: static + browser + unit
+/emmet test              → Ciclo completo: static + functions + unit
 /emmet test --static     → Solo analisi statica (veloce, no browser)
-/emmet test --browser    → Solo test browser (Playwright o BrowserMCP)
+/emmet test --functions  → Test funzionali automatizzati (Playwright runner)
+/emmet test --personas   → Test esperienziale (Claude naviga via @playwright/mcp)
 /emmet test --unit       → Solo unit test funzioni pure (da map)
 ```
 
@@ -21,7 +22,7 @@ Comando unico per il ciclo completo di test e QA. Combina analisi statica, test 
 
 `/emmet test` richiede `.emmet/functional-map.md` per sapere cosa testare.
 
-- Se la map **esiste**: la legge e usa gli use cases come guida
+- Se la map **esiste**: la legge e usa use cases, personas, entità come guida
 - Se la map **non esiste**: avvisa l'utente e suggerisce `/emmet map` prima
 
 ```
@@ -29,273 +30,271 @@ Comando unico per il ciclo completo di test e QA. Combina analisi statica, test 
 Proseguo con analisi generica basata sul codice (meno precisa).
 ```
 
-In assenza di map, il test ricade sul comportamento legacy: scan generico basato su pattern di codice.
-
 ---
 
-## Flusso di Esecuzione
-
-### `/emmet test` (completo)
+## Flusso: `/emmet test` (completo)
 
 ```
 1. LEGGI MAP
    → Carica .emmet/functional-map.md
-   → Estrai lista use cases con stato test
-   → Estrai lista pure functions con stato test
+   → Estrai: use cases, personas, entità ripetute, API endpoints, pure functions
 
 2. ANALISI STATICA
-   → Esegui scan statico (vedi testing/static.md)
+   → Esegui scan statico (testing/static.md)
    → Security → Logic → Error Handling → Performance → Code Quality
    → Documenta issue trovati
 
-3. TEST BROWSER
-   → a. DETECT STACK — Identifica framework del progetto target
-        (Next.js, Vite, Express, SvelteKit, etc.)
-        Determina: webServer command, waitForPage() logic, baseURL, porta
-   → b. SCAFFOLD — Se e2e/ non esiste, genera struttura completa:
-        - e2e/fixtures.ts (worker-scoped single-window fixture)
-        - e2e/helpers.ts (waitForPage, apiFetch, screenshot — adattati allo stack)
-        - playwright.config.ts (sequential, single worker, no retries, env targeting)
-        - Se map ha auth use cases:
-          - e2e/global-setup.ts (session caching con flusso auth del progetto)
-          - Aggiungere .auth/ a .gitignore
-        - e2e/screenshots/ (directory)
-   → c. GENERA TEST — Per ogni area funzionale nella map:
-        - Raggruppa UC correlati in un test file (es. auth.spec.ts, dashboard.spec.ts)
-        - Entita ripetute nella map → test parametrizzati (for loop su array)
-        - Flussi alternativi → test case separati
-        - API endpoints nella map → apiFetch() tests per data integrity
-        - Se map indica responsive → gruppo dedicato viewport (375x812, 768x1024)
-        - Se map indica error flows → gruppo dedicato (404, bad params, unauthorized)
-        - TUTTI i file importano da ./fixtures, MAI da @playwright/test
-        - Consultare Completeness Checklist in testing/dynamic.md per categorie mancanti
-   → d. HOOKS — Ogni file include afterEach/afterAll per report real-time
-        (pass/fail counter, screenshot automatico su failure, summary)
-   → e. ESEGUI — npx playwright test (sequential, single worker)
-   → f. CATTURA — Evidenze generate automaticamente dai hooks in e2e/report.md
+3. TEST FUNZIONALI (--functions)
+   → Riferimento completo: testing/dynamic.md
+   → a. DETECT STACK
+   → b. SCAFFOLD e2e/ se mancante
+   → c. ESTRAI COSTANTI dalla map (P8)
+   → d. GENERA TEST applicando P1-P9 (vedi Checklist Generazione sotto)
+   → e. ESEGUI npx playwright test
+   → f. REPORT generato automaticamente dai hooks
 
 4. UNIT TEST
-   → Per ogni pure function nella map (ordine P1 → P2 → P3):
-     a. Leggi file sorgente per contesto completo
+   → Per ogni pure function nella map (P1 → P2 → P3):
+     a. Leggi file sorgente
      b. Identifica dipendenze esterne da mockare
-     c. Genera test (framework auto-detected, vedi testing/unit.md)
-     d. Esegui test
-     e. Cattura risultati (pass/fail, errori, coverage se disponibile)
+     c. Genera test (testing/unit.md)
+     d. Esegui
+     e. Cattura risultati
 
 5. AGGIORNA MAP
-   → Per ogni use case testato, aggiorna stato:
-     "Ultimo test: YYYY-MM-DD HH:MM — [backend] — PASS/FAIL"
-   → Per ogni pure function testata, aggiorna stato:
-     "Ultimo test: YYYY-MM-DD HH:MM — [framework] — PASS/FAIL (N/M)"
+   → Stato test per ogni UC e pure function
 
 6. GENERA REPORT
-   → Assembla report finale in .emmet/test-report.md
-   → Mostra summary all'utente
+   → Assembla in .emmet/test-report.md
+   → Mostra summary
 ```
 
-### `/emmet test --static`
+---
 
-Solo step 2. Non richiede browser, non richiede map (ma la usa se disponibile per scope).
+## Flusso: `/emmet test --static`
 
-```
-1. (Opzionale) LEGGI MAP → identifica file/scope rilevanti
-2. ANALISI STATICA → scan completo da testing/static.md
-3. GENERA REPORT → solo sezione analisi statica
-```
+Solo step 2. Non richiede browser né map (ma la usa se disponibile per scope).
 
-### `/emmet test --browser`
+---
 
-Solo step 3. Richiede map per sapere quali flussi testare.
+## Flusso: `/emmet test --functions`
+
+Test automatizzati Playwright. Il cuore dei test funzionali.
 
 ```
-1. LEGGI MAP → estrai use cases, entita ripetute, API endpoints, flag responsive/error
-2. DETECT STACK → identifica framework progetto target per adattare config e helpers
-3. SCAFFOLD → genera e2e/ structure se non esiste (fixtures, helpers, config, global-setup)
-4. GENERA TEST → test files per area funzionale (vedi testing/dynamic.md per pattern)
-5. ESEGUI → npx playwright test (sequential, single worker)
-6. AGGIORNA MAP → stato test per ogni UC
-7. GENERA REPORT → sezione browser test (assemblata dal report hook output in e2e/report.md)
+1. LEGGI MAP
+   → Estrai: use cases, entità ripetute, API endpoints, flag responsive/error, bug noti
+
+2. DETECT STACK
+   → Framework del progetto target (Next.js, Vite, Express, SvelteKit, etc.)
+   → Determina: webServer command, porta, waitForPage logic
+
+3. SCAFFOLD
+   → Se e2e/ non esiste, genera struttura completa:
+     - e2e/fixtures.ts (worker-scoped single-window — vedi dynamic.md)
+     - e2e/helpers.ts (waitForPage, apiFetch, screenshot, setupReportHooks)
+     - playwright.config.ts (sequential, single worker, no retries)
+     - Se map ha auth UC → e2e/global-setup.ts + .auth/ in .gitignore
+     - e2e/screenshots/
+
+4. ESTRAI COSTANTI (P8)
+   → Dalla map, genera costanti tipizzate:
+     - Array di entità con id, name, expected values
+     - Helper functions per ID, slug, label localizzate
+     - Zero hardcoding nei test body
+
+5. GENERA TEST — applicando la Checklist Generazione (sotto)
+   → Per ogni area funzionale nella map → test file o describe block
+   → TUTTI i file importano da ./fixtures, MAI da @playwright/test
+   → TUTTI i file includono setupReportHooks() (P7)
+
+6. ESEGUI
+   → npx playwright test (sequential, single worker)
+
+7. AGGIORNA MAP
+   → Stato test per ogni UC
+
+8. REPORT
+   → Assemblato dal report hook output in e2e/report.md
 ```
 
-### `/emmet test --unit`
+### Checklist Generazione Test (P1-P9)
 
-Solo step 4. Richiede map per sapere quali funzioni testare.
+**Prima di scrivere ogni test, verificare:**
+
+- [ ] **P1 Profondità** — Min 3 assertions: stato iniziale + azione + risultato + side-effects
+- [ ] **P2 Esaustività** — Se ci sono N entità, loop su TUTTE. Costanti tipizzate in cima
+- [ ] **P3 Multi-step** — Flow completi: fill → submit → feedback → stato finale → side-effects
+- [ ] **P4 Data integrity** — ~30% dei test usano `apiFetch()` per verificare dati
+- [ ] **P5 Graceful timeout** — Elementi obbligatori: `expect().toBeVisible()`. Opzionali: `.catch(() => false)` + report
+- [ ] **P6 Bug regression** — Se bugs.md esiste → describe block per ogni bug aperto
+- [ ] **P7 Report hooks** — `setupReportHooks(test)` in ogni file. Non opzionale
+- [ ] **P8 Costanti** — Entità dalla map come array tipizzati, helper functions per derivati
+- [ ] **P9 Naming** — `"[area] -- [comportamento]"` con double-dash
+
+---
+
+## Flusso: `/emmet test --personas`
+
+Test esperienziale. Claude naviga il browser e giudica l'esperienza utente.
+
+```
+1. VERIFICA PREREQUISITI
+   → @playwright/mcp disponibile come MCP server?
+   → Se NO: suggerisci configurazione e interrompi
+   → Se SI: procedi
+
+2. LEGGI MAP
+   → Estrai personas: profilo, obiettivi, aspettative, livello tecnico
+   → Estrai use cases associati a ciascuna persona
+
+3. PER OGNI PERSONA:
+   a. IMMEDESIMAZIONE
+      → Assumi mentalità, obiettivi, frustrazioni tipiche
+      → Livello tecnico: quanto perdoni errori/complessità?
+
+   b. NAVIGAZIONE
+      → Usa @playwright/mcp per aprire browser
+      → Per ogni UC della persona:
+        - Naviga alla pagina iniziale
+        - Screenshot → prima impressione (3 secondi)
+        - Esegui flusso come farebbe la persona
+        - Ad ogni step: screenshot + valutazione
+        - Nota: confusioni, attese, frustrazioni, piaceri
+
+   c. VALUTAZIONE (per ogni step)
+      → First impression: capisco dove sono? cosa posso fare?
+      → Usabilità: controlli dove me li aspetto? feedback chiaro?
+      → Visual: gerarchia, coerenza, leggibilità
+      → Workflow: lineare? passi inutili?
+      → Frustrazioni: confusione, attese, rotture
+
+   d. SCORING (1-5 per area)
+      → Onboarding, Navigation, Core Task, Feedback,
+        Error Recovery, Visual Clarity, Performance percepita
+
+4. REPORT
+   → Output: .emmet/personas-report.md
+   → Riferimento completo: testing/experiential.md
+   → Include: scores per persona, issues prioritizzati, verdict
+```
+
+---
+
+## Flusso: `/emmet test --unit`
+
+Solo unit test. Richiede map per sapere quali funzioni testare.
 
 ```
 1. LEGGI MAP → estrai sezione Pure Functions
-   - Se non esiste: avvisa utente, suggerisci /emmet map
-2. DETECT FRAMEWORK → identifica test runner (vedi testing/unit.md "Framework Detection")
-   - Se nessun runner: genera pseudocodice, suggerisci installazione
-3. UNIT TEST → per ogni pure function (ordine P1 → P2 → P3):
-   a. Leggi file sorgente per contesto completo della funzione
-   b. Identifica dipendenze esterne dal catalogo nella map
-   c. Genera test seguendo i pattern in testing/unit.md:
-      - Import funzione
-      - Setup mock per dipendenze esterne
-      - Test "happy path" (input valido → output atteso)
-      - Test per ogni edge case derivato dalla firma
-      - Test per branch non coperti (da analisi del corpo)
-      - Teardown mock
-   d. Esegui test con runner del progetto
-   e. Cattura risultati (pass/fail, errori, coverage)
-4. AGGIORNA MAP → stato test per ogni funzione
+2. DETECT FRAMEWORK (testing/unit.md)
+3. UNIT TEST per ogni funzione (P1 → P2 → P3):
+   a. Leggi file sorgente
+   b. Identifica dipendenze esterne
+   c. Genera test (happy path + edge case dalla firma)
+   d. Esegui
+   e. Cattura risultati
+4. AGGIORNA MAP
 5. GENERA REPORT → solo sezione unit test
 ```
 
 ---
 
-## Backend Browser
-
-| Backend | Detection | Caratteristiche |
-|---------|-----------|-----------------|
-| **Playwright** (default) | `npx playwright --version` disponibile | Headless, veloce, CI-friendly, assertions DOM |
-| **BrowserMCP** | MCP server `browser` disponibile | Browser reale, Claude "vede" la pagina, assertions visive |
-
-### Auto-detection
-
-```
-1. Verifica se BrowserMCP e configurato come MCP server
-2. Se si → usa BrowserMCP per visual assertions
-3. Se no → usa Playwright
-4. Se nessuno disponibile → suggerisci installazione Playwright
-```
-
-### Quando usare quale
-
-| Scenario | Backend consigliato |
-|----------|---------------------|
-| CI/CD, regression automatizzati | Playwright |
-| Visual regression, UX validation | BrowserMCP |
-| Test rapidi durante sviluppo | Playwright |
-| Debugging interattivo | BrowserMCP |
-| Test cross-browser | Playwright |
-
----
-
-## Analisi Statica — Riferimento
-
-Segue le regole complete in `testing/static.md`. Sintesi:
-
-### Ordine di scan (CRITICAL first)
-
-1. **Security** — Hardcoded secrets, injection, XSS, command injection
-2. **Logic** — Off-by-one, null checks, race conditions
-3. **Error Handling** — Empty catch, swallowed errors, missing catch
-4. **Performance** — N+1 queries, memory leaks, sync in async
-5. **Code Quality** — Deep nesting, long functions, magic numbers
-
-### Output per issue
-
-```markdown
-### [SEVERITY] Titolo Issue
-
-**File:** `path/to/file:line`
-**Category:** [categoria]
-**Problem:** [descrizione]
-**Fix:** [suggerimento]
-**Impact:** [conseguenze se non fixato]
-```
-
----
-
-## Test Browser — Riferimento
-
-Segue le regole complete in `testing/dynamic.md`. Integrazione con map:
-
-### Per ogni Use Case nella map
-
-```
-1. Leggi UC-NNN → estrai flusso principale + flussi alternativi
-2. Raggruppa UC per area funzionale (auth, navigation, CRUD, etc.)
-3. Genera test file per gruppo con:
-   - Import da ./fixtures (worker-scoped page, NON default)
-   - waitForPage() dopo ogni navigazione (non solo networkidle)
-   - apiFetch() per verificare dati post-azione
-   - Flussi alternativi come test case separati
-   - Entita ripetute → test parametrizzati (for loop su array)
-   - afterEach/afterAll hooks per report real-time
-4. Esegui (sequential, single worker)
-5. Evidenze catturate automaticamente dagli hooks
-6. Aggiorna stato nella map
-```
-
-### Assertions Strategy
-
-| Cosa verificare | Come |
-|-----------------|------|
-| Screen visibile | `expect(locator).toBeVisible()` |
-| Testo corretto | `expect(locator).toHaveText(...)` |
-| Navigazione avvenuta | `expect(page).toHaveURL(...)` |
-| Elemento abilitato/disabilitato | `expect(locator).toBeEnabled()` / `.toBeDisabled()` |
-| Stato cambiato | `expect(locator).toHaveClass(...)` |
-| API chiamata | `page.waitForResponse(...)` |
-
----
-
 ## Aggiornamento Map
 
-Dopo ogni esecuzione, `/emmet test` aggiorna `functional-map.md`:
+Dopo ogni esecuzione, aggiorna `functional-map.md`:
 
 ### Per ogni Use Case testato
-
-Sostituisci la riga `Ultimo test:` con il risultato:
 
 ```markdown
 - **Ultimo test:** YYYY-MM-DD HH:MM — Playwright — PASS
 ```
 
-oppure:
+o:
 
 ```markdown
 - **Ultimo test:** YYYY-MM-DD HH:MM — Playwright — FAIL (BUG-SEC-001)
 ```
 
-### Coverage Summary
+### Per ogni Persona testata
 
-Aggiorna la tabella Coverage Summary alla fine della map:
+```markdown
+- **Ultimo test:** YYYY-MM-DD HH:MM — @playwright/mcp — Score medio: 3.8/5
+```
+
+### Coverage Summary
 
 ```markdown
 | Metrica | Valore |
 |---------|--------|
-| Use cases testati | N |
+| Use cases testati (functions) | N |
 | Use cases NON testati | M |
-| Use cases PASS | P |
-| Use cases FAIL | F |
+| Personas testate | N |
+| Personas NON testate | M |
 | Pure functions testate | N |
 | Pure functions NON testate | M |
-| Unit test totali | T |
-| Unit test PASS | P |
-| Unit test FAIL | F |
 ```
+
+---
+
+## Analisi Statica — Riferimento
+
+Segue `testing/static.md`. Ordine: Security → Logic → Error Handling → Performance → Code Quality.
+
+---
+
+## Assertions Strategy (--functions)
+
+| Cosa verificare | Come |
+|-----------------|------|
+| Screen visibile | `expect(locator).toBeVisible()` |
+| Testo corretto | `expect(locator).toHaveText(...)` |
+| Navigazione | `expect(page).toHaveURL(...)` |
+| Abilitato/disabilitato | `expect(locator).toBeEnabled()` / `.toBeDisabled()` |
+| Stato cambiato | `expect(locator).toHaveClass(...)` |
+| Dati API | `apiFetch()` + `expect(res.status).toBe(200)` |
 
 ---
 
 ## Report Finale
 
-Usa il template in `testing/report-template.md`. Include:
+Usa `testing/report-template.md`. Include:
 
 1. **Executive Summary** — conteggi per severity
-2. **Static Analysis Results** — issue trovati per categoria
-3. **Browser Test Results** — stato per use case
+2. **Static Analysis Results** — issue per categoria
+3. **Functional Test Results** — stato per use case (da hooks)
 4. **Unit Test Results** — stato per pure function
-5. **Bug Details** — dettaglio per ogni bug con evidenze
+5. **Bug Details** — dettaglio con evidenze
 6. **Recommendations** — must fix / should fix / nice to have
-7. **Coverage** — use cases e pure functions testati vs non testati (da map)
+7. **Coverage** — UC e pure functions testati vs non testati
+
+Il report personas è separato: `.emmet/personas-report.md`
 
 ---
 
 ## Post-Test Output
 
-Dopo l'esecuzione, mostra all'utente:
-
 ```
 QA completata.
 
 Analisi statica: N issue (C critical, H high, M medium, L low)
-Test browser: N use cases testati (P pass, F fail)
+Test funzionali: N use cases testati (P pass, F fail)
 Unit test: N funzioni testate, M test totali (P pass, F fail)
-Coverage: X% use cases testati, Y% pure functions testate
+Coverage: X% use cases, Y% pure functions
 
 Report: .emmet/test-report.md
+Map aggiornata: .emmet/functional-map.md
+```
+
+Per `--personas`:
+
+```
+Test esperienziale completato.
+
+Personas testate: N
+Score medio: X.X/5
+Issues trovati: N (H high, M medium, L low)
+
+Report: .emmet/personas-report.md
 Map aggiornata: .emmet/functional-map.md
 ```

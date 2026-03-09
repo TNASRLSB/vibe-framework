@@ -262,7 +262,7 @@ Template per generare report bug con `/emmet report`.
 
 When `/emmet report` is invoked:
 
-1. **Gather results** - Collect outputs from `/emmet test` and `/emmet journey`
+1. **Gather results** - Collect outputs from `/emmet test`
 2. **Categorize bugs** - Assign IDs and severity
 3. **Generate report** - Fill template
 4. **Output** - Save to `.emmet/test-report.md`
