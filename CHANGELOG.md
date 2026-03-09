@@ -5,6 +5,15 @@ All notable changes to the VIBE Framework are documented in this file.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 This project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2026-03-09
+
+### Changed
+- **Distribution cleanup** — Reset user-specific files to empty templates for clean installs
+  - `registry.md` — cleared project-specific entries (Key Functions, Notes)
+  - `decisions.md` — removed all project-specific decisions
+  - `request-log.md` — cleared log entries
+  - Removed 5 project-specific spec files from `.claude/docs/specs/`
+
 ## [0.5.0] - 2026-03-09
 
 ### Changed
