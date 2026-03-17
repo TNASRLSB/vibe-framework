@@ -1,6 +1,6 @@
 # Codebase Registry
 
-**Last updated:** —
+**Last updated:** 2026-03-17
 
 This is my memory. I update it as I learn. I check it before making claims.
 
@@ -10,7 +10,7 @@ This is my memory. I update it as I learn. I check it before making claims.
 
 | Name | Location | Purpose |
 |------|----------|---------|
-| Seurat | `.claude/skills/seurat/` | UI design system, wireframing, page layout, WCAG accessibility |
+| Seurat | `.claude/skills/seurat/` | UI design system, wireframing, page layout, WCAG accessibility, brand identity |
 | Emmet | `.claude/skills/emmet/` | Testing, QA, tech debt audit, functional mapping, unit tests |
 | Heimdall | `.claude/skills/heimdall/` | AI-specific security analysis, OWASP Top 10, credential detection |
 | Ghostwriter | `.claude/skills/ghostwriter/` | SEO + GEO dual optimization, persuasive copywriting |
@@ -83,7 +83,17 @@ This is my memory. I update it as I learn. I check it before making claims.
 
 ## Notes
 
-*Project-specific notes go here.*
+### Seurat Brand Identity (`/seurat brandidentity`)
+
+Added 2026-03-17. Three reference files in `.claude/skills/seurat/references/`:
+
+| File | Purpose |
+|------|---------|
+| `references/brandidentity.md` | Main workflow: phases, user gates, schemas (brief.json, identity.json, tokens.json), flag routing |
+| `references/logo-design.md` | Logo theory (Henderson & Cote, Bertin), SVG generation patterns, variation rules, construction docs |
+| `references/brand-guidelines.md` | Guidelines structure (6 sections), 18-slide proposal, PDF generation via Scribe/reportlab |
+
+Output: `.seurat/brand/` (brief.json, identity.json, tokens.json, logo SVGs, guidelines PDF, proposal PDF)
 
 
 ---
