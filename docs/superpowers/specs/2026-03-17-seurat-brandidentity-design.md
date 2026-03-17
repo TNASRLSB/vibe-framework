@@ -35,7 +35,33 @@ The command starts by scanning the project to extract brand signals:
 - **Tech stack** — framework, language, platform (informs brand personality)
 - **Content/copy** — landing page text, meta descriptions (if Ghostwriter was used)
 
-**Output:** A `brief.json` object containing: brand name, industry/domain, values, target audience, personality traits, competitive positioning.
+**Output:** A `brief.json` with this schema:
+
+```json
+{
+  "name": "string — brand/project name",
+  "tagline": "string | null — existing tagline if found",
+  "domain": "string — industry/sector (e.g., 'developer tools', 'e-commerce')",
+  "description": "string — what the project does (1-2 sentences)",
+  "techStack": ["string[] — detected technologies"],
+  "values": ["string[] — inferred brand values (3-5)"],
+  "audience": {
+    "primary": "string — main target user",
+    "secondary": "string | null"
+  },
+  "personality": {
+    "traits": ["string[] — 3-5 personality adjectives"],
+    "tone": "string — e.g., 'professional but approachable'",
+    "archetype": "string — primary brand archetype"
+  },
+  "existingAssets": {
+    "colors": ["string[] — HEX codes already in use"],
+    "fonts": ["string[] — font families already in use"],
+    "hasLogo": "boolean"
+  },
+  "competitors": ["string[] — if detectable from docs/config"]
+}
+```
 
 **User gate:** The user reviews and can edit the brief before proceeding.
 
@@ -59,6 +85,8 @@ The command starts by scanning the project to extract brand signals:
 - Theme/metaphor rationale (e.g., TerraViva's cave paintings, Umbrahands' light/transformation)
 - Moodboard description (colors, textures, visual references)
 - Shape psychology analysis (Graphic Variables / Bertin's 7 variables)
+
+**User gate:** The user selects one concept (or requests modifications) before logo generation proceeds.
 
 ### 2.3 Logo & Logotype
 
@@ -190,11 +218,28 @@ Generated via Scribe (reportlab for PDF).
 │       └── brand-proposal.pdf
 ```
 
-### 5.3 Integration with Existing Seurat
+### 5.3 Token Handoff & Integration with Existing Seurat
 
-- Brand tokens (colors, fonts) feed into Seurat's design system tokens automatically
+Brand identity produces a `tokens.json` in `.seurat/brand/` that Seurat's design system commands consume:
+
+```json
+{
+  "colors": {
+    "primary": { "hex": "#...", "rgb": "...", "cmyk": "...", "pantone": "..." },
+    "secondary": { "hex": "#..." },
+    "extended": [{ "name": "...", "hex": "#..." }]
+  },
+  "typography": {
+    "primary": { "family": "...", "weights": [], "usage": "headings" },
+    "secondary": { "family": "...", "weights": [], "usage": "body" }
+  },
+  "spacing": { "base": "...", "scale": "..." }
+}
+```
+
 - If `/seurat extract` was already run, those existing tokens inform the brand brief
-- If `/seurat brandidentity` runs first, subsequent Seurat commands inherit the brand
+- If `/seurat brandidentity` runs first, subsequent Seurat commands read `tokens.json` and inherit the brand
+- `.seurat/` directory is added to `.gitignore` (same pattern as `.scribe/`), except `tokens.json` which should be committed for team sharing
 
 ### 5.4 Integration with Other Skills
 
@@ -244,7 +289,7 @@ Knowledge distilled from the 11 analyzed reference documents:
 
 ## 7. Open Questions
 
-None — all design decisions have been made through the brainstorming process.
+None — all design decisions have been made through the brainstorming process. Schema definitions added during spec review for brief.json and tokens.json.
 
 ---
 
