@@ -93,18 +93,7 @@ Analizza e ottimizza contenuto o codebase esistente per dual platform (SEO + GEO
 
 ---
 
-## Deprecated Commands
-
-| Comando | Sostituito da | Motivo |
-|---------|---------------|--------|
-| `/ghostwriter audit` | `/ghostwriter optimize` (senza PROCEED) | L'audit è il primo step di optimize. Report in `.ghostwriter/audit-report.md` |
-| `/ghostwriter research [topic]` | `/ghostwriter write` (step 2) | La ricerca è parte integrante della generazione |
-| `/ghostwriter schema [type]` | `/ghostwriter write` / `optimize` | Schema generato automaticamente come parte del deliverable |
-| `/ghostwriter meta [content]` | `/ghostwriter write` / `optimize` | Meta tags generati automaticamente come parte del deliverable |
-| `/ghostwriter persona [audience]` | `/ghostwriter write` (step 2) | Persona derivata durante la fase di ricerca |
-| `/ghostwriter pillar-cluster [topic]` | `/ghostwriter write pillar` | Il type `pillar` include topic cluster map + linking plan |
-| `/ghostwriter llms-txt` | `/ghostwriter optimize` / `write` | Generato come parte dell'infrastruttura tecnica |
-| `/ghostwriter robots [strategy]` | `/ghostwriter optimize` / `write` | Generato come parte dell'infrastruttura tecnica |
+For deprecated commands and migration from previous versions, see `KNOWLEDGE.md`.
 
 ---
 

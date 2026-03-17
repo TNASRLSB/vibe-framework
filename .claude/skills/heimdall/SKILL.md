@@ -272,14 +272,6 @@ Every file modified through Claude Code is tracked. Tracking data is stored in `
 
 **Note**: Iteration count alone NEVER blocks operations. It's informational to encourage best practices.
 
-### Reset Tracking
-
-After human review, reset iteration count:
-
-```bash
-/heimdall reset src/auth/login.ts
-```
-
 ---
 
 ## Integration

@@ -155,13 +155,12 @@ For deeper reference on each type, see the corresponding file in `references/`.
 ## A/B Testing Methodology
 
 **Core requirements** (apply to all experiments):
-- 95% confidence level, 80% statistical power
-- Run for at least 1-2 full business cycles (7-14 days minimum)
 - Pre-register: hypothesis, primary metric, guardrails, sample size, duration
+- Run for at least 1-2 full business cycles (7-14 days minimum)
 - Do NOT peek and stop early
 - Check SRM on day 1 and day 3
 
-For sample size formulas, quick reference tables, and advanced methods, see `KNOWLEDGE.md` and `references/advanced-testing.md`.
+For statistical parameters (confidence, power), sample size formulas, and advanced methods, see `KNOWLEDGE.md` and `references/advanced-testing.md`.
 
 ---
 
@@ -185,11 +184,7 @@ Use `assets/ice-scoring.md` template for structured prioritization.
 
 ---
 
-For conversion rate benchmarks by page type, see `KNOWLEDGE.md`.
-
----
-
-For privacy-first CRO guidance, see `KNOWLEDGE.md`.
+For conversion rate benchmarks and privacy-first CRO guidance, see `KNOWLEDGE.md`.
 
 ---
 

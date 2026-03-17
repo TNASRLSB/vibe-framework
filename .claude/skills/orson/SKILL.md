@@ -268,58 +268,17 @@ var XFADE = 30;
 - `P()` — Particle system (noise-driven animated particles)
 - `R()` — Seeded random (deterministic positions)
 
-#### Step 3.1b: Quality Validation (MANDATORY — run every check before preview)
+#### Step 3.1b: Quality Validation (MANDATORY)
 
-Before previewing, self-check the HTML against ALL of these rules. This is a checklist, not a suggestion.
+Before previewing, validate HTML against `references/quality-validation.md` — 29 checks across 6 categories:
+- **A. Spatial Fill** — headline width ≥60%, vertical spread ≥40%, gap sizing ≥32px
+- **B. Typography** — hero headline ≥80px, body ≥28px, stats ≥96px, contrast ≥4.5:1
+- **C. Component Sizing** — cards ≥40% viewport, CTA ≥24px font, icons ≥48px
+- **D. Animation Diversity** — ≥5 distinct entrance types from ≥3 categories, hero/CTA use statement entrances, ≥3 transition types, ≥2 camera motions, ≥2 kinetic typography scenes
+- **D2. v6 Function Usage** — ≥1 SP(), ≥1 N(), ≥1 D(), ≥1 P()/N()-decorative, ≥2 CSS ambient, ≥1 shimmer/shine
+- **E. Visual Variety** — no 3+ consecutive same layouts, max 3 text-only scenes, visible color arc
 
-**A. SPATIAL FILL (see `visual-recipes.md` → "Spatial Presence")**
-
-1. **Headline width** — Is every headline ≥60% of viewport width? (≥1152px on 16:9). If not, increase `font-size` or `max-width`.
-2. **Vertical spread** — In centered layouts, does the content block (all elements + gaps) span ≥40% of viewport height (≥432px on 1080)? If it's a tiny island in the center, increase font sizes and gaps.
-3. **Split layout balance** — In split layouts, does content extend from ≤25% to ≥75% of viewport height? No half-empty sides.
-4. **Body text width** — Are body text containers ≥500px wide on 16:9?
-5. **Gap sizing** — Are gaps between elements ≥32px? Between sections ≥48px? Gaps of 16-24px are web-scale bugs in video.
-
-**B. TYPOGRAPHY (see `html-contract.md` → "Video Scale Requirements")**
-
-6. **Hero headline** — ≥80px on 16:9, ≥96px on 9:16, ≥72px on 1:1.
-7. **Body text** — ≥28px on 16:9.
-8. **Stat values** — ≥96px on 16:9.
-9. **Contrast** — No text with contrast < 4.5:1. On dark BG (#000–#1a1a1a), dimmest text is #808080.
-
-**C. COMPONENT SIZING**
-
-10. **Cards** — min-width ≥40% of viewport (≥768px on 1920).
-11. **CTA button** — font-size ≥24px, padding ≥20px 56px.
-12. **Icons** — ≥48px.
-
-**D. ANIMATION DIVERSITY (see `visual-recipes.md` → "Animation Diversity")**
-
-13. **Entrance variety** — Count distinct entrance animation types across the entire video. Minimum: **5 different types from at least 3 different categories**. Categories: fade-family (fade-in-*), slide-family (slide-*), clip-family (clip-reveal-*), spring-family (spring-*, SP()), bounce-family (bounce-in-*), kinetic (word-by-word, char-stagger, impact-word), statement (slam, stamp, drop, kinetic-push), special (blur-in, zoom-in, elastic-in). If all 5 are from the same category (e.g. all fade variants), that's NOT variety — ADD from other categories.
-14. **No consecutive duplicates** — In each scene, no two consecutive elements may use the same entrance animation.
-15. **Hero/CTA statement entrance** — Scene 0 headline and final CTA must use a "statement" animation (`slam`, `stamp`, `scale-word`, `impact-word`, `drop`, `kinetic-push`, or `SP()` with scale 3→1), NOT `fade-in-up`.
-16. **Transition variety** — Count distinct scene transitions. Minimum: **3 different types** in a 6+ scene video. Not all crossfade.
-17. **Camera variety** — Count distinct camera motions. Minimum: **2 different types**. At least 3 scenes must have camera animation.
-18. **Kinetic typography** — At least **2 scenes** use kinetic text (word-by-word, char-stagger, impact-word, typewriter).
-19. **Easing variety** — Are you using at least 3 different easings? Mix: `outCubic`, `outBack`, `outExpo`, `outElastic`, `outBounce`.
-20. **Exit animations** — In at least half the scenes, the main content element has an explicit exit animation (not just scene crossfade).
-
-**D2. v6 FUNCTION USAGE (MANDATORY — prevents A()-only monotony)**
-
-21. **SP() usage** — At least **1 element** must use `SP()` spring physics instead of A() with outBack/outElastic. Best candidates: hero headline slam, CTA button pop, icon bounce-in, card drop. Count your SP() calls — if zero, add one.
-22. **N() usage** — At least **1 decorative element or camera** must use `N()` noise. Best candidates: background orb drift (x+y), camera shake on hero/impact scene, floating badge/pill. Count your N() calls — if zero, add one.
-23. **D() usage** — At least **1 SVG element** must use `D()` path draw. Best candidates: underline under heading, connector between features, circle outline, logo draw-on. If the video has no SVG elements, add a curved underline SVG under the hero or CTA headline.
-24. **P() or N()-decorative** — At least **1 scene** must have ambient organic motion: either P() particles or N() on decorative elements (orbs, blobs). Static backgrounds with no ambient motion = slideshow.
-25. **CSS ambient motion** — At least **2 decorative elements** must have CSS ambient animation (float, pulse-glow, breathe, grid-fade). Static decoratives with no ambient motion = flat. The runtime syncs CSS animations to frame capture automatically.
-26. **Shimmer/shine** — At least **1 CTA button or premium card** should have a `amb-shine` or `amb-shimmer` effect for premium feel.
-
-**E. VISUAL VARIETY**
-
-27. **Layout alternation** — No more than 2 consecutive scenes with the same layout type (centered/centered/centered = bug).
-28. **Text-only limit** — Max 3 consecutive text-only scenes. At least 1 scene must have a non-text visual.
-29. **Color arc** — Can you visually tell scenes apart by color? If the shift is imperceptible, increase it.
-
-**If ANY check fails, fix it BEFORE proceeding to preview.** This is the difference between a video and a slideshow.
+**If ANY check fails, fix it BEFORE proceeding to preview.**
 
 #### Step 3.2: Preview & Verify
 
@@ -370,81 +329,14 @@ Report output path and stats when done.
 
 ## Audio System
 
-Orson includes an integrated audio system for background music and narration. Audio is automatically added during `render` (use `--no-audio` to skip).
+Audio (background music + narration) is automatically added during `render`. Use `--no-audio` to skip.
 
-### How Audio Selection Works
+For full details on audio selection, TTS engines, narration pipeline, SFX configuration, and audio library management, read `references/audio-system.md`.
 
-1. **Mode filtering** — Video mode (safe/chaos/hybrid/cocomelon) determines allowed music styles via `coherence-matrix.json`
-2. **Context matching** — Video context tags are matched against style definitions
-3. **Energy matching** — Track energy level is matched to video energy
-4. **Track processing** — Selected track is trimmed/looped to video duration, faded in/out
-5. **Merge** — Processed audio is merged into the final MP4
-
-### TTS Engines
-
-Narration uses a pluggable TTS engine architecture. Any provider can be added; Edge-TTS is the built-in fallback (free, no API key).
-
-**Engine selection priority:**
-1. `ttsEngine` field in demo script JSON
-2. `ORSON_TTS_ENGINE` environment variable
-3. Auto-detect: first available non-edge-tts engine
-4. Fallback: `edge-tts`
-
-| Engine | Prosody | Languages | API Key | Pip Package |
-|--------|---------|-----------|---------|-------------|
-| `edge-tts` (default) | Yes (rate, pitch) | 75+ incl. Italian | None | `edge-tts` |
-| `elevenlabs` | Partial (speed, style) | 70+ incl. Italian | `ELEVENLABS_API_KEY` | `elevenlabs` |
-
-To add a new TTS engine, read `references/tts-extension.md`.
-
-### Narration Pipeline
-
-1. Generate a narration brief (JSON) with text + timing per element
-2. Run `narration_generator.py` — selects engine, produces MP3 files
-3. Use `audio-mixer.ts` to concatenate, duck music, and merge
-
-```bash
-# Using default engine (edge-tts)
-python .claude/skills/orson/engine/audio/narration_generator.py brief.json ./.orson/narration/
-
-# List available voices for active engine
-python .claude/skills/orson/engine/audio/narration_generator.py --list-voices
-
-# List registered engines
-python .claude/skills/orson/engine/audio/narration_generator.py --list-engines
-```
-
-### Audio Library
-
-Tracks live in `engine/audio/tracks/` and SFX in `engine/audio/sfx/`. The catalog is in `engine/audio/presets/audio-library.json`.
-
-Run `engine/audio/download-library.sh` to bootstrap placeholder tracks. Replace with real CC0 audio from Pixabay, Mixkit, or similar.
-
-### Contextual SFX
-
-Sound effects are automatically added based on video actions. Available SFX types: `ui-click`, `typing-loop`, `transition`, `scene-transition`, `success`.
-
-**Demo mode:** SFX are auto-generated from actions (click → click sound, fill → typing loop, navigate → transition). Control via the `sfx` field in the demo script:
-
-```json
-{
-  "sfx": {
-    "enabled": true,
-    "volume": 0.7,
-    "autoFromActions": true
-  }
-}
-```
-
-Per-step override with `"sfx": "ui-click"` (explicit) or `"sfx": "none"` (silence).
-
-**HTML video:** Add `sfx` attribute to `@scene` comments:
-```html
-<!-- @scene name="Demo" sfx="click@1500,typing@2000:3000,whoosh@5000" -->
-```
-Format: `type@startMs` or `type@startMs:durationMs`. Timestamps are relative to scene start.
-
-SFX are mixed at gain 0.7 (below narration at 1.0) and go through the same -14 LUFS normalization.
+**Quick reference:**
+- TTS engine priority: script field → `ORSON_TTS_ENGINE` env → auto-detect → edge-tts fallback
+- Voice presets: `tech-demo`, `explainer`, `promo`, `tutorial`, `sales`, `onboarding`
+- SFX in HTML: `sfx="click@1500,typing@2000:3000"` on `@scene` comments
 
 ---
 
@@ -510,15 +402,6 @@ Before recording, the engine validates:
 1. All selectors exist on the initial page (warning if not found — selectors for post-navigation pages are expected to be missing)
 2. Python venv is available with edge-tts installed (auto-created if missing)
 3. Music tracks are available (downloaded or silence placeholders)
-
-### Demo Reference
-
-- Script parser: `engine/src/demo-script.ts`
-- Timeline builder: `engine/src/demo-timeline.ts`
-- Capture + orchestrator: `engine/src/demo-capture.ts`
-- Director (zoom + cursor + overlay removal): `engine/src/demo-director.ts`
-- Subtitles: `engine/src/demo-subtitles.ts`
-- Narration generator: `engine/audio/narration_generator.py`
 
 ---
 

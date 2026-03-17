@@ -300,12 +300,6 @@ Key testing reference files:
 
 ---
 
-## Visual Testing
-
-Two complementary approaches:
-- **`--functions`**: Playwright captures screenshots on failure. Programmatic assertions on DOM state.
-- **`--personas`**: Claude navigates via `@playwright/mcp`, sees pages visually, judges UX/UI/workflow as a human would. Produces qualitative report with scores.
-
 For full functional map and testing knowledge base, see `KNOWLEDGE.md`.
 
 ---
