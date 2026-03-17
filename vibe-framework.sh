@@ -762,7 +762,7 @@ if [ "$IS_INSTALL" = true ]; then
   echo "     Analizza questo codebase e popola .claude/docs/registry.md"
   echo ""
   echo "  3. Generate stack-specific patterns:"
-  echo "     /adapt-framework"
+  echo "     /emmet setup"
   echo ""
   echo "  4. (Optional) For projects with UI:"
   echo "     /seurat extract"

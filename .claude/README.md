@@ -301,7 +301,7 @@ Include status check automatico del progresso.
 | File/Comando | Tipo | Quando |
 |--------------|------|--------|
 | `registry.md` | **Obbligatorio** | Subito dopo aver copiato il framework |
-| `/emmet setup` | **Obbligatorio** | Genera pattern per lo stack del progetto. (Sostituisce `/adapt-framework`) |
+| `/emmet setup` | **Obbligatorio** | Genera pattern per lo stack del progetto |
 | `decisions.md` | Consigliato | Se ci sono pattern già stabiliti |
 | `/heimdall audit` | Consigliato | Audit sicurezza iniziale su progetti esistenti |
 | `/emmet techdebt` | Consigliato | Audit tech debt iniziale |

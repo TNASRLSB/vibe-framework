@@ -6,8 +6,8 @@ An operating system for Claude Code with 8 specialized skills and context awaren
 
 | Skill | What it does |
 |-------|-------------|
-| **seurat** | UI/UX design system generation, wireframing, page layout. 11 styles, 6 page archetypes, WCAG accessibility |
-| **emmet** | Testing, QA, tech debt audit, functional mapping. Dual backend: Playwright + BrowserMCP |
+| **seurat** | UI/UX design system generation, wireframing, page layout, brand identity. 11 styles, 6 page archetypes, WCAG accessibility |
+| **emmet** | Testing, QA, tech debt audit, functional mapping, stack adaptation. Playwright + unit test frameworks |
 | **heimdall** | AI-specific security analysis. OWASP Top 10, credential detection, BaaS audit, iteration tracking |
 | **ghostwriter** | SEO + GEO (AI search) optimization and persuasive copywriting. 50 validation rules |
 | **baptist** | CRO orchestrator. Fogg B=MAP diagnostics, A/B test design, funnel analysis |
@@ -48,7 +48,7 @@ Use `--dry-run` to preview changes without modifying anything.
 
 2. **Generate stack-specific patterns:**
    ```
-   /adapt-framework
+   /emmet setup
    ```
 
 3. **(Optional) For projects with UI:**

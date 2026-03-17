@@ -87,7 +87,7 @@ ls .claude/docs/specs/
 - Database schema
 - Environment variables
 
-Skip sections that don't apply. Then run `/adapt-framework` to generate stack-specific patterns.
+Skip sections that don't apply. Then run `/emmet setup` to generate stack-specific patterns.
 
 For projects with existing UI, also run `/seurat extract` then `/seurat map`.
 
