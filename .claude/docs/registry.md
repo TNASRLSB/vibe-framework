@@ -1,6 +1,6 @@
 # Codebase Registry
 
-**Last updated:** 2026-03-17
+**Last updated:** —
 
 This is my memory. I update it as I learn. I check it before making claims.
 
@@ -83,18 +83,7 @@ This is my memory. I update it as I learn. I check it before making claims.
 
 ## Notes
 
-### Seurat Brand Identity (`/seurat brandidentity`)
-
-Added 2026-03-17. Three reference files in `.claude/skills/seurat/references/`:
-
-| File | Purpose |
-|------|---------|
-| `references/brandidentity.md` | Main workflow: phases, user gates, schemas (brief.json, identity.json, tokens.json), flag routing |
-| `references/logo-design.md` | Logo theory (Henderson & Cote, Bertin), SVG generation patterns, variation rules, construction docs |
-| `references/brand-guidelines.md` | Guidelines structure (6 sections), 18-slide proposal, PDF generation via Scribe/reportlab |
-
-Output: `.seurat/brand/` (brief.json, identity.json, tokens.json, logo SVGs, guidelines PDF, proposal PDF)
-
+*Project-specific notes go here.*
 
 ---
 
