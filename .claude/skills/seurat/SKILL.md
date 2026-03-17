@@ -36,6 +36,13 @@ Signs of "AI slop" to avoid:
 /seurat build [type]→ generate page consistent with existing design
 ```
 
+### Brand Identity
+```
+/seurat brandidentity  → analyze codebase, generate brand identity + logo + guidelines + PDF
+/seurat setup          → (inherits brand tokens automatically)
+/seurat build [type]   → (uses brand palette/typography)
+```
+
 ---
 
 ## Phases (for each page/component)
@@ -136,6 +143,41 @@ Extract design system from an existing project's code.
 - `.seurat/extraction-report.md` — inconsistencies found
 
 User can edit tokens.css to refine before proceeding with build.
+
+---
+
+### `/seurat brandidentity`
+
+Generate a complete brand identity system from codebase analysis: brand brief, identity profile, generative SVG logo, brand guidelines PDF, and proposal presentation PDF.
+
+**Flags:**
+```
+/seurat brandidentity          # Full flow: discovery → identity → guidelines → PDF
+/seurat brandidentity --brief  # Only codebase analysis + brand brief
+/seurat brandidentity --logo   # Skip to logo generation (assumes brief exists)
+/seurat brandidentity --pdf    # Skip to PDF presentation (assumes identity exists)
+```
+
+**Process:**
+1. **Discovery** — Scan codebase, produce `brief.json` → **user gate: review brief**
+2. **Identity** — Brand identikit, 2-3 concept directions → **user gate: select concept**
+3. **Logo** — Generative SVG (geometric/abstract) + logotype + figurative spec + variations
+4. **Guidelines** — Full brand guidelines document (strategy, visual, voice, digital, architecture, resources)
+5. **Proposal** — Professional PDF presentation using the brand's own palette/typography
+
+**Output:** `.seurat/brand/` directory (see [references/brandidentity.md](references/brandidentity.md) for full structure)
+
+**Token handoff:** Produces `.seurat/brand/tokens.json` consumed by all other Seurat commands. If `/seurat extract` was run first, existing tokens inform the brief. If brandidentity runs first, subsequent commands inherit the brand.
+
+**Integration:**
+- **Scribe** — PDF generation (reportlab) for guidelines and proposal
+- **Ghostwriter** — Brand voice copy, messaging, taglines
+- **Emmet** — Validates SVG output, tests token consistency
+
+**Reference files:**
+- [references/brandidentity.md](references/brandidentity.md) — Complete workflow, prompts, schemas
+- [references/logo-design.md](references/logo-design.md) — Logo theory, SVG patterns, shape psychology
+- [references/brand-guidelines.md](references/brand-guidelines.md) — Guidelines structure, content standards
 
 ---
 
@@ -353,6 +395,9 @@ Active migration trackers.
 
 ### Directory: `.seurat/patterns/`
 Extracted reusable patterns.
+
+### Directory: `.seurat/brand/`
+Brand identity system: brief.json, identity.json, tokens.json, logo SVGs, guidelines PDF, proposal PDF. Created by `/seurat brandidentity`.
 
 ---
 
