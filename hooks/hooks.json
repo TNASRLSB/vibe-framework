@@ -1,0 +1,85 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/setup-check.sh",
+            "statusMessage": "VIBE: checking configuration..."
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/post-edit-lint.sh",
+            "statusMessage": "Lint check..."
+          },
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/security-quickscan.sh",
+            "statusMessage": "Security scan..."
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/failure-reset.sh"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/pre-compact-save.sh",
+            "statusMessage": "Saving state..."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Review the last assistant message. Is it claiming that a TASK or FEATURE is complete, fixed, done, or passing? Single action reports like 'file updated' or 'commit created' are NOT completion claims — allow those. Only block if the message claims a multi-step task is finished without showing verification evidence (test output, command results, or screenshots). If blocking: {\"decision\": \"block\", \"reason\": \"Verification required before claiming task completion. Run tests or show evidence.\"}. If allowing: {\"decision\": \"allow\"}.",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/correction-capture.sh",
+            "statusMessage": "Checking for learnings..."
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "matcher": "Bash|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/failure-loop-detect.sh",
+            "statusMessage": "Tracking failures..."
+          }
+        ]
+      }
+    ]
+  }
+}
