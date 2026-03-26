@@ -1,0 +1,132 @@
+{
+  "name": "BaaS Misconfiguration Patterns",
+  "version": "1.0.0",
+  "description": "Patterns for detecting insecure Backend-as-a-Service configurations (Supabase, Firebase)",
+  "patterns": [
+    {
+      "id": "supabase-rls-using-true",
+      "name": "Supabase RLS Policy USING (true)",
+      "pattern": "USING\\s*\\(\\s*true\\s*\\)",
+      "severity": "high",
+      "description": "RLS policy allows access to all rows. Any user (including anonymous) can access every row in this table.",
+      "remediation": "Replace USING (true) with a condition that checks auth.uid(), e.g., USING (auth.uid() = user_id).",
+      "file_types": ["*.sql"]
+    },
+    {
+      "id": "supabase-rls-with-check-true",
+      "name": "Supabase RLS WITH CHECK (true)",
+      "pattern": "WITH\\s+CHECK\\s*\\(\\s*true\\s*\\)",
+      "severity": "high",
+      "description": "RLS write policy allows any data to be written. No row-level write restrictions.",
+      "remediation": "Replace WITH CHECK (true) with a condition that validates ownership, e.g., WITH CHECK (auth.uid() = user_id).",
+      "file_types": ["*.sql"]
+    },
+    {
+      "id": "supabase-policy-anon-write",
+      "name": "Supabase Anon Write Access",
+      "pattern": "FOR\\s+(INSERT|UPDATE|DELETE)\\s+TO\\s+(anon|public)",
+      "severity": "critical",
+      "description": "Write access granted to anonymous/public role. Unauthenticated users can modify data.",
+      "remediation": "Change TO anon to TO authenticated and add auth.uid() checks in USING/WITH CHECK.",
+      "file_types": ["*.sql"]
+    },
+    {
+      "id": "supabase-service-role-frontend",
+      "name": "Supabase Service Role in Frontend",
+      "pattern": "(NEXT_PUBLIC_|VITE_|REACT_APP_|EXPO_PUBLIC_|PUBLIC_).*(SERVICE_ROLE|SUPABASE_SERVICE|service_role)",
+      "severity": "critical",
+      "description": "Supabase service_role key exposed via frontend environment variable. This key bypasses all RLS policies.",
+      "remediation": "Remove the public prefix. Use this key only in server-side code (API routes, serverless functions).",
+      "file_types": ["*.env*", "*.ts", "*.tsx", "*.js", "*.jsx"]
+    },
+    {
+      "id": "supabase-security-definer-anon",
+      "name": "Supabase SECURITY DEFINER with Anon Access",
+      "pattern": "SECURITY\\s+DEFINER[\\s\\S]{0,200}GRANT\\s+EXECUTE[\\s\\S]{0,100}TO\\s+(anon|public)",
+      "severity": "critical",
+      "description": "Database function with SECURITY DEFINER is callable by anonymous users. The function runs with the definer's privileges, bypassing RLS.",
+      "remediation": "Change GRANT to 'authenticated' role and add auth.uid() checks inside the function.",
+      "file_types": ["*.sql"]
+    },
+    {
+      "id": "supabase-admin-client-side",
+      "name": "Supabase Admin in Client Code",
+      "pattern": "supabase\\.auth\\.admin",
+      "severity": "high",
+      "description": "Supabase admin auth methods used in potentially client-accessible code. Admin methods require service_role key.",
+      "remediation": "Move admin operations to server-side API routes or edge functions.",
+      "file_types": ["*.ts", "*.tsx", "*.js", "*.jsx", "*.vue", "*.svelte"]
+    },
+    {
+      "id": "firebase-allow-all-read-write",
+      "name": "Firebase Allow All Read/Write",
+      "pattern": "allow\\s+(read|write)\\s*[,:;]\\s*if\\s+true",
+      "severity": "critical",
+      "description": "Firebase security rules allow unrestricted read or write access. Any user can access/modify data.",
+      "remediation": "Replace 'if true' with auth checks: 'if request.auth != null && request.auth.uid == userId'.",
+      "file_types": ["*.rules", "firestore.rules", "storage.rules"]
+    },
+    {
+      "id": "firebase-open-realtime-db",
+      "name": "Firebase Realtime DB Open Rules",
+      "pattern": "\"\\.read\"\\s*:\\s*(true|\"true\")",
+      "severity": "critical",
+      "description": "Firebase Realtime Database rules allow unrestricted read access.",
+      "remediation": "Replace with auth-based rules: \"$uid === auth.uid\".",
+      "file_types": ["*.json", "database.rules.json"]
+    },
+    {
+      "id": "firebase-open-realtime-db-write",
+      "name": "Firebase Realtime DB Open Write Rules",
+      "pattern": "\"\\.write\"\\s*:\\s*(true|\"true\")",
+      "severity": "critical",
+      "description": "Firebase Realtime Database rules allow unrestricted write access.",
+      "remediation": "Replace with auth-based rules: \"$uid === auth.uid\".",
+      "file_types": ["*.json", "database.rules.json"]
+    },
+    {
+      "id": "firebase-wildcard-permissive",
+      "name": "Firebase Permissive Wildcard Rule",
+      "pattern": "match\\s+/\\{document=\\*\\*\\}[\\s\\S]{0,100}allow\\s+(read|write)",
+      "severity": "high",
+      "description": "Firebase wildcard rule matches all documents with permissive access. This overrides more specific rules.",
+      "remediation": "Remove the wildcard catch-all or set it to 'allow read, write: if false'. Define specific rules per collection.",
+      "file_types": ["*.rules", "firestore.rules"]
+    },
+    {
+      "id": "firebase-no-data-validation",
+      "name": "Firebase Write Without Data Validation",
+      "pattern": "allow\\s+(create|update)\\s*:\\s*if\\s+request\\.auth\\s*!=\\s*null\\s*;",
+      "severity": "medium",
+      "description": "Firebase write rule only checks authentication, not data shape or content. Any authenticated user can write arbitrary data.",
+      "remediation": "Add data validation: check request.resource.data.keys(), field types, and size limits.",
+      "file_types": ["*.rules", "firestore.rules"]
+    },
+    {
+      "id": "firebase-storage-no-limits",
+      "name": "Firebase Storage Without Size/Type Limits",
+      "pattern": "allow\\s+write[\\s\\S]{0,50}(?!request\\.resource\\.size)(?!request\\.resource\\.contentType)",
+      "severity": "medium",
+      "description": "Firebase Storage write rule does not enforce file size or content type limits.",
+      "remediation": "Add: request.resource.size < 5 * 1024 * 1024 && request.resource.contentType.matches('image/.*').",
+      "file_types": ["*.rules", "storage.rules"]
+    },
+    {
+      "id": "firebase-test-mode-rules",
+      "name": "Firebase Test Mode Rules (Expiring)",
+      "pattern": "request\\.time\\s*<\\s*timestamp\\.date\\(",
+      "severity": "high",
+      "description": "Firebase rules using test-mode timestamp. These are meant to be temporary and should be replaced with proper rules before deployment.",
+      "remediation": "Replace timestamp-based rules with proper auth-based security rules.",
+      "file_types": ["*.rules", "firestore.rules"]
+    },
+    {
+      "id": "baas-public-bucket",
+      "name": "BaaS Public Storage Bucket",
+      "pattern": "(public\\s*[:=]\\s*true|isPublic\\s*[:=]\\s*true|acl\\s*[:=]\\s*['\"]public)",
+      "severity": "medium",
+      "description": "Storage bucket configured as public. All objects are accessible without authentication.",
+      "remediation": "Make bucket private unless public access is intentionally required (e.g., static assets). Use signed URLs for private files."
+    }
+  ]
+}
