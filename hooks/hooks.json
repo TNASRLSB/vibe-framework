@@ -52,8 +52,8 @@
         "hooks": [
           {
             "type": "prompt",
-            "prompt": "Review the last assistant message. Is it claiming that a TASK or FEATURE is complete, fixed, done, or passing? Single action reports like 'file updated' or 'commit created' are NOT completion claims — allow those. Only block if the message claims a multi-step task is finished without showing verification evidence (test output, command results, or screenshots). If blocking: {\"decision\": \"block\", \"reason\": \"Verification required before claiming task completion. Run tests or show evidence.\"}. If allowing: {\"decision\": \"allow\"}.",
-            "timeout": 15
+            "prompt": "Does the last assistant message claim a multi-step TASK or FEATURE is complete, fixed, or passing WITHOUT showing evidence like test output or command results? Simple action reports like 'file updated' or 'commit created' do NOT count as completion claims. Answer only YES or NO.",
+            "timeout": 10
           }
         ]
       }
