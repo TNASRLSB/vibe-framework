@@ -1,0 +1,111 @@
+name: Auto Release
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get current version
+        id: current
+        run: |
+          VERSION=$(jq -r '.version' .claude-plugin/plugin.json)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Current version: $VERSION"
+
+      - name: Determine version bump
+        id: bump
+        run: |
+          # Get commits since last tag
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -z "$LAST_TAG" ]; then
+            COMMITS=$(git log --oneline)
+          else
+            COMMITS=$(git log --oneline "$LAST_TAG"..HEAD)
+          fi
+
+          echo "Commits since $LAST_TAG:"
+          echo "$COMMITS"
+
+          # Determine bump type from conventional commits
+          if echo "$COMMITS" | grep -qiE '^[a-f0-9]+ .*(BREAKING CHANGE|!:)'; then
+            echo "bump=major" >> "$GITHUB_OUTPUT"
+          elif echo "$COMMITS" | grep -qiE '^[a-f0-9]+ feat'; then
+            echo "bump=minor" >> "$GITHUB_OUTPUT"
+          elif echo "$COMMITS" | grep -qiE '^[a-f0-9]+ (fix|perf|refactor)'; then
+            echo "bump=patch" >> "$GITHUB_OUTPUT"
+          else
+            echo "bump=none" >> "$GITHUB_OUTPUT"
+            echo "No version-worthy commits found, skipping release."
+          fi
+
+      - name: Calculate new version
+        id: new
+        if: steps.bump.outputs.bump != 'none'
+        run: |
+          IFS='.' read -r MAJOR MINOR PATCH <<< "${{ steps.current.outputs.version }}"
+          case "${{ steps.bump.outputs.bump }}" in
+            major) MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
+            minor) MINOR=$((MINOR + 1)); PATCH=0 ;;
+            patch) PATCH=$((PATCH + 1)) ;;
+          esac
+          NEW_VERSION="${MAJOR}.${MINOR}.${PATCH}"
+          echo "version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          echo "New version: $NEW_VERSION"
+
+      - name: Update plugin.json version
+        if: steps.bump.outputs.bump != 'none'
+        run: |
+          jq --arg v "${{ steps.new.outputs.version }}" '.version = $v' \
+            .claude-plugin/plugin.json > tmp.json && mv tmp.json .claude-plugin/plugin.json
+
+      - name: Generate release notes
+        id: notes
+        if: steps.bump.outputs.bump != 'none'
+        run: |
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -z "$LAST_TAG" ]; then
+            CHANGES=$(git log --pretty=format:"- %s" HEAD)
+          else
+            CHANGES=$(git log --pretty=format:"- %s" "$LAST_TAG"..HEAD)
+          fi
+
+          # Write to file to handle multiline
+          {
+            echo "## What's Changed"
+            echo ""
+            echo "$CHANGES" | grep -iE '^- (feat|fix|perf|refactor|docs|test|chore)' || echo "$CHANGES"
+            echo ""
+            echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${LAST_TAG}...v${{ steps.new.outputs.version }}"
+          } > release_notes.md
+
+          cat release_notes.md
+
+      - name: Commit version bump
+        if: steps.bump.outputs.bump != 'none'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .claude-plugin/plugin.json
+          git commit -m "chore: bump version to ${{ steps.new.outputs.version }}" || echo "No changes to commit"
+          git push
+
+      - name: Create tag and release
+        if: steps.bump.outputs.bump != 'none'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git tag -a "v${{ steps.new.outputs.version }}" -m "v${{ steps.new.outputs.version }}"
+          git push origin "v${{ steps.new.outputs.version }}"
+          gh release create "v${{ steps.new.outputs.version }}" \
+            --title "v${{ steps.new.outputs.version }}" \
+            --notes-file release_notes.md
