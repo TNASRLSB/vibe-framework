@@ -44,6 +44,8 @@ vibe-framework/
 ├── skills/
 │   ├── setup/SKILL.md
 │   ├── reflect/SKILL.md
+│   ├── pause/SKILL.md
+│   ├── resume/SKILL.md
 │   ├── seurat/
 │   │   ├── SKILL.md
 │   │   └── references/
@@ -109,7 +111,7 @@ vibe-framework/
 
 | Component | Count | Role |
 |---|---|---|
-| Skills | 10 (8 domain + setup + reflect) | Specialized methodologies with effort:max |
+| Skills | 12 (8 domain + setup + reflect + pause + resume) | Specialized methodologies with effort:max |
 | Agents | 3 | Review, research, security in isolated context |
 | Hooks | 7 handlers across 5 events | Mechanical quality gates |
 | Scripts | 6 | Logic for command hooks (Stop uses prompt hook, no script) |
@@ -293,35 +295,44 @@ Behavior:
 **Purpose:** Save critical state before context compaction to prevent the documented amnesia problem.
 
 Saves to `${CLAUDE_PLUGIN_DATA}/session-state.md`:
-- Files modified in the current session (from git diff)
-- Active skills and current workflow phase
-- Key decisions made
-- Tasks in progress
+- Files modified in the current session (from `git diff --name-only`)
+- Active skills and current workflow phase (extracted by parsing `tail -200` of `transcript_path` JSONL for recent Skill tool invocations)
+- Recent key tool calls (last 20 from transcript tail)
 - Timestamp for freshness detection
 
-The SessionStart hook detects this file and re-injects state post-compaction.
+The script receives `transcript_path` in the hook input JSON, which points to the session's JSONL transcript file. It parses the tail of this file to reconstruct recent context — this is not magic, it's grep/jq on structured log data.
+
+The SessionStart hook detects this file and re-injects state post-compaction if the file is recent (< 5 minutes old, indicating a compaction just happened rather than a new session).
 
 ### 5.5 Stop: Verification Gate
 
 **Type:** prompt hook
 **Purpose:** Block Claude from claiming work is complete without showing evidence.
 
-Prompt evaluates the last assistant message:
-- If claims "done", "complete", "fixed", "passing" without evidence (test output, verification command, screenshot): blocks with "Verification required. Run tests or show evidence."
-- If evidence is present: allows
+Prompt evaluates the last assistant message. Distinguishes between:
+- **Task completion claims** ("the feature is done", "bug is fixed", "all tests pass", "implementation complete") → blocks without evidence (test output, verification command, screenshot)
+- **Single action reports** ("file updated", "test executed", "commit created", "installed dependency") → always allows, these are progress updates not completion claims
+
+Prompt:
+> "Review the last assistant message. Is it claiming that a TASK or FEATURE is complete, fixed, done, or passing? Single action reports like 'file updated' or 'commit created' are NOT completion claims — allow those. Only block if the message claims a multi-step task is finished without showing verification evidence (test output, command results, or screenshots). If blocking: {\"decision\": \"block\", \"reason\": \"Verification required before claiming task completion. Run tests or show evidence.\"}. If allowing: {\"decision\": \"allow\"}."
 
 ### 5.6 UserPromptSubmit: Correction Capture
 
 **Script:** `correction-capture.sh`
 **Purpose:** Detect when user corrects Claude and queue the correction for learning.
 
-Detects patterns:
-- "no, use X not Y"
-- "don't do X"
-- "I told you to..."
-- "not like that"
-- "actually..."
-- "wrong, it should be..."
+Detects correction patterns in multiple languages:
+
+| Language | Patterns |
+|---|---|
+| English | "no, use X not Y", "don't do X", "I told you to...", "not like that", "actually...", "wrong, it should be..." |
+| Italian | "no, usa X non Y", "non fare X", "ti avevo detto", "non così", "sbagliato", "doveva essere..." |
+| Spanish | "no, usa X no Y", "no hagas X", "te dije que...", "así no", "está mal..." |
+| French | "non, utilise X pas Y", "ne fais pas X", "je t'avais dit...", "pas comme ça..." |
+| German | "nein, benutze X nicht Y", "mach das nicht", "ich hatte gesagt...", "nicht so..." |
+| Portuguese | "não, use X não Y", "não faça X", "eu disse para...", "assim não..." |
+
+Pattern detection is conservative — false positives are acceptable because they get filtered during `/vibe:reflect` review. The pattern list is extensible via a JSON config file at `${CLAUDE_PLUGIN_DATA}/correction-patterns.json`.
 
 Saves to `${CLAUDE_PLUGIN_DATA}/learnings/queue.jsonl`:
 ```json
@@ -504,7 +515,36 @@ Step 7: Verification
 
 ---
 
-## 7. Skill: `/vibe:reflect`
+## 7. Skills: `/vibe:pause` and `/vibe:resume`
+
+Escape hatch for when hooks are in the way during rapid prototyping, exploratory editing, or brainstorming in code.
+
+```yaml
+---
+name: pause
+description: Temporarily disable VIBE quality hooks for the current session.
+disable-model-invocation: true
+---
+```
+
+```yaml
+---
+name: resume
+description: Re-enable VIBE quality hooks for the current session.
+disable-model-invocation: true
+---
+```
+
+**Mechanism:** Both skills write/remove a flag file at `/tmp/vibe-paused-{session_id}`. All hook scripts check for this file as their first operation — if it exists, they exit 0 immediately (no-op). This pauses all quality gates without uninstalling or disabling the plugin.
+
+- `/vibe:pause` creates the flag file and confirms: "VIBE hooks paused for this session. Quality gates disabled. Run /vibe:resume to re-enable."
+- `/vibe:resume` removes the flag file and confirms: "VIBE hooks resumed. Quality gates active."
+- The flag is session-scoped (uses session_id in filename) and lives in /tmp, so it auto-cleans on reboot.
+- The SessionStart hook ignores the pause flag (always runs) so the framework status is always injected.
+
+---
+
+## 8. Skill: `/vibe:reflect`
 
 ```yaml
 ---
@@ -548,9 +588,9 @@ Pattern discovery (manual, /vibe:reflect --patterns)
 
 ---
 
-## 8. Domain Skills
+## 9. Domain Skills
 
-### 8.1 SEURAT — UI Design System
+### 9.1 SEURAT — UI Design System
 
 ```yaml
 ---
@@ -572,7 +612,7 @@ model: opus
 
 **Changes from v1:** Eliminates fuzzy-weight matrix system (overengineered). Keeps visual styles and archetypes as on-demand references. Adds brand identity as main flow.
 
-### 8.2 EMMET — Testing & QA
+### 9.2 EMMET — Testing & QA
 
 ```yaml
 ---
@@ -583,7 +623,21 @@ model: opus
 ---
 ```
 
-**Workflow:** Map codebase functions → Plan test strategy → Unit tests → Static analysis → Visual tests (headed, per-persona) → Report
+**Workflows:**
+
+Testing: Map codebase functions → Plan test strategy → Unit tests → Static analysis → Visual tests (headed, per-persona) → Report
+
+Debugging (systematic):
+```
+1. Reproduce    → Confirm the bug exists, define exact reproduction steps
+2. Isolate      → Narrow down to smallest failing case
+3. Hypothesize  → Form 2-3 hypotheses about root cause
+4. Verify       → Test each hypothesis with targeted investigation
+5. Fix          → Implement minimal fix for confirmed root cause
+6. Validate     → Comment out fix, verify test fails. Restore fix, verify test passes.
+7. Prevent      → Add regression test, document if non-obvious
+```
+This workflow is the complement to the failure-loop-detect hook: the hook stops Claude after 3 failures, Emmet's debug workflow provides the method to break out of the loop systematically.
 
 **8 Default personas for experiential testing:**
 
@@ -611,7 +665,7 @@ model: opus
 - No mocks by default (community lesson: mock/prod divergence)
 - References: strategies/, checklists/, personas/, templates/
 
-### 8.3 HEIMDALL — Security
+### 9.3 HEIMDALL — Security
 
 ```yaml
 ---
@@ -636,7 +690,7 @@ model: opus
 
 **References:** owasp/, baas/, credentials/, patterns/
 
-### 8.4 GHOSTWRITER — SEO + GEO + Copywriting
+### 9.4 GHOSTWRITER — SEO + GEO + Copywriting
 
 ```yaml
 ---
@@ -653,7 +707,7 @@ model: opus
 
 **References:** seo/, geo/, copywriting/, validation/
 
-### 8.5 BAPTIST — CRO
+### 9.5 BAPTIST — CRO
 
 ```yaml
 ---
@@ -670,7 +724,7 @@ model: opus
 
 **References:** frameworks/, experiments/, analytics/
 
-### 8.6 ORSON — Video
+### 9.6 ORSON — Video
 
 ```yaml
 ---
@@ -687,7 +741,7 @@ model: opus
 
 **References:** components/, audio/, rendering/, recipes/
 
-### 8.7 SCRIBE — Office & PDF
+### 9.7 SCRIBE — Office & PDF
 
 ```yaml
 ---
@@ -704,7 +758,7 @@ model: opus
 
 **References:** xlsx/, docx/, pptx/, pdf/
 
-### 8.8 FORGE — Meta-skill
+### 9.8 FORGE — Meta-skill
 
 ```yaml
 ---
@@ -724,7 +778,7 @@ disable-model-invocation: true
 
 ---
 
-## 9. Installation Flow
+## 10. Installation Flow
 
 ```
 1. /plugin marketplace add DKHBSFA/vibe-framework
@@ -746,7 +800,7 @@ disable-model-invocation: true
 
 ---
 
-## 10. Implementation Strategy
+## 11. Implementation Strategy
 
 ### Phase 0: Backup
 - Full backup of v1 framework before any work begins
@@ -798,11 +852,11 @@ disable-model-invocation: true
 
 ---
 
-## 11. Success Criteria
+## 12. Success Criteria
 
 The framework is complete when:
 
-1. All 10 skills work independently and together
+1. All 12 skills work independently and together
 2. All 3 agents invoke correctly with memory persistence
 3. All 7 hooks fire reliably without false positives
 4. `/vibe:setup` configures a fresh environment in one pass
@@ -813,4 +867,7 @@ The framework is complete when:
 9. Verification gate blocks unsubstantiated completion claims
 10. Post-edit lint runs the correct linter for the project stack
 11. The entire framework fits in a single plugin installable with `/plugin install`
-12. No component from v1 that provided real value was lost without replacement
+12. `/vibe:pause` and `/vibe:resume` correctly toggle all hook behavior per-session
+13. Correction capture detects patterns in at least 6 languages
+14. Emmet's debugging workflow breaks failure loops with systematic method
+15. No component from v1 that provided real value was lost without replacement
