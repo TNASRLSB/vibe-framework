@@ -1,0 +1,45 @@
+{
+  "template_id": "hype_social",
+  "display_name": "Hype / Social",
+  "description": "High-energy, attention-grabbing audio for gaming, sports, energy brands, and viral social content",
+  "use_cases": ["gaming", "sports", "energy drink", "retail", "social media", "viral"],
+
+  "parameters": {
+    "duration": { "type": "enum", "values": ["15s", "30s"], "default": "15s" },
+    "energy": { "type": "range", "min": 0.7, "max": 1.0, "default": 0.9 },
+    "voiceover": { "type": "bool", "default": false }
+  },
+
+  "base_style": "trap",
+
+  "duration_adaptations": {
+    "15s": {
+      "arc_strategy": "no_arc",
+      "impact_intensity": 1.0,
+      "phases": { "impact": [0, 0.2], "climax": [0.2, 0.9], "resolve": [0.9, 1.0] }
+    },
+    "30s": {
+      "arc_strategy": "compressed",
+      "impact_intensity": 0.95,
+      "phases": { "impact": [0, 0.11], "build": [0.11, 0.44], "climax": [0.44, 0.89], "resolve": [0.89, 1.0] }
+    }
+  },
+
+  "energy_scaling": {
+    "affects": ["velocity_multiplier", "density", "filter_brightness"],
+    "formula": {
+      "velocity_multiplier": "0.7 + (energy * 0.3)",
+      "density": "energy < 0.8 ? 'balanced' : 'dense'",
+      "filter_brightness": "2000 + (energy * 2000)"
+    }
+  },
+
+  "voiceover_adaptation": {
+    "if_true": { "apply_mode": "voiceover_bed", "mid_gain_reduction": 0.25 }
+  },
+
+  "track_hints": {
+    "bpm": 140,
+    "key": "F# minor"
+  }
+}

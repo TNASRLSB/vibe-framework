@@ -1,0 +1,158 @@
+{
+  "_doc": "Catalog of available audio tracks and SFX. Update this file when adding new tracks.",
+  "tracks": [
+    {
+      "id": "ambient-01",
+      "file": "tracks/ambient-01.mp3",
+      "style": "ambient",
+      "bpm": 72,
+      "energy": 0.25,
+      "durationMs": 120000,
+      "tags": ["calm", "atmospheric", "spacious"],
+      "loopable": true
+    },
+    {
+      "id": "ambient-02",
+      "file": "tracks/ambient-02.mp3",
+      "style": "ambient",
+      "bpm": 65,
+      "energy": 0.2,
+      "durationMs": 90000,
+      "tags": ["minimal", "ethereal", "wellness"],
+      "loopable": true
+    },
+    {
+      "id": "corporate-01",
+      "file": "tracks/corporate-01.mp3",
+      "style": "corporate",
+      "bpm": 90,
+      "energy": 0.45,
+      "durationMs": 120000,
+      "tags": ["professional", "clean", "business"],
+      "loopable": true
+    },
+    {
+      "id": "corporate-02",
+      "file": "tracks/corporate-02.mp3",
+      "style": "corporate",
+      "bpm": 95,
+      "energy": 0.5,
+      "durationMs": 90000,
+      "tags": ["optimistic", "presentation", "B2B"],
+      "loopable": true
+    },
+    {
+      "id": "electronic-01",
+      "file": "tracks/electronic-01.mp3",
+      "style": "electronic",
+      "bpm": 120,
+      "energy": 0.7,
+      "durationMs": 120000,
+      "tags": ["tech", "startup", "modern"],
+      "loopable": true
+    },
+    {
+      "id": "electronic-02",
+      "file": "tracks/electronic-02.mp3",
+      "style": "electronic",
+      "bpm": 125,
+      "energy": 0.65,
+      "durationMs": 90000,
+      "tags": ["digital", "app", "dev-tools"],
+      "loopable": true
+    },
+    {
+      "id": "cinematic-01",
+      "file": "tracks/cinematic-01.mp3",
+      "style": "cinematic",
+      "bpm": 80,
+      "energy": 0.6,
+      "durationMs": 120000,
+      "tags": ["epic", "trailer", "building"],
+      "loopable": false
+    },
+    {
+      "id": "cinematic-02",
+      "file": "tracks/cinematic-02.mp3",
+      "style": "cinematic",
+      "bpm": 75,
+      "energy": 0.55,
+      "durationMs": 90000,
+      "tags": ["emotional", "brand-story", "reveal"],
+      "loopable": false
+    },
+    {
+      "id": "lofi-01",
+      "file": "tracks/lofi-01.mp3",
+      "style": "lo-fi",
+      "bpm": 78,
+      "energy": 0.3,
+      "durationMs": 120000,
+      "tags": ["chill", "warm", "relaxed"],
+      "loopable": true
+    },
+    {
+      "id": "lofi-02",
+      "file": "tracks/lofi-02.mp3",
+      "style": "lo-fi",
+      "bpm": 82,
+      "energy": 0.35,
+      "durationMs": 90000,
+      "tags": ["nostalgic", "study", "blog"],
+      "loopable": true
+    },
+    {
+      "id": "upbeat-01",
+      "file": "tracks/upbeat-01.mp3",
+      "style": "upbeat",
+      "bpm": 128,
+      "energy": 0.85,
+      "durationMs": 90000,
+      "tags": ["happy", "energetic", "social-media"],
+      "loopable": true
+    },
+    {
+      "id": "upbeat-02",
+      "file": "tracks/upbeat-02.mp3",
+      "style": "upbeat",
+      "bpm": 135,
+      "energy": 0.9,
+      "durationMs": 90000,
+      "tags": ["bouncy", "promo", "retail"],
+      "loopable": true
+    }
+  ],
+  "sfx": [
+    {
+      "id": "click-01",
+      "file": "sfx/click.mp3",
+      "type": "ui-click",
+      "durationMs": 80
+    },
+    {
+      "id": "whoosh-01",
+      "file": "sfx/whoosh.mp3",
+      "type": "transition",
+      "durationMs": 300
+    },
+    {
+      "id": "typing-01",
+      "file": "sfx/typing.mp3",
+      "type": "typing-loop",
+      "durationMs": 2000,
+      "loopable": true
+    },
+    {
+      "id": "success-01",
+      "file": "sfx/success.mp3",
+      "type": "success",
+      "durationMs": 500
+    },
+    {
+      "id": "transition-01",
+      "file": "sfx/transition.mp3",
+      "type": "scene-transition",
+      "durationMs": 400
+    }
+  ]
+}
