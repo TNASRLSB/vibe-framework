@@ -34,6 +34,24 @@ if [[ -f "$STATE_FILE" ]]; then
   fi
 fi
 
+# --- Check for project CLAUDE.md ---
+PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
+has_claude_md=false
+if [[ -f "$PROJECT_DIR/CLAUDE.md" ]]; then
+  has_claude_md=true
+fi
+
+# --- Detect v1 framework remnants ---
+has_v1=false
+if [[ -f "$PROJECT_DIR/CLAUDE.md" ]]; then
+  if grep -q "Claude Operating System\|adapt-framework\|Morpheus: Context Awareness" "$PROJECT_DIR/CLAUDE.md" 2>/dev/null; then
+    has_v1=true
+  fi
+fi
+[[ -d "$PROJECT_DIR/.claude/morpheus" ]] && has_v1=true
+[[ -d "$PROJECT_DIR/vibe-framework" ]] && has_v1=true
+[[ -f "$PROJECT_DIR/vibe-framework.sh" ]] && has_v1=true
+
 # --- Build status message ---
 status_parts=()
 
@@ -41,6 +59,12 @@ if [[ "$settings_ok" == "true" ]]; then
   status_parts+=("VIBE settings: OK")
 else
   status_parts+=("VIBE settings: ~/.claude/settings.json missing or incomplete — run /vibe:setup")
+fi
+
+if [[ "$has_v1" == "true" ]]; then
+  status_parts+=("WARNING: This project has VIBE Framework v1 remnants that conflict with the v2 plugin. Run the migration script: https://github.com/TNASRLSB/vibe-framework/blob/main/scripts/vibe-v1-cleanup.sh")
+elif [[ "$has_claude_md" == "false" ]]; then
+  status_parts+=("No CLAUDE.md found in this project. Run /vibe:setup to generate one (detects stack, linters, build commands).")
 fi
 
 if (( pending_count > 0 )); then
