@@ -5,7 +5,8 @@
 # Conservative matching — false positives are OK.
 # Always exits 0 (never blocks user input).
 
-set -uo pipefail
+set +e  # Never exit on error — this hook must always succeed
+trap 'exit 0' ERR  # On any error, exit 0 silently
 
 # Read JSON input from stdin
 INPUT=$(cat)
@@ -42,7 +43,7 @@ CORRECTION_PATTERN+='(nicht so|mach nicht|falsch|ich sagte|ich meinte|stattdesse
 CORRECTION_PATTERN+="|"
 CORRECTION_PATTERN+='(não assim|não faça|errado|eu disse|quis dizer|em vez|deveria|na verdade)'
 
-if echo "$PROMPT" | grep -iPq "$CORRECTION_PATTERN"; then
+if echo "$PROMPT" | grep -iPq "$CORRECTION_PATTERN" 2>/dev/null; then
   # Match found — save to queue
   DATA_DIR="${CLAUDE_PLUGIN_DATA:-/tmp/vibe-plugin-data}"
   QUEUE_DIR="${DATA_DIR}/learnings"
