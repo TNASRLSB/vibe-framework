@@ -1,0 +1,21 @@
+{
+  "name": "vibe",
+  "version": "2.0.0",
+  "description": "Quality-first framework for Claude Code. Specialized skills, quality gates, and maximum intelligence.",
+  "author": {
+    "name": "DKHBSFA"
+  },
+  "repository": "https://github.com/DKHBSFA/vibe-framework",
+  "license": "MIT",
+  "keywords": [
+    "quality",
+    "testing",
+    "security",
+    "ui-design",
+    "seo",
+    "cro",
+    "video",
+    "documents",
+    "framework"
+  ]
+}
