@@ -1,15 +1,20 @@
 node_modules/
 __pycache__/
-.claude/settings.local.json
-.claude/docs/session-notes/*.md
-!.claude/docs/session-notes/.gitkeep
-.claude/skills/orson/engine/dist/
-.emmet/
-.forge/
-.seurat/
-.orson/
-.scribe/
-.ghostwriter/
-.heimdall/
+*.pyc
+.venv/
+
+# Orson engine build output
+skills/orson/engine/dist/
+skills/orson/engine/node_modules/
+skills/orson/engine/audio/.venv/
+
+# Claude Code worktrees
+.claude/worktrees/
+
+# Preview files
 *.preview.html
 video-preview.html
+
+# OS files
+.DS_Store
+Thumbs.db

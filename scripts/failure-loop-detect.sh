@@ -40,8 +40,8 @@ Do not continue with the same approach. You must:
 1. STOP what you are doing immediately
 2. Analyze what is failing and why
 3. Create a new plan from scratch
-4. Consider using /emmet test to run diagnostics
-5. If stuck, read .claude/docs/workflows.md for debugging patterns
+4. Run /vibe:emmet debug for systematic debugging (Reproduce → Isolate → Hypothesize → Verify → Fix)
+5. If stuck, ask the user for guidance
 
 The failure counter will reset on your next successful tool use.
 STOPMSG

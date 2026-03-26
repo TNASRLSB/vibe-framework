@@ -3,7 +3,7 @@
 # Validates environment and reports status on session start.
 # Does NOT check pause flag — SessionStart always runs.
 
-set -euo pipefail
+set -uo pipefail
 
 # Read JSON input from stdin
 INPUT=$(cat)
@@ -40,7 +40,7 @@ status_parts=()
 if [[ "$settings_ok" == "true" ]]; then
   status_parts+=("VIBE settings: OK")
 else
-  status_parts+=("VIBE settings: ~/.claude/settings.json missing or incomplete — run /vibe:install")
+  status_parts+=("VIBE settings: ~/.claude/settings.json missing or incomplete — run /vibe:setup")
 fi
 
 if (( pending_count > 0 )); then

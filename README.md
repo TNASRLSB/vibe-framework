@@ -24,16 +24,16 @@ VIBE operates on three pillars:
 |-------|---------|----------|
 | **setup** | Initialize framework in a project | `/vibe:setup` |
 | **reflect** | Guided self-assessment of session quality | `/vibe:reflect` |
-| **pause** | Save work state before interruption | `/vibe:pause` |
-| **resume** | Restore state after compaction or restart | `/vibe:resume` |
-| **seurat** | UI/UX design system, wireframing, layout, brand identity, WCAG | `/seurat map`, `/seurat wireframe`, `/seurat brand` |
-| **emmet** | Testing, QA, tech debt audit, systematic debugging | `/emmet test`, `/emmet techdebt`, `/emmet debug` |
-| **heimdall** | Security analysis, OWASP Top 10, credential detection | `/heimdall audit`, `/heimdall scan` |
-| **ghostwriter** | SEO + GEO dual optimization, persuasive copywriting | `/ghostwriter write`, `/ghostwriter optimize` |
-| **baptist** | CRO orchestrator, A/B testing, funnel analysis | `/baptist audit`, `/baptist test` |
-| **orson** | Programmatic video generation, demo recording with audio | `/orson create`, `/orson demo` |
+| **pause** | Temporarily disable quality hooks for rapid prototyping | `/vibe:pause` |
+| **resume** | Re-enable quality hooks after pausing | `/vibe:resume` |
+| **seurat** | UI/UX design system, wireframing, layout, brand identity, WCAG | `/vibe:seurat setup`, `/vibe:seurat generate`, `/vibe:seurat brand` |
+| **emmet** | Testing, QA, tech debt audit, systematic debugging | `/vibe:emmet test`, `/vibe:emmet techdebt`, `/vibe:emmet debug` |
+| **heimdall** | Security analysis, OWASP Top 10, credential detection | `/vibe:heimdall audit`, `/vibe:heimdall scan` |
+| **ghostwriter** | SEO + GEO dual optimization, persuasive copywriting | `/vibe:ghostwriter write`, `/vibe:ghostwriter optimize` |
+| **baptist** | CRO orchestrator, A/B testing, funnel analysis | `/vibe:baptist audit`, `/vibe:baptist test` |
+| **orson** | Programmatic video generation, demo recording with audio | `/vibe:orson create`, `/vibe:orson demo` |
 | **scribe** | Office documents (xlsx, docx, pptx) and PDF creation | Describe file type -- auto-routed |
-| **forge** | Create, audit, and maintain skills | `/forge create`, `/forge audit`, `/forge fix` |
+| **forge** | Create, audit, and maintain skills | `/vibe:forge create`, `/vibe:forge audit`, `/vibe:forge fix` |
 
 ## Agents
 
@@ -47,13 +47,13 @@ VIBE operates on three pillars:
 
 | Hook | Event | Purpose |
 |------|-------|---------|
-| **setup check** | Post-install | Verify environment meets requirements |
-| **lint** | Pre-commit | Code quality enforcement |
-| **security scan** | File edit | Quick security scan on every change |
-| **compact save** | Pre-compaction | Save state before context is compacted |
-| **verification gate** | Task completion | Block "done" claims without evidence |
-| **correction capture** | Post-correction | Learn from mistakes (6 languages) |
-| **failure loop** | Consecutive failures | Stop after 3 failed attempts, force re-plan |
+| **setup check** | SessionStart | Detect if setup done, inject framework status, recover post-compaction state |
+| **lint** | PostToolUse (Edit/Write) | Run project linter on every file modification |
+| **security scan** | PostToolUse (Edit/Write) | Lightweight regex scan for obvious vulnerabilities |
+| **compact save** | PreCompact | Save active skills, modified files, workflow phase before compaction |
+| **verification gate** | Stop | Block task completion claims without test output or evidence |
+| **correction capture** | UserPromptSubmit | Detect corrections in 6 languages, queue for /vibe:reflect |
+| **failure loop** | PostToolUseFailure | Stop after 3 consecutive failures, force systematic replan |
 
 ## How It Works
 
