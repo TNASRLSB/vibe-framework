@@ -15,7 +15,7 @@ if [ -z "$PROMPT" ]; then
   exit 0
 fi
 
-# Check for correction patterns (multilingual)
+# Check for correction patterns (multilingual, case-insensitive)
 LOWER=$(echo "$PROMPT" | tr '[:upper:]' '[:lower:]' 2>/dev/null) || exit 0
 
 MATCH=""

@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/setup-check.sh",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/setup-check.sh\"",
             "statusMessage": "VIBE: checking configuration..."
           }
         ]
@@ -17,12 +17,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/post-edit-lint.sh",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/post-edit-lint.sh\"",
             "statusMessage": "Lint check..."
           },
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/security-quickscan.sh",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/security-quickscan.sh\"",
             "statusMessage": "Security scan..."
           }
         ]
@@ -31,7 +31,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/failure-reset.sh"
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/failure-reset.sh\""
           }
         ]
       }
@@ -41,7 +41,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/pre-compact-save.sh",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/pre-compact-save.sh\"",
             "statusMessage": "Saving state..."
           }
         ]
@@ -63,7 +63,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/correction-capture.sh",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/correction-capture.sh\"",
             "statusMessage": "Checking for learnings..."
           }
         ]
@@ -75,7 +75,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/failure-loop-detect.sh",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/failure-loop-detect.sh\"",
             "statusMessage": "Tracking failures..."
           }
         ]
