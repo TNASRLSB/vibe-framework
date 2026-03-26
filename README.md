@@ -1,72 +1,72 @@
-# VIBE Framework
+# VIBE Framework 2.0
 
-An operating system for Claude Code with 8 specialized skills and context awareness (Morpheus). It defines *how* Claude works (process rules, memory, verification) and *what* it knows (domain-specific skills).
+Quality-first plugin for Claude Code. Forces maximum effort, specialized methodologies, and mechanical quality gates for Max 20x subscribers.
+
+## Installation
+
+```
+/plugin marketplace add DKHBSFA/vibe-framework
+/plugin install vibe
+/vibe:setup
+```
+
+## What It Does
+
+VIBE operates on three pillars:
+
+1. **Specialized Skills** -- Domain-specific methodologies (UI design, testing, security, SEO, CRO, video, documents, skill authoring) that encode expert knowledge into repeatable workflows.
+2. **Quality Enforcement** -- Hook handlers that run automatically on every edit, commit, and task completion. They lint, scan for security issues, verify claims, and detect failure loops -- mechanically, not by suggestion.
+3. **Maximum Intelligence** -- Forces effort:max and opus model across all skills and agents. Independent agents review work, research codebases, and audit security without being asked.
 
 ## Skills
 
-| Skill | What it does |
-|-------|-------------|
-| **seurat** | UI/UX design system generation, wireframing, page layout, brand identity. 11 styles, 6 page archetypes, WCAG accessibility |
-| **emmet** | Testing, QA, tech debt audit, functional mapping, stack adaptation. Playwright + unit test frameworks |
-| **heimdall** | AI-specific security analysis. OWASP Top 10, credential detection, BaaS audit, iteration tracking |
-| **ghostwriter** | SEO + GEO (AI search) optimization and persuasive copywriting. 50 validation rules |
-| **baptist** | CRO orchestrator. Fogg B=MAP diagnostics, A/B test design, funnel analysis |
-| **orson** | Programmatic video + demo recording. Frame-addressed v6 engine with SP/N/D/P animation primitives, TTS narration, audio mixing |
-| **scribe** | Office document creation and editing (xlsx, docx, pptx, pdf). Auto-routing by file type |
-| **forge** | Meta-skill for creating, auditing, and improving Claude Code skills |
+| Skill | Purpose | Commands |
+|-------|---------|----------|
+| **setup** | Initialize framework in a project | `/vibe:setup` |
+| **reflect** | Guided self-assessment of session quality | `/vibe:reflect` |
+| **pause** | Save work state before interruption | `/vibe:pause` |
+| **resume** | Restore state after compaction or restart | `/vibe:resume` |
+| **seurat** | UI/UX design system, wireframing, layout, brand identity, WCAG | `/seurat map`, `/seurat wireframe`, `/seurat brand` |
+| **emmet** | Testing, QA, tech debt audit, systematic debugging | `/emmet test`, `/emmet techdebt`, `/emmet debug` |
+| **heimdall** | Security analysis, OWASP Top 10, credential detection | `/heimdall audit`, `/heimdall scan` |
+| **ghostwriter** | SEO + GEO dual optimization, persuasive copywriting | `/ghostwriter write`, `/ghostwriter optimize` |
+| **baptist** | CRO orchestrator, A/B testing, funnel analysis | `/baptist audit`, `/baptist test` |
+| **orson** | Programmatic video generation, demo recording with audio | `/orson create`, `/orson demo` |
+| **scribe** | Office documents (xlsx, docx, pptx) and PDF creation | Describe file type -- auto-routed |
+| **forge** | Create, audit, and maintain skills | `/forge create`, `/forge audit`, `/forge fix` |
 
-## Setup
+## Agents
 
-### Install (new project)
+| Agent | Purpose | When Used |
+|-------|---------|-----------|
+| **reviewer** | Independent post-implementation review | After any significant code change |
+| **researcher** | Deep codebase exploration and analysis | Before implementation, during planning |
+| **guardian** | Security audit of changes | On file edits, before commits |
 
-```bash
-git clone <this-repo> ~/vibe-framework
-cd ~/vibe-framework
-./vibe-framework.sh /path/to/your/project
-```
+## Hooks
 
-The script copies `CLAUDE.md` + `.claude/` into your project, creates `settings.local.json`, output directories, and updates `.gitignore`.
+| Hook | Event | Purpose |
+|------|-------|---------|
+| **setup check** | Post-install | Verify environment meets requirements |
+| **lint** | Pre-commit | Code quality enforcement |
+| **security scan** | File edit | Quick security scan on every change |
+| **compact save** | Pre-compaction | Save state before context is compacted |
+| **verification gate** | Task completion | Block "done" claims without evidence |
+| **correction capture** | Post-correction | Learn from mistakes (6 languages) |
+| **failure loop** | Consecutive failures | Stop after 3 failed attempts, force re-plan |
 
-### Update (existing project)
+## How It Works
 
-```bash
-cd ~/vibe-framework
-git pull
-./vibe-framework.sh /path/to/your/project
-```
-
-Framework files (skills, workflows, checklists) are overwritten. User data (registry, decisions, specs, session-notes) is preserved. A backup is created before any changes.
-
-Use `--dry-run` to preview changes without modifying anything.
-
-### After install
-
-1. **Populate the registry** (existing projects):
-   ```
-   Analizza questo codebase e popola .claude/docs/registry.md
-   ```
-
-2. **Generate stack-specific patterns:**
-   ```
-   /emmet setup
-   ```
-
-3. **(Optional) For projects with UI:**
-   ```
-   /seurat extract
-   /seurat map
-   ```
+The plugin forces `effort:max` and the opus model on all skills and agents, ensuring Claude always operates at peak capability. Hook handlers enforce quality mechanically -- they run on every edit, commit, and completion claim without relying on Claude to remember. Agents provide independent review: the reviewer checks work after implementation, the researcher explores before implementation, and the guardian scans for security issues continuously. The correction capture hook learns from mistakes in six languages, building a self-improving knowledge base.
 
 ## Requirements
 
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (CLI or VS Code extension)
-- `jq` (required by Morpheus context awareness)
-- **Optional:** FFmpeg (for Orson video rendering and audio mixing)
-- **Optional:** `pip install edge-tts` (for Orson TTS narration)
-- **Optional:** `pip install elevenlabs` (for ElevenLabs TTS engine)
+- **Claude Code** (CLI or VS Code extension)
+- **Max 20x subscription** (recommended -- required for effort:max and opus model)
+- **jq** (JSON processing)
+- **Optional:** FFmpeg + `pip install edge-tts` (for Orson video/audio)
+- **Optional:** Python 3.6+ (for Scribe document scripts)
 
-## Documentation
+## License
 
-Full documentation: [`.claude/README.md`](.claude/README.md)
-
-Covers setup paths (new project, existing project, existing project with UI), skill commands, framework glossary, and FAQ.
+MIT
