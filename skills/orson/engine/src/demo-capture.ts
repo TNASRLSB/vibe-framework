@@ -1,0 +1,670 @@
+// Demo capture — real-time Playwright recording with action execution
+// Includes the full runDemo orchestrator that drives the entire pipeline
+
+import { chromium, type Browser, type Page } from 'playwright';
+import { resolve, dirname } from 'path';
+import { mkdirSync, existsSync, writeFileSync } from 'fs';
+import { spawn } from 'child_process';
+import { fileURLToPath } from 'url';
+
+import { parseDemoScript, generateNarrationBrief, type DemoScript, type AuthStep } from './demo-script.js';
+import { buildDemoTimeline, type DemoTimeline, type NarrationManifest } from './demo-timeline.js';
+import { injectCursor, animateCursor, injectZoomOverlay, applyZoom, resetZoom, highlightElement, removeDevOverlay } from './demo-director.js';
+import { selectTrack, selectSfx, type VideoMeta } from './audio-selector.js';
+import { trimAndLoop, applyDucking, fadeInOut, concatenateNarration, concatenateSfx, mixTracks, mergeAudioVideo, type DuckingEvent, type SfxEvent } from './audio-mixer.js';
+import { generateWebVTT } from './demo-subtitles.js';
+import { FORMAT_PRESETS } from './presets.js';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+// ─── Frame Capture ──────────────────────────────────────────
+
+interface CaptureSession {
+  browser: Browser;
+  page: Page;
+  width: number;
+  height: number;
+  fps: number;
+}
+
+async function initDemoCapture(
+  url: string,
+  width: number,
+  height: number,
+  storageState?: string,
+): Promise<CaptureSession> {
+  const browser = await chromium.launch({ headless: true });
+  const contextOpts: Record<string, unknown> = {
+    viewport: { width, height },
+    deviceScaleFactor: 1,
+  };
+  if (storageState && existsSync(storageState)) {
+    contextOpts.storageState = storageState;
+  }
+  const context = await browser.newContext(contextOpts);
+  const page = await context.newPage();
+
+  await page.goto(url, { waitUntil: 'load', timeout: 30000 });
+
+  return { browser, page, width, height, fps: 30 };
+}
+
+async function closeDemoCapture(session: CaptureSession): Promise<void> {
+  await session.browser.close();
+}
+
+// ─── Auth Execution ─────────────────────────────────────────
+
+async function executeAuth(page: Page, authSteps: AuthStep[]): Promise<void> {
+  for (const step of authSteps) {
+    switch (step.action) {
+      case 'navigate':
+        if (step.url) await page.goto(step.url, { waitUntil: 'load', timeout: step.timeout ?? 15000 });
+        break;
+      case 'click':
+        if (step.selector) await page.click(step.selector, { timeout: step.timeout ?? 5000 });
+        break;
+      case 'fill':
+        if (step.selector && step.value) {
+          await page.click(step.selector, { timeout: step.timeout ?? 5000 });
+          await page.fill(step.selector, step.value);
+        }
+        break;
+      case 'wait':
+        if (step.waitFor) await page.waitForSelector(step.waitFor, { timeout: step.timeout ?? 10000 });
+        else await page.waitForTimeout(step.timeout ?? 2000);
+        break;
+    }
+  }
+}
+
+// ─── Action Execution ───────────────────────────────────────
+
+async function executeAction(
+  page: Page,
+  action: string,
+  selector?: string,
+  value?: string,
+  typingSpeed?: number,
+): Promise<void> {
+  switch (action) {
+    case 'click':
+      if (selector) {
+        await animateCursor(page, selector, 500);
+        await page.click(selector, { timeout: 5000 });
+      }
+      break;
+
+    case 'fill':
+      if (selector && value) {
+        await animateCursor(page, selector, 500);
+        await page.click(selector, { timeout: 5000 });
+        // Type character by character for visual effect
+        for (const char of value) {
+          await page.keyboard.type(char, { delay: typingSpeed ?? 60 });
+        }
+      }
+      break;
+
+    case 'scroll':
+      await page.evaluate((sel) => {
+        const el = sel ? document.querySelector(sel) : null;
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        else window.scrollBy({ top: 300, behavior: 'smooth' });
+      }, selector ?? null);
+      await page.waitForTimeout(600);
+      break;
+
+    case 'hover':
+      if (selector) {
+        await animateCursor(page, selector, 500);
+        await page.hover(selector, { timeout: 5000 });
+      }
+      break;
+
+    case 'navigate':
+      if (value) await page.goto(value, { waitUntil: 'load', timeout: 15000 });
+      break;
+
+    case 'wait':
+      // Just wait — handled by timeline
+      break;
+
+    case 'none':
+    default:
+      break;
+  }
+}
+
+// ─── Recording Loop ─────────────────────────────────────────
+
+interface RecordingOptions {
+  session: CaptureSession;
+  timeline: DemoTimeline;
+  script: DemoScript;
+  outputFramesDir: string;
+}
+
+async function recordDemo(opts: RecordingOptions): Promise<void> {
+  const { session, timeline, script, outputFramesDir } = opts;
+  const { page } = session;
+  const frameDuration = 1000 / session.fps;
+  const totalFrames = Math.ceil(timeline.totalDurationMs / 1000 * session.fps);
+
+  // Remove framework dev overlays and inject visual overlays
+  await removeDevOverlay(page);
+  await injectCursor(page);
+  await injectZoomOverlay(page);
+
+  console.log(`  Recording ${totalFrames} frames...`);
+
+  let currentStepIdx = -1;
+  let actionExecuted = new Set<number>();
+
+  for (let frame = 0; frame < totalFrames; frame++) {
+    const currentTimeMs = frame * frameDuration;
+
+    // Find active step
+    const activeStep = timeline.steps.find(
+      s => currentTimeMs >= s.stepStart && currentTimeMs < s.stepEnd
+    );
+
+    if (activeStep && activeStep.stepIndex !== currentStepIdx) {
+      currentStepIdx = activeStep.stepIndex;
+      const step = script.steps[activeStep.stepIndex];
+
+      // Apply zoom at step start
+      if (step.zoom && step.zoom > 1 && step.selector) {
+        await applyZoom(page, step.selector, step.zoom, script.zoomTransitionMs);
+      }
+
+      // Highlight target element
+      if (step.highlight && step.selector) {
+        await highlightElement(page, step.selector, activeStep.stepEnd - activeStep.stepStart);
+      }
+    }
+
+    // Execute action at the right time
+    if (activeStep && !actionExecuted.has(activeStep.stepIndex)) {
+      if (currentTimeMs >= activeStep.actionStart) {
+        actionExecuted.add(activeStep.stepIndex);
+        const step = script.steps[activeStep.stepIndex];
+        const urlBefore = page.url();
+
+        try {
+          await executeAction(page, step.action, step.selector, step.value, step.typingSpeed);
+        } catch (err: any) {
+          console.warn(`  [capture] WARN: action failed at step ${activeStep.stepIndex + 1}: ${err.message}`);
+          // Continue recording — don't crash on a single failed action
+        }
+
+        // After action: re-inject overlays only if page navigated
+        const urlAfter = page.url();
+        if (urlAfter !== urlBefore) {
+          await page.waitForTimeout(300);
+          try { await removeDevOverlay(page); } catch {}
+
+          // Retry overlay injection up to 2 times
+          for (let retry = 0; retry < 2; retry++) {
+            try {
+              const cursorLost = await page.evaluate(() => !document.getElementById('orson-cursor'));
+              if (cursorLost) {
+                await injectCursor(page);
+                await injectZoomOverlay(page);
+              }
+              break;
+            } catch {
+              await page.waitForTimeout(500);
+            }
+          }
+        } else if (step.action === 'click') {
+          // Non-navigational click: wait for re-render (e.g. dark mode toggle)
+          await page.waitForTimeout(100);
+        }
+      }
+    }
+
+    // Reset zoom between steps
+    if (!activeStep && currentStepIdx >= 0) {
+      await resetZoom(page, script.zoomTransitionMs);
+      currentStepIdx = -1;
+    }
+
+    // Wait for waitFor selector if specified
+    if (activeStep) {
+      const step = script.steps[activeStep.stepIndex];
+      if (step.waitFor) {
+        try {
+          await page.waitForSelector(step.waitFor, { timeout: 100 });
+        } catch {
+          // Not ready yet, continue recording
+        }
+      }
+    }
+
+    // Capture frame
+    const buffer = await page.screenshot({ type: 'png' });
+    const paddedFrame = String(frame).padStart(6, '0');
+    writeFileSync(resolve(outputFramesDir, `frame-${paddedFrame}.png`), buffer);
+
+    // Progress reporting
+    if (frame % 30 === 0 || frame === totalFrames - 1) {
+      const pct = ((frame / totalFrames) * 100).toFixed(0);
+      console.log(`  Frame ${frame}/${totalFrames} (${pct}%)`);
+    }
+  }
+
+  // Final zoom reset
+  await resetZoom(page, 200);
+}
+
+// ─── FFmpeg Encode from Frames ──────────────────────────────
+
+async function encodeFrames(
+  framesDir: string,
+  fps: number,
+  codec: string,
+  outputPath: string,
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const args = [
+      '-y',
+      '-framerate', String(fps),
+      '-i', `${framesDir}/frame-%06d.png`,
+      '-c:v', codec === 'h265' ? 'libx265' : codec === 'av1' ? 'libaom-av1' : 'libx264',
+      '-pix_fmt', 'yuv420p',
+      '-preset', 'medium',
+      '-crf', '23',
+      outputPath,
+    ];
+
+    const proc = spawn('ffmpeg', args, { stdio: ['pipe', 'pipe', 'pipe'] });
+    proc.on('close', (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(`FFmpeg encode failed with code ${code}`));
+    });
+    proc.on('error', reject);
+  });
+}
+
+// ─── Orchestrator ───────────────────────────────────────────
+
+/**
+ * runDemo — the full demo pipeline:
+ * 1. Parse script
+ * 2. Generate narration (via narration_generator.py)
+ * 3. Build timeline
+ * 4. Select music track (if enabled)
+ * 5. Record video (Playwright frame capture)
+ * 6. Process audio: concatenate narration, process music, mix, merge
+ * 7. Generate subtitles
+ */
+export async function runDemo(scriptPath: string): Promise<void> {
+  const startTime = Date.now();
+  let warningCount = 0;
+  let fallbackCount = 0;
+
+  // Step 1: Parse script
+  console.log('[demo] Step 1: Parsing demo script...');
+  const script = parseDemoScript(scriptPath);
+  console.log(`  [demo] URL: ${script.url}`);
+  console.log(`  [demo] Steps: ${script.steps.length}`);
+  console.log(`  [demo] Voice: ${script.voice}${script.voicePreset ? ` (preset: ${script.voicePreset})` : ''}`);
+
+  // Resolve paths
+  const outputPath = resolve(dirname(scriptPath), script.output);
+  const outputDir = dirname(outputPath);
+  const workDir = resolve(outputDir, '.demo-work');
+  const framesDir = resolve(workDir, 'frames');
+  const narrationDir = resolve(workDir, 'narration');
+
+  mkdirSync(framesDir, { recursive: true });
+  mkdirSync(narrationDir, { recursive: true });
+
+  // Step 2: Generate narration
+  console.log('\n[demo] Step 2: Generating narration...');
+  const brief = generateNarrationBrief(script);
+  const briefPath = resolve(workDir, 'narration-brief.json');
+  writeFileSync(briefPath, JSON.stringify(brief, null, 2));
+
+  let manifest: NarrationManifest = brief as NarrationManifest;
+
+  try {
+    const narrationScript = resolve(__dirname, '..', 'audio', 'narration_generator.py');
+    const venvDir = resolve(__dirname, '..', 'audio', '.venv');
+    const venvPython = resolve(venvDir, 'bin', 'python3');
+
+    // Auto-create venv if missing
+    if (!existsSync(venvPython)) {
+      console.log('  [tts] Setting up Python venv for TTS...');
+      await new Promise<void>((res, rej) => {
+        const proc = spawn('python3', ['-m', 'venv', venvDir], { stdio: 'inherit' });
+        proc.on('close', (code) => code === 0 ? res() : rej(new Error(`venv creation failed with ${code}`)));
+        proc.on('error', rej);
+      });
+      // Always install edge-tts as fallback
+      await new Promise<void>((res, rej) => {
+        const pip = resolve(venvDir, 'bin', 'pip');
+        const proc = spawn(pip, ['install', '-q', 'edge-tts'], { stdio: 'inherit' });
+        proc.on('close', (code) => code === 0 ? res() : rej(new Error(`pip install failed with ${code}`)));
+        proc.on('error', rej);
+      });
+    }
+
+    // Install extra TTS engine package if configured
+    const ttsEngine = script.ttsEngine ?? process.env.ORSON_TTS_ENGINE;
+    if (ttsEngine && ttsEngine !== 'edge-tts') {
+      const presetsPath = resolve(__dirname, '..', 'audio', 'presets', 'voices.json');
+      if (existsSync(presetsPath)) {
+        const { readFileSync: readFs } = await import('fs');
+        const presets = JSON.parse(readFs(presetsPath, 'utf-8'));
+        const engineInfo = presets.engines?.[ttsEngine];
+        if (engineInfo?.pip_package) {
+          const pip = resolve(venvDir, 'bin', 'pip');
+          console.log(`  [tts] Installing TTS engine: ${engineInfo.pip_package}...`);
+          await new Promise<void>((res, rej) => {
+            const proc = spawn(pip, ['install', '-q', engineInfo.pip_package], { stdio: 'inherit' });
+            proc.on('close', (code) => code === 0 ? res() : rej(new Error(`pip install ${engineInfo.pip_package} failed`)));
+            proc.on('error', rej);
+          });
+        }
+      }
+    }
+
+    if (existsSync(narrationScript)) {
+      const pythonBin = existsSync(venvPython) ? venvPython : 'python3';
+
+      // Build CLI args — pass --wpm if voice preset specifies a target
+      const cliArgs = [narrationScript, briefPath, narrationDir];
+      if (brief.narration.target_wpm) {
+        cliArgs.push('--wpm', String(brief.narration.target_wpm));
+      }
+
+      await new Promise<void>((res, rej) => {
+        const proc = spawn(pythonBin, cliArgs, {
+          stdio: ['pipe', 'inherit', 'inherit'],
+        });
+        proc.on('close', (code) => code === 0 ? res() : rej(new Error(`Narration generator exited with ${code}`)));
+        proc.on('error', rej);
+      });
+
+      // Read updated manifest
+      const manifestPath = resolve(narrationDir, 'manifest.json');
+      if (existsSync(manifestPath)) {
+        const { readFileSync } = await import('fs');
+        manifest = JSON.parse(readFileSync(manifestPath, 'utf-8'));
+      }
+    } else {
+      console.log('  [tts] WARN: narration_generator.py not found, using estimated durations');
+      warningCount++;
+      fallbackCount++;
+    }
+  } catch (err: any) {
+    console.log(`  [tts] WARN: narration generation failed: ${err.message}`);
+    console.log('  [tts] Using estimated durations');
+    warningCount++;
+    fallbackCount++;
+  }
+
+  // Step 3: Build timeline
+  console.log('\n[demo] Step 3: Building timeline...');
+  const timeline = buildDemoTimeline(script, manifest);
+  console.log(`  [demo] Total duration: ${(timeline.totalDurationMs / 1000).toFixed(1)}s`);
+  for (const step of timeline.steps) {
+    console.log(`  [demo] Step ${step.stepIndex + 1}: ${(step.stepStart / 1000).toFixed(1)}s → ${(step.stepEnd / 1000).toFixed(1)}s`);
+  }
+
+  // Step 3.5: Build SFX track
+  const sfxEvents: SfxEvent[] = [];
+  if (script.sfx.enabled) {
+    console.log('\n[demo] Step 3.5: Building SFX track...');
+    const sfxVolume = script.sfx.volume;
+
+    for (let i = 0; i < timeline.steps.length; i++) {
+      const step = timeline.steps[i];
+      const scriptStep = script.steps[step.stepIndex];
+
+      // Per-step SFX override: "none" silences, explicit type overrides auto
+      if (scriptStep.sfx === 'none') continue;
+
+      if (scriptStep.sfx) {
+        // Explicit SFX
+        const sel = selectSfx(scriptStep.sfx);
+        if (sel) {
+          sfxEvents.push({
+            path: sel.sfxPath,
+            startMs: step.actionStart,
+            durationMs: sel.durationMs,
+            gain: sfxVolume,
+          });
+        }
+        continue;
+      }
+
+      // Auto SFX from action type (only if autoFromActions is true)
+      if (!script.sfx.autoFromActions) continue;
+
+      switch (scriptStep.action) {
+        case 'click': {
+          const sel = selectSfx('ui-click');
+          if (sel) {
+            sfxEvents.push({
+              path: sel.sfxPath,
+              startMs: step.actionStart + 500, // after cursor move
+              durationMs: sel.durationMs,
+              gain: sfxVolume,
+            });
+          }
+          break;
+        }
+        case 'fill': {
+          const sel = selectSfx('typing-loop');
+          if (sel) {
+            const charCount = (scriptStep.value ?? '').length;
+            const typingSpeed = scriptStep.typingSpeed ?? 60;
+            const typingDurationMs = charCount * typingSpeed;
+            sfxEvents.push({
+              path: sel.sfxPath,
+              startMs: step.actionStart + 700, // after cursor move + click
+              durationMs: Math.max(typingDurationMs, 500),
+              gain: sfxVolume,
+            });
+          }
+          break;
+        }
+        case 'navigate': {
+          const sel = selectSfx('scene-transition');
+          if (sel) {
+            sfxEvents.push({
+              path: sel.sfxPath,
+              startMs: step.actionStart,
+              durationMs: sel.durationMs,
+              gain: sfxVolume,
+            });
+          }
+          break;
+        }
+        case 'scroll': {
+          const sel = selectSfx('transition');
+          if (sel) {
+            sfxEvents.push({
+              path: sel.sfxPath,
+              startMs: step.actionStart,
+              durationMs: sel.durationMs,
+              gain: sfxVolume * 0.5, // subtle
+            });
+          }
+          break;
+        }
+      }
+    }
+
+    // Scene transitions — add SFX at gaps between steps
+    for (let i = 1; i < timeline.steps.length; i++) {
+      const prevEnd = timeline.steps[i - 1].stepEnd;
+      const currStart = timeline.steps[i].stepStart;
+      if (currStart > prevEnd) {
+        const sel = selectSfx('scene-transition');
+        if (sel) {
+          sfxEvents.push({
+            path: sel.sfxPath,
+            startMs: prevEnd,
+            durationMs: sel.durationMs,
+            gain: sfxVolume,
+          });
+        }
+      }
+    }
+
+    console.log(`  [sfx] ${sfxEvents.length} SFX events collected`);
+  }
+
+  // Step 4: Record video
+  console.log('\n[demo] Step 4: Recording demo...');
+  const fmt = FORMAT_PRESETS[script.format];
+  const width = fmt?.width ?? 1920;
+  const height = fmt?.height ?? 1080;
+
+  const storageStatePath = script.storageState ? resolve(dirname(scriptPath), script.storageState) : undefined;
+  const session = await initDemoCapture(script.url, width, height, storageStatePath);
+  session.fps = script.fps;
+
+  // Execute auth if present
+  if (script.auth && script.auth.length > 0) {
+    console.log('  [demo] Running auth steps...');
+    await executeAuth(session.page, script.auth);
+    console.log('  [demo] Auth complete');
+  }
+
+  // Navigate to demo URL (may have changed during auth)
+  await session.page.goto(script.url, { waitUntil: 'load', timeout: 30000 });
+
+  // Pre-flight: validate selectors on initial page
+  console.log('  [capture] Pre-flight: validating selectors...');
+  let selectorWarnings = 0;
+  for (const [i, step] of script.steps.entries()) {
+    if (step.selector) {
+      const found = await session.page.locator(step.selector).count();
+      if (found === 0) {
+        console.warn(`  [capture] WARN: Step ${i + 1} selector not found: ${step.selector}`);
+        selectorWarnings++;
+        warningCount++;
+      }
+    }
+  }
+  if (selectorWarnings > 0) {
+    console.warn(`  [capture] ${selectorWarnings} selector(s) not found (may appear after navigation)`);
+  } else {
+    console.log('  [capture] All initial selectors found');
+  }
+
+  await recordDemo({
+    session,
+    timeline,
+    script,
+    outputFramesDir: framesDir,
+  });
+
+  await closeDemoCapture(session);
+
+  // Step 5: Encode video
+  console.log('\n[demo] Step 5: Encoding video...');
+  const silentVideoPath = resolve(workDir, 'video-silent.mp4');
+  await encodeFrames(framesDir, script.fps, script.codec, silentVideoPath);
+  console.log('  [demo] Video encoded');
+
+  // Step 6: Process audio
+  console.log('\n[demo] Step 6: Processing audio...');
+
+  // 6a: Concatenate narration files at correct timestamps
+  const narrationFiles = timeline.steps.map((step, i) => {
+    const audioFile = resolve(narrationDir, `narr-step-${i}.mp3`);
+    return { path: audioFile, startMs: step.narrationStart };
+  }).filter(f => existsSync(f.path));
+
+  const concatenatedNarration = resolve(workDir, 'narration-full.mp3');
+  await concatenateNarration(narrationFiles, timeline.totalDurationMs, concatenatedNarration);
+
+  // 6b: Build SFX track (if any events collected)
+  let sfxTrackPath: string | null = null;
+  if (sfxEvents.length > 0) {
+    console.log('  [audio] Processing SFX...');
+    sfxTrackPath = resolve(workDir, 'sfx-track.mp3');
+    await concatenateSfx(sfxEvents, timeline.totalDurationMs, sfxTrackPath);
+    console.log(`  [audio] SFX track: ${sfxEvents.length} events`);
+  }
+
+  // 6c: Select and process music track
+  let finalAudioPath = concatenatedNarration;
+
+  if (script.music.enabled) {
+    console.log('  [audio] Processing music...');
+
+    const videoMeta: VideoMeta = {
+      mode: 'safe',
+      durationMs: timeline.totalDurationMs,
+      styleHint: script.music.style !== 'auto' ? script.music.style : undefined,
+    };
+    const track = selectTrack(videoMeta);
+    console.log(`  [audio] Track: ${track.style} (${track.bpm} BPM)`);
+
+    // Trim/loop music to video duration
+    const processedMusic = resolve(workDir, 'music-processed.mp3');
+    await trimAndLoop(track.trackPath, timeline.totalDurationMs, processedMusic, track.loopable);
+
+    // Apply ducking based on narration timing
+    const duckingEvents: DuckingEvent[] = [];
+    for (const step of timeline.steps) {
+      duckingEvents.push({ time_ms: Math.max(0, step.narrationStart - 300), action: 'duck', target_gain: 0.12 });
+      duckingEvents.push({ time_ms: step.narrationEnd + 500, action: 'release', target_gain: Math.min(script.music.volume, 0.35) });
+    }
+
+    const duckedMusic = resolve(workDir, 'music-ducked.mp3');
+    await applyDucking(processedMusic, duckingEvents, script.music.volume, duckedMusic);
+
+    // Fade music
+    const fadedMusic = resolve(workDir, 'music-faded.mp3');
+    await fadeInOut(duckedMusic, 500, 2000, fadedMusic);
+
+    // Mix narration + music + SFX
+    const mixInputs: { path: string; gain: number }[] = [
+      { path: concatenatedNarration, gain: 1.0 },
+      { path: fadedMusic, gain: 1.0 },
+    ];
+    if (sfxTrackPath && existsSync(sfxTrackPath)) {
+      mixInputs.push({ path: sfxTrackPath, gain: 1.0 }); // gain already baked into SFX track
+    }
+
+    finalAudioPath = resolve(workDir, 'audio-mixed.mp3');
+    await mixTracks(mixInputs, finalAudioPath);
+  } else if (sfxTrackPath && existsSync(sfxTrackPath)) {
+    // No music but we have SFX — mix narration + SFX
+    finalAudioPath = resolve(workDir, 'audio-mixed.mp3');
+    await mixTracks([
+      { path: concatenatedNarration, gain: 1.0 },
+      { path: sfxTrackPath, gain: 1.0 },
+    ], finalAudioPath);
+  }
+
+  // 6d: Merge audio into video
+  mkdirSync(dirname(outputPath), { recursive: true });
+  await mergeAudioVideo(silentVideoPath, finalAudioPath, outputPath);
+  console.log('  [audio] Audio merged');
+
+  // Step 7: Generate subtitles
+  if (script.subtitles.enabled) {
+    console.log('\n[demo] Step 7: Generating subtitles...');
+    const vtt = generateWebVTT(timeline, script);
+    const vttPath = outputPath.replace(/\.mp4$/, '.vtt');
+    writeFileSync(vttPath, vtt);
+    console.log(`  [demo] Subtitles: ${vttPath}`);
+  }
+
+  // Cleanup work directory
+  const { rmSync } = await import('fs');
+  try { rmSync(workDir, { recursive: true }); } catch {}
+
+  const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
+  console.log(`\n[demo] Done: ${outputPath} (${totalTime}s)`);
+  console.log(`[demo] Summary: ${script.steps.length} steps completed, ${warningCount} warnings, ${fallbackCount} fallbacks`);
+}
