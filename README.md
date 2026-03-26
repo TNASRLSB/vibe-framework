@@ -5,7 +5,7 @@ Quality-first plugin for Claude Code. Forces maximum effort, specialized methodo
 ## Installation
 
 ```
-/plugin marketplace add DKHBSFA/vibe-framework
+/plugin marketplace add TNASRLSB/vibe-framework
 /plugin install vibe
 /vibe:setup
 ```
