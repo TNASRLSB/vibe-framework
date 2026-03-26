@@ -197,14 +197,18 @@ Propose a status bar configuration for the user's settings:
 
 ```json
 {
-  "statusLine": "ctx {{context_percent}}% {{context_bar}} | {{model}} effort:{{effort}} | ~${{session_cost}}"
+  "statusLine": {
+    "type": "command",
+    "command": "jq -r '\"[\\(.model.display_name)] ctx \\(.context_window.used_percentage // 0 | floor)% | $\\(.cost.total_cost_usd // 0 | tostring | .[0:5])\"'"
+  }
 }
 ```
 
+**Important:** `statusLine` must be an object with `type: "command"` and a `command` field containing a shell command. The command receives JSON on stdin from Claude Code. Template syntax like `{{context_percent}}` does NOT work — always use the jq command format shown above.
+
 Explain what it shows:
+- **Model:** the active model name
 - **Context %:** how full the context window is
-- **Context bar:** visual representation (e.g., `████░░░░`)
-- **Model + effort:** current model and effort level at a glance
 - **Session cost:** estimated spend for the current session
 
 ### 3.2 Ask for Confirmation
@@ -230,6 +234,7 @@ Setting                        Current              Recommended
 ─────────────────────────────────────────────────────────────────
 Model                          [current]            opus[1m]
 Effort level                   [current]            max
+Skill char budget              [current]            50000
 LSP plugin                     [current]            [detected]-lsp
 Status line                    [current]            [proposed above]
 ```
@@ -238,6 +243,7 @@ Status line                    [current]            [proposed above]
 
 - **opus[1m]:** The 1M context variant of Opus. Highest capability model with maximum context window. Required for deep codebase understanding.
 - **effort: max:** Forces Claude to think thoroughly on every response. No shortcuts, no lazy outputs. This is the core of what VIBE does.
+- **SLASH_COMMAND_TOOL_CHAR_BUDGET: 50000:** Ensures all 12 skills appear in the autocomplete menu. The default budget (~20K chars) is too small when multiple plugins are installed; raising it to 50K prevents skills from being silently truncated.
 - **LSP:** Enables Claude to use language-aware diagnostics for catching errors before they reach you.
 
 ### 4.3 Ask for Approval
@@ -269,7 +275,8 @@ Use `jq` to merge (preferred) or construct manually:
 ```bash
 echo "$EXISTING" | jq '
   .model = "opus[1m]" |
-  .env.CLAUDE_CODE_EFFORT_LEVEL = "max"
+  .env.CLAUDE_CODE_EFFORT_LEVEL = "max" |
+  .env.SLASH_COMMAND_TOOL_CHAR_BUDGET = "50000"
 ' > ~/.claude/settings.json.tmp && mv ~/.claude/settings.json.tmp ~/.claude/settings.json
 ```
 
