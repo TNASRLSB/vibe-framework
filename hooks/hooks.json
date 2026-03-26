@@ -47,17 +47,6 @@
         ]
       }
     ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "prompt",
-            "prompt": "Does the last assistant message claim a multi-step TASK or FEATURE is complete, fixed, or passing WITHOUT showing evidence like test output or command results? Simple action reports like 'file updated' or 'commit created' do NOT count as completion claims. Answer only YES or NO.",
-            "timeout": 10
-          }
-        ]
-      }
-    ],
     "UserPromptSubmit": [
       {
         "hooks": [
