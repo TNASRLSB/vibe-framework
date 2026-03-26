@@ -304,3 +304,76 @@ for row in range(2, 100):
 ```python
 wb.save("output.xlsx")
 ```
+
+---
+
+## Financial Model Template
+
+Standard structure for comprehensive Excel financial models. Adapt sheets and sections to the specific use case.
+
+### Sheet Structure
+
+**1. Cover** -- Model name, company/project, version, date, author, disclaimer.
+
+**2. Assumptions** -- All hard-coded numbers live here (no magic numbers in other sheets). Yellow background for all input cells. Organized by:
+
+| Section | Examples |
+|---------|----------|
+| Revenue assumptions | Price per unit, growth rate, market size |
+| Cost assumptions | COGS %, opex items, headcount costs |
+| Capital assumptions | Capex schedule, depreciation method/life |
+| Financing assumptions | Interest rate, loan term, debt/equity split |
+| Tax assumptions | Tax rate, loss carryforward |
+| Timing | Start date, projection period (3/5/10 years) |
+
+**3. Revenue** -- Revenue build-up from assumptions. By product/segment/geography if applicable. Monthly --> quarterly --> annual rollup. Formulas reference Assumptions sheet only.
+
+**4. Costs** -- COGS (variable costs tied to revenue), operating expenses by category, headcount plan with loaded costs. Formulas reference Assumptions + Revenue sheets.
+
+**5. P&L (Income Statement)**
+- Revenue (from Revenue sheet)
+- (-) COGS --> Gross Profit
+- (-) Operating Expenses --> EBITDA
+- (-) Depreciation & Amortization --> EBIT
+- (-) Interest --> EBT
+- (-) Tax --> Net Income
+- Key margins calculated: Gross %, EBITDA %, Net %
+
+**6. Balance Sheet** -- Assets (Cash, AR, Inventory, PP&E, Other), Liabilities (AP, Short-term debt, Long-term debt), Equity (Common stock, Retained earnings). Must balance: Assets = Liabilities + Equity. Add balance check formula with conditional formatting (red if unbalanced).
+
+**7. Cash Flow**
+- Operating: Net Income + non-cash adjustments + working capital changes
+- Investing: Capex, acquisitions
+- Financing: Debt drawdowns/repayments, equity raises, dividends
+- Net cash flow --> ending cash balance (must tie to Balance Sheet cash)
+
+**8. KPIs / Dashboard** -- Summary metrics pulled from other sheets. Charts: Revenue trend, margin trend, cash runway.
+
+| Category | Metrics |
+|----------|---------|
+| Profitability | Gross margin, EBITDA margin, Net margin, ROE |
+| Liquidity | Current ratio, Quick ratio, Cash runway (months) |
+| Efficiency | DSO, DPO, DIO, Cash conversion cycle |
+| Growth | Revenue growth %, Customer growth %, ARPU |
+| Valuation | EV/EBITDA, P/E (if applicable) |
+
+**9. Scenarios (Optional)** -- Base / Bull / Bear cases. Use named ranges or data validation dropdowns to switch. Delta table showing key metrics across all scenarios.
+
+### Color Coding Convention
+
+| Color | Meaning |
+|-------|---------|
+| Yellow fill | Hard-coded input (editable) |
+| Blue font | Formula (calculated) |
+| Green font | Links to other sheets |
+| Black font | Labels and headers |
+| Red fill (conditional) | Balance check failure or out-of-range values |
+
+### Best Practices
+
+- No magic numbers -- every assumption in one place
+- Formulas only reference the Assumptions sheet for inputs
+- Balance check formula on Balance Sheet (Assets = L + E, with conditional red highlight)
+- Separate formatting from data -- use styles consistently
+- Document assumptions with cell comments
+- Version control in filename or Cover sheet

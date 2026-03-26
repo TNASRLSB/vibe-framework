@@ -229,3 +229,76 @@ Use these as rough baselines, not targets. Your own data is always more relevant
 | Pricing page → plan select | 10-20% | 25-35% | 40%+ |
 
 **Context matters:** A 2% conversion rate on high-intent organic traffic is worse than 2% on cold paid traffic. Always segment.
+
+---
+
+## Page-Specific CRO Frameworks
+
+### Homepage
+
+Homepages serve multiple audiences simultaneously.
+
+**Key challenges:**
+- Cold visitors need clear positioning
+- "Ready to buy" and "still researching" visitors coexist
+- Multiple conversion paths compete for attention
+
+**Framework:**
+1. Clear positioning statement that works for first-time visitors
+2. Quick path to primary conversion (visible without scrolling)
+3. Self-selection navigation -- help visitors find their path
+4. Trust signals -- logos, stats, testimonials visible early
+5. Secondary paths for visitors not ready to convert
+
+**Experiment ideas:** Headline (specific vs abstract), hero visual (screenshot vs GIF vs illustration vs video), CTA text/color/placement, customer logo placement, sticky nav with CTA vs standard, live chat vs AI chatbot.
+
+### Landing Page
+
+Single-purpose pages. Focus on one conversion.
+
+**Framework:**
+1. Message match -- headline must match the ad/source that brought them
+2. Single CTA -- remove navigation, sidebar, competing links
+3. Complete argument -- everything needed to convert on one page
+4. Above-fold completeness -- headline, subheadline, CTA, trust signal all visible
+5. Urgency/scarcity -- only if genuine
+
+**Above-the-fold checklist:**
+
+| Element | Requirement |
+|---------|-------------|
+| Headline | Clear value proposition |
+| Subheadline | Specific benefit or outcome |
+| Hero image/video | Relevant, shows outcome |
+| CTA | Prominent, action-oriented |
+| Trust signal | Logo strip, rating, or stat |
+
+**Common issues:** Feature-focused instead of benefit-focused headline, vague value proposition, generic CTA text ("Submit"), stock photos, missing trust signals near CTA.
+
+**Experiment ideas:** Headline (outcome-focused vs problem-focused), CTA copy ("Start Free Trial" vs "Get Started" vs "See Demo"), trust element placement, social proof type, page length, video type.
+
+### Pricing Page
+
+High-intent visitors. They are already interested -- help them decide.
+
+**Framework:**
+1. Clear plan comparison -- easy to scan differences
+2. Recommended plan -- visual indicator on target plan
+3. Feature clarity -- what is included and excluded
+4. Objection handling -- FAQ, guarantee, "cancel anytime"
+5. Easy path to checkout -- minimize steps from decision to payment
+
+**Experiment ideas:** Number of tiers (2 vs 3 vs 4), annual vs monthly toggle default, recommended plan position, feature comparison format (checkmarks vs details), trial CTA vs direct purchase, social proof placement.
+
+### Checkout
+
+Reduce abandonment. Every friction point costs money.
+
+**Framework:**
+1. Progress indicator -- show how many steps remain
+2. Trust signals -- security badges, guarantees near payment form
+3. Minimal distractions -- no navigation, no competing links
+4. Smart defaults -- pre-fill what you can, sensible country/currency
+5. Error recovery -- clear error messages, preserve entered data
+
+**Experiment ideas:** Guest checkout vs required signup, number of steps, payment method order, trust badge placement, order summary position (sidebar vs inline), express checkout options.

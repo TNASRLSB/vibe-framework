@@ -897,3 +897,57 @@ Styles can be combined in limited ways:
 | Bento Grid | Any (it is a layout pattern, not a surface treatment) |
 
 **Rule:** Never combine more than 2 styles. The base style covers 80%+ of the interface. The accent style is used for specific sections or components.
+
+---
+
+## Factor-X: Controlled Distinctiveness
+
+Factor-X is a system of visual "breakers" -- single targeted interventions that break the predictability of a design and make it memorable. Apply one Factor-X per project to avoid every SaaS looking identical, every e-commerce having the same layout, every corporate site being interchangeable.
+
+### The 5 Factor-X Categories
+
+#### 1. Typography Clash
+Unexpected typographic combinations that create visual tension.
+- Example: Display serif headings (Playfair, Fraunces) in an otherwise sans-serif Flat design
+- Works well with: Flat, Brutalism
+- Avoid with: Material, enterprise contexts where consistency signals trust
+
+#### 2. Color Intrusion
+A single "alien" color that breaks an otherwise coherent palette.
+- Example: Neon lime accent on an earth-tone palette
+- Works well with: Monochromatic palettes, cool palettes
+- Avoid with: Already-vibrant palettes (neon, Gen-Z multicolor)
+
+#### 3. Layout Break
+Elements that deliberately break the grid in controlled ways.
+- Example: One section with asymmetric offset, or a card that bleeds past the grid edge
+- Works well with: Swiss grid, Bento Grid
+- Avoid with: Already-broken grids (Brutalism in chaotic mode)
+
+#### 4. Texture Injection
+Pattern, grain, or material texture that adds physicality.
+- Example: Film grain overlay on all images, paper texture on cards
+- Works well with: Flat, Glassmorphism (adds depth)
+- Avoid with: Skeuomorphism, Claymorphism (already textured)
+
+#### 5. Motion Surprise
+An unexpected animation in an otherwise static context.
+- Example: A single element with a springy entrance animation when the rest fades in linearly
+- Works well with: Static styles (Flat, Material)
+- Avoid with: Spatial, Y2K (already heavily animated)
+
+### Intensity Levels
+
+| Level | Presence | Effect |
+|-------|----------|--------|
+| Subtle | ~10% of elements | Almost invisible, creates subconscious distinctiveness |
+| Moderate | ~25% of elements | Noticeable but not dominant |
+| Bold | ~40% of elements | Clear design statement |
+| Extreme | ~60% of elements | Dominant visual element |
+
+### Application Rules
+
+1. **One Factor-X per project.** Never combine multiple. One is enough for distinctiveness.
+2. **Respect functional constraints.** Factor-X must never compromise accessibility (WCAG), content readability, or core functionality (forms, navigation, checkout).
+3. **Apply in non-critical zones.** Prefer: hero sections, visual dividers, background elements, decorative sections. Avoid: forms, navigation, CTA buttons, error messages.
+4. **Scale with trust requirements.** High-trust contexts (finance, healthcare, legal) use subtle intensity only. Low-trust requirements (portfolio, creative agency) can go bold or extreme.
