@@ -112,7 +112,7 @@ Report the checklist results to the user.
 
 ### Step 6: Register
 
-Add the new skill to `.claude/docs/registry.md` in the Skills table.
+Update auto-memory with the new skill's name and purpose so future sessions know it exists.
 
 ---
 
@@ -168,7 +168,7 @@ Output a report with this format:
 
 ### Step 4: Save Report
 
-Save the report to `.claude/docs/forge-audit-[YYYY-MM-DD].md`.
+Present the report to the user. Save key findings to auto-memory for future reference.
 
 ---
 
@@ -178,13 +178,7 @@ Save the report to `.claude/docs/forge-audit-[YYYY-MM-DD].md`.
 
 ### Step 1: Load Latest Audit
 
-Find the most recent audit report:
-
-```bash
-ls -t .claude/docs/forge-audit-*.md | head -1
-```
-
-If no audit report exists, run the audit workflow first.
+Check auto-memory for the most recent audit findings. If no previous audit exists, run the audit workflow first.
 
 ### Step 2: Process Issues
 

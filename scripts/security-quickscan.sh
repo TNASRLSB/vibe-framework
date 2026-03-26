@@ -58,9 +58,9 @@ if echo "$CONTENT" | grep -nF 'dangerouslySetInnerHTML' >/dev/null 2>&1; then
   ISSUES+=("dangerouslySetInnerHTML usage detected — XSS risk")
 fi
 
-# Pattern 5: USING(true) — common ORM security bypass
-if echo "$CONTENT" | grep -nF 'USING(true)' >/dev/null 2>&1; then
-  ISSUES+=("USING(true) detected — potential security bypass")
+# Pattern 5: USING (true) — public database policy (Supabase/Firebase)
+if echo "$CONTENT" | grep -nPi 'USING\s*\(\s*true\s*\)' >/dev/null 2>&1; then
+  ISSUES+=("USING(true) detected — public database access, add proper RLS conditions")
 fi
 
 # Pattern 6: eval() usage
@@ -76,6 +76,11 @@ fi
 # Pattern 8: Public S3 ACL
 if echo "$CONTENT" | grep -nPi 'acl.*public-read|public-read.*acl' >/dev/null 2>&1; then
   ISSUES+=("Public S3 ACL detected — data exposure risk")
+fi
+
+# Pattern 9: --no-verify in git commands
+if echo "$CONTENT" | grep -nF -- '--no-verify' >/dev/null 2>&1; then
+  ISSUES+=("--no-verify flag detected — bypasses git hooks safety checks")
 fi
 
 # Report results
