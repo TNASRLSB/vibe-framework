@@ -1,8 +1,10 @@
-# VIBE Framework 2.0
+# VIBE Framework
 
-Quality-first plugin for Claude Code. Forces maximum effort, specialized methodologies, and mechanical quality gates for Max 20x subscribers.
+A Claude Code plugin that maximizes output quality. Forces maximum effort, specialized methodologies, and mechanical quality gates.
 
-## Installation
+Claude Code out-of-the-box optimizes for speed and token savings. VIBE inverts this: **quality above all**, even at the cost of more tokens and longer execution. Built for developers on Max 20x who want the best Claude can produce.
+
+## Install
 
 ```
 /plugin marketplace add TNASRLSB/vibe-framework
@@ -10,62 +12,131 @@ Quality-first plugin for Claude Code. Forces maximum effort, specialized methodo
 /vibe:setup
 ```
 
-## What It Does
+`/vibe:setup` configures your environment in one pass: detects your stack, recommends LSP plugins, sets model to `opus[1m]` with `effort:max`, configures a status line, and optionally maps your codebase. Restart Claude Code after setup for global settings to take effect.
 
-VIBE operates on three pillars:
+## Why This Exists
 
-1. **Specialized Skills** -- Domain-specific methodologies (UI design, testing, security, SEO, CRO, video, documents, skill authoring) that encode expert knowledge into repeatable workflows.
-2. **Quality Enforcement** -- Hook handlers that run automatically on every edit, commit, and task completion. They lint, scan for security issues, verify claims, and detect failure loops -- mechanically, not by suggestion.
-3. **Maximum Intelligence** -- Forces effort:max and opus model across all skills and agents. Independent agents review work, research codebases, and audit security without being asked.
+Claude Code defaults to medium effort on Max subscriptions. It skips verification. It forgets corrections between sessions. It gets stuck retrying the same failing approach. It writes code with hardcoded API keys if you ask it to.
+
+VIBE fixes these with three layers:
+
+**1. Skills** — domain-specific methodologies that encode expert knowledge. Not generic instructions, but complete workflows with numbered phases, verification steps, and reference material loaded on-demand. When Claude uses Emmet to debug, it follows a systematic 7-step process. When it uses Heimdall to audit security, it checks against OWASP Top 10 patterns and scans for the 3 most common AI-generated vulnerabilities.
+
+**2. Hooks** — mechanical quality gates that run on every action. A shell script that scans for hardcoded API keys can't be persuaded to skip the check. A failure counter that blocks after 3 consecutive failures can't be reasoned away. These aren't suggestions Claude might ignore — they're deterministic enforcement.
+
+**3. Agents** — independent reviewers that run in separate context. The reviewer agent hasn't seen the implementation, so it can't exhibit self-review bias. The researcher agent explores in an isolated worktree, so it doesn't pollute your main context. The guardian agent has Heimdall's full security methodology preloaded.
 
 ## Skills
 
-| Skill | Purpose | Commands |
-|-------|---------|----------|
-| **setup** | Initialize framework in a project | `/vibe:setup` |
-| **reflect** | Guided self-assessment of session quality | `/vibe:reflect` |
-| **pause** | Temporarily disable quality hooks for rapid prototyping | `/vibe:pause` |
-| **resume** | Re-enable quality hooks after pausing | `/vibe:resume` |
-| **seurat** | UI/UX design system, wireframing, layout, brand identity, WCAG | `/vibe:seurat setup`, `/vibe:seurat generate`, `/vibe:seurat brand` |
-| **emmet** | Testing, QA, tech debt audit, systematic debugging | `/vibe:emmet test`, `/vibe:emmet techdebt`, `/vibe:emmet debug` |
-| **heimdall** | Security analysis, OWASP Top 10, credential detection | `/vibe:heimdall audit`, `/vibe:heimdall scan` |
-| **ghostwriter** | SEO + GEO dual optimization, persuasive copywriting | `/vibe:ghostwriter write`, `/vibe:ghostwriter optimize` |
-| **baptist** | CRO orchestrator, A/B testing, funnel analysis | `/vibe:baptist audit`, `/vibe:baptist test` |
-| **orson** | Programmatic video generation, demo recording with audio | `/vibe:orson create`, `/vibe:orson demo` |
-| **scribe** | Office documents (xlsx, docx, pptx) and PDF creation | Describe file type -- auto-routed |
-| **forge** | Create, audit, and maintain skills | `/vibe:forge create`, `/vibe:forge audit`, `/vibe:forge fix` |
+### Domain Skills
+
+| Skill | What it does |
+|-------|-------------|
+| **seurat** | UI design system generation. 11 visual styles, 6 page archetypes, brand identity workflow, WCAG verification. Every component gets an accessibility pass. |
+| **emmet** | Testing, QA, and debugging. 8 test personas with headed Playwright sessions. Systematic 7-step debugging workflow. Tech debt audit. The "comment out the fix, verify tests fail" rule is mandatory. |
+| **heimdall** | Security analysis for AI-generated code. OWASP Top 10, BaaS misconfiguration detection (Supabase/Firebase), credential scanning with 25+ API key patterns, Trail of Bits integration. |
+| **ghostwriter** | Dual-optimization content: SEO for Google + GEO for AI search (ChatGPT, Perplexity, Claude). 6 copywriting frameworks, 52+ validation rules, structured data templates. |
+| **baptist** | Conversion Rate Optimization. Fogg B=MAP diagnostics (Motivation, Ability, Prompt), ICE scoring, A/B experiment design with sample size calculation, funnel analysis. |
+| **orson** | Programmatic video generation. HTML frames captured by Playwright, encoded with FFmpeg. TTS narration (edge-tts free, ElevenLabs paid), background music, SFX mixing. |
+| **scribe** | Office documents and PDFs. Auto-routes by format. XLSX with formulas and charts, DOCX with styles and TOC, PPTX with slide masters, PDF creation and extraction. Includes Python scripts for OOXML manipulation. |
+| **forge** | Meta-skill for creating and auditing skills. Updated for v2 skill format with frontmatter spec, quality checklist, and starter templates. |
+
+### Utility Skills
+
+| Skill | What it does |
+|-------|-------------|
+| **setup** | First-run configuration wizard. Detects stack, linters, LSP, configures model/effort/status line, generates minimal CLAUDE.md, optionally maps codebase. |
+| **reflect** | Reviews corrections captured by the hook system. For each, choose: save to project memory, user memory, or discard. `--patterns` mode discovers repeated actions that could become skills. |
+| **pause** | Disables all quality hooks for the current session. For rapid prototyping or exploratory coding where hooks get in the way. |
+| **resume** | Re-enables quality hooks after pause. |
+
+### Invoking Skills
+
+All skills are invocable as `/vibe:<name>`:
+
+```
+/vibe:emmet test              # full testing cycle
+/vibe:emmet debug             # systematic 7-step debugging
+/vibe:emmet techdebt          # tech debt audit
+/vibe:heimdall audit          # full security audit
+/vibe:heimdall secrets        # credential scan only
+/vibe:seurat brand            # brand identity workflow
+/vibe:ghostwriter write       # content creation
+/vibe:baptist audit           # B=MAP conversion audit
+/vibe:orson create            # guided video creation
+/vibe:scribe create xlsx      # create spreadsheet
+/vibe:forge create my-skill   # create a new skill
+/vibe:reflect --patterns      # discover skill candidates
+```
+
+Claude also invokes domain skills automatically when relevant to your task — you don't always need to call them explicitly.
 
 ## Agents
 
-| Agent | Purpose | When Used |
-|-------|---------|-----------|
-| **reviewer** | Independent post-implementation review | After any significant code change |
-| **researcher** | Deep codebase exploration and analysis | Before implementation, during planning |
-| **guardian** | Security audit of changes | On file edits, before commits |
+| Agent | Model | Tools | Memory | Purpose |
+|-------|-------|-------|--------|---------|
+| **reviewer** | Opus | Read-only | Project | Post-implementation code review from a fresh perspective. Runs in separate context — never reviews its own code. Rates findings as Critical/Warning/Suggestion. |
+| **researcher** | Opus | Read-only | Project | Deep codebase exploration in isolated worktree. Returns structured findings (architecture, stack, patterns, concerns) without cluttering your main context. |
+| **guardian** | Opus | Read-only + Heimdall | Project | Security and quality audit. Has Heimdall's full methodology preloaded. Checks OWASP, secrets, BaaS configs, input validation. Rates findings Critical/High/Medium/Low. |
+
+All agents persist memory across sessions — they accumulate knowledge about your specific project over time.
 
 ## Hooks
 
-| Hook | Event | Purpose |
-|------|-------|---------|
-| **setup check** | SessionStart | Detect if setup done, inject framework status, recover post-compaction state |
-| **lint** | PostToolUse (Edit/Write) | Run project linter on every file modification |
-| **security scan** | PostToolUse (Edit/Write) | Lightweight regex scan for obvious vulnerabilities |
-| **compact save** | PreCompact | Save active skills, modified files, workflow phase before compaction |
-| **verification gate** | Stop | Block task completion claims without test output or evidence |
-| **correction capture** | UserPromptSubmit | Detect corrections in 6 languages, queue for /vibe:reflect |
-| **failure loop** | PostToolUseFailure | Stop after 3 consecutive failures, force systematic replan |
+Six hook handlers run automatically, enforcing quality mechanically:
 
-## How It Works
+| Hook | When | What it does |
+|------|------|-------------|
+| **Setup check** | Every session start | Injects VIBE status, reminds about pending corrections, recovers state after context compaction |
+| **Lint** | Every file edit | Detects project linter (eslint, prettier, ruff, black, rustfmt, gofmt) and runs it. Blocks on failure. |
+| **Security scan** | Every file edit | Regex scan for: hardcoded API keys, `dangerouslySetInnerHTML`, `USING(true)`, `eval()`, hardcoded passwords, public S3 ACLs, `--no-verify`. Blocks on detection. |
+| **Compact save** | Before context compaction | Saves modified files, active skills, recent tool calls to a state file. SessionStart hook re-injects this state post-compaction, preventing the documented amnesia problem. |
+| **Correction capture** | Every user prompt | Detects correction patterns in 6 languages (EN, IT, ES, FR, DE, PT). Queues them silently for `/vibe:reflect` review. |
+| **Failure loop** | After tool failures | Counts consecutive failures. After 3, blocks with: "STOP. Replan from scratch or use /vibe:emmet debug." Resets on next success. |
 
-The plugin forces `effort:max` and the opus model on all skills and agents, ensuring Claude always operates at peak capability. Hook handlers enforce quality mechanically -- they run on every edit, commit, and completion claim without relying on Claude to remember. Agents provide independent review: the reviewer checks work after implementation, the researcher explores before implementation, and the guardian scans for security issues continuously. The correction capture hook learns from mistakes in six languages, building a self-improving knowledge base.
+Use `/vibe:pause` to temporarily disable hooks when they get in the way, `/vibe:resume` to re-enable.
+
+## Self-Learning
+
+VIBE captures your corrections automatically. When you say "no, use tabs not spaces" or "sbagliato, doveva essere così", the correction-capture hook detects the pattern and queues it. Run `/vibe:reflect` to review:
+
+- **Save to project memory** — applies to this project in future sessions
+- **Save to user memory** — applies to all your projects
+- **Discard** — one-time correction, not worth remembering
+
+`/vibe:reflect --patterns` analyzes your session history to find repeated actions that could become reusable skills, then proposes creating them via Forge.
+
+## Emmet's 8 Test Personas
+
+Visual testing runs Playwright in headed mode with persona-specific configurations:
+
+| Persona | Viewport | Network | Tests |
+|---------|----------|---------|-------|
+| First-timer | 1440x900 | Fast | Onboarding, time-to-first-value |
+| Power user | 1920x1080 | Fast | Edge cases, complex workflows |
+| Non-tech | 1280x720 150% zoom | Average | Accessibility, clear language |
+| Mobile-only | 360x640 | Slow 3G | Responsive, touch targets |
+| Screen reader | 1440x900 | Fast | ARIA, focus order, alt text |
+| Distracted | 1440x900 | Fast | State preservation, auto-save |
+| Hostile | 1920x1080 | Fast | Input validation, XSS, SQLi |
+| International | 1440x900 | Average | i18n, UTF-8, RTL layout |
 
 ## Requirements
 
-- **Claude Code** (CLI or VS Code extension)
-- **Max 20x subscription** (recommended -- required for effort:max and opus model)
-- **jq** (JSON processing)
-- **Optional:** FFmpeg + `pip install edge-tts` (for Orson video/audio)
-- **Optional:** Python 3.6+ (for Scribe document scripts)
+- **Claude Code** v2.1.59+
+- **Max 20x subscription** recommended (required for `effort:max` and `opus[1m]`)
+- **jq** for hook scripts
+- **Optional:** Playwright (for Emmet visual testing and Orson video rendering)
+- **Optional:** FFmpeg + `pip install edge-tts` (for Orson audio)
+- **Optional:** Python 3.6+ (for Scribe document scripts and Heimdall scanners)
+
+## Testing
+
+```bash
+bash tests/run-tests.sh
+```
+
+Runs 53 automated tests covering plugin structure, all skills, agents, hook scripts, security patterns, failure detection, pause/resume, and correction capture.
 
 ## License
 
