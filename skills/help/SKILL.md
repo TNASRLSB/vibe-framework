@@ -25,6 +25,12 @@ VIBE v3 is built on three principles:
 | `/vibe:reflect --patterns` | Discover repeated actions that could become skills |
 | `/vibe:pause` | Disable quality hooks for this session |
 | `/vibe:resume` | Re-enable quality hooks |
+| `/vibe:audit` | Interactive project audit — scans project, proposes agents, launches in parallel |
+| `/vibe:audit --status` | Quick health check from agent memory (no agents launched) |
+| `/vibe:audit --all` | Launch all relevant agents without confirmation |
+| `/vibe:audit --fix` | Auto-merge all agent fixes |
+| `/vibe:audit --dry-run` | Report only, no fixes |
+| `/vibe:audit seurat ghostwriter` | Launch specific agents directly |
 | `/vibe:emmet test` | Full testing cycle (map, unit, static, visual, report) |
 | `/vibe:emmet test --unit` | Unit tests only |
 | `/vibe:emmet test --visual` | Visual persona tests with Playwright (8 personas) |
@@ -67,11 +73,19 @@ VIBE v3 is built on three principles:
 
 ## Agents
 
+Each domain skill has two invocation modes: interactive (skill) and autonomous audit (agent).
+
 | Agent | Purpose | Invoke with |
 |-------|---------|-------------|
 | **reviewer** | Post-implementation code review (separate context, no self-review bias) | "use the reviewer agent" or @vibe:reviewer |
 | **researcher** | Deep codebase exploration (isolated worktree, returns summary) | "use the researcher agent" or @vibe:researcher |
-| **guardian** | Security + quality audit (Heimdall preloaded) | "use the guardian agent" or @vibe:guardian |
+| **seurat** | UI, design system, accessibility audit (worktree, memory) | @vibe:seurat or via /vibe:audit |
+| **ghostwriter** | SEO, GEO, copy, schema markup audit (worktree, memory) | @vibe:ghostwriter or via /vibe:audit |
+| **baptist** | Conversion rate, funnel, CRO audit (worktree, memory) | @vibe:baptist or via /vibe:audit |
+| **emmet** | Code quality, testing, tech debt audit (worktree, memory) | @vibe:emmet or via /vibe:audit |
+| **heimdall** | Security, OWASP, credentials, CVE audit (worktree, memory) | @vibe:heimdall or via /vibe:audit |
+| **orson** | Video asset quality audit (worktree, memory) | @vibe:orson or via /vibe:audit |
+| **scribe** | Document quality audit (worktree, memory) | @vibe:scribe or via /vibe:audit |
 
 ## Hooks (automatic)
 
