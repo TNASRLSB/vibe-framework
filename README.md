@@ -53,6 +53,23 @@ Ghostwriter, Seurat, and Baptist share a **competitor research protocol** (`_sha
 
 Results are stored in `.vibe/competitor-research/` with 30-day freshness. Any skill can trigger the research; all three consume it.
 
+### Audit Orchestrator
+
+| Skill | What it does |
+|-------|-------------|
+| **audit** | Project-wide quality orchestrator. Scans the project, proposes which domain audits are relevant, launches agents in parallel, correlates findings across domains, and proposes project rules. |
+
+```
+/vibe:audit                    # interactive: scan, propose, confirm, launch
+/vibe:audit --all              # launch all relevant agents without confirmation
+/vibe:audit --status           # quick health check from agent memory (no agents launched)
+/vibe:audit --fix              # auto-merge all agent fixes
+/vibe:audit --dry-run          # report only, no fixes
+/vibe:audit seurat ghostwriter # launch specific agents directly
+```
+
+The audit system uses **delta analysis**: on repeated audits it reads agent memory, compares with current state, and only analyzes what changed. It detects **regressions** (issues fixed then re-emerged) and proposes **project rules** when the same issue appears 3+ times.
+
 ### Utility Skills
 
 | Skill | What it does |
@@ -78,6 +95,7 @@ All skills are invocable as `/vibe:<name>`:
 /vibe:orson create            # guided video creation
 /vibe:scribe create xlsx      # create spreadsheet
 /vibe:forge create my-skill   # create a new skill
+/vibe:audit                   # project-wide audit
 /vibe:reflect --patterns      # discover skill candidates
 ```
 
@@ -85,13 +103,30 @@ Claude also invokes domain skills automatically when relevant to your task — y
 
 ## Agents
 
+Every domain skill has two invocation modes: **interactive** (`/vibe:seurat`) runs in the main conversation, **audit** (`@vibe:seurat` or via `/vibe:audit`) runs autonomously in an isolated worktree with persistent memory.
+
+### General-Purpose Agents
+
 | Agent | Model | Tools | Memory | Purpose |
 |-------|-------|-------|--------|---------|
 | **reviewer** | Opus | Read-only | Project | Post-implementation code review from a fresh perspective. Runs in separate context — never reviews its own code. Rates findings as Critical/Warning/Suggestion. |
 | **researcher** | Opus | Read-only | Project | Deep codebase exploration in isolated worktree. Returns structured findings (architecture, stack, patterns, concerns) without cluttering your main context. |
-| **guardian** | Opus | Read-only + Heimdall | Project | Security and quality audit. Has Heimdall's full methodology preloaded. Checks OWASP, secrets, BaaS configs, input validation. Rates findings Critical/High/Medium/Low. |
 
-All agents persist memory across sessions — they accumulate knowledge about your specific project over time.
+### Domain Audit Agents
+
+All domain audit agents follow a shared [audit protocol](references/audit-protocol.md): standardized report format, evidence-based findings (no "seems wrong"), severity levels (Critical/Warning/Info), regression detection, and rule proposals.
+
+| Agent | Domain | Extra Tools | Purpose |
+|-------|--------|-------------|---------|
+| **seurat** | UI & Accessibility | — | WCAG contrast ratios, semantic HTML, responsive breakpoints, design token consistency, focus management |
+| **ghostwriter** | SEO & Content | WebFetch, WebSearch | Meta tags, schema markup, sitemap, robots.txt, Open Graph, keyword cannibalization, GEO readiness |
+| **baptist** | Conversion (CRO) | WebFetch | Fogg B=MAP on every conversion point, form friction, CTA visibility, trust signals, funnel continuity |
+| **emmet** | Code Quality | — | Test suite, coverage, critical untested paths, debug artifacts, complexity, dependency health, dead code |
+| **heimdall** | Security | — | OWASP Top 10, hardcoded secrets, input validation, auth/authz, CORS, CSP headers, dependency CVEs |
+| **orson** | Video Assets | — | Encoding quality, file size budgets, responsive embeds, poster images, captions/accessibility |
+| **scribe** | Documents | — | Metadata, heading structure, document accessibility, formatting consistency, broken references |
+
+All agents run in isolated worktrees, persist memory across sessions, and produce machine-parseable metrics for trending. The `/vibe:audit` orchestrator launches them in parallel and correlates findings across domains.
 
 ## Hooks
 
