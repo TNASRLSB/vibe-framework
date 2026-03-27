@@ -1,25 +1,12 @@
-# OWASP Top 10 Reference
+# OWASP Top 10 — Remediation Reference
 
-Detection patterns, code examples, and remediation for each OWASP Top 10 (2021) category.
+Detection patterns live in patterns/owasp-top-10.json. This file provides vulnerable/fixed code pairs and remediation checklists only.
 
 ---
 
-## A01:2021 — Broken Access Control
+## A01 — Broken Access Control
 
-The most common web application vulnerability. Access control enforces that users cannot act outside their intended permissions.
-
-### Detection Patterns
-
-```
-# Missing auth checks on routes
-app\.(get|post|put|delete|patch)\s*\([^)]*\)\s*(?!.*auth)
-router\.(get|post|put|delete|patch)\s*\([^)]*\)\s*(?!.*auth)
-
-# Direct object reference without ownership check
-findById|findOne|findUnique.*params\.(id|userId)
-```
-
-### Vulnerable Code
+### Vulnerable
 
 ```javascript
 // No authorization — any authenticated user can access any user's data
@@ -29,7 +16,7 @@ app.get('/api/users/:id', async (req, res) => {
 });
 ```
 
-### Fixed Code
+### Fixed
 
 ```javascript
 app.get('/api/users/:id', authMiddleware, async (req, res) => {
@@ -43,7 +30,7 @@ app.get('/api/users/:id', authMiddleware, async (req, res) => {
 });
 ```
 
-### Remediation Checklist
+### Remediation
 - Deny by default — require explicit authorization for every endpoint
 - Implement ownership checks on all resource access
 - Use middleware for role-based access control
@@ -52,32 +39,16 @@ app.get('/api/users/:id', authMiddleware, async (req, res) => {
 
 ---
 
-## A02:2021 — Cryptographic Failures
+## A02 — Cryptographic Failures
 
-Sensitive data exposed due to weak or missing encryption.
-
-### Detection Patterns
-
-```
-# Weak hashing
-(md5|sha1)\s*\(
-createHash\s*\(\s*['"]md5['"]
-
-# Hardcoded encryption keys
-(encrypt|cipher|secret|key)\s*[:=]\s*['"][^'"]{8,}['"]
-
-# HTTP for sensitive data
-http://(?!localhost|127\.0\.0\.1)
-```
-
-### Vulnerable Code
+### Vulnerable
 
 ```javascript
 const crypto = require('crypto');
 const hash = crypto.createHash('md5').update(password).digest('hex');
 ```
 
-### Fixed Code
+### Fixed
 
 ```javascript
 const bcrypt = require('bcrypt');
@@ -86,7 +57,7 @@ const hash = await bcrypt.hash(password, 12);
 const isValid = await bcrypt.compare(password, storedHash);
 ```
 
-### Remediation Checklist
+### Remediation
 - Use bcrypt/scrypt/argon2 for password hashing (never MD5/SHA1)
 - Encrypt sensitive data at rest (AES-256-GCM)
 - Enforce TLS for all connections
@@ -95,30 +66,9 @@ const isValid = await bcrypt.compare(password, storedHash);
 
 ---
 
-## A03:2021 — Injection
+## A03 — Injection
 
-Untrusted data sent to an interpreter as part of a command or query.
-
-### Detection Patterns
-
-```
-# SQL injection
-(query|execute|raw)\s*\(\s*[`'"].*\$\{
-(query|execute|raw)\s*\(\s*.*\+\s*(req\.|params\.|query\.|body\.)
-\.whereRaw\s*\(.*\$\{
-
-# Command injection
-exec\s*\(.*\$\{
-execSync\s*\(.*\$\{
-child_process.*\+\s*(req\.|params\.|query\.|body\.)
-spawn\s*\(.*req\.
-
-# NoSQL injection
-\{\s*\$where\s*:
-\{\s*\$regex\s*:.*req\.
-```
-
-### Vulnerable Code
+### Vulnerable
 
 ```javascript
 // SQL injection
@@ -128,7 +78,7 @@ const result = await db.query(`SELECT * FROM users WHERE id = '${req.params.id}'
 const output = execSync(`convert ${req.body.filename} output.png`);
 ```
 
-### Fixed Code
+### Fixed
 
 ```javascript
 // Parameterized query
@@ -140,7 +90,7 @@ const { execFile } = require('child_process');
 execFile('convert', [sanitizedFilename, 'output.png'], callback);
 ```
 
-### Remediation Checklist
+### Remediation
 - Use parameterized queries / prepared statements for all DB access
 - Use ORM query builders instead of raw SQL
 - Validate and sanitize all input (allowlist over denylist)
@@ -149,31 +99,9 @@ execFile('convert', [sanitizedFilename, 'output.png'], callback);
 
 ---
 
-## A04:2021 — Insecure Design
+## A04 — Insecure Design
 
-Missing or ineffective security controls in the design phase.
-
-### Detection Patterns
-
-```
-# No rate limiting on auth endpoints
-(login|signin|register|signup|forgot-password|reset-password)(?!.*rateLimit)
-
-# Missing CSRF protection on state-changing endpoints
-app\.(post|put|delete|patch)(?!.*csrf)
-
-# Business logic: no limits on resource creation
-(create|insert|add)(?!.*limit)(?!.*throttle)
-```
-
-### Key Areas
-- Authentication flows without rate limiting
-- Password reset without token expiry
-- Business logic that allows unlimited resource creation
-- Missing multi-factor authentication for sensitive operations
-- No account lockout after failed attempts
-
-### Remediation Checklist
+### Remediation
 - Threat model during design phase
 - Rate limit authentication endpoints (5 attempts per 15 minutes)
 - Add CSRF tokens to all state-changing forms
@@ -183,30 +111,9 @@ app\.(post|put|delete|patch)(?!.*csrf)
 
 ---
 
-## A05:2021 — Security Misconfiguration
+## A05 — Security Misconfiguration
 
-Insecure default configurations, incomplete or ad hoc configurations.
-
-### Detection Patterns
-
-```
-# Debug mode in production
-DEBUG\s*[:=]\s*(true|1|'true')
-NODE_ENV\s*[:=]\s*['"]development['"]
-
-# Default credentials
-(admin|root|test|password|123456)
-
-# Verbose error responses
-stack.*trace|\.stack\b
-res\.(json|send)\s*\(\s*err\b
-
-# CORS wildcard
-(Access-Control-Allow-Origin|origin)\s*[:=]\s*['"]\*['"]
-cors\(\s*\)(?!\s*\{)
-```
-
-### Vulnerable Code
+### Vulnerable
 
 ```javascript
 // Leaks stack trace to client
@@ -218,7 +125,7 @@ app.use((err, req, res, next) => {
 app.use(cors());
 ```
 
-### Fixed Code
+### Fixed
 
 ```javascript
 // Production error handler — no internals exposed
@@ -235,7 +142,7 @@ app.use(cors({
 }));
 ```
 
-### Remediation Checklist
+### Remediation
 - Remove debug mode and verbose errors in production
 - Configure CORS with explicit allowed origins
 - Remove default accounts and passwords
@@ -245,20 +152,9 @@ app.use(cors({
 
 ---
 
-## A06:2021 — Vulnerable and Outdated Components
+## A06 — Vulnerable and Outdated Components
 
-Using components with known vulnerabilities.
-
-### Detection Patterns
-
-```bash
-# Check for known vulnerabilities
-npm audit --json 2>/dev/null
-pip-audit 2>/dev/null
-cargo audit 2>/dev/null
-```
-
-### Remediation Checklist
+### Remediation
 - Run `npm audit` / `pip-audit` / `cargo audit` regularly
 - Keep dependencies updated (automated with Dependabot/Renovate)
 - Remove unused dependencies
@@ -267,27 +163,9 @@ cargo audit 2>/dev/null
 
 ---
 
-## A07:2021 — Identification and Authentication Failures
+## A07 — Identification and Authentication Failures
 
-Weak authentication mechanisms.
-
-### Detection Patterns
-
-```
-# Weak JWT configuration
-(algorithm|alg)\s*[:=]\s*['"]none['"]
-(algorithm|alg)\s*[:=]\s*['"]HS256['"].*secret.{0,20}['"]
-jwt\.sign\s*\(.*expiresIn.*['"](\d{2,}d|never)['"]
-
-# Session fixation
-session\.id\s*=
-req\.session\s*=\s*req\.
-
-# No password complexity
-password.*minlength.*[0-5]
-```
-
-### Vulnerable Code
+### Vulnerable
 
 ```javascript
 // JWT with no expiry and weak secret
@@ -297,7 +175,7 @@ const token = jwt.sign({ userId: user.id }, 'secret123');
 if (password.length < 4) return 'Too short';
 ```
 
-### Fixed Code
+### Fixed
 
 ```javascript
 // Strong JWT configuration
@@ -316,7 +194,7 @@ const passwordSchema = z.string()
   .regex(/[^A-Za-z0-9]/, 'Needs special character');
 ```
 
-### Remediation Checklist
+### Remediation
 - Use strong, unique JWT secrets from environment variables
 - Set short token expiry (15m access, 7d refresh)
 - Enforce password complexity requirements
@@ -326,29 +204,9 @@ const passwordSchema = z.string()
 
 ---
 
-## A08:2021 — Software and Data Integrity Failures
+## A08 — Software and Data Integrity Failures
 
-Assumptions about software updates, critical data, and CI/CD pipelines without verifying integrity.
-
-### Detection Patterns
-
-```
-# Unpinned dependencies
-["'][^"']+["']\s*:\s*["']\^|~|>=|\*|latest["']
-
-# Integrity-less script loading
-<script\s+src=["']http
-<script(?!.*integrity).*src=["']https://cdn
-
-# Insecure deserialization
-JSON\.parse\s*\(\s*req\.
-eval\s*\(\s*req\.
-unserialize\s*\(
-yaml\.load\s*\((?!.*Loader=yaml\.SafeLoader)
-pickle\.load
-```
-
-### Remediation Checklist
+### Remediation
 - Pin dependency versions exactly
 - Use lockfiles (package-lock.json, yarn.lock)
 - Add Subresource Integrity (SRI) hashes to CDN scripts
@@ -358,22 +216,9 @@ pickle\.load
 
 ---
 
-## A09:2021 — Security Logging and Monitoring Failures
+## A09 — Security Logging and Monitoring Failures
 
-Insufficient logging, monitoring, and alerting.
-
-### Detection Patterns
-
-```
-# Auth events without logging
-(login|logout|register|password)(?!.*log)(?!.*audit)
-
-# Catch blocks that swallow errors
-catch\s*\([^)]*\)\s*\{\s*\}
-catch\s*\([^)]*\)\s*\{\s*(return|continue|break)
-```
-
-### Remediation Checklist
+### Remediation
 - Log all authentication events (success and failure)
 - Log all access control failures
 - Log all input validation failures
@@ -384,22 +229,9 @@ catch\s*\([^)]*\)\s*\{\s*(return|continue|break)
 
 ---
 
-## A10:2021 — Server-Side Request Forgery (SSRF)
+## A10 — Server-Side Request Forgery (SSRF)
 
-Application fetches a remote resource without validating the user-supplied URL.
-
-### Detection Patterns
-
-```
-# URL from user input passed to fetch/request
-fetch\s*\(\s*(req\.|params\.|query\.|body\.)
-axios\s*\.\s*(get|post)\s*\(\s*(req\.|params\.|query\.|body\.)
-http\.get\s*\(\s*(req\.|params\.|query\.|body\.)
-urllib\.request.*req\.
-requests\.(get|post)\s*\(\s*(req\.|request\.)
-```
-
-### Vulnerable Code
+### Vulnerable
 
 ```javascript
 // SSRF — user controls the URL
@@ -410,7 +242,7 @@ app.get('/proxy', async (req, res) => {
 });
 ```
 
-### Fixed Code
+### Fixed
 
 ```javascript
 const { URL } = require('url');
@@ -437,7 +269,7 @@ app.get('/proxy', async (req, res) => {
 });
 ```
 
-### Remediation Checklist
+### Remediation
 - Validate and sanitize all user-supplied URLs
 - Allowlist permitted domains and protocols
 - Block requests to internal/private IP ranges (10.x, 172.16.x, 192.168.x, 127.x, ::1)

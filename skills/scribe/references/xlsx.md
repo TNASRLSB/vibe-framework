@@ -1,80 +1,29 @@
-# Excel (XLSX) Reference Guide
+# XLSX — Gotchas & Non-Obvious Patterns
 
-## Library: openpyxl
+> Standard openpyxl operations are not included — you already know them. This file covers only patterns that are error-prone, require workarounds, or encode opinionated design standards.
 
-### Basic Workbook Operations
+## Number Format Strings
 
-```python
-from openpyxl import Workbook, load_workbook
-
-# Create new
-wb = Workbook()
-ws = wb.active
-ws.title = "Sheet1"
-
-# Load existing
-wb = load_workbook("file.xlsx")
-wb = load_workbook("file.xlsx", data_only=True)  # read cached formula values
-```
-
-### Cell Operations
+These exact patterns are easy to get wrong. Copy verbatim:
 
 ```python
-# Write values
-ws["A1"] = "Header"
-ws["B1"] = 42
-ws["C1"] = 3.14
-ws.cell(row=1, column=4, value="Direct")
-
-# Write formulas
-ws["A2"] = "=SUM(B1:B100)"
-ws["A3"] = '=IF(B1>0, "Positive", "Negative")'
-ws["A4"] = "=VLOOKUP(B1, Sheet2!A:B, 2, FALSE)"
-
-# Read values
-val = ws["A1"].value
+ws["B1"].number_format = '#,##0.00'                          # 1,234.56
+ws["B2"].number_format = '$#,##0.00'                         # $1,234.56
+ws["B3"].number_format = '0.0%'                              # 85.5%
+ws["B4"].number_format = 'yyyy-mm-dd'                        # 2025-01-15
+ws["B5"].number_format = '#,##0.00_);[Red](#,##0.00)'        # Negative in red parens
+ws["B6"].number_format = '$#,##0'                            # Currency, no decimals
 ```
 
-### Cell Formatting
+The negative-in-red format requires the exact semicolon-separated syntax with `[Red]` and parentheses. Getting it slightly wrong produces no error — just wrong display.
 
-```python
-from openpyxl.styles import Font, PatternFill, Alignment, Border, Side, numbers
+## Auto-Fit Column Width Workaround
 
-# Font
-ws["A1"].font = Font(name="Calibri", size=12, bold=True, color="003366")
-
-# Fill
-ws["A1"].fill = PatternFill(start_color="D9E1F2", end_color="D9E1F2", fill_type="solid")
-
-# Alignment
-ws["A1"].alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
-
-# Border
-thin_border = Border(
-    left=Side(style="thin"),
-    right=Side(style="thin"),
-    top=Side(style="thin"),
-    bottom=Side(style="thin"),
-)
-ws["A1"].border = thin_border
-
-# Number formatting
-ws["B1"].number_format = '#,##0.00'        # 1,234.56
-ws["B2"].number_format = '$#,##0.00'       # $1,234.56
-ws["B3"].number_format = '0.0%'            # 85.5%
-ws["B4"].number_format = 'yyyy-mm-dd'      # 2025-01-15
-ws["B5"].number_format = '#,##0.00_);[Red](#,##0.00)'  # Negative in red
-```
-
-### Column and Row Sizing
+openpyxl has no true auto-fit. This approximation is required every time you want readable columns:
 
 ```python
 from openpyxl.utils import get_column_letter
 
-# Set column width
-ws.column_dimensions["A"].width = 25
-
-# Auto-fit approximation (openpyxl has no true auto-fit)
 for col in ws.columns:
     max_length = 0
     col_letter = get_column_letter(col[0].column)
@@ -82,21 +31,16 @@ for col in ws.columns:
         if cell.value:
             max_length = max(max_length, len(str(cell.value)))
     ws.column_dimensions[col_letter].width = min(max_length + 2, 50)
-
-# Set row height
-ws.row_dimensions[1].height = 30
-
-# Freeze panes
-ws.freeze_panes = "A2"  # Freeze header row
-ws.freeze_panes = "B2"  # Freeze header row and first column
 ```
 
-### Data Validation
+## Data Validation
+
+**Gotcha:** The dropdown formula requires the quoted-string syntax with double quotes inside the formula1 string.
 
 ```python
 from openpyxl.worksheet.datavalidation import DataValidation
 
-# Dropdown list
+# Dropdown — note the double-quote wrapping inside the string
 dv = DataValidation(type="list", formula1='"Yes,No,Maybe"', allow_blank=True)
 dv.error = "Please select from the list"
 dv.errorTitle = "Invalid Input"
@@ -113,12 +57,13 @@ dv_date = DataValidation(type="date", operator="greaterThan", formula1="2024-01-
 ws.add_data_validation(dv_date)
 ```
 
-### Conditional Formatting
+## Conditional Formatting
 
 ```python
 from openpyxl.formatting.rule import (
     CellIsRule, ColorScaleRule, DataBarRule, FormulaRule
 )
+from openpyxl.styles import PatternFill
 
 # Highlight cells greater than value
 ws.conditional_formatting.add(
@@ -127,7 +72,7 @@ ws.conditional_formatting.add(
                fill=PatternFill(bgColor="C6EFCE"))
 )
 
-# Color scale (green to red)
+# Color scale (green-yellow-red)
 ws.conditional_formatting.add(
     "B2:B100",
     ColorScaleRule(
@@ -143,7 +88,7 @@ ws.conditional_formatting.add(
     DataBarRule(start_type="min", end_type="max", color="638EC6")
 )
 
-# Formula-based rule
+# Formula-based rule (reference a column with $ for absolute)
 ws.conditional_formatting.add(
     "A2:D100",
     FormulaRule(formula=['$E2="Overdue"'],
@@ -151,68 +96,30 @@ ws.conditional_formatting.add(
 )
 ```
 
-### Charts
+## Named Ranges via DefinedName
 
-```python
-from openpyxl.chart import BarChart, LineChart, PieChart, Reference
-
-# Bar chart
-chart = BarChart()
-chart.type = "col"
-chart.title = "Monthly Sales"
-chart.y_axis.title = "Revenue ($)"
-chart.x_axis.title = "Month"
-chart.style = 10
-
-data = Reference(ws, min_col=2, min_row=1, max_row=13, max_col=3)
-cats = Reference(ws, min_col=1, min_row=2, max_row=13)
-chart.add_data(data, titles_from_data=True)
-chart.set_categories(cats)
-chart.shape = 4
-ws.add_chart(chart, "E2")
-
-# Line chart
-line_chart = LineChart()
-line_chart.title = "Trend Analysis"
-line_chart.y_axis.title = "Value"
-line_chart.width = 20
-line_chart.height = 12
-
-# Pie chart
-pie = PieChart()
-pie.title = "Market Share"
-data = Reference(ws, min_col=2, min_row=1, max_row=5)
-cats = Reference(ws, min_col=1, min_row=2, max_row=5)
-pie.add_data(data, titles_from_data=True)
-pie.set_categories(cats)
-```
-
-### Named Ranges
+The `attr_text` parameter name is unintuitive — it is the cell reference string, not a display attribute:
 
 ```python
 from openpyxl.workbook.defined_name import DefinedName
 
-# Create named range
 ref = f"Sheet1!$A$1:$D${ws.max_row}"
 defn = DefinedName("SalesData", attr_text=ref)
 wb.defined_names.add(defn)
 ```
 
-### Pivot Table Patterns
+## Pivot Table Workaround
 
-openpyxl cannot create pivot tables directly. Use these patterns instead:
+openpyxl cannot create pivot tables. Build the summary manually:
 
-**Manual pivot summary:**
 ```python
 from collections import defaultdict
 
-# Group data manually
 groups = defaultdict(lambda: defaultdict(float))
 for row in ws.iter_rows(min_row=2, values_only=True):
     category, subcategory, amount = row[0], row[1], row[2]
     groups[category][subcategory] += amount
 
-# Write pivot-style summary to new sheet
 pivot_ws = wb.create_sheet("Summary")
 pivot_ws["A1"] = "Category"
 pivot_ws["B1"] = "Subcategory"
@@ -226,7 +133,7 @@ for cat, subs in sorted(groups.items()):
         row_num += 1
 ```
 
-### Financial Model Patterns
+## Financial Model Patterns
 
 **Income statement template:**
 ```python
@@ -239,22 +146,18 @@ line_items = [
     ("EBITDA", None),  # formula row
 ]
 
-# Write headers
 for col, h in enumerate(headers, 1):
     ws.cell(row=1, column=col, value=h).font = Font(bold=True)
 
-# Write data with formulas for calculated rows
 row = 2
 for item_name, values in line_items:
     ws.cell(row=row, column=1, value=item_name)
     if values:
         for col, val in enumerate(values, 2):
             ws.cell(row=row, column=col, value=val)
-        # FY Total formula
         ws.cell(row=row, column=6, value=f"=SUM(B{row}:E{row})")
     row += 1
 
-# Currency formatting for all numeric cells
 for r in range(2, row):
     for c in range(2, 7):
         ws.cell(row=r, column=c).number_format = '$#,##0'
@@ -262,60 +165,54 @@ for r in range(2, row):
 
 **Variance analysis:**
 ```python
-# Actual vs Budget with variance
 ws["A1"] = "Line Item"
 ws["B1"] = "Budget"
 ws["C1"] = "Actual"
 ws["D1"] = "Variance ($)"
 ws["E1"] = "Variance (%)"
 
-# Variance formulas
 for row in range(2, last_row + 1):
     ws[f"D{row}"] = f"=C{row}-B{row}"
     ws[f"E{row}"] = f'=IF(B{row}=0, "", D{row}/B{row})'
     ws[f"E{row}"].number_format = '0.0%'
 ```
 
-### Print Setup
+## Print Setup
 
 ```python
 ws.page_setup.orientation = ws.ORIENTATION_LANDSCAPE
 ws.page_setup.paperSize = ws.PAPERSIZE_LETTER
 ws.page_setup.fitToWidth = 1
-ws.page_setup.fitToHeight = 0
-ws.print_title_rows = "1:1"  # Repeat header row on every page
+ws.page_setup.fitToHeight = 0  # 0 = as many pages as needed vertically
+ws.print_title_rows = "1:1"    # Repeat header row on every printed page
 ws.print_area = f"A1:F{ws.max_row}"
 ```
 
-### Protection
+## Sheet Protection with Selective Cell Unlocking
+
+Lock the sheet but allow editing in specific input cells:
 
 ```python
+from openpyxl.styles import Protection
+
+# Lock the entire sheet
 ws.protection.sheet = True
 ws.protection.password = "password"
 
-# Unlock specific cells for input
-from openpyxl.styles import Protection
+# Unlock specific input cells (all cells are locked by default when protection is on)
 for row in range(2, 100):
     ws.cell(row=row, column=2).protection = Protection(locked=False)
 ```
 
-### Save
+## Financial Model Template Structure
 
-```python
-wb.save("output.xlsx")
-```
-
----
-
-## Financial Model Template
-
-Standard structure for comprehensive Excel financial models. Adapt sheets and sections to the specific use case.
+Standard structure for comprehensive Excel financial models.
 
 ### Sheet Structure
 
-**1. Cover** -- Model name, company/project, version, date, author, disclaimer.
+**1. Cover** — Model name, company/project, version, date, author, disclaimer.
 
-**2. Assumptions** -- All hard-coded numbers live here (no magic numbers in other sheets). Yellow background for all input cells. Organized by:
+**2. Assumptions** — All hard-coded numbers live here (no magic numbers in other sheets). Yellow background for all input cells. Sections:
 
 | Section | Examples |
 |---------|----------|
@@ -326,28 +223,28 @@ Standard structure for comprehensive Excel financial models. Adapt sheets and se
 | Tax assumptions | Tax rate, loss carryforward |
 | Timing | Start date, projection period (3/5/10 years) |
 
-**3. Revenue** -- Revenue build-up from assumptions. By product/segment/geography if applicable. Monthly --> quarterly --> annual rollup. Formulas reference Assumptions sheet only.
+**3. Revenue** — Revenue build-up from assumptions. By product/segment/geography. Monthly -> quarterly -> annual rollup. Formulas reference Assumptions sheet only.
 
-**4. Costs** -- COGS (variable costs tied to revenue), operating expenses by category, headcount plan with loaded costs. Formulas reference Assumptions + Revenue sheets.
+**4. Costs** — COGS (variable costs tied to revenue), operating expenses by category, headcount plan with loaded costs. Formulas reference Assumptions + Revenue sheets.
 
 **5. P&L (Income Statement)**
 - Revenue (from Revenue sheet)
-- (-) COGS --> Gross Profit
-- (-) Operating Expenses --> EBITDA
-- (-) Depreciation & Amortization --> EBIT
-- (-) Interest --> EBT
-- (-) Tax --> Net Income
-- Key margins calculated: Gross %, EBITDA %, Net %
+- (-) COGS -> Gross Profit
+- (-) Operating Expenses -> EBITDA
+- (-) Depreciation & Amortization -> EBIT
+- (-) Interest -> EBT
+- (-) Tax -> Net Income
+- Key margins: Gross %, EBITDA %, Net %
 
-**6. Balance Sheet** -- Assets (Cash, AR, Inventory, PP&E, Other), Liabilities (AP, Short-term debt, Long-term debt), Equity (Common stock, Retained earnings). Must balance: Assets = Liabilities + Equity. Add balance check formula with conditional formatting (red if unbalanced).
+**6. Balance Sheet** — Assets, Liabilities, Equity. Must balance. Add balance check formula with conditional formatting (red if unbalanced).
 
 **7. Cash Flow**
 - Operating: Net Income + non-cash adjustments + working capital changes
 - Investing: Capex, acquisitions
 - Financing: Debt drawdowns/repayments, equity raises, dividends
-- Net cash flow --> ending cash balance (must tie to Balance Sheet cash)
+- Net cash flow -> ending cash balance (must tie to Balance Sheet cash)
 
-**8. KPIs / Dashboard** -- Summary metrics pulled from other sheets. Charts: Revenue trend, margin trend, cash runway.
+**8. KPIs / Dashboard** — Summary metrics from other sheets. Charts: Revenue trend, margin trend, cash runway.
 
 | Category | Metrics |
 |----------|---------|
@@ -357,7 +254,7 @@ Standard structure for comprehensive Excel financial models. Adapt sheets and se
 | Growth | Revenue growth %, Customer growth %, ARPU |
 | Valuation | EV/EBITDA, P/E (if applicable) |
 
-**9. Scenarios (Optional)** -- Base / Bull / Bear cases. Use named ranges or data validation dropdowns to switch. Delta table showing key metrics across all scenarios.
+**9. Scenarios (Optional)** — Base / Bull / Bear cases. Use named ranges or data validation dropdowns to switch.
 
 ### Color Coding Convention
 
@@ -371,9 +268,8 @@ Standard structure for comprehensive Excel financial models. Adapt sheets and se
 
 ### Best Practices
 
-- No magic numbers -- every assumption in one place
+- No magic numbers — every assumption in one place
 - Formulas only reference the Assumptions sheet for inputs
-- Balance check formula on Balance Sheet (Assets = L + E, with conditional red highlight)
-- Separate formatting from data -- use styles consistently
+- Balance check formula on Balance Sheet with conditional red highlight
+- Separate formatting from data — use styles consistently
 - Document assumptions with cell comments
-- Version control in filename or Cover sheet

@@ -20,7 +20,7 @@ Check `$ARGUMENTS` to determine mode:
 ### Step 1: Read the Queue
 
 ```bash
-QUEUE="${CLAUDE_PLUGIN_DATA}/learnings/queue.jsonl"
+QUEUE="${CLAUDE_PLUGIN_DATA:-/tmp/vibe-plugin-data}/learnings/queue.jsonl"
 if [ -f "$QUEUE" ] && [ -s "$QUEUE" ]; then
   echo "QUEUE_EXISTS"
   wc -l < "$QUEUE"
@@ -43,7 +43,7 @@ If `QUEUE_EXISTS`, proceed.
 ### Step 2: Read All Entries
 
 ```bash
-cat "${CLAUDE_PLUGIN_DATA}/learnings/queue.jsonl"
+cat "${CLAUDE_PLUGIN_DATA:-/tmp/vibe-plugin-data}/learnings/queue.jsonl"
 ```
 
 Each line is a JSON object with this structure:
@@ -121,11 +121,18 @@ Skip. No action needed.
 After all entries have been reviewed, remove them from the queue:
 
 ```bash
-QUEUE="${CLAUDE_PLUGIN_DATA}/learnings/queue.jsonl"
-> "$QUEUE"
+QUEUE="${CLAUDE_PLUGIN_DATA:-/tmp/vibe-plugin-data}/learnings/queue.jsonl"
+# If any entries were skipped (user chose to defer), preserve them.
+# Only truncate if all entries were processed.
+# PROCESSED_LINES is a space-separated list of line numbers (1-based) that were reviewed.
+# Write back only the lines that were NOT processed.
+awk -v processed="$PROCESSED_LINES" '
+BEGIN { split(processed, p, " "); for (i in p) skip[p[i]]=1 }
+!(NR in skip)
+' "$QUEUE" > "${QUEUE}.tmp" && mv "${QUEUE}.tmp" "$QUEUE"
 ```
 
-If some entries were skipped (user did not answer for all), only remove the ones that were explicitly processed. Use line numbers to track which were handled.
+The `PROCESSED_LINES` variable must contain the 1-based line numbers of every entry the user triaged (saved or discarded). Deferred/unanswered entries are preserved in the queue for the next run.
 
 ### Step 6: Summary
 
@@ -160,13 +167,13 @@ cat ~/.claude/auto-memory/learnings.md 2>/dev/null | wc -l
 
 ```bash
 # Check queue for recurring patterns
-QUEUE="${CLAUDE_PLUGIN_DATA}/learnings/queue.jsonl"
+QUEUE="${CLAUDE_PLUGIN_DATA:-/tmp/vibe-plugin-data}/learnings/queue.jsonl"
 cat "$QUEUE" 2>/dev/null | sort | uniq -c | sort -rn | head -20
 ```
 
 ```bash
 # Check for repeated correction types
-cat "${CLAUDE_PLUGIN_DATA}/learnings/queue.jsonl" 2>/dev/null | \
+cat "${CLAUDE_PLUGIN_DATA:-/tmp/vibe-plugin-data}/learnings/queue.jsonl" 2>/dev/null | \
   grep -o '"type":"[^"]*"' | sort | uniq -c | sort -rn
 ```
 

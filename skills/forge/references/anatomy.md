@@ -21,16 +21,18 @@ skills/[skill-name]/
 
 ### Naming Conventions
 
-- **Skill directory:** lowercase, hyphens for multi-word (`my-skill/`)
-- **SKILL.md:** always uppercase, always this exact name
-- **Reference files:** lowercase, hyphens, descriptive (`brand-guidelines.md`)
-- **Scripts:** lowercase, hyphens, include extension (`run-audit.sh`)
+| Item | Rule | Example |
+|------|------|---------|
+| Skill directory | lowercase, hyphens | `my-skill/` |
+| SKILL.md | always uppercase, exact name | `SKILL.md` |
+| Reference files | lowercase, hyphens, descriptive | `brand-guidelines.md` |
+| Scripts | lowercase, hyphens, include extension | `run-audit.sh` |
 
 ---
 
 ## YAML Frontmatter
 
-The frontmatter block at the top of SKILL.md is the contract between the skill and Claude Code. It controls when and how the skill is invoked.
+The frontmatter block at the top of SKILL.md controls when and how the skill is invoked.
 
 ```yaml
 ---
@@ -197,70 +199,6 @@ Check `$ARGUMENTS` to determine mode:
 
 [Table linking to reference files with descriptions]
 ```
-
-### Key Rules
-
-1. **Under 500 lines.** SKILL.md is a navigator, not an encyclopedia. If a section grows past what's needed for routing and decision-making, extract to a reference file.
-
-2. **Numbered steps.** Every workflow uses explicit `### Step N:` headers. This lets Claude track progress and lets users see where they are.
-
-3. **Verification is mandatory.** Every workflow ends with a verification or quality-check step. A skill that can't verify its own output is incomplete.
-
-4. **References section at the end.** Always include a table of reference files so Claude knows what detailed knowledge is available.
-
----
-
-## References Directory
-
-Reference files contain detailed knowledge that SKILL.md points to but does not include inline.
-
-### When to Create a Reference File
-
-- The knowledge is more than 20 lines
-- It contains examples, templates, or detailed specifications
-- It's needed for some commands but not all
-- It would push SKILL.md past 500 lines
-
-### When to Keep Content in SKILL.md
-
-- It's a short checklist (under 20 lines)
-- It's needed by every command
-- It's the routing logic or core principles
-
-### Reference File Format
-
-```markdown
-# [Title]
-
-[1-2 sentence description of what this file covers]
-
----
-
-## [Section]
-
-[Content with examples, rationale, and specifics]
-```
-
----
-
-## Scripts Directory
-
-Scripts are executable files that the skill can invoke via Bash.
-
-### When to Use Scripts
-
-- Repetitive shell operations (scanning files, running linters)
-- Operations that benefit from proper error handling
-- Tasks that would be unwieldy as inline bash in SKILL.md
-
-### Script Conventions
-
-- Include shebang line (`#!/usr/bin/env bash`)
-- Set strict mode (`set -euo pipefail`)
-- Accept arguments via `$1`, `$2`, etc.
-- Print results to stdout
-- Print errors to stderr
-- Exit 0 on success, non-zero on failure
 
 ---
 

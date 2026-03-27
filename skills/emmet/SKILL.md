@@ -310,8 +310,6 @@ This is intentional: the hook prevents wasted time, and Emmet provides the struc
 
 **Trigger:** `/vibe:emmet techdebt`
 
-> **Read** `references/checklists.md` → "Tech Debt Checklist" section.
-
 ### Scan Categories
 
 1. **Code Duplication** — Find repeated logic across files
@@ -375,8 +373,6 @@ The map is used by other skills (Heimdall for attack surface, Seurat for compone
 ---
 
 ## Pre-Deploy Checklist
-
-> **Read** `references/checklists.md` → "Pre-Deploy" section.
 
 Before any deployment, verify:
 - [ ] All tests pass

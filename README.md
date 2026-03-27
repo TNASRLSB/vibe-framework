@@ -14,17 +14,19 @@ Claude Code out-of-the-box optimizes for speed and token savings. VIBE inverts t
 
 `/vibe:setup` configures your environment in one pass: detects your stack, recommends LSP plugins, sets model to `opus[1m]` with `effort:max`, configures a status line, and optionally maps your codebase. Restart Claude Code after setup for global settings to take effect.
 
-## Why This Exists
+## What's New in v3
 
-Claude Code defaults to medium effort on Max subscriptions. It skips verification. It forgets corrections between sessions. It gets stuck retrying the same failing approach. It writes code with hardcoded API keys if you ask it to.
+VIBE v3 introduces **market intelligence** as a core principle. Instead of asking users questions they can't answer ("who is your target audience? what tone do you want?"), skills now discover the answers through global competitor research.
 
-VIBE fixes these with three layers:
+**Three principles:**
 
-**1. Skills** — domain-specific methodologies that encode expert knowledge. Not generic instructions, but complete workflows with numbered phases, verification steps, and reference material loaded on-demand. When Claude uses Emmet to debug, it follows a systematic 7-step process. When it uses Heimdall to audit security, it checks against OWASP Top 10 patterns and scans for the 3 most common AI-generated vulnerabilities.
+1. **Market intelligence over guesswork** — Ghostwriter, Seurat, and Baptist research how the world's best companies in the user's sector communicate, design, and convert — across 11 languages. This becomes the baseline. The user's differentiation builds on top.
 
-**2. Hooks** — mechanical quality gates that run on every action. A shell script that scans for hardcoded API keys can't be persuaded to skip the check. A failure counter that blocks after 3 consecutive failures can't be reasoned away. These aren't suggestions Claude might ignore — they're deterministic enforcement.
+2. **Process discipline over knowledge** — Skills no longer teach copywriting frameworks, design styles, or security concepts Claude already knows. Instead, they enforce mandatory reasoning steps: audience modeling before writing, multiple options before selecting, anti-AI-pattern detection before delivering, sharpening before publishing.
 
-**3. Agents** — independent reviewers that run in separate context. The reviewer agent hasn't seen the implementation, so it can't exhibit self-review bias. The researcher agent explores in an isolated worktree, so it doesn't pollute your main context. The guardian agent has Heimdall's full security methodology preloaded.
+3. **Mechanical quality gates** — Hooks and agents enforce standards deterministically, not through suggestions Claude might skip.
+
+**In numbers:** Reference files trimmed from ~5,900 to ~2,450 lines (-58%) by removing tutorial content and redundant knowledge. Every remaining line is either a process constraint, a detection pattern, a code example, or tool-specific API reference.
 
 ## Skills
 
@@ -32,14 +34,24 @@ VIBE fixes these with three layers:
 
 | Skill | What it does |
 |-------|-------------|
-| **seurat** | UI design system generation. 11 visual styles, 6 page archetypes, brand identity workflow, WCAG verification. Every component gets an accessibility pass. |
-| **emmet** | Testing, QA, and debugging. 8 test personas with headed Playwright sessions. Systematic 7-step debugging workflow. Tech debt audit. The "comment out the fix, verify tests fail" rule is mandatory. |
-| **heimdall** | Security analysis for AI-generated code. OWASP Top 10, BaaS misconfiguration detection (Supabase/Firebase), credential scanning with 25+ API key patterns, Trail of Bits integration. |
-| **ghostwriter** | Dual-optimization content: SEO for Google + GEO for AI search (ChatGPT, Perplexity, Claude). 6 copywriting frameworks, 52+ validation rules, structured data templates. |
-| **baptist** | Conversion Rate Optimization. Fogg B=MAP diagnostics (Motivation, Ability, Prompt), ICE scoring, A/B experiment design with sample size calculation, funnel analysis. |
+| **ghostwriter** | Content creation with dual-optimization (SEO + GEO). Global competitor research discovers messaging patterns across 11 languages. Mandatory process: audience modeling, 5 headline options, anti-AI-pattern detection, sharpening pass. 52+ validation rules. |
+| **seurat** | UI design systems informed by competitor visual research. Style selection based on what the market does, not a generic menu. Anti-generic-design constraints. 11 visual styles with Factor-X distinctiveness system. WCAG 2.1 AA mandatory on every component. |
+| **baptist** | Conversion Rate Optimization with competitor benchmarking. "Your checkout has 6 steps, the top 5 in your sector have 3." B=MAP diagnosis, ICE scoring, A/B experiment design with statistical rigor, funnel analysis. |
+| **emmet** | Testing, QA, and debugging. 8 test personas with headed Playwright sessions. Systematic 7-step debugging (comment-out validation mandatory). Tech debt audit. |
+| **heimdall** | Security analysis for AI-generated code. OWASP Top 10 with vulnerable/fixed code pairs, BaaS misconfiguration detection (Supabase/Firebase), credential scanning with 25+ API key patterns. |
 | **orson** | Programmatic video generation. HTML frames captured by Playwright, encoded with FFmpeg. TTS narration (edge-tts free, ElevenLabs paid), background music, SFX mixing. |
-| **scribe** | Office documents and PDFs. Auto-routes by format. XLSX with formulas and charts, DOCX with styles and TOC, PPTX with slide masters, PDF creation and extraction. Includes Python scripts for OOXML manipulation. |
-| **forge** | Meta-skill for creating and auditing skills. Updated for v2 skill format with frontmatter spec, quality checklist, and starter templates. |
+| **scribe** | Office documents and PDFs. Auto-routes by format. Reference files focus on gotchas and non-obvious patterns only — no tutorials. |
+| **forge** | Meta-skill for creating and auditing skills. Quality checklist includes "Textbook" anti-pattern: if Claude already knows it, don't put it in a reference file. |
+
+### Shared Protocol
+
+Ghostwriter, Seurat, and Baptist share a **competitor research protocol** (`_shared/competitor-research.md`). It runs once per project, searches across 11 languages (English, Chinese, Spanish, Portuguese, French, Japanese, Korean, Russian, Arabic, Hebrew, Aramaic), and extracts three lenses from each competitor:
+
+- **Copy lens** (Ghostwriter): messaging, tone, value propositions, CTAs
+- **Design lens** (Seurat): visual style, palette, typography, layout patterns
+- **Conversion lens** (Baptist): UX flows, trust signals, friction reducers
+
+Results are stored in `.vibe/competitor-research/` with 30-day freshness. Any skill can trigger the research; all three consume it.
 
 ### Utility Skills
 
@@ -60,9 +72,9 @@ All skills are invocable as `/vibe:<name>`:
 /vibe:emmet techdebt          # tech debt audit
 /vibe:heimdall audit          # full security audit
 /vibe:heimdall secrets        # credential scan only
-/vibe:seurat brand            # brand identity workflow
-/vibe:ghostwriter write       # content creation
-/vibe:baptist audit           # B=MAP conversion audit
+/vibe:seurat brand            # brand identity from competitor landscape
+/vibe:ghostwriter write       # content creation with competitor research
+/vibe:baptist audit            # conversion audit with competitor benchmarks
 /vibe:orson create            # guided video creation
 /vibe:scribe create xlsx      # create spreadsheet
 /vibe:forge create my-skill   # create a new skill
@@ -134,13 +146,6 @@ bash scripts/vibe-v1-cleanup.sh --scan ~/your-projects --deep --yes
 ```
 
 The script backs up everything into a timestamped zip before removing, cleans morpheus hooks from both `settings.json` and `settings.local.json`, and scans worktrees and nested projects.
-
-| Flag | What it does |
-|------|-------------|
-| `--scan DIR` | Scans all subdirectories of DIR (+ worktrees) |
-| `--deep` | Also finds nested projects (2 levels deep) |
-| `--dry-run` | Preview only, no changes |
-| `--yes` | Skip confirmation prompts |
 
 After migration, run `/vibe:setup` in each project to generate a fresh v2-compatible `CLAUDE.md`.
 

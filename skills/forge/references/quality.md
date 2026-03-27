@@ -54,6 +54,9 @@ Comprehensive quality criteria for evaluating Claude Code skills. Used by the au
 | Q3 | Error handling for missing prerequisites | Info | Graceful failure when dependencies are missing |
 | Q4 | Output format specified for reports | Info | Consistent output makes reports scannable |
 | Q5 | No duplicate functionality with other skills | Warning | Check registry before creating overlapping skills |
+| Q6 | References don't teach knowledge Claude already has | Warning | Framework explanations, word lists, formula templates are redundant. Reference files should contain process constraints, detection patterns, code examples, calibration tables, or tool-specific API docs |
+| Q7 | Skill enforces process discipline, not just knowledge | Warning | The value of a skill is changing HOW Claude reasons, not WHAT it knows. Skills should add mandatory steps, friction, quality gates, and anti-pattern detection |
+| Q8 | Competitor research integrated where applicable | Info | For content, design, and conversion skills: the shared competitor research protocol (`_shared/competitor-research.md`) provides market-informed baselines. Skills should consume it through their relevant lens |
 
 ---
 
@@ -171,6 +174,25 @@ Check `$ARGUMENTS` to determine mode:
 - Users confused about which skill to use
 
 **Fix:** Check the registry before creating a new skill. If functionality overlaps, extend the existing skill or create a clear boundary.
+
+### 7. The Textbook
+
+**Problem:** Reference files teach knowledge Claude already has instead of enforcing process discipline.
+
+**Symptoms:**
+- Reference file explains what AIDA, PAS, or OWASP Top 10 ARE (Claude knows)
+- Lists of "power words," generic frameworks, or persuasion principles
+- Content that reads like a course rather than a checklist or set of constraints
+- Reference file over 300 lines with mostly educational content
+
+**Fix:** Ask: "Does Claude already know this?" If yes, remove it. Replace with:
+- **Process constraints** — mandatory steps that force better reasoning
+- **Detection patterns** — regex, code patterns, anti-patterns to check against
+- **Calibration tables** — specific values for scoring, benchmarking, mapping
+- **Code examples** — concrete, copy-paste-ready patterns for specific tools/APIs
+- **Checklists** — actionable pass/fail criteria
+
+**Test:** If you deleted the reference file and Claude could still produce equivalent output from its training data alone, the file is redundant.
 
 ---
 
