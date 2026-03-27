@@ -315,6 +315,145 @@ EXIT=$?
 rm -f "$TMPFILE"
 
 # ─────────────────────────────────────────────────────────
+header "V1 Cleanup — settings.local.json morpheus removal"
+# ─────────────────────────────────────────────────────────
+
+CLEANUP_TMP=$(mktemp -d)
+mkdir -p "$CLEANUP_TMP/.claude/morpheus"
+echo '#!/bin/bash' > "$CLEANUP_TMP/.claude/morpheus/injector.sh"
+
+# Create a settings.local.json with morpheus hooks (mimics v1 project)
+cat > "$CLEANUP_TMP/.claude/settings.local.json" << 'SETTINGSEOF'
+{
+  "permissions": {
+    "allow": ["Bash(git status:*)"]
+  },
+  "PreToolUse": [
+    {
+      "matcher": "",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "$CLAUDE_PROJECT_DIR/.claude/morpheus/injector.sh"
+        }
+      ]
+    }
+  ],
+  "statusLine": {
+    "type": "command",
+    "command": "$CLAUDE_PROJECT_DIR/.claude/morpheus/sensor.sh"
+  }
+}
+SETTINGSEOF
+
+# Also create a CLAUDE.md with v1 marker so detect_v1 fires
+cat > "$CLEANUP_TMP/CLAUDE.md" << 'CLAUDEEOF'
+# Claude Operating System
+This is a v1 framework file.
+CLAUDEEOF
+
+# Run cleanup with --yes
+(cd "$CLEANUP_TMP" && bash "$SCRIPTS/vibe-v1-cleanup.sh" --yes "$CLEANUP_TMP") >/dev/null 2>&1
+
+# Verify morpheus references were removed from settings.local.json
+if [ -f "$CLEANUP_TMP/.claude/settings.local.json" ]; then
+  if grep -q "morpheus" "$CLEANUP_TMP/.claude/settings.local.json" 2>/dev/null; then
+    fail "Cleanup removes morpheus from settings.local.json" "morpheus references still present"
+  else
+    # Verify permissions were preserved
+    if grep -q "git status" "$CLEANUP_TMP/.claude/settings.local.json" 2>/dev/null; then
+      pass "Cleanup removes morpheus from settings.local.json (permissions preserved)"
+    else
+      fail "Cleanup removes morpheus from settings.local.json" "permissions were also removed"
+    fi
+  fi
+else
+  fail "Cleanup removes morpheus from settings.local.json" "file was deleted entirely"
+fi
+
+# Verify morpheus directory was removed
+if [ -d "$CLEANUP_TMP/.claude/morpheus" ]; then
+  fail "Cleanup removes .claude/morpheus/" "directory still exists"
+else
+  pass "Cleanup removes .claude/morpheus/"
+fi
+
+rm -rf "$CLEANUP_TMP"
+
+# --- Test .forge/ and old backup zip removal ---
+
+CLEANUP_TMP2=$(mktemp -d)
+mkdir -p "$CLEANUP_TMP2/.claude/morpheus"
+mkdir -p "$CLEANUP_TMP2/.forge"
+echo '#!/bin/bash' > "$CLEANUP_TMP2/.claude/morpheus/injector.sh"
+echo "test" > "$CLEANUP_TMP2/.forge/workspace.json"
+echo "old backup" > "$CLEANUP_TMP2/.vibe-v1-backup-20260101-000000.zip"
+
+cat > "$CLEANUP_TMP2/CLAUDE.md" << 'CLAUDEEOF2'
+# Claude Operating System
+v1 framework
+CLAUDEEOF2
+
+(cd "$CLEANUP_TMP2" && bash "$SCRIPTS/vibe-v1-cleanup.sh" --yes "$CLEANUP_TMP2") >/dev/null 2>&1
+
+if [ -d "$CLEANUP_TMP2/.forge" ]; then
+  fail "Cleanup removes .forge/" "directory still exists"
+else
+  pass "Cleanup removes .forge/"
+fi
+
+# Check old zip was removed (but new one was created)
+if [ -f "$CLEANUP_TMP2/.vibe-v1-backup-20260101-000000.zip" ]; then
+  fail "Cleanup removes old backup zips" "old zip still exists"
+else
+  pass "Cleanup removes old backup zips"
+fi
+
+rm -rf "$CLEANUP_TMP2"
+
+# --- Test --deep scan finds nested projects ---
+
+DEEP_TMP=$(mktemp -d)
+# Create a nested project structure: parent/child/.claude/morpheus/
+mkdir -p "$DEEP_TMP/parent/child/.claude/morpheus"
+echo '#!/bin/bash' > "$DEEP_TMP/parent/child/.claude/morpheus/injector.sh"
+cat > "$DEEP_TMP/parent/child/CLAUDE.md" << 'DEEPEOF'
+# Claude Operating System
+nested v1
+DEEPEOF
+
+(bash "$SCRIPTS/vibe-v1-cleanup.sh" --scan "$DEEP_TMP" --deep --yes) >/dev/null 2>&1
+
+if [ -d "$DEEP_TMP/parent/child/.claude/morpheus" ]; then
+  fail "Deep scan finds nested projects" "morpheus still present in nested project"
+else
+  pass "Deep scan finds nested projects"
+fi
+
+rm -rf "$DEEP_TMP"
+
+# --- Test worktree scanning ---
+
+WT_TMP=$(mktemp -d)
+# Create a project with a worktree containing v1 remnants
+mkdir -p "$WT_TMP/myproject/.worktrees/feature-branch/.claude/morpheus"
+echo '#!/bin/bash' > "$WT_TMP/myproject/.worktrees/feature-branch/.claude/morpheus/injector.sh"
+cat > "$WT_TMP/myproject/.worktrees/feature-branch/CLAUDE.md" << 'WTEOF'
+# Claude Operating System
+worktree v1
+WTEOF
+
+(bash "$SCRIPTS/vibe-v1-cleanup.sh" --scan "$WT_TMP" --yes) >/dev/null 2>&1
+
+if [ -d "$WT_TMP/myproject/.worktrees/feature-branch/.claude/morpheus" ]; then
+  fail "Scan finds worktree v1 remnants" "morpheus still present in worktree"
+else
+  pass "Scan finds worktree v1 remnants"
+fi
+
+rm -rf "$WT_TMP"
+
+# ─────────────────────────────────────────────────────────
 header "Heimdall Pattern Files (JSON validation)"
 # ─────────────────────────────────────────────────────────
 

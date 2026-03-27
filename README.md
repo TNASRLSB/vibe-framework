@@ -121,6 +121,29 @@ Visual testing runs Playwright in headed mode with persona-specific configuratio
 | Hostile | 1920x1080 | Fast | Input validation, XSS, SQLi |
 | International | 1440x900 | Average | i18n, UTF-8, RTL layout |
 
+## Migrating from v1
+
+If you previously used VIBE Framework v1 (the one that installed `.claude/morpheus/`, `vibe-framework.sh`, and a large `CLAUDE.md` into each project), run the cleanup script to remove all remnants:
+
+```bash
+# Preview what would be removed (no changes)
+bash scripts/vibe-v1-cleanup.sh --scan ~/your-projects --deep --dry-run
+
+# Run the migration
+bash scripts/vibe-v1-cleanup.sh --scan ~/your-projects --deep --yes
+```
+
+The script backs up everything into a timestamped zip before removing, cleans morpheus hooks from both `settings.json` and `settings.local.json`, and scans worktrees and nested projects.
+
+| Flag | What it does |
+|------|-------------|
+| `--scan DIR` | Scans all subdirectories of DIR (+ worktrees) |
+| `--deep` | Also finds nested projects (2 levels deep) |
+| `--dry-run` | Preview only, no changes |
+| `--yes` | Skip confirmation prompts |
+
+After migration, run `/vibe:setup` in each project to generate a fresh v2-compatible `CLAUDE.md`.
+
 ## Requirements
 
 - **Claude Code** v2.1.59+
@@ -136,7 +159,7 @@ Visual testing runs Playwright in headed mode with persona-specific configuratio
 bash tests/run-tests.sh
 ```
 
-Runs 53 automated tests covering plugin structure, all skills, agents, hook scripts, security patterns, failure detection, pause/resume, and correction capture.
+Runs 59 automated tests covering plugin structure, all skills, agents, hook scripts, security patterns, failure detection, pause/resume, correction capture, and v1 migration cleanup.
 
 ## License
 

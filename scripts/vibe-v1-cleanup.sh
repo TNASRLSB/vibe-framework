@@ -20,7 +20,8 @@ set -euo pipefail
 # Options:
 #   --dry-run     Preview what would be done without making changes
 #   --yes, -y     Skip confirmation prompts (use with --scan for batch runs)
-#   --scan DIR    Scan all immediate subdirectories of DIR
+#   --scan DIR    Scan all immediate subdirectories of DIR (+ worktrees)
+#   --deep        With --scan: also find nested projects (2 levels deep)
 #   --no-color    Disable colored output
 #   --keep-docs   Preserve .claude/docs/ (default: backs up but does NOT delete)
 #   --help        Show this help message
@@ -32,13 +33,17 @@ set -euo pipefail
 #   - .claude/skills/ (embedded v1 skills)
 #   - .claude/settings.template.json
 #   - .claude/README.md
+#   - .forge/ (v1 forge workspace)
 #   - vibe-framework/ (embedded framework copy)
 #   - vibe-framework.sh (v1 installer script)
 #   - .framework-backup-*/ (old migration backups)
+#   - .vibe-v1-backup-*.zip (old cleanup backup zips)
+#
+# What is surgically cleaned (only morpheus references removed):
+#   - .claude/settings.json (hooks and statusLine referencing morpheus)
+#   - .claude/settings.local.json (hooks and statusLine referencing morpheus)
 #
 # What is NEVER touched:
-#   - .claude/settings.local.json (project permissions)
-#   - .claude/settings.json (active settings — hooks are removed from it)
 #   - .claude/docs/ (project documentation — backed up but preserved)
 #   - .claude/memory/ (project memory)
 #   - .git/ and all version-controlled content
@@ -46,7 +51,7 @@ set -euo pipefail
 # The backup zip is placed at: <project>/.vibe-v1-backup-YYYYMMDD-HHMMSS.zip
 # ============================================================================
 
-VERSION="1.0.0"
+VERSION="1.1.0"
 
 # --- Colors ---------------------------------------------------------------
 
@@ -64,6 +69,7 @@ dim()    { $USE_COLOR && printf '\033[2m%s\033[0m'    "$*" || printf '%s' "$*"; 
 DRY_RUN=false
 AUTO_YES=false
 SCAN_DIR=""
+DEEP_SCAN=false
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 PROJECTS_FOUND=0
 PROJECTS_MIGRATED=0
@@ -132,6 +138,12 @@ detect_v1() {
     # Marker 7: Old settings template
     [[ -f "$dir/.claude/settings.template.json" ]] && found=1
 
+    # Marker 8: .forge directory (v1 forge workspace)
+    [[ -d "$dir/.forge" ]] && found=1
+
+    # Marker 9: Old backup zips from previous cleanup runs
+    compgen -G "$dir/.vibe-v1-backup-*.zip" &>/dev/null && found=1
+
     return $(( found == 0 ))
 }
 
@@ -158,9 +170,17 @@ collect_v1_items() {
     [[ -d "$dir/vibe-framework" ]]                && items+=("vibe-framework")
     [[ -f "$dir/vibe-framework.sh" ]]             && items+=("vibe-framework.sh")
 
+    # .forge directory (v1 forge workspace)
+    [[ -d "$dir/.forge" ]] && items+=(".forge")
+
     # Old migration backups
     for backup_dir in "$dir"/.framework-backup-*/; do
         [[ -d "$backup_dir" ]] && items+=("$(basename "$backup_dir")")
+    done
+
+    # Old cleanup backup zips from previous runs
+    for zip_file in "$dir"/.vibe-v1-backup-*.zip; do
+        [[ -f "$zip_file" ]] && items+=("$(basename "$zip_file")")
     done
 
     # .claude/docs/ — included in backup for safety, but NOT deleted
@@ -169,25 +189,29 @@ collect_v1_items() {
     printf '%s\n' "${items[@]}"
 }
 
-# --- Clean settings.json from morpheus hooks ------------------------------
+# --- Clean settings files from morpheus hooks -----------------------------
 
-clean_settings_json() {
-    local dir="$1"
-    local settings="$dir/.claude/settings.json"
+# Surgically remove morpheus references from a single JSON settings file.
+# Removes hook entries, statusLine, and top-level keys that reference morpheus.
+# Preserves all other configuration (permissions, env, mcpServers, etc.).
+_clean_single_settings_file() {
+    local settings="$1"
+    local label="$2"   # for logging, e.g. "settings.json" or "settings.local.json"
 
     [[ -f "$settings" ]] || return 0
 
-    # Check if settings.json references morpheus
+    # Check if file references morpheus at all
     if ! grep -q "morpheus" "$settings" 2>/dev/null; then
+        echo "no-change:$label"
         return 0
     fi
 
     if $DRY_RUN; then
-        info "Would clean morpheus hooks from .claude/settings.json"
+        info "Would clean morpheus hooks from .claude/$label"
+        echo "dry-run:$label"
         return 0
     fi
 
-    # Use python3 (widely available) to surgically remove morpheus references
     if command -v python3 &>/dev/null; then
         python3 -c "
 import json, sys
@@ -198,23 +222,44 @@ with open(path) as f:
 
 changed = False
 
-# Remove hooks that reference morpheus
-if 'hooks' in data:
-    for event_type in list(data['hooks'].keys()):
-        hooks = data['hooks'][event_type]
-        if isinstance(hooks, list):
-            cleaned = [h for h in hooks if 'morpheus' not in json.dumps(h)]
-            if len(cleaned) != len(hooks):
-                data['hooks'][event_type] = cleaned
+# Remove hooks that reference morpheus (both top-level hooks and event keys)
+for hooks_key in ['hooks', 'PreToolUse', 'PostToolUse', 'SessionStart',
+                   'PreCompact', 'UserPromptSubmit', 'PostToolUseFailure',
+                   'SubagentStop']:
+    if hooks_key in data:
+        val = data[hooks_key]
+        if isinstance(val, list):
+            cleaned = [h for h in val if 'morpheus' not in json.dumps(h)]
+            if len(cleaned) != len(val):
                 changed = True
-            if not cleaned:
-                del data['hooks'][event_type]
-        elif isinstance(hooks, dict):
-            if 'morpheus' in json.dumps(hooks):
-                del data['hooks'][event_type]
+            if cleaned:
+                data[hooks_key] = cleaned
+            else:
+                del data[hooks_key]
                 changed = True
-    if not data['hooks']:
-        del data['hooks']
+        elif isinstance(val, dict):
+            # Nested structure: hooks.PreToolUse, hooks.PostToolUse, etc.
+            if hooks_key == 'hooks':
+                for event_type in list(val.keys()):
+                    hooks = val[event_type]
+                    if isinstance(hooks, list):
+                        cleaned = [h for h in hooks if 'morpheus' not in json.dumps(h)]
+                        if len(cleaned) != len(hooks):
+                            changed = True
+                        if cleaned:
+                            val[event_type] = cleaned
+                        else:
+                            del val[event_type]
+                    elif isinstance(hooks, dict):
+                        if 'morpheus' in json.dumps(hooks):
+                            del val[event_type]
+                            changed = True
+                if not val:
+                    del data['hooks']
+            else:
+                if 'morpheus' in json.dumps(val):
+                    del data[hooks_key]
+                    changed = True
 
 # Remove statusLine if it references morpheus
 if 'statusLine' in data:
@@ -226,13 +271,21 @@ if changed:
     with open(path, 'w') as f:
         json.dump(data, f, indent=2)
         f.write('\n')
-    print('cleaned')
+    print('cleaned:$label')
 else:
-    print('no-change')
+    print('no-change:$label')
 " 2>/dev/null
     else
-        warn "python3 not found — skipping settings.json cleanup (manual edit needed)"
+        warn "python3 not found — skipping .claude/$label cleanup (manual edit needed)"
     fi
+}
+
+clean_settings_files() {
+    local dir="$1"
+
+    # Clean both settings.json and settings.local.json
+    _clean_single_settings_file "$dir/.claude/settings.json"       "settings.json"
+    _clean_single_settings_file "$dir/.claude/settings.local.json" "settings.local.json"
 }
 
 # --- Migration ------------------------------------------------------------
@@ -285,9 +338,13 @@ migrate_project() {
         info "  2. Remove ${#backup_items[@]} v1 items from disk"
         [[ ${#preserve_items[@]} -gt 0 ]] && info "  3. Keep ${#preserve_items[@]} items on disk (backup only: .claude/docs/)"
 
-        # Check settings.json
+        # Check settings files
+        local step_num=$( [[ ${#preserve_items[@]} -gt 0 ]] && echo "4" || echo "3" )
         if [[ -f "$dir/.claude/settings.json" ]] && grep -q "morpheus" "$dir/.claude/settings.json" 2>/dev/null; then
-            info "  $( [[ ${#preserve_items[@]} -gt 0 ]] && echo "4" || echo "3" ). Clean morpheus hooks from .claude/settings.json"
+            info "  $step_num. Clean morpheus hooks from .claude/settings.json"
+        fi
+        if [[ -f "$dir/.claude/settings.local.json" ]] && grep -q "morpheus" "$dir/.claude/settings.local.json" 2>/dev/null; then
+            info "  $step_num. Clean morpheus hooks from .claude/settings.local.json"
         fi
 
         log ""
@@ -352,15 +409,19 @@ migrate_project() {
 
     ok "Removed $removed v1 items"
 
-    # --- Step 3: Clean settings.json ---
+    # --- Step 3: Clean settings files ---
     info "Step 3/3: Cleaning configuration..."
-    local clean_result
-    clean_result=$(clean_settings_json "$dir")
-    if [[ "$clean_result" == "cleaned" ]]; then
-        ok "  Cleaned morpheus hooks from .claude/settings.json"
-    else
-        ok "  .claude/settings.json — no morpheus references found"
-    fi
+    local clean_output
+    clean_output=$(clean_settings_files "$dir")
+    while IFS= read -r line; do
+        local status="${line%%:*}"
+        local label="${line#*:}"
+        case "$status" in
+            cleaned)   ok "  Cleaned morpheus hooks from .claude/$label" ;;
+            no-change) ok "  .claude/$label — no morpheus references" ;;
+            dry-run)   ;;  # already logged by _clean_single_settings_file
+        esac
+    done <<< "$clean_output"
 
     # Clean up empty .claude/ if everything was removed
     if [[ -d "$dir/.claude" ]]; then
@@ -384,6 +445,7 @@ main() {
             --yes|-y)    AUTO_YES=true;    shift ;;
             --no-color)  USE_COLOR=false;  shift ;;
             --scan)      SCAN_DIR="$2";    shift 2 ;;
+            --deep)      DEEP_SCAN=true;   shift ;;
             --keep-docs) shift ;;  # docs are kept by default, flag is a no-op for clarity
             --help|-h)   usage ;;
             --version)   log "vibe-v1-cleanup $VERSION"; exit 0 ;;
@@ -407,33 +469,93 @@ main() {
 
     # Determine targets
     if [[ -n "$SCAN_DIR" ]]; then
-        # Scan mode: process all immediate subdirectories
         if [[ ! -d "$SCAN_DIR" ]]; then
             err "Scan directory not found: $SCAN_DIR"
             exit 1
         fi
         log ""
-        info "Scanning $(bold "$SCAN_DIR") for v1 projects..."
-        for subdir in "$SCAN_DIR"/*/; do
-            [[ -d "$subdir" ]] || continue
-            # Skip hidden directories and the framework itself
-            local base
-            base=$(basename "$subdir")
-            [[ "$base" == .* ]] && continue
-            [[ "$base" == "VIBE_FRAMEWORK" ]] && continue
-            [[ "$base" == "vibe-framework-v1-backup" ]] && continue
-            targets+=("${subdir%/}")
+        if $DEEP_SCAN; then
+            info "Deep scanning $(bold "$SCAN_DIR") for v1 projects..."
+        else
+            info "Scanning $(bold "$SCAN_DIR") for v1 projects..."
+        fi
+
+        # Collect candidate directories
+        _add_scan_targets() {
+            local search_dir="$1"
+            for subdir in "$search_dir"/*/; do
+                [[ -d "$subdir" ]] || continue
+                local base
+                base=$(basename "$subdir")
+                # Skip hidden dirs, framework itself, and v1 backup dirs
+                [[ "$base" == .* ]] && continue
+                [[ "$base" == "VIBE_FRAMEWORK" ]] && continue
+                [[ "$base" == "vibe-framework-v1-backup" ]] && continue
+                [[ "$base" == "tna-website-v1-framework-backup" ]] && continue
+                [[ "$base" == node_modules ]] && continue
+                targets+=("${subdir%/}")
+
+                # In deep mode, also scan subdirectories (nested projects)
+                if $DEEP_SCAN; then
+                    for nested in "$subdir"/*/; do
+                        [[ -d "$nested" ]] || continue
+                        local nested_base
+                        nested_base=$(basename "$nested")
+                        [[ "$nested_base" == .* ]] && continue
+                        [[ "$nested_base" == node_modules ]] && continue
+                        # Only add if it has a .claude/ dir (likely a project)
+                        [[ -d "$nested/.claude" ]] && targets+=("${nested%/}")
+                    done
+                fi
+            done
+        }
+        _add_scan_targets "$SCAN_DIR"
+
+        # Also scan worktree directories (both patterns used by v1)
+        for project_dir in "$SCAN_DIR"/*/; do
+            [[ -d "$project_dir" ]] || continue
+            local pbase
+            pbase=$(basename "$project_dir")
+            [[ "$pbase" == .* ]] && continue
+
+            # Pattern 1: .worktrees/<name>/ (git worktrees)
+            if [[ -d "$project_dir/.worktrees" ]]; then
+                for wt in "$project_dir"/.worktrees/*/; do
+                    [[ -d "$wt" ]] && targets+=("${wt%/}")
+                done
+            fi
+
+            # Pattern 2: .claude/worktrees/<name>/ (claude worktrees)
+            if [[ -d "$project_dir/.claude/worktrees" ]]; then
+                for wt in "$project_dir"/.claude/worktrees/*/; do
+                    [[ -d "$wt" ]] && targets+=("${wt%/}")
+                done
+            fi
         done
+
+        # Deduplicate targets
+        local unique_targets=()
+        local seen=""
+        for t in "${targets[@]}"; do
+            local abs
+            abs=$(cd "$t" 2>/dev/null && pwd) || continue
+            if [[ "$seen" != *"|$abs|"* ]]; then
+                unique_targets+=("$abs")
+                seen+="|$abs|"
+            fi
+        done
+        targets=("${unique_targets[@]}")
+
         info "Found ${#targets[@]} directories to check"
     elif [[ ${#targets[@]} -eq 0 ]]; then
         # Default: current directory
         targets+=("$(pwd)")
     fi
 
-    # Resolve to absolute paths
+    # Resolve to absolute paths (scan mode already resolved, but CLI args may be relative)
     local resolved=()
     for t in "${targets[@]}"; do
-        resolved+=("$(cd "$t" && pwd)")
+        resolved+=("$(cd "$t" 2>/dev/null && pwd || echo "$t")")
     done
 
     # Process each target
