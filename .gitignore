@@ -8,8 +8,10 @@ skills/orson/engine/dist/
 skills/orson/engine/node_modules/
 skills/orson/engine/audio/.venv/
 
-# Claude Code worktrees
+# Claude Code local state
 .claude/worktrees/
+.claude/settings.local.json
+.claude/projects/
 
 # Preview files
 *.preview.html
