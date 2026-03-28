@@ -1,8 +1,8 @@
 # VIBE Framework
 
-A Claude Code plugin that maximizes output quality. Forces maximum effort, specialized methodologies, and mechanical quality gates.
+A Claude Code plugin that maximizes output quality. Specialized methodologies, mechanical quality gates, and intelligent model tiering.
 
-Claude Code out-of-the-box optimizes for speed and token savings. VIBE inverts this: **quality above all**, even at the cost of more tokens and longer execution. Built for developers on Max 20x who want the best Claude can produce.
+Claude Code out-of-the-box optimizes for speed and token savings. VIBE inverts this: **quality above all**, using the right model for each task — Opus for creative and complex reasoning, Sonnet for structured execution, Haiku for high-volume search. Built for developers who want the best Claude can produce without burning through their plan.
 
 ## Install
 
@@ -20,7 +20,7 @@ VIBE v3 introduces **market intelligence** as a core principle. Instead of askin
 
 **Three principles:**
 
-1. **Market intelligence over guesswork** — Ghostwriter, Seurat, and Baptist research how the world's best companies in the user's sector communicate, design, and convert — across 11 languages. This becomes the baseline. The user's differentiation builds on top.
+1. **Market intelligence over guesswork** — Ghostwriter, Seurat, and Baptist research how the world's best companies in the user's sector communicate, design, and convert — across 5 languages by default (EN, ZH, ES, PT, FR), up to 11 with `--global`. This becomes the baseline. The user's differentiation builds on top.
 
 2. **Process discipline over knowledge** — Skills no longer teach copywriting frameworks, design styles, or security concepts Claude already knows. Instead, they enforce mandatory reasoning steps: audience modeling before writing, multiple options before selecting, anti-AI-pattern detection before delivering, sharpening before publishing.
 
@@ -45,7 +45,7 @@ VIBE v3 introduces **market intelligence** as a core principle. Instead of askin
 
 ### Shared Protocol
 
-Ghostwriter, Seurat, and Baptist share a **competitor research protocol** (`_shared/competitor-research.md`). It runs once per project, searches across 11 languages (English, Chinese, Spanish, Portuguese, French, Japanese, Korean, Russian, Arabic, Hebrew, Aramaic), and extracts three lenses from each competitor:
+Ghostwriter, Seurat, and Baptist share a **competitor research protocol** (`_shared/competitor-research.md`). It runs once per project, searches across 5 languages by default (English, Chinese, Spanish, Portuguese, French — covering ~75% of global web commerce), expandable to 11 with `--global`. Discovery agents run on Haiku for efficiency. Three lenses are extracted from each competitor:
 
 - **Copy lens** (Ghostwriter): messaging, tone, value propositions, CTAs
 - **Design lens** (Seurat): visual style, palette, typography, layout patterns
@@ -109,8 +109,8 @@ Every domain skill has two invocation modes: **interactive** (`/vibe:seurat`) ru
 
 | Agent | Model | Tools | Memory | Purpose |
 |-------|-------|-------|--------|---------|
-| **reviewer** | Opus | Read-only | Project | Post-implementation code review from a fresh perspective. Runs in separate context — never reviews its own code. Rates findings as Critical/Warning/Suggestion. |
-| **researcher** | Opus | Read-only | Project | Deep codebase exploration in isolated worktree. Returns structured findings (architecture, stack, patterns, concerns) without cluttering your main context. |
+| **reviewer** | Sonnet | Read-only | Project | Post-implementation code review from a fresh perspective. Runs in separate context — never reviews its own code. Rates findings as Critical/Warning/Suggestion. |
+| **researcher** | Sonnet | Read-only | Project | Deep codebase exploration in isolated worktree. Returns structured findings (architecture, stack, patterns, concerns) without cluttering your main context. |
 
 ### Domain Audit Agents
 
@@ -127,6 +127,20 @@ All domain audit agents follow a shared [audit protocol](references/audit-protoc
 | **scribe** | Documents | — | Metadata, heading structure, document accessibility, formatting consistency, broken references |
 
 All agents run in isolated worktrees, persist memory across sessions, and produce machine-parseable metrics for trending. The `/vibe:audit` orchestrator launches them in parallel and correlates findings across domains.
+
+## Model Tiering
+
+Not every task needs the most powerful model. VIBE assigns each component the model that matches its cognitive demands, validated via blind A/B testing.
+
+| Tier | Model | Components | Why |
+|------|-------|------------|-----|
+| **Creative & Complex** | Opus | ghostwriter, seurat, heimdall, audit orchestrator | Creative writing, design judgment, novel vulnerability discovery, cross-domain synthesis |
+| **Structured Execution** | Sonnet | baptist, emmet, scribe, orson, reviewer, researcher, forge | Pattern matching, template following, code analysis, format compliance |
+| **High-Volume Search** | Haiku | competitor research discovery agents | Web search + candidate identification across multiple languages |
+
+**Validation**: Heimdall was A/B tested — Opus found a 3-step token confusion attack chain that Sonnet missed (5.0 vs 4.5). Baptist was A/B tested — both models scored identically on CRO analysis (4.9 vs 4.9). Test fixtures and protocol are in `tests/model-validation/`.
+
+**Recalibration**: when new models ship, rerun the test cases in `tests/model-validation/test-cases.md` to verify assignments still hold. The model map at `tests/model-validation/model-map.md` is the source of truth.
 
 ## Hooks
 
@@ -187,7 +201,7 @@ After migration, run `/vibe:setup` in each project to generate a fresh v2-compat
 ## Requirements
 
 - **Claude Code** v2.1.59+
-- **Max 20x subscription** recommended (required for `effort:max` and `opus[1m]`)
+- **Max 20x subscription** recommended for full capability (Opus skills use `effort:max`). Most skills run on Sonnet and work on lower tiers.
 - **jq** for hook scripts
 - **Optional:** Playwright (for Emmet visual testing and Orson video rendering)
 - **Optional:** FFmpeg + `pip install edge-tts` (for Orson audio)
