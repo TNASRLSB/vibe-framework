@@ -24,11 +24,21 @@ From the invoking skill or user, receive:
 
 ## Phase 1: Discovery
 
-Search for the service/product type across ALL languages, always:
+### Language Tiers
 
-**English, Chinese (simplified + traditional), Spanish, Portuguese, French, Japanese, Korean, Russian, Arabic, Hebrew, Aramaic**
+**Default (5 languages):** English, Chinese (simplified), Spanish, Portuguese, French
+These cover ~75% of global web commerce. Used unless the invoking skill or user specifies otherwise.
 
-Dispatch one Agent per language (all in parallel, `subagent_type: "general-purpose"`).
+**Global (all 11 languages):** English, Chinese (simplified + traditional), Spanish, Portuguese, French, Japanese, Korean, Russian, Arabic, Hebrew, Aramaic
+Used when the invoking skill passes `global_research: true` or the user requests `--global`.
+
+**Custom:** The invoking skill may specify `languages: ["en", "ja", "ko"]` to target specific markets.
+
+Always include the target market's language if not already in the tier.
+
+### Agent Dispatch
+
+Dispatch one Agent per language (all in parallel, `subagent_type: "general-purpose"`, `model: "haiku"`).
 
 Each agent:
 1. **WebSearch** for the service/product type in that language, 2-3 query variations

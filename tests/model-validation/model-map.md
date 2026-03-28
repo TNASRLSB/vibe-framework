@@ -38,7 +38,7 @@ Tasks requiring speed over depth: web scraping, summarization, simple validation
 
 | Component | Type | Effort | Status |
 |-----------|------|--------|--------|
-| competitor research (search phase) | shared protocol | high | **Pending validation** |
+| competitor research (discovery agents) | shared protocol | — | **Applied** — WebSearch + candidate ID |
 | hook validation scripts | hooks | low | **Pending architectural review** |
 
 ---
@@ -64,3 +64,4 @@ Tasks requiring speed over depth: web scraping, summarization, simple validation
 |------|--------|--------|
 | 2026-03-28 | emmet, scribe, orson, reviewer, researcher, forge → sonnet | Conservative model tiering — pattern matching and template-following tasks don't need Opus-level reasoning |
 | 2026-03-28 | forge templates default → sonnet | New skills should default to sonnet, upgrade to opus only if needed |
+| 2026-03-28 | competitor research discovery → haiku, default 5 languages | Discovery agents do WebSearch + candidate listing — Haiku's sweet spot. Default 5 langs covers ~75% web commerce, --global for full 11 |
