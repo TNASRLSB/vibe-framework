@@ -2,7 +2,7 @@
 name: orson
 description: Programmatic video generation with frame-addressed animations, rendered via Playwright + FFmpeg. Use when creating product videos, promos, explainers, or demo recordings.
 effort: max
-model: opus
+model: sonnet
 ---
 
 # Orson -- Video Generation

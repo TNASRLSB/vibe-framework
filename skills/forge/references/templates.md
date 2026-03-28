@@ -99,7 +99,7 @@ For skills that perform multi-step work. Most skills fall into this category.
 name: [skill-name]
 description: [What it does. Use when [trigger conditions].]
 effort: max
-model: opus
+model: sonnet
 ---
 
 # [Name] — [Tagline]
@@ -197,7 +197,7 @@ For skills that run in a separate context. The main agent delegates to a subagen
 name: [skill-name]
 description: [What it does. Use when [trigger conditions].]
 effort: max
-model: opus
+model: sonnet
 context: fork
 agent: code
 ---

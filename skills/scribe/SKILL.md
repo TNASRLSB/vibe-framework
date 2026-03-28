@@ -2,7 +2,7 @@
 name: scribe
 description: Create, read, edit Office documents (xlsx, docx, pptx) and PDFs. Use when user wants spreadsheets, Word documents, presentations, or PDF files.
 effort: max
-model: opus
+model: sonnet
 ---
 
 # Scribe -- Office & PDF Documents

@@ -2,7 +2,7 @@
 name: emmet
 description: Testing, debugging, tech debt audit, and code quality. Use when writing tests, finding bugs, debugging code, auditing quality, or doing pre-deploy checks.
 effort: max
-model: opus
+model: sonnet
 ---
 
 # Emmet — Testing, QA & Debugging

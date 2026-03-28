@@ -7,7 +7,7 @@ skills:
 memory: project
 isolation: worktree
 effort: max
-model: opus
+model: sonnet
 ---
 
 # Emmet — Code Quality & Testing Auditor

@@ -39,7 +39,7 @@ The frontmatter block at the top of SKILL.md controls when and how the skill is 
 name: skill-name
 description: What it does. When to use it.
 effort: max
-model: opus
+model: sonnet
 disable-model-invocation: true
 allowed-tools: Edit,Read,Write,Bash,Glob,Grep
 context: fork

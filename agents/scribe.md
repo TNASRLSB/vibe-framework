@@ -7,7 +7,7 @@ skills:
 memory: project
 isolation: worktree
 effort: max
-model: opus
+model: sonnet
 ---
 
 # Scribe — Document Quality Auditor

@@ -1,7 +1,7 @@
 ---
 name: researcher
 description: Explores codebases in depth. Use before implementing features, when onboarding to new projects, or when investigating complex systems. Returns structured findings without modifying code.
-model: opus
+model: sonnet
 effort: max
 tools: Read, Grep, Glob, Bash
 memory: project

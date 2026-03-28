@@ -1,7 +1,7 @@
 ---
 name: reviewer
 description: Reviews code for quality, bugs, edge cases, and best practices. Use after implementing features or fixing bugs. Provides critical review from a fresh perspective — never reviews its own code.
-model: opus
+model: sonnet
 effort: max
 tools: Read, Grep, Glob, Bash
 memory: project

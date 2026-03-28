@@ -2,7 +2,7 @@
 name: forge
 description: Create, audit, and improve Claude Code skills. Use when creating new skills, improving existing ones, or auditing skill quality.
 effort: max
-model: opus
+model: sonnet
 disable-model-invocation: true
 ---
 
