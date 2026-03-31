@@ -14,9 +14,9 @@ Claude Code out-of-the-box optimizes for speed and token savings. VIBE inverts t
 
 `/vibe:setup` configures your environment in one pass: detects your stack, recommends LSP plugins, sets model to `opus[1m]` with `effort:max`, configures a status line, and optionally maps your codebase. Restart Claude Code after setup for global settings to take effect.
 
-## What's New in v3.4
+## What's New in v3.5
 
-VIBE v3.4 applies 12 improvements derived from analysis of the Claude Code source architecture:
+VIBE v3.5 applies 12 improvements derived from analysis of the Claude Code source architecture:
 
 **Security**
 - **31 security patterns** (was 9) — added private key detection, AWS/GCP/Stripe/GitHub/Slack credential patterns, innerHTML/document.write XSS, SQL injection via interpolation, disabled SSL verification, pickle/yaml deserialization, subprocess injection, Zsh module attacks, IFS manipulation, unicode obfuscation, control characters, /proc environ exfiltration
