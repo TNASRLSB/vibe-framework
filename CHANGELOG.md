@@ -1,5 +1,15 @@
 # Changelog
 
+## 3.5.1 — 2026-03-31
+
+### Fixed
+- **Help skill**: removed `disable-model-invocation` which prevented `/vibe:help` from working via the Skill tool; changed to `model: sonnet` with `effort: low`
+
+## 3.5.0 — 2026-03-31
+
+### Changed
+- Version alignment after v3.4.0 feature release
+
 ## 3.4.0 — 2026-03-31
 
 12 improvements derived from Claude Code source architecture analysis.
