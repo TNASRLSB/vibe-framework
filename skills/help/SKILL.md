@@ -1,8 +1,10 @@
 ---
 name: help
 description: Show all VIBE Framework skills, agents, hooks, and commands.
-disable-model-invocation: true
+model: sonnet
+effort: low
 whenToUse: "Use to see all VIBE Framework skills, agents, hooks, and commands. Example: '/vibe:help'"
+argumentHint: ""
 maxTokenBudget: 5000
 ---
 
