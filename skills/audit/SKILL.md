@@ -3,6 +3,9 @@ name: audit
 description: Project audit orchestrator. Scans project, proposes relevant domain audits, launches agents in parallel. Use when auditing an existing project for quality, security, accessibility, SEO, or conversion.
 effort: max
 model: opus
+whenToUse: "Use when auditing an existing project for quality, security, accessibility, SEO, or conversion. Examples: '/vibe:audit', '/vibe:audit --all', '/vibe:audit security'"
+argumentHint: "[--all|security|seo|ui|code|conversion|video|docs]"
+maxTokenBudget: 60000
 ---
 
 # Audit — Project Quality Orchestrator

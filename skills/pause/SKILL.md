@@ -2,6 +2,8 @@
 name: pause
 description: Temporarily disable VIBE quality hooks for the current session. Use during rapid prototyping or exploratory coding.
 disable-model-invocation: true
+whenToUse: "Use during rapid prototyping to temporarily disable VIBE quality hooks. Example: '/vibe:pause'"
+maxTokenBudget: 1000
 ---
 
 # VIBE Pause

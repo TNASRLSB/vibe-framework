@@ -2,6 +2,8 @@
 name: help
 description: Show all VIBE Framework skills, agents, hooks, and commands.
 disable-model-invocation: true
+whenToUse: "Use to see all VIBE Framework skills, agents, hooks, and commands. Example: '/vibe:help'"
+maxTokenBudget: 5000
 ---
 
 Display the complete VIBE Framework reference. Format it exactly as below, as a clean table for each section.
@@ -38,6 +40,7 @@ VIBE v3 is built on three principles:
 | `/vibe:emmet debug` | Systematic 7-step debugging (comment-out validation mandatory) |
 | `/vibe:emmet techdebt` | Tech debt audit |
 | `/vibe:emmet map` | Functional codebase map |
+| `/vibe:emmet verify` | Verify a code change works end-to-end (detect stack, start app, test, report) |
 | `/vibe:heimdall audit` | Full security audit (OWASP, secrets, BaaS, AI-generated patterns) |
 | `/vibe:heimdall scan [path]` | Scan specific file or directory |
 | `/vibe:heimdall secrets` | Credential detection only |
@@ -61,9 +64,10 @@ VIBE v3 is built on three principles:
 | `/vibe:scribe create [format]` | Create document (xlsx, docx, pptx, pdf) |
 | `/vibe:scribe edit [file]` | Edit existing document |
 | `/vibe:scribe convert [file]` | Convert between formats |
-| `/vibe:forge create [name]` | Create a new skill (process constraints > knowledge) |
-| `/vibe:forge audit` | Audit all skills for quality (includes "Textbook" anti-pattern check) |
-| `/vibe:forge fix` | Fix audit findings |
+| `/vibe:forge create [name]` | Create a new skill via 4-round structured interview |
+| `/vibe:forge audit` | Audit all skills for quality (frontmatter, structure, success criteria) |
+| `/vibe:forge improve [name]` | Audit then apply targeted improvements |
+| `/vibe:forge template` | Generate blank skill template |
 
 ## Shared Protocol
 
@@ -87,13 +91,17 @@ Each domain skill has two invocation modes: interactive (skill) and autonomous a
 | **orson** | Video asset quality audit (worktree, memory) | @vibe:orson or via /vibe:audit |
 | **scribe** | Document quality audit (worktree, memory) | @vibe:scribe or via /vibe:audit |
 
-## Hooks (automatic)
+## Hooks (automatic — 11 handlers, 6 lifecycle events)
 
 | Hook | Trigger | What it does |
 |------|---------|-------------|
-| Setup check | Every session start | Injects VIBE status, pending corrections reminder, post-compaction recovery |
-| Lint | Every file edit | Runs project linter (eslint, ruff, rustfmt, gofmt). Blocks on failure. |
-| Security scan | Every file edit | Catches hardcoded keys, XSS, eval, public DB policies. Blocks on detection. |
-| Compact save | Before compaction | Saves modified files, active skills, workflow phase for recovery |
+| Setup check | Session start | Injects VIBE status, pending corrections, post-compaction recovery |
+| Auto Dream | Session start | Triggers knowledge consolidation after 5+ sessions and 3+ corrections |
+| Tips | Session start | Shows contextual tips with cooldown based on session history |
+| PreToolUse security | Before bash | Blocks rm -rf /, force push to main, curl\|bash, chmod 777, DB DROP |
+| Lint | After file edit | Runs project linter (eslint, ruff, rustfmt, gofmt). Blocks on failure. |
+| Security scan | After file edit | 31 patterns: keys, XSS, injection, credentials, obfuscation. Blocks on detection. |
+| Cost tracking | After skill use | Estimates token usage and cost per skill invocation |
+| Compact save | Before compaction | Saves structured session state (JSON + markdown) for recovery |
 | Correction capture | Every prompt | Detects corrections in 6 languages, queues for /vibe:reflect |
-| Failure loop | After tool failures | Blocks after 3 consecutive failures, forces replan |
+| Failure loop | After failures | Blocks after 3 consecutive failures, forces replan |

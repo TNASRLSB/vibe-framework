@@ -3,6 +3,9 @@ name: emmet
 description: Testing, debugging, tech debt audit, and code quality. Use when writing tests, finding bugs, debugging code, auditing quality, or doing pre-deploy checks.
 effort: max
 model: sonnet
+whenToUse: "Use when writing tests, finding bugs, debugging code, auditing quality, or doing pre-deploy checks. Examples: '/vibe:emmet test', '/vibe:emmet debug', '/vibe:emmet verify'"
+argumentHint: "[test|debug|techdebt|map|setup|verify]"
+maxTokenBudget: 40000
 ---
 
 # Emmet — Testing, QA & Debugging
@@ -20,6 +23,7 @@ Check `$ARGUMENTS` to determine mode:
 - `techdebt` → **Tech Debt Audit**
 - `map` → **Functional Codebase Map**
 - `setup` → **Stack Detection & Pattern Config**
+- `verify` or `verify [description]` --> Verify a code change works end-to-end by running the app
 - No arguments or `help` → show available commands
 
 ---
@@ -383,6 +387,99 @@ Before any deployment, verify:
 - [ ] No hardcoded secrets
 - [ ] Error handling covers all API endpoints
 - [ ] Performance: no N+1 queries, no unbounded loops
+
+---
+
+## Verify Workflow
+
+**Trigger:** `verify` or `verify [description]`
+
+End-to-end verification that a code change works as intended by running the application.
+
+### Step 1: Identify the Change
+Read `git diff` (staged and unstaged) to understand what changed.
+If `$ARGUMENTS` includes a description, use it to focus the verification.
+
+**Success criteria:** You can articulate what changed and what behavior to verify.
+
+### Step 2: Detect the Stack
+Check for framework indicators:
+- `package.json` → Node.js (check for next, react, express, fastify, etc.)
+- `pyproject.toml` / `requirements.txt` → Python (check for flask, django, fastapi)
+- `go.mod` → Go
+- `Cargo.toml` → Rust
+- `Gemfile` → Ruby
+
+**Success criteria:** You know which dev server command to use.
+
+### Step 3: Start the Application
+Run the appropriate dev server in background:
+- **Next.js:** `npm run dev` or `npx next dev`
+- **React (Vite):** `npm run dev` or `npx vite`
+- **Express/Fastify:** `node server.js` or `npm start`
+- **Flask:** `python -m flask run` or `FLASK_APP=app.py flask run`
+- **FastAPI:** `uvicorn main:app --reload`
+- **Django:** `python manage.py runserver`
+- **Go:** `go run ./cmd/...` or `go run main.go`
+
+Wait for the server to be ready (check for "listening on" or similar output).
+
+**Success criteria:** Dev server is running and responding to requests.
+
+### Step 4: Exercise the Changed Behavior
+Based on what changed:
+
+**Route/API changes:**
+```bash
+curl -s http://localhost:PORT/path | head -50
+```
+
+**Component/page changes:**
+- If Playwright is available: take a screenshot
+- Otherwise: curl the page and check HTML structure
+
+**Logic/utility changes:**
+- Write a minimal test script that imports and calls the changed function
+- Run it and verify output
+
+**Configuration changes:**
+- Restart the server and verify it starts without errors
+- Check that the config takes effect (e.g., new env var reflected in output)
+
+**Success criteria:** The changed behavior produces expected results.
+
+### Step 5: Check for Regressions
+Run the existing test suite (if available) to ensure nothing broke:
+```bash
+npm test 2>&1 | tail -20  # or pytest, go test, cargo test
+```
+
+**Success criteria:** All pre-existing tests still pass.
+
+### Step 6: Report
+Provide a clear verdict:
+
+**If verified:**
+```
+Verification PASSED
+- Change: [what changed]
+- Behavior: [what was tested]
+- Evidence: [curl output, test results, screenshot]
+- Regressions: None detected
+```
+
+**If issues found:**
+```
+Verification FAILED
+- Change: [what changed]
+- Expected: [expected behavior]
+- Actual: [actual behavior]
+- Evidence: [error output, unexpected response]
+- Suggested fix: [if obvious]
+```
+
+### Step 7: Cleanup
+Stop the dev server process. Remove any temporary test files created in Step 4.
 
 ---
 

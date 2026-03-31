@@ -7,6 +7,28 @@
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/setup-check.sh\"",
             "statusMessage": "VIBE: checking configuration..."
+          },
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/auto-dream.sh\"",
+            "statusMessage": "VIBE: checking knowledge consolidation..."
+          },
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/tips-engine.sh\"",
+            "statusMessage": "VIBE: loading tips..."
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/pre-tool-security.sh\"",
+            "statusMessage": "VIBE: pre-execution security check..."
           }
         ]
       }
@@ -28,6 +50,16 @@
         ]
       },
       {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/cost-tracker.sh\"",
+            "statusMessage": "Tracking skill cost..."
+          }
+        ]
+      },
+      {
         "hooks": [
           {
             "type": "command",
@@ -42,7 +74,7 @@
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/pre-compact-save.sh\"",
-            "statusMessage": "Saving state..."
+            "statusMessage": "Saving session state..."
           }
         ]
       }

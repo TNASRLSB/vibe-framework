@@ -3,6 +3,9 @@ name: orson
 description: Programmatic video generation with frame-addressed animations, rendered via Playwright + FFmpeg. Use when creating product videos, promos, explainers, or demo recordings.
 effort: max
 model: sonnet
+whenToUse: "Use when creating product videos, promos, explainers, or demo recordings. Examples: '/vibe:orson create', '/vibe:orson render', '/vibe:orson storyboard'"
+argumentHint: "[create|render|storyboard|audit]"
+maxTokenBudget: 40000
 ---
 
 # Orson -- Video Generation

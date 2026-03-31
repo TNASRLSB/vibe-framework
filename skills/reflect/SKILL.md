@@ -3,6 +3,9 @@ name: reflect
 description: Review captured corrections and turn them into permanent learnings. Run periodically or when prompted by the framework.
 effort: max
 disable-model-invocation: true
+whenToUse: "Use periodically to review captured corrections and turn them into permanent learnings. Example: '/vibe:reflect', '/vibe:reflect --patterns'"
+argumentHint: "[--patterns|--review|--clear]"
+maxTokenBudget: 30000
 ---
 
 # VIBE Reflect

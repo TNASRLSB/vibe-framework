@@ -14,6 +14,30 @@ Claude Code out-of-the-box optimizes for speed and token savings. VIBE inverts t
 
 `/vibe:setup` configures your environment in one pass: detects your stack, recommends LSP plugins, sets model to `opus[1m]` with `effort:max`, configures a status line, and optionally maps your codebase. Restart Claude Code after setup for global settings to take effect.
 
+## What's New in v3.4
+
+VIBE v3.4 applies 12 improvements derived from analysis of the Claude Code source architecture:
+
+**Security**
+- **31 security patterns** (was 9) — added private key detection, AWS/GCP/Stripe/GitHub/Slack credential patterns, innerHTML/document.write XSS, SQL injection via interpolation, disabled SSL verification, pickle/yaml deserialization, subprocess injection, Zsh module attacks, IFS manipulation, unicode obfuscation, control characters, /proc environ exfiltration
+- **PreToolUse hook** — blocks dangerous bash commands (rm -rf /, force push to main, curl|bash, chmod 777, database DROP) *before* execution, not after
+
+**Infrastructure**
+- **Lazy loading frontmatter** — all skills now declare `whenToUse`, `argumentHint`, and `maxTokenBudget` for context-efficient registration
+- **Frontmatter validation** — `scripts/validate-frontmatter.sh` validates all skill and agent metadata against required schema
+- **Per-skill cost tracking** — estimates token usage and cost per skill invocation (logged to `.vibe/costs/skill-costs.jsonl`)
+- **Session memory extraction** — enhanced pre-compaction hook saves structured JSON session state (branch, errors, files, skills) for reliable recovery
+
+**Agent System**
+- **Memory scopes** — all 9 agents declare `memoryScope: project`, `snapshotEnabled: true`, enabling team sharing via snapshots
+- **omitClaudeMd** — read-only agents (reviewer, researcher) skip CLAUDE.md injection for token savings
+
+**Skills**
+- **Emmet verify** — new `/vibe:emmet verify` workflow: detects stack, starts dev server, exercises changed behavior, checks regressions, reports verdict
+- **Forge 4-round interview** — skill creation now uses structured 4-round interview (high-level, structure, per-step breakdown, final polish) with success criteria per step
+- **Auto Dream** — background knowledge consolidation triggers after 5+ sessions and 3+ corrections, synthesizing learnings into project memory
+- **Contextual tips** — session-aware tips system with cooldowns, shown during startup based on session count and project state
+
 ## What's New in v3
 
 VIBE v3 introduces **market intelligence** as a core principle. Instead of asking users questions they can't answer ("who is your target audience? what tone do you want?"), skills now discover the answers through global competitor research.
@@ -37,11 +61,11 @@ VIBE v3 introduces **market intelligence** as a core principle. Instead of askin
 | **ghostwriter** | Content creation with dual-optimization (SEO + GEO). Global competitor research discovers messaging patterns across 11 languages. Mandatory process: audience modeling, 5 headline options, anti-AI-pattern detection, sharpening pass. 52+ validation rules. |
 | **seurat** | UI design systems informed by competitor visual research. Style selection based on what the market does, not a generic menu. Anti-generic-design constraints. 11 visual styles with Factor-X distinctiveness system. WCAG 2.1 AA mandatory on every component. |
 | **baptist** | Conversion Rate Optimization with competitor benchmarking. "Your checkout has 6 steps, the top 5 in your sector have 3." B=MAP diagnosis, ICE scoring, A/B experiment design with statistical rigor, funnel analysis. |
-| **emmet** | Testing, QA, and debugging. 8 test personas with headed Playwright sessions. Systematic 7-step debugging (comment-out validation mandatory). Tech debt audit. |
+| **emmet** | Testing, QA, and debugging. 8 test personas with headed Playwright sessions. Systematic 7-step debugging (comment-out validation mandatory). Tech debt audit. End-to-end verification (`verify`). |
 | **heimdall** | Security analysis for AI-generated code. OWASP Top 10 with vulnerable/fixed code pairs, BaaS misconfiguration detection (Supabase/Firebase), credential scanning with 25+ API key patterns. |
 | **orson** | Programmatic video generation. HTML frames captured by Playwright, encoded with FFmpeg. TTS narration (edge-tts free, ElevenLabs paid), background music, SFX mixing. |
 | **scribe** | Office documents and PDFs. Auto-routes by format. Reference files focus on gotchas and non-obvious patterns only — no tutorials. |
-| **forge** | Meta-skill for creating and auditing skills. Quality checklist includes "Textbook" anti-pattern: if Claude already knows it, don't put it in a reference file. |
+| **forge** | Meta-skill for creating and auditing skills. 4-round structured interview for skill creation (high-level, structure, per-step breakdown, final polish). Per-step success criteria. Quality checklist includes "Textbook" anti-pattern. |
 
 ### Shared Protocol
 
@@ -87,6 +111,7 @@ All skills are invocable as `/vibe:<name>`:
 /vibe:emmet test              # full testing cycle
 /vibe:emmet debug             # systematic 7-step debugging
 /vibe:emmet techdebt          # tech debt audit
+/vibe:emmet verify            # verify a code change works end-to-end
 /vibe:heimdall audit          # full security audit
 /vibe:heimdall secrets        # credential scan only
 /vibe:seurat brand            # brand identity from competitor landscape
@@ -144,16 +169,20 @@ Not every task needs the most powerful model. VIBE assigns each component the mo
 
 ## Hooks
 
-Six hook handlers run automatically, enforcing quality mechanically:
+Eleven hook handlers across six lifecycle events run automatically, enforcing quality mechanically:
 
 | Hook | When | What it does |
 |------|------|-------------|
-| **Setup check** | Every session start | Injects VIBE status, reminds about pending corrections, recovers state after context compaction |
-| **Lint** | Every file edit | Detects project linter (eslint, prettier, ruff, black, rustfmt, gofmt) and runs it. Blocks on failure. |
-| **Security scan** | Every file edit | Regex scan for: hardcoded API keys, `dangerouslySetInnerHTML`, `USING(true)`, `eval()`, hardcoded passwords, public S3 ACLs, `--no-verify`. Blocks on detection. |
-| **Compact save** | Before context compaction | Saves modified files, active skills, recent tool calls to a state file. SessionStart hook re-injects this state post-compaction, preventing the documented amnesia problem. |
-| **Correction capture** | Every user prompt | Detects correction patterns in 6 languages (EN, IT, ES, FR, DE, PT). Queues them silently for `/vibe:reflect` review. |
-| **Failure loop** | After tool failures | Counts consecutive failures. After 3, blocks with: "STOP. Replan from scratch or use /vibe:emmet debug." Resets on next success. |
+| **Setup check** | Session start | Injects VIBE status, pending corrections reminder, post-compaction recovery |
+| **Auto Dream** | Session start | Checks if knowledge consolidation is needed (5+ sessions, 3+ corrections), outputs guidance |
+| **Tips** | Session start | Shows contextual tips based on session history with cooldown (e.g., "Run /vibe:reflect", "Try /vibe:forge create") |
+| **PreToolUse security** | Before bash commands | Blocks dangerous operations before execution: rm -rf /, force push to main, curl\|bash, chmod 777, database DROP. |
+| **Lint** | After file edit | Detects project linter (eslint, prettier, ruff, black, rustfmt, gofmt) and runs it. Blocks on failure. |
+| **Security scan** | After file edit | 31-pattern scan for: hardcoded keys (API, AWS, Stripe, GitHub, Slack), XSS (innerHTML, document.write, dangerouslySetInnerHTML), injection (eval, SQL interpolation, pickle, yaml.load), credentials (private keys, JWT, Bearer), and more. Blocks on detection. |
+| **Cost tracking** | After skill invocation | Estimates token usage and cost per skill, logs to JSONL for budget awareness |
+| **Compact save** | Before compaction | Saves structured session state (JSON + markdown) including branch, modified files, errors, skills used. SessionStart re-injects post-compaction. |
+| **Correction capture** | Every user prompt | Detects correction patterns in 6 languages (EN, IT, ES, FR, DE, PT). Queues for `/vibe:reflect`. |
+| **Failure loop** | After tool failures | Blocks after 3 consecutive failures: "STOP. Replan or use /vibe:emmet debug." Resets on success. |
 
 Use `/vibe:pause` to temporarily disable hooks when they get in the way, `/vibe:resume` to re-enable.
 
@@ -213,7 +242,7 @@ After migration, run `/vibe:setup` in each project to generate a fresh v2-compat
 bash tests/run-tests.sh
 ```
 
-Runs 59 automated tests covering plugin structure, all skills, agents, hook scripts, security patterns, failure detection, pause/resume, correction capture, and v1 migration cleanup.
+Runs 80+ automated tests covering plugin structure, all skills, all agents, hook scripts (including new PreToolUse and cost tracking), 31 security patterns, failure detection, pause/resume, correction capture, frontmatter validation, and v1 migration cleanup.
 
 ## License
 

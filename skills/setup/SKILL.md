@@ -3,6 +3,8 @@ name: setup
 description: First-run configuration for VIBE Framework. Configures Claude Code for maximum quality output. Run after installing the plugin.
 effort: max
 disable-model-invocation: true
+whenToUse: "Use after installing the VIBE plugin for first-run configuration. Example: '/vibe:setup'"
+maxTokenBudget: 20000
 ---
 
 # VIBE Setup Wizard

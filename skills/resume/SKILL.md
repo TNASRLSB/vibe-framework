@@ -2,6 +2,8 @@
 name: resume
 description: Re-enable VIBE quality hooks after pausing. Run after /vibe:pause.
 disable-model-invocation: true
+whenToUse: "Use to re-enable VIBE quality hooks after pausing. Example: '/vibe:resume'"
+maxTokenBudget: 1000
 ---
 
 # VIBE Resume
