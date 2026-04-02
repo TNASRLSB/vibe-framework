@@ -23,3 +23,7 @@ references/src/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Internal development files (not part of distributed product)
+/docs/superpowers/
+/tests/
