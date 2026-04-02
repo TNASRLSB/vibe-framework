@@ -17,8 +17,8 @@ skills/orson/engine/audio/.venv/
 *.preview.html
 video-preview.html
 
-# Reference source (analysis only, not distributed)
-references/src/
+# Reference material (internal, not distributed)
+/references/
 
 # OS files
 .DS_Store
