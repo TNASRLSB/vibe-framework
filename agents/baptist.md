@@ -28,7 +28,7 @@ This agent uses **project-scope** memory. Tailor all learnings and findings to t
 
 ## Protocol
 
-Follow the audit protocol in `references/audit-protocol.md` for:
+Follow the audit protocol in `${CLAUDE_PLUGIN_ROOT}/skills/_shared/audit-protocol.md` for:
 - Report format and severity levels
 - Evidence requirements (every finding needs measurable data)
 - Fix behavior (all fixes in worktree)

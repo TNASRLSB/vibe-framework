@@ -396,7 +396,7 @@ Before delivering a video:
 ## Reference Files
 
 For detailed information, see:
-- `references/components.md` -- Scene types, transitions, text animations, layout templates
-- `references/audio.md` -- TTS engines, voice presets, music selection, SFX, ducking
-- `references/rendering.md` -- Playwright capture, FFmpeg encoding, parallel rendering, HW accel
-- `references/recipes.md` -- Ready-to-use recipes for common video types
+- `${CLAUDE_SKILL_DIR}/references/components.md` -- Scene types, transitions, text animations, layout templates
+- `${CLAUDE_SKILL_DIR}/references/audio.md` -- TTS engines, voice presets, music selection, SFX, ducking
+- `${CLAUDE_SKILL_DIR}/references/rendering.md` -- Playwright capture, FFmpeg encoding, parallel rendering, HW accel
+- `${CLAUDE_SKILL_DIR}/references/recipes.md` -- Ready-to-use recipes for common video types

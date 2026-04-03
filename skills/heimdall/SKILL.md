@@ -46,9 +46,9 @@ Heimdall loads the same pattern files the hook uses, but adds contextual analysi
 ### Phase 1: Pre-scan (Pattern Matching)
 
 Fast pass using regex patterns. Load pattern files:
-- `patterns/secrets.json` — API key and credential patterns
-- `patterns/baas-misconfig.json` — BaaS misconfigurations
-- `patterns/owasp-top-10.json` — OWASP vulnerability patterns
+- `${CLAUDE_SKILL_DIR}/patterns/secrets.json` — API key and credential patterns
+- `${CLAUDE_SKILL_DIR}/patterns/baas-misconfig.json` — BaaS misconfigurations
+- `${CLAUDE_SKILL_DIR}/patterns/owasp-top-10.json` — OWASP vulnerability patterns
 
 ```bash
 # Find all source files (exclude deps, build output, assets)
@@ -181,7 +181,7 @@ If `[path]` is a directory, discover files within it and run the standard pipeli
 Focused scan for credentials and secrets only.
 
 ### Step 1: Pattern Scan
-Load `patterns/secrets.json` and scan all files.
+Load `${CLAUDE_SKILL_DIR}/patterns/secrets.json` and scan all files.
 
 ### Step 2: Check .gitignore Coverage
 ```bash
@@ -245,7 +245,7 @@ baas.forEach(b => { if(deps[b]) console.log(b + ': ' + deps[b]); });
 - Verify Auth configuration
 - Check Cloud Storage rules
 
-Load detailed checks from `references/baas.md`.
+Load detailed checks from `${CLAUDE_SKILL_DIR}/references/baas.md`.
 
 ### Step 3: Report
 
@@ -267,10 +267,10 @@ Same format as full audit, focused on BaaS findings.
 ## Reference Files
 
 For detailed patterns, examples, and remediation guidance:
-- `references/owasp.md` — OWASP Top 10 with detection and fixes
-- `references/baas.md` — Supabase and Firebase security
-- `references/credentials.md` — API key patterns and env var management
-- `references/patterns.md` — Input validation, encoding, CSRF, rate limiting, CSP, secure headers
+- `${CLAUDE_SKILL_DIR}/references/owasp.md` — OWASP Top 10 with detection and fixes
+- `${CLAUDE_SKILL_DIR}/references/baas.md` — Supabase and Firebase security
+- `${CLAUDE_SKILL_DIR}/references/credentials.md` — API key patterns and env var management
+- `${CLAUDE_SKILL_DIR}/references/patterns.md` — Input validation, encoding, CSRF, rate limiting, CSP, secure headers
 
 ---
 
