@@ -1,5 +1,16 @@
 # Changelog
 
+## 3.7.0 — 2026-04-03
+
+### Fixed
+- **Reference path resolution**: all skills now use `${CLAUDE_SKILL_DIR}/references/` instead of bare relative paths — the plugin loader expands these to absolute paths before Claude sees them, ensuring reference files are found regardless of the user's working directory
+- **Agent audit protocol**: moved `audit-protocol.md` from gitignored `/references/` to distributed `skills/_shared/` — all 7 audit agents now reference it via `${CLAUDE_PLUGIN_ROOT}` and can actually read it at runtime
+- **Heimdall pattern paths**: `patterns/*.json` files now use `${CLAUDE_SKILL_DIR}/patterns/` for reliable resolution
+- **Shared protocol paths**: competitor research references in Ghostwriter, Seurat, and Baptist use `${CLAUDE_SKILL_DIR}/../_shared/` instead of bare `../_shared/`
+
+### Changed
+- **Setup skill**: improved monorepo detection with `find -maxdepth 2` instead of flat `ls`, covers `frontend/`, `backend/`, `packages/*` structures
+
 ## 3.5.1 — 2026-03-31
 
 ### Fixed
