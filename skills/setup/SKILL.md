@@ -41,76 +41,83 @@ uname -s && echo "---" && echo "$SHELL" && echo "---" && echo "${BASH_VERSION:-n
 
 ### 1.3 Detect Project Stack
 
-Check for manifest files to identify the project stack. Run all checks in parallel:
+Search for manifest files in the project root **and** up to 2 levels deep (covers monorepos, `frontend/`, `backend/`, `packages/*`, etc.). Never assume any specific subdirectory exists.
 
 ```bash
-# Package managers and languages
-ls -1 package.json pnpm-lock.yaml yarn.lock package-lock.json \
-      pyproject.toml setup.cfg setup.py requirements.txt Pipfile \
-      Cargo.toml go.mod go.sum \
-      Gemfile composer.json build.gradle build.gradle.kts pom.xml \
-      *.sln *.csproj Package.swift Makefile CMakeLists.txt \
-      pubspec.yaml mix.exs 2>/dev/null
+find . -maxdepth 2 \( \
+  -name 'package.json' -o -name 'pnpm-lock.yaml' -o -name 'yarn.lock' -o -name 'package-lock.json' \
+  -o -name 'pyproject.toml' -o -name 'setup.cfg' -o -name 'setup.py' -o -name 'requirements.txt' -o -name 'Pipfile' \
+  -o -name 'Cargo.toml' -o -name 'go.mod' -o -name 'go.sum' \
+  -o -name 'Gemfile' -o -name 'composer.json' -o -name 'build.gradle' -o -name 'build.gradle.kts' -o -name 'pom.xml' \
+  -o -name '*.sln' -o -name '*.csproj' -o -name 'Package.swift' -o -name 'Makefile' -o -name 'CMakeLists.txt' \
+  -o -name 'pubspec.yaml' -o -name 'mix.exs' \
+\) ! -path '*/node_modules/*' ! -path '*/.git/*' ! -path '*/target/*' ! -path '*/vendor/*' ! -path '*/dist/*' 2>/dev/null | sort
 ```
+
+**Record every manifest path found** (e.g., `./package.json`, `./frontend/package.json`, `./backend/pyproject.toml`). Use these exact paths in Steps 1.4 and 1.5. Never `cd` into subdirectories — always use absolute or relative paths from the project root.
 
 ### 1.4 Detect Available Linters
 
-Based on detected stack, check which linters/formatters are available:
+**Only run checks for stacks whose manifest files were actually found in Step 1.3.** Skip any section whose manifest was not found. Use the **exact paths** recorded in Step 1.3 — never hardcode `./package.json` or `cd` into assumed subdirectories.
 
-**JavaScript/TypeScript projects** — check package.json for:
+For each `package.json` found in Step 1.3 (substitute `PKG_PATH` with the actual path, e.g., `./frontend/package.json`):
 ```bash
 node -e "
-const p = require('./package.json');
+const p = require('PKG_PATH');
 const deps = {...(p.dependencies||{}), ...(p.devDependencies||{})};
 const tools = ['eslint','prettier','biome','oxlint','stylelint','tsc'];
-tools.forEach(t => { if(deps[t]) console.log(t + ': ' + deps[t]); });
-" 2>/dev/null || echo "no package.json or node not available"
+tools.forEach(t => { if(deps[t]) console.log('PKG_PATH → ' + t + ': ' + deps[t]); });
+" 2>/dev/null || echo "PKG_PATH: could not read or node not available"
 ```
 
-**Python projects** — check pyproject.toml and installed tools:
+For each `pyproject.toml` found (substitute `PYPROJ_PATH`):
 ```bash
-grep -E '^\[tool\.(ruff|black|flake8|mypy|pylint|isort|pyright)\]' pyproject.toml 2>/dev/null
-grep -E '(ruff|black|flake8|mypy|pylint)' setup.cfg 2>/dev/null
+grep -E '^\[tool\.(ruff|black|flake8|mypy|pylint|isort|pyright)\]' PYPROJ_PATH 2>/dev/null
 ```
 
-**Rust projects:**
+For each `setup.cfg` found (substitute `SETUP_PATH`):
 ```bash
-grep -q '\[package\]' Cargo.toml 2>/dev/null && echo "rustfmt: $(rustfmt --version 2>/dev/null || echo 'not found')" && echo "clippy: $(cargo clippy --version 2>/dev/null || echo 'not found')"
+grep -E '(ruff|black|flake8|mypy|pylint)' SETUP_PATH 2>/dev/null
 ```
 
-**Go projects:**
+For each `Cargo.toml` found (substitute `CARGO_PATH`):
 ```bash
-test -f go.mod && echo "gofmt: $(gofmt -h 2>&1 | head -1 || echo 'not found')" && echo "golint: $(which golangci-lint 2>/dev/null || echo 'not found')"
+grep -q '\[package\]' CARGO_PATH 2>/dev/null && echo "rustfmt: $(rustfmt --version 2>/dev/null || echo 'not found')" && echo "clippy: $(cargo clippy --version 2>/dev/null || echo 'not found')"
+```
+
+For each `go.mod` found (substitute `GOMOD_PATH`):
+```bash
+test -f GOMOD_PATH && echo "gofmt: $(gofmt -h 2>&1 | head -1 || echo 'not found')" && echo "golint: $(which golangci-lint 2>/dev/null || echo 'not found')"
 ```
 
 ### 1.5 Detect Build/Test/Lint Commands
 
-Extract standard commands from manifest files:
+Extract standard commands from manifest files found in Step 1.3. **Only run checks for manifests that were actually found. Use the exact paths from Step 1.3.**
 
+For each `package.json` found (substitute `PKG_PATH`):
 ```bash
-# Node projects
-node -e "const p=require('./package.json'); const s=p.scripts||{}; ['build','test','lint','format','typecheck','dev','start'].forEach(k=>{if(s[k])console.log(k+': '+s[k])})" 2>/dev/null
+node -e "const p=require('PKG_PATH'); const s=p.scripts||{}; ['build','test','lint','format','typecheck','dev','start'].forEach(k=>{if(s[k])console.log('PKG_PATH → '+k+': '+s[k])})" 2>/dev/null
 ```
 
+For each `pyproject.toml` found (substitute `PYPROJ_PATH`):
 ```bash
-# Python projects — check pyproject.toml for scripts
-grep -A1 '\[project.scripts\]' pyproject.toml 2>/dev/null
-grep -A1 '\[tool.pytest' pyproject.toml 2>/dev/null && echo "test: pytest"
+grep -A1 '\[project.scripts\]' PYPROJ_PATH 2>/dev/null
+grep -A1 '\[tool.pytest' PYPROJ_PATH 2>/dev/null && echo "test: pytest"
 ```
 
+For each `Cargo.toml` found (substitute `CARGO_PATH`):
 ```bash
-# Rust projects
-test -f Cargo.toml && echo "build: cargo build" && echo "test: cargo test" && echo "lint: cargo clippy"
+test -f CARGO_PATH && echo "build: cargo build" && echo "test: cargo test" && echo "lint: cargo clippy"
 ```
 
+For each `go.mod` found (substitute `GOMOD_PATH`):
 ```bash
-# Go projects
-test -f go.mod && echo "build: go build ./..." && echo "test: go test ./..." && echo "lint: golangci-lint run"
+test -f GOMOD_PATH && echo "build: go build ./..." && echo "test: go test ./..." && echo "lint: golangci-lint run"
 ```
 
+For each `Makefile` found (substitute `MAKE_PATH`):
 ```bash
-# Makefile targets
-grep -E '^[a-zA-Z_-]+:' Makefile 2>/dev/null | head -20
+grep -E '^[a-zA-Z_-]+:' MAKE_PATH 2>/dev/null | head -20
 ```
 
 ### 1.6 Present Diagnosis
@@ -399,7 +406,8 @@ Restart Claude Code to apply all changes.
 4. **Transparent:** Show every change before applying. No silent modifications.
 5. **Graceful degradation:** If `jq` is missing, handle JSON manually. If a manifest file is absent, skip that check. Never fail hard on a missing tool.
 6. **No assumptions:** If you cannot detect something, say so. Do not guess.
-7. **Re-runnable:** Running setup again should detect what is already configured and only propose missing pieces.
+7. **No directory assumptions:** Never assume subdirectories like `frontend/`, `backend/`, `src/`, or `packages/` exist. Only reference paths that were discovered by `find` in Step 1.3. Never use `cd` to enter assumed subdirectories — use full paths from the project root.
+8. **Re-runnable:** Running setup again should detect what is already configured and only propose missing pieces.
 
 ---
 

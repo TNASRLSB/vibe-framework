@@ -74,7 +74,7 @@ Scan for existing CSS/component files. Look for existing tokens in:
 
 ### Step 3: Competitor Research (Design Lens)
 
-> **Read** `../_shared/competitor-research.md` for the full research protocol.
+> **Read** `${CLAUDE_SKILL_DIR}/../_shared/competitor-research.md` for the full research protocol.
 
 Check if competitor research exists for this project. If not, ask the user for their service/product type and execute the shared protocol.
 
@@ -91,7 +91,7 @@ Informed by competitor research, select the visual style that best fits the mark
 2. What style do the standout competitors use? (= differentiation strategies)
 3. What would make the user's product feel native to the market but distinctive?
 
-> **Read** `references/styles.md` for token overrides and CSS patterns per style.
+> **Read** `${CLAUDE_SKILL_DIR}/references/styles.md` for token overrides and CSS patterns per style.
 
 Present a recommendation to the user based on competitor patterns, not a generic menu. "Based on your sector, I recommend Flat as the base with a Typography Clash Factor-X for differentiation. Here's why..."
 
@@ -124,7 +124,7 @@ Parse the request: what (component/page/interface), archetype, data, interaction
 
 ### Phase 2: Select Page Archetype
 
-> **Read** `references/archetypes.md` for complete definitions.
+> **Read** `${CLAUDE_SKILL_DIR}/references/archetypes.md` for complete definitions.
 
 | Archetype | Use case |
 |-----------|----------|
@@ -152,7 +152,7 @@ Parse the request: what (component/page/interface), archetype, data, interaction
 - No identical card grids where every card looks the same
 - No generic hero with stock photo + centered headline + centered CTA (unless competitor research shows this IS what the market expects)
 - Check: would a designer look at this and say "AI made this"? If yes, redesign.
-- Apply Factor-X from `references/styles.md` for controlled distinctiveness
+- Apply Factor-X from `${CLAUDE_SKILL_DIR}/references/styles.md` for controlled distinctiveness
 
 ### Phase 4: Build Components
 
@@ -175,7 +175,7 @@ Assemble into the archetype layout:
 
 ### Phase 6: Accessibility Pass
 
-> **Read** `references/accessibility.md` for the full WCAG checklist.
+> **Read** `${CLAUDE_SKILL_DIR}/references/accessibility.md` for the full WCAG checklist.
 
 Before delivering ANY output:
 - Color contrast >= 4.5:1 normal text, >= 3:1 large text
@@ -196,7 +196,7 @@ Before delivering ANY output:
 
 ### Step 1: Competitor Visual Research
 
-> **Read** `../_shared/competitor-research.md` for the research protocol.
+> **Read** `${CLAUDE_SKILL_DIR}/../_shared/competitor-research.md` for the research protocol.
 
 Before defining any brand element, understand the visual landscape of the sector. From the Design Lens results:
 - What visual language does the market speak?
@@ -206,7 +206,7 @@ Before defining any brand element, understand the visual landscape of the sector
 
 ### Step 2: Brand Personality
 
-> **Read** `references/brand.md` for personality-to-visual mapping tables.
+> **Read** `${CLAUDE_SKILL_DIR}/references/brand.md` for personality-to-visual mapping tables.
 
 Define the brand across five dimensions (1-7 scale): Tone, Energy, Complexity, Temperature, Edge.
 
@@ -214,7 +214,7 @@ Inform the scoring with competitor context: "Most competitors in your sector sco
 
 ### Step 3: Visual Language
 
-Map personality scores to visual decisions using the mapping tables in `references/brand.md`:
+Map personality scores to visual decisions using the mapping tables in `${CLAUDE_SKILL_DIR}/references/brand.md`:
 - Color palette from Temperature + Energy + Tone
 - Typography from Complexity + Edge + Tone
 - Shape language from Edge + Energy
@@ -225,7 +225,7 @@ Map personality scores to visual decisions using the mapping tables in `referenc
 
 Generate 3 logo concepts as clean SVG: wordmark, symbol, combination mark.
 
-> **Read** `references/brand.md` → SVG best practices.
+> **Read** `${CLAUDE_SKILL_DIR}/references/brand.md` → SVG best practices.
 
 ### Step 5: Brand Guidelines
 
@@ -299,7 +299,7 @@ Scan all component files. For each: name, props, children/slots, import referenc
 | Bento Grid | Grid cells | 12-20px | Card-level | Stagger |
 | Gen-Z | Expressive | Pill/blob | Mixed | Playful |
 
-> **Read** `references/styles.md` for token overrides, CSS patterns, and Factor-X system.
+> **Read** `${CLAUDE_SKILL_DIR}/references/styles.md` for token overrides, CSS patterns, and Factor-X system.
 
 ---
 

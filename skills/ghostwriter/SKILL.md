@@ -57,7 +57,7 @@ Confirm your understanding in 2-3 lines before proceeding. Do NOT ask follow-up 
 
 ### Phase 2: Global Competitor Research
 
-> **Read** `../_shared/competitor-research.md` for the full research protocol.
+> **Read** `${CLAUDE_SKILL_DIR}/../_shared/competitor-research.md` for the full research protocol.
 
 Execute the shared competitor research protocol with the service/product type from Phase 1. The protocol handles: global multi-language search, competitor qualification, deep analysis across all lenses (copy, design, conversion), pattern extraction, and storage.
 
@@ -101,7 +101,7 @@ If the user doesn't know, help them find it by contrasting their offering with t
 
 ### Phase 6: Write
 
-> **Read** `references/copywriting.md` for mandatory process constraints.
+> **Read** `${CLAUDE_SKILL_DIR}/references/copywriting.md` for mandatory process constraints.
 
 Follow ALL constraints in that reference. In summary:
 
@@ -118,15 +118,15 @@ Follow ALL constraints in that reference. In summary:
 4. Generate 3 CTA options → select the strongest (state why)
 
 **After the first draft (mandatory):**
-1. Anti-AI pattern check (see `references/copywriting.md` — zero tolerance)
+1. Anti-AI pattern check (see `${CLAUDE_SKILL_DIR}/references/copywriting.md` — zero tolerance)
 2. Sharpening: cut 20%, abstract → concrete, generic → specific
 3. Every sentence must pass the "so what?" test
 4. Quotability check: at least ONE sentence a reader would share with a colleague
 
 ### Phase 7: SEO + GEO Optimization
 
-> **Read** `references/seo.md` for on-page optimization rules.
-> **Read** `references/geo.md` for AI search optimization rules.
+> **Read** `${CLAUDE_SKILL_DIR}/references/seo.md` for on-page optimization rules.
+> **Read** `${CLAUDE_SKILL_DIR}/references/geo.md` for AI search optimization rules.
 
 Apply both rulesets to the sharpened draft:
 - Keyword integration (density 1-2%, primary keyword in first 100 words)
@@ -141,7 +141,7 @@ Apply both rulesets to the sharpened draft:
 
 ### Phase 8: Validate
 
-> **Read** `references/validation.md` for the complete 52+ rule checklist.
+> **Read** `${CLAUDE_SKILL_DIR}/references/validation.md` for the complete 52+ rule checklist.
 
 Run every applicable rule. Report in three categories:
 - **PASS** — Rule satisfied
@@ -183,22 +183,22 @@ Read the target content (file path or pasted text). If a URL is provided, extrac
 
 Run all audits in parallel:
 
-**Technical SEO audit** — Read `references/seo.md`:
+**Technical SEO audit** — Read `${CLAUDE_SKILL_DIR}/references/seo.md`:
 - Title tag, meta description, heading structure, internal links
 - Image alt text, schema markup, keyword density, URL structure
 
-**GEO audit** — Read `references/geo.md`:
+**GEO audit** — Read `${CLAUDE_SKILL_DIR}/references/geo.md`:
 - Quotable statements, entity precision, freshness signals
 - Structured answers, definitional sentences, consistent naming
 
-**Copywriting audit** — Read `references/copywriting.md`:
+**Copywriting audit** — Read `${CLAUDE_SKILL_DIR}/references/copywriting.md`:
 - Anti-AI pattern detection (every pattern in the checklist)
 - Headline strength, opening hook quality
 - CTA presence and clarity
 - Audience perspective (is the reader's point of view present in the text?)
 - Sharpening opportunities (abstract claims, generic sentences, filler)
 
-**Validation** — Read `references/validation.md`:
+**Validation** — Read `${CLAUDE_SKILL_DIR}/references/validation.md`:
 - Run all 52+ rules, report PASS/FAIL/WARN per rule
 
 ### Step 3: Deliver Optimization Report
@@ -219,7 +219,7 @@ Output:
 Run the full 52+ rule validation against content without rewriting.
 
 1. Read the content
-2. Run all rules from `references/validation.md`
+2. Run all rules from `${CLAUDE_SKILL_DIR}/references/validation.md`
 3. Output pass/fail/warn for every rule
 4. Summary with total score
 
@@ -276,7 +276,7 @@ Run the full 52+ rule validation against content without rewriting.
 
 ### Banned Patterns
 
-In addition to the anti-AI patterns in `references/copywriting.md`:
+In addition to the anti-AI patterns in `${CLAUDE_SKILL_DIR}/references/copywriting.md`:
 - "In today's world..." / "In today's digital age..."
 - "It goes without saying..." / "Needless to say..."
 - "At the end of the day..."

@@ -100,7 +100,7 @@ This is the full testing cycle. For subsets, use the flags.
 
 ### Phase 1: Functional Map
 
-> **Read** `references/strategies.md` for test planning guidance.
+> **Read** `${CLAUDE_SKILL_DIR}/references/strategies.md` for test planning guidance.
 
 Map the codebase to understand what exists and what needs testing.
 
@@ -110,7 +110,7 @@ Map the codebase to understand what exists and what needs testing.
 4. **Catalog side-effectful functions:** DB writes, API calls, file I/O — these need integration tests
 5. **Identify untested code:** Cross-reference with existing test files
 
-Output a functional map. See `references/templates.md` for format.
+Output a functional map. See `${CLAUDE_SKILL_DIR}/references/templates.md` for format.
 
 ### Phase 2: Test Strategy
 
@@ -126,7 +126,7 @@ Based on the functional map, plan what to test and how:
 
 ### Phase 3: Unit Tests
 
-> **Read** `references/strategies.md` → "Unit Testing" section.
+> **Read** `${CLAUDE_SKILL_DIR}/references/strategies.md` → "Unit Testing" section.
 
 Write unit tests for pure functions:
 
@@ -156,7 +156,7 @@ Report type errors, unused variables, unreachable code.
 
 ### Phase 5: Visual Persona Tests
 
-> **Read** `references/personas.md` for complete persona configs.
+> **Read** `${CLAUDE_SKILL_DIR}/references/personas.md` for complete persona configs.
 
 For each relevant persona (select based on project type):
 
@@ -183,7 +183,7 @@ Use Playwright in **headed mode** (not headless) with Chrome MCP when available.
 
 ### Phase 6: Report
 
-> **Read** `references/templates.md` for report format.
+> **Read** `${CLAUDE_SKILL_DIR}/references/templates.md` for report format.
 
 Generate a test report containing:
 - Total tests: pass / fail / skip
@@ -229,7 +229,7 @@ Run Phase 1 (map) → Phase 2 (strategy). Output map and plan, but do not write 
 
 **Trigger:** `/vibe:emmet debug`
 
-> **Read** `references/debugging.md` for the complete methodology.
+> **Read** `${CLAUDE_SKILL_DIR}/references/debugging.md` for the complete methodology.
 
 This is a systematic, 7-step process. Never skip steps. Never jump to fixing before isolating.
 
@@ -346,7 +346,7 @@ This is intentional: the hook prevents wasted time, and Emmet provides the struc
 
 ### Output
 
-> **Read** `references/templates.md` → "Tech Debt Report" format.
+> **Read** `${CLAUDE_SKILL_DIR}/references/templates.md` → "Tech Debt Report" format.
 
 Generate a prioritized report:
 - **Critical:** Production risk, data integrity issues
@@ -362,7 +362,7 @@ Each finding includes: location, description, suggested fix, estimated effort (S
 
 **Trigger:** `/vibe:emmet map`
 
-> **Read** `references/templates.md` → "Functional Map" format.
+> **Read** `${CLAUDE_SKILL_DIR}/references/templates.md` → "Functional Map" format.
 
 Generate a complete functional map of the codebase:
 

@@ -46,10 +46,10 @@ When the user makes a request, detect the target format:
 
 Once format is detected, read the appropriate reference:
 
-- **XLSX** --> Read `references/xlsx.md`
-- **DOCX** --> Read `references/docx.md`
-- **PPTX** --> Read `references/pptx.md`
-- **PDF** --> Read `references/pdf.md`
+- **XLSX** --> Read `${CLAUDE_SKILL_DIR}/references/xlsx.md`
+- **DOCX** --> Read `${CLAUDE_SKILL_DIR}/references/docx.md`
+- **PPTX** --> Read `${CLAUDE_SKILL_DIR}/references/pptx.md`
+- **PDF** --> Read `${CLAUDE_SKILL_DIR}/references/pdf.md`
 
 ---
 

@@ -41,7 +41,7 @@ Every conversion failure traces back to one of these. Baptist identifies WHICH f
 
 ### Step 1: Competitor Research (Conversion Lens)
 
-> **Read** `../_shared/competitor-research.md` for the full research protocol.
+> **Read** `${CLAUDE_SKILL_DIR}/../_shared/competitor-research.md` for the full research protocol.
 
 Check if competitor research exists for this project. If not, ask the user for their service/product type and execute the shared protocol.
 
@@ -96,7 +96,7 @@ For the weakest factor, generate 3-5 specific recommendations. Each must include
 
 ## ICE Scoring
 
-> **Read** `references/frameworks.md` for calibrated scoring examples.
+> **Read** `${CLAUDE_SKILL_DIR}/references/frameworks.md` for calibrated scoring examples.
 
 **ICE Score = (Impact + Confidence + Ease) / 3** — each dimension 1-10.
 
@@ -116,7 +116,7 @@ Key calibration points:
 
 **Trigger:** `/vibe:baptist test`
 
-> **Read** `references/experiments.md` for the complete methodology.
+> **Read** `${CLAUDE_SKILL_DIR}/references/experiments.md` for the complete methodology.
 
 ### Step 1: Hypothesis
 
@@ -135,7 +135,7 @@ Link the hypothesis to competitor evidence where possible: "Competitors with 3-f
 
 ### Step 3: Sample Size & Duration
 
-> **Read** `references/experiments.md` → "Sample Size Calculation"
+> **Read** `${CLAUDE_SKILL_DIR}/references/experiments.md` → "Sample Size Calculation"
 
 Calculate based on: baseline conversion rate, minimum detectable effect, 95% significance, 80% power.
 
@@ -151,7 +151,7 @@ Specific instructions: exact copy changes (before/after), layout changes, traffi
 
 **Trigger:** `/vibe:baptist analyze`
 
-> **Read** `references/analytics.md` for statistical methods.
+> **Read** `${CLAUDE_SKILL_DIR}/references/analytics.md` for statistical methods.
 
 ### Step 1: Data Validation
 
@@ -186,7 +186,7 @@ Output: hypothesis restated, result (confirmed/rejected/inconclusive), key numbe
 
 **Trigger:** `/vibe:baptist funnel`
 
-> **Read** `references/analytics.md` → "Funnel Analysis"
+> **Read** `${CLAUDE_SKILL_DIR}/references/analytics.md` → "Funnel Analysis"
 
 ### Step 1: Define the Funnel
 
