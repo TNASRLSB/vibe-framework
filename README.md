@@ -12,7 +12,7 @@ Claude Code out-of-the-box optimizes for speed and token savings. VIBE inverts t
 /vibe:setup
 ```
 
-`/vibe:setup` configures your environment in one pass: detects your stack, recommends LSP plugins, sets model to `opus[1m]` with `effort:max`, configures a status line, and optionally maps your codebase. Restart Claude Code after setup for global settings to take effect.
+`/vibe:setup` configures your environment in one pass: detects your stack, recommends LSP plugins, sets model to `opus` with `effort:max`, configures a status line, and optionally maps your codebase. Restart Claude Code after setup for global settings to take effect.
 
 ## What's New in v3.5
 
