@@ -234,7 +234,7 @@ Configuration Proposal
 
 Setting                        Current              Recommended
 ─────────────────────────────────────────────────────────────────
-Model                          [current]            opus[1m]
+Model                          [current]            opus
 Effort level                   [current]            max
 Skill char budget              [current]            50000
 LSP plugin                     [current]            [detected]-lsp
@@ -243,12 +243,28 @@ Status line                    [current]            [proposed above]
 
 ### 4.2 Explain the Recommendations
 
-- **opus[1m]:** The 1M context variant of Opus. Highest capability model with maximum context window. Required for deep codebase understanding.
+- **opus:** The highest capability model. Use `opus[1m]` (1M context variant) if you have extra usage enabled and need deep codebase understanding across very large projects.
 - **effort: max:** Forces Claude to think thoroughly on every response. No shortcuts, no lazy outputs. This is the core of what VIBE does.
 - **SLASH_COMMAND_TOOL_CHAR_BUDGET: 50000:** Ensures all 12 skills appear in the autocomplete menu. The default budget (~20K chars) is too small when multiple plugins are installed; raising it to 50K prevents skills from being silently truncated.
 - **LSP:** Enables Claude to use language-aware diagnostics for catching errors before they reach you.
 
-### 4.3 Ask for Approval
+### 4.3 Extended Context (Optional)
+
+After presenting the proposal, ask the user about 1M context:
+
+> **Extended context:** Claude supports a 1M token context window (`opus[1m]`), which gives deeper codebase understanding on large projects. This requires:
+> 1. A **Max plan** (5x or 20x)
+> 2. **Extra usage** enabled (run `/extra-usage` in Claude Code)
+>
+> Do you have a Max plan and want to use `opus[1m]`? (yes/no/not sure)
+
+**If yes:** update the proposed model from `opus` to `opus[1m]` and note the change in the proposal table before proceeding to approval.
+
+**If not sure:** suggest the user check their plan at https://console.anthropic.com or in Claude Code settings. Default to `opus` if they can't confirm.
+
+**If no:** keep `opus` as proposed. No further action needed.
+
+### 4.4 Ask for Approval
 
 > I will update `~/.claude/settings.json` with these changes.
 > Existing settings will be preserved — I only merge new values.
@@ -267,16 +283,18 @@ Status line                    [current]            [proposed above]
 
 Merge recommended values into `~/.claude/settings.json`. Never overwrite the file — always read, merge, write.
 
+Use the model chosen in Step 4.3: `opus[1m]` if the user opted in, `opus` otherwise.
+
 ```bash
 # Read existing settings (or start with empty object)
 EXISTING=$(cat ~/.claude/settings.json 2>/dev/null || echo '{}')
 ```
 
-Use `jq` to merge (preferred) or construct manually:
+Use `jq` to merge (preferred) or construct manually. Replace `MODEL` with the chosen value (`opus` or `opus[1m]`):
 
 ```bash
 echo "$EXISTING" | jq '
-  .model = "opus[1m]" |
+  .model = "MODEL" |
   .env.CLAUDE_CODE_EFFORT_LEVEL = "max" |
   .env.SLASH_COMMAND_TOOL_CHAR_BUDGET = "50000"
 ' > ~/.claude/settings.json.tmp && mv ~/.claude/settings.json.tmp ~/.claude/settings.json
@@ -358,7 +376,7 @@ VIBE Setup — Complete
 [x] Settings diagnosed
 [x] LSP: [status]
 [x] Status line: [configured/skipped]
-[x] Model set to opus[1m]
+[x] Model set to [opus or opus[1m]]
 [x] Effort set to max
 [x] CLAUDE.md: [generated/already existed]
 [x] Codebase mapping: [done/skipped]
