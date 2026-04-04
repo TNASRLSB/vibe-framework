@@ -389,7 +389,8 @@ This is the complete validation checklist for Ghostwriter. Run every applicable 
 | Content Quality | C01-C14 (14 rules) | 25% |
 | GEO / AI Search | G01-G12 (12 rules) | 25% |
 | Copywriting / Conversion | X01-X14 (14 rules) | 25% |
-| **Total** | **52 rules** | **100%** |
+| Content Separation | S01 (1 rule) | — |
+| **Total** | **53 rules** | **100%** |
 
 ### Score Calculation
 
@@ -420,6 +421,7 @@ These rules must PASS regardless of overall score. Content should not be publish
 6. **X01** — Headline strength
 7. **X03** — CTA present
 8. **X05** — Value proposition clear
+9. **S01** — Content JSON completeness
 
 If any critical rule fails, the overall score is capped at 69 regardless of other scores.
 
