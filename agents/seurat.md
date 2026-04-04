@@ -1,6 +1,6 @@
 ---
 name: seurat
-description: UI, design system, and accessibility audit with persistent memory. Use after frontend changes or for periodic quality checks.
+description: UI, design system, accessibility, and content/style separation audit with persistent memory. Use after frontend changes or for periodic quality checks.
 tools: Read, Grep, Glob, Bash, Write, Edit
 skills:
   - seurat
@@ -45,6 +45,16 @@ Follow the audit protocol in `${CLAUDE_PLUGIN_ROOT}/skills/_shared/audit-protoco
 6. **Focus management:** Verify visible focus indicators, logical tab order, skip navigation links.
 7. **Images:** Every `<img>` needs alt text. Decorative images use `alt=""`. Informative images use descriptive alt.
 8. **Forms:** Labels associated with inputs, error messages accessible, required fields indicated.
+
+### Content Separation Directives
+
+> **Reference:** Read `${CLAUDE_PLUGIN_ROOT}/skills/seurat/references/content-separation.md` for the full convention.
+> **Content keys:** Read `${CLAUDE_PLUGIN_ROOT}/skills/ghostwriter/references/content-json.md` for JSON key naming.
+
+9. **Hardcoded text:** Scan all template/component files for visible text not externalized to a content system. Text-bearing elements (`h1`-`h6`, `p`, `span`, `a`, `button`, `label`, `li`, `td`, `th`, `figcaption`) must use `data-i18n` attributes (static HTML) or `t()`/`useTranslations()` calls (React/Vue) — never inline text. Check `<img>` alt text, `<title>`, and `<meta description>` too. Repeating content blocks (features, pricing, testimonials) must use `<template data-i18n-list>` (static) or `.map()` with `t()` (React). Severity: CRITICAL for visible text hardcoded in templates, WARNING for alt text or meta tags inline. Fix: extract text into `content/en/[page].json` using standard section keys, replace inline text with `data-i18n` or `t()` references.
+10. **Raw style values:** Scan CSS and components for values that should be tokens. Flag color values (`#hex`, `rgb()`, `hsl()`), font sizes, spacing (margin/padding), border-radius, box-shadow, and transitions with raw values instead of `var(--token)` references. Acceptable exceptions: `0`, `100%`, `50%`, `auto`, `inherit`, `currentColor`, `1px` borders, values inside `tokens.css` itself, `@media` breakpoint values, Tailwind utility classes. Severity: WARNING for raw values in component CSS or inline styles, INFO if project has no token system yet. Fix: create `styles/tokens.css` with extracted values if missing, replace raw values with `var(--token)` references.
+11. **Content JSON integrity:** If the project has a `content/` directory, verify the content system. Every `data-i18n` key in templates must have a matching key in the JSON. Every key in the JSON should be referenced by at least one template (flag orphans). If multiple languages exist, all must have the same key set. Severity: CRITICAL for template keys missing from JSON (= empty element), WARNING for orphan keys or missing translation keys. Fix: add missing keys to JSON with placeholder `"[TODO: key.name]"`, do NOT delete orphan keys, add missing keys to translations with default language value.
+12. **Style architecture:** Verify CSS file structure follows the token hierarchy. `styles/tokens.css` must exist and contain only `:root` custom properties. `styles/theme.css` must use only `var()` references (no raw values except structural like `4rem`). `styles/global.css` must import the chain (`tokens.css`, `theme.css`, `components.css`). No `<style>` blocks in HTML with token definitions. For Tailwind: `tailwind.config.js` must have `theme.extend` with tokens. Severity: WARNING for missing or incomplete architecture files, INFO for missing dark mode or responsive tokens. Fix: create skeleton `tokens.css`, `theme.css`, `global.css` if missing, move raw values in `theme.css` to token references.
 
 ## Verification Commands
 
