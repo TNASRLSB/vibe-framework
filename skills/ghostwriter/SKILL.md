@@ -158,11 +158,25 @@ Critical rules that MUST pass:
 7. At least 3 quotable statements per major section
 8. CTA present and clear
 
-### Phase 9: Deliver
+### Phase 9: Structure & Deliver
+
+> **Read** `${CLAUDE_SKILL_DIR}/references/content-json.md` for JSON output format and key naming conventions.
+
+**Step 1: Structure into JSON**
+
+After validation passes, structure all copy into `content/[lang]/[page].json`:
+1. Map written sections to standard keys (hero, features, pricing, etc.)
+2. Extract shared strings (nav, footer, brand) into `common.json`
+3. Include all image paths and alt text in the JSON
+4. Include meta content (title, description, OG image) under `meta` key
+5. Verify: every piece of written copy appears in the JSON. No text left behind.
+
+**Step 2: Deliver**
 
 Output:
-- The content itself (formatted in markdown)
-- Meta content block: title tag, meta description, schema JSON-LD
+- `content/[lang]/common.json` -- shared strings
+- `content/[lang]/[page].json` -- page-specific content
+- Meta content block: title tag, meta description, schema JSON-LD (also in JSON under `meta` key)
 - Validation summary: pass/fail/warn counts
 - Competitor insights: key patterns that informed the messaging
 - Differentiation notes: how this copy stands out from the market baseline
@@ -240,6 +254,7 @@ Run the full 52+ rule validation against content without rewriting.
 - Social proof section: testimonials, logos, numbers
 - FAQ section at bottom (long-tail + schema)
 - Page speed critical — minimal JavaScript
+- All copy delivered as `content/[lang]/home.json` with standard section keys (see `${CLAUDE_SKILL_DIR}/references/content-json.md`)
 
 ### Product Descriptions
 - Lead with benefit, not feature
@@ -295,12 +310,14 @@ In addition to the anti-AI patterns in `${CLAUDE_SKILL_DIR}/references/copywriti
 
 ## When Other Skills Call Ghostwriter
 
-- **Seurat** → copy within UI components (button text, headings, microcopy)
-- **Baptist** → CTA text, headlines, value propositions during CRO
-- **Orson** → video scripts and narration text
-- **Scribe** → document content needing SEO/copy optimization
+- **Seurat** --> copy within UI components (button text, headings, microcopy). Output as `content/[lang]/[page].json` matching Seurat's `data-i18n` keys.
+- **Baptist** --> CTA text, headlines, value propositions during CRO. Output as structured JSON.
+- **Orson** --> video scripts and narration text
+- **Scribe** --> document content needing SEO/copy optimization
 
-When called programmatically: output structured content (not prose commentary) for machine consumption. Skip competitor research (Phases 2-5) when called by other skills — they provide context directly.
+When called programmatically: output `content/[lang]/[page].json` following the conventions in `${CLAUDE_SKILL_DIR}/references/content-json.md`. Skip competitor research (Phases 2-5) when called by other skills -- they provide context directly.
+
+**Integration contract with Seurat:** Ghostwriter fills the content keys that Seurat's templates reference. Both skills use the standard section keys defined in `${CLAUDE_SKILL_DIR}/references/content-json.md`. Keys must match exactly.
 
 ---
 
