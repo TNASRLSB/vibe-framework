@@ -1,4 +1,4 @@
-# Validation Checklist — 52+ Rules
+# Validation Checklist — 53+ Rules
 
 This is the complete validation checklist for Ghostwriter. Run every applicable rule against content before delivery.
 
@@ -422,3 +422,14 @@ These rules must PASS regardless of overall score. Content should not be publish
 8. **X05** — Value proposition clear
 
 If any critical rule fails, the overall score is capped at 69 regardless of other scores.
+
+---
+
+## Category 5: Content Separation (1 rule)
+
+### S01 — Content JSON Completeness
+- **Rule:** All user-facing text must be structured in `content/[lang]/[page].json`. No text may be hardcoded in HTML, JSX, or template files.
+- **Pass:** Every visible string (headings, paragraphs, button text, image alt text, meta tags, navigation labels, footer text) exists as a key in the content JSON. HTML/JSX contains only `data-i18n` references or `t()` calls.
+- **Fail:** Any visible text found directly in HTML/JSX rather than referenced from content JSON.
+- **Priority:** Critical
+- **How to check:** After structuring copy into JSON, scan the HTML template or JSX components. Every element that displays text must have a `data-i18n` attribute (static) or `t()` call (React). If you find literal text in the markup, move it to the JSON and replace with a key reference.

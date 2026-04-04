@@ -21,7 +21,7 @@ Check `$ARGUMENTS` to determine mode:
   - `write faq` → FAQ content with schema
   - `write pillar` → Pillar page + cluster strategy
 - `optimize [target]` → **Content Optimization Workflow**
-- `validate` → **Validation Only** (run 52+ rules)
+- `validate` → **Validation Only** (run 53+ rules)
 - No arguments or `help` → show available commands
 
 ---
@@ -141,7 +141,7 @@ Apply both rulesets to the sharpened draft:
 
 ### Phase 8: Validate
 
-> **Read** `${CLAUDE_SKILL_DIR}/references/validation.md` for the complete 52+ rule checklist.
+> **Read** `${CLAUDE_SKILL_DIR}/references/validation.md` for the complete 53+ rule checklist.
 
 Run every applicable rule. Report in three categories:
 - **PASS** — Rule satisfied
@@ -213,7 +213,7 @@ Run all audits in parallel:
 - Sharpening opportunities (abstract claims, generic sentences, filler)
 
 **Validation** — Read `${CLAUDE_SKILL_DIR}/references/validation.md`:
-- Run all 52+ rules, report PASS/FAIL/WARN per rule
+- Run all 53+ rules, report PASS/FAIL/WARN per rule
 
 ### Step 3: Deliver Optimization Report
 
@@ -230,7 +230,7 @@ Output:
 
 **Trigger:** `/vibe:ghostwriter validate`
 
-Run the full 52+ rule validation against content without rewriting.
+Run the full 53+ rule validation against content without rewriting.
 
 1. Read the content
 2. Run all rules from `${CLAUDE_SKILL_DIR}/references/validation.md`
