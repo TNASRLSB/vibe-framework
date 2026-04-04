@@ -30,6 +30,7 @@ Check `$ARGUMENTS` to determine mode:
 3. **Style is informed by the market, differentiated by the user.** Competitor research provides the visual baseline. The user's brand provides the distinctive angle.
 4. **Responsive by construction.** Every layout must work from 320px to 2560px.
 5. **Semantic HTML always.** The right element for the right job.
+6. **Content and presentation are separated.** Text lives in content JSON. Styles live in token files. HTML/JSX references both, contains neither.
 
 ---
 
@@ -156,13 +157,16 @@ Parse the request: what (component/page/interface), archetype, data, interaction
 
 ### Phase 4: Build Components
 
+> **Read** `${CLAUDE_SKILL_DIR}/references/content-separation.md` for output architecture rules.
+
 For each component:
 1. **Semantic HTML** -- correct elements, ARIA roles
-2. **Token-based styling** -- no hard-coded values
-3. **States** -- default, hover, focus, active, disabled, loading, error
-4. **Responsive behavior** -- adapts at each breakpoint
-5. **Keyboard interaction** -- tab order, key handlers
-6. **Screen reader support** -- labels, live regions
+2. **Token-based styling** -- no hard-coded values, all `var(--token)` or Tailwind classes
+3. **Content references** -- no inline text. Use `data-i18n` attributes (static HTML) or `t()` calls (React/Vue)
+4. **States** -- default, hover, focus, active, disabled, loading, error
+5. **Responsive behavior** -- adapts at each breakpoint
+6. **Keyboard interaction** -- tab order, key handlers
+7. **Screen reader support** -- labels, live regions
 
 ### Phase 5: Compose Layout
 
@@ -171,7 +175,8 @@ Assemble into the archetype layout:
 2. Set responsive breakpoints
 3. Wire interactions
 4. Add ARIA landmarks
-5. Set document title and meta
+5. Set document `<title>` and `<meta>` via `data-i18n` attributes (static) or head management (React)
+6. Use `<template data-i18n-list>` for repeating content (features, pricing, testimonials)
 
 ### Phase 6: Accessibility Pass
 
@@ -187,6 +192,37 @@ Before delivering ANY output:
 - No information conveyed by color alone
 - Form inputs have visible labels
 - Error messages associated via `aria-describedby`
+
+### Phase 7: Output Architecture
+
+> **Read** `${CLAUDE_SKILL_DIR}/references/content-separation.md` for complete conventions.
+
+Generate the correct file set based on project type:
+
+**Static HTML:**
+1. `styles/tokens.css` -- all design tokens with dark mode + responsive overrides
+2. `styles/theme.css` -- semantic mapping (tokens to UI roles)
+3. `styles/global.css` -- reset + base + import chain
+4. `styles/components.css` -- component rules
+5. `templates/[page].html` -- HTML template with `data-i18n` attributes, NO inline text
+6. `content/en/[page].json` -- content keys matching template `data-i18n` attributes (coordinate with Ghostwriter)
+7. `content/en/common.json` -- shared strings (nav, footer)
+8. `build.js` -- merges templates + content into `dist/`
+9. `content-loader.js` -- optional, for client-side language switching
+10. Run build to produce `dist/`
+
+**React/Next.js/Vue:**
+1. `styles/tokens.css` (or `tailwind.config.js`) -- design tokens
+2. `styles/theme.css` (vanilla CSS only) -- semantic mapping
+3. `styles/global.css` -- base styles
+4. Components with `t()` / `useTranslations()` -- never inline text
+5. `content/en/[page].json` -- content matching component translation keys
+6. Configure project's i18n library
+
+**Tailwind projects:**
+1. `tailwind.config.js` with tokens in `theme.extend` -- replaces tokens.css + theme.css
+2. `styles/global.css` with `@tailwind` directives
+3. Components with Tailwind utility classes referencing config tokens
 
 ---
 
@@ -305,8 +341,10 @@ Scan all component files. For each: name, props, children/slots, import referenc
 
 ## When Other Skills Call Seurat
 
-- **Ghostwriter** → landing page layouts after writing copy
-- **Baptist** → A/B test variant implementations
-- **Emmet** → visual persona testing against component map
+- **Ghostwriter** --> landing page layouts after writing copy. Ghostwriter provides `content/[lang]/[page].json`; Seurat generates templates with matching `data-i18n` keys.
+- **Baptist** --> A/B test variant implementations
+- **Emmet** --> visual persona testing against component map
 
-When called programmatically: output structured component definitions. Skip competitor research (Steps using shared protocol) when called by other skills — they provide context directly.
+When called programmatically: output structured component definitions. Skip competitor research (Steps using shared protocol) when called by other skills -- they provide context directly.
+
+**Integration contract with Ghostwriter:** Seurat's templates define WHICH content keys are needed. Ghostwriter fills those keys. Keys must match exactly. Both skills use the standard section keys defined in `${CLAUDE_SKILL_DIR}/../ghostwriter/references/content-json.md`.
