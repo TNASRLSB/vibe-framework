@@ -1,6 +1,6 @@
 # Changelog
 
-## 3.8.2 — 2026-04-07
+## 3.9.2 — 2026-04-07
 
 ### Fixed
 - **Setup skill**: empty projects no longer skip CLAUDE.md generation and codebase mapping offer — the wizard now generates a placeholder CLAUDE.md and presents all optional steps regardless of project state
