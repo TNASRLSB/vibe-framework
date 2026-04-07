@@ -78,13 +78,12 @@ File:       [file path, if present]
 Then ask:
 
 > What should I do with this?
-> a) **Save to project** — becomes a project-level auto-memory (applies to this codebase only)
-> b) **Save to user** — becomes a user-level auto-memory (applies to all your projects)
-> c) **Discard** — not worth keeping
+> a) **Save** — becomes a project-level auto-memory (applies to this codebase only)
+> b) **Discard** — not worth keeping
 
 ### Step 4: Apply the Decision
 
-**For option (a) — project auto-memory:**
+**For option (a) — save:**
 
 Write the learning to the project's auto-memory location. Format it as a clear, actionable instruction:
 
@@ -101,21 +100,7 @@ Append to `.claude/auto-memory/learnings.md`:
 Example: If the correction says "user changed tabs to spaces in Python files," write:
 `- Use spaces (not tabs) for Python indentation in this project.`
 
-**For option (b) — user auto-memory:**
-
-Write to the user-level auto-memory location:
-
-```bash
-mkdir -p ~/.claude/auto-memory
-```
-
-Append to `~/.claude/auto-memory/learnings.md`:
-
-```markdown
-- [Actionable instruction derived from the correction.]
-```
-
-**For option (c) — discard:**
+**For option (b) — discard:**
 
 Skip. No action needed.
 
@@ -143,8 +128,7 @@ The `PROCESSED_LINES` variable must contain the 1-based line numbers of every en
 Reflect — Complete
 ==================
 Reviewed:          [N] corrections
-Saved to project:  [N]
-Saved to user:     [N]
+Saved:             [N]
 Discarded:         [N]
 ```
 
@@ -165,7 +149,6 @@ Look for recent session artifacts:
 ```bash
 # Check for auto-memory entries
 cat .claude/auto-memory/learnings.md 2>/dev/null | wc -l
-cat ~/.claude/auto-memory/learnings.md 2>/dev/null | wc -l
 ```
 
 ```bash
@@ -204,7 +187,7 @@ Suggestion:  [what to do about it]
 Suggestions fall into three categories:
 
 1. **Add a rule** — simple enough to be an auto-memory entry
-   > Suggest adding to project or user auto-memory.
+   > Suggest adding to project auto-memory.
 
 2. **Create a skill** — complex enough to warrant a dedicated skill
    > This pattern could become a skill. Run `/vibe:forge create [name]` to scaffold it.
@@ -243,4 +226,4 @@ Actions taken:     [list what was done, if anything]
 3. **Deduplicate.** Before saving a learning, check if a similar rule already exists in the target auto-memory file. If so, inform the user and suggest merging or skipping.
 4. **Preserve queue integrity.** Only clear entries that were explicitly processed. If the session ends mid-review, unprocessed entries remain in the queue.
 5. **No hallucinated patterns.** In pattern discovery mode, only report patterns backed by actual data from the queue or auto-memory files. If there is insufficient data, say so.
-6. **Respect scope.** Project learnings stay in the project. User learnings go to the user directory. Never mix them up.
+6. **Project-only memory.** All learnings are saved to the project directory (`.claude/auto-memory/learnings.md`). Never write to `~/.claude/auto-memory/` or any shared location — each project's memory must be fully self-contained.

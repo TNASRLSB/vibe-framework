@@ -1,5 +1,10 @@
 # Changelog
 
+## 3.9.3 — 2026-04-07
+
+### Fixed
+- **Reflect skill**: removed cross-project memory leakage — all learnings now save exclusively to project-local `.claude/auto-memory/learnings.md`, never to shared `~/.claude/auto-memory/`
+
 ## 3.9.2 — 2026-04-07
 
 ### Fixed
