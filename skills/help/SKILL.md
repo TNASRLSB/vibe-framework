@@ -23,7 +23,7 @@ VIBE v3 is built on three principles:
 
 | Command | Description |
 |---------|-------------|
-| `/vibe:setup` | First-run configuration — model, effort, LSP, status line, CLAUDE.md |
+| `/vibe:setup` | First-run configuration — model, effort, LSP, status line, CLAUDE.md (works on empty projects) |
 | `/vibe:help` | This reference |
 | `/vibe:reflect` | Review captured corrections, save to memory |
 | `/vibe:reflect --patterns` | Discover repeated actions that could become skills |
