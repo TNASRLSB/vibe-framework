@@ -98,7 +98,7 @@ The audit system uses **delta analysis**: on repeated audits it reads agent memo
 
 | Skill | What it does |
 |-------|-------------|
-| **setup** | First-run configuration wizard. Detects stack, linters, LSP, configures model/effort/status line, generates minimal CLAUDE.md, optionally maps codebase. |
+| **setup** | First-run configuration wizard. Detects stack, linters, LSP, configures model/effort/status line, generates minimal CLAUDE.md (even on empty projects), optionally maps codebase. |
 | **reflect** | Reviews corrections captured by the hook system. For each, choose: save to project memory, user memory, or discard. `--patterns` mode discovers repeated actions that could become skills. |
 | **pause** | Disables all quality hooks for the current session. For rapid prototyping or exploratory coding where hooks get in the way. |
 | **resume** | Re-enables quality hooks after pause. |

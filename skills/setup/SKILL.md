@@ -319,7 +319,7 @@ If `jq` is not available, construct the JSON carefully by hand, preserving all e
 
 ### 5.2 Generate Minimal CLAUDE.md
 
-**Only if no CLAUDE.md exists in the project root.**
+**Only if no CLAUDE.md exists in the project root. Always generate — even for empty projects.**
 
 Check first:
 
@@ -337,6 +337,8 @@ Test: `[detected test command or "not detected"]`
 Lint: `[detected lint command or "not detected"]`
 ```
 
+For empty projects where no commands were detected, use `"not detected"` for all three. A CLAUDE.md with placeholders is better than none — it gives future sessions an anchor file and signals that VIBE is configured. The user will re-run `/vibe:setup` once code exists, and the file will be updated then.
+
 If EXISTS, do not touch it. Inform the user:
 
 > Existing CLAUDE.md found. Skipping generation.
@@ -346,6 +348,8 @@ If EXISTS, do not touch it. Inform the user:
 ## Step 6: Codebase Mapping (Optional)
 
 ### 6.1 Offer Exploration
+
+**Always present this offer, including for empty or minimal projects.** Even a nearly-empty project may have config files, a README, or a git history worth mapping.
 
 > **Optional:** I can run an initial codebase exploration using the researcher agent.
 > This will map the project structure, key files, and architecture into auto-memory
@@ -413,7 +417,7 @@ Restart Claude Code to apply all changes.
 
 ## Error Handling
 
-- **No manifest files found:** Inform user this appears to be an empty or non-standard project. Offer to proceed with just model/effort settings.
+- **No manifest files found:** Inform user this appears to be an empty or non-standard project. Skip stack-specific steps (linter detection, build/test/lint commands) but **still execute all other steps**: settings configuration (Step 4–5.1), CLAUDE.md generation (Step 5.2), codebase mapping offer (Step 6), and verification (Step 7). An empty project is not a reason to short-circuit the wizard.
 - **Settings file is malformed JSON:** Back up the original, inform user, offer to create fresh settings.
 - **Permission denied on ~/.claude/:** Inform user and provide manual instructions.
 - **No internet / plugin install fails:** Note the failure, continue with remaining steps.
