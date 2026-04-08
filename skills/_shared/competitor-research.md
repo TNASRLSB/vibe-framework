@@ -38,6 +38,8 @@ Always include the target market's language if not already in the tier.
 
 ### Agent Dispatch
 
+**Phase 1 uses `model: "haiku"`** — discovery is high-volume, low-depth. Haiku is the right tool here.
+
 Dispatch one Agent per language (all in parallel, `subagent_type: "general-purpose"`, `model: "haiku"`).
 
 Each agent:
@@ -47,11 +49,27 @@ Each agent:
 
 Not all languages will yield results. That is expected.
 
+> **Model escalation:** Phase 1 (discovery) uses Haiku. Phase 3 (deep analysis) MUST use `model: "sonnet"` — deep analysis requires page rendering, screenshot interpretation, and structured extraction across three lenses. Haiku cannot reliably perform visual analysis or produce the depth required.
+
 ---
 
 ## Phase 2: Qualification
 
-From all candidates across all languages, select the **top 15-20** for deep analysis based on:
+From all candidates across all languages, select the **top 15-20** for deep analysis. Present the selection to the user as a **ranked table** so they can verify and override:
+
+| # | Competitor | Market | Presence | Relevance | Why selected |
+|---|-----------|--------|----------|-----------|--------------|
+| 1 | Example Corp | US/EN | Large | High | Market leader, best-in-class UX |
+| ... | ... | ... | ... | ... | ... |
+
+**Also show the excluded candidates** in a second table with the reason for exclusion:
+
+| Competitor | Market | Excluded because |
+|-----------|--------|-----------------|
+| Example B | ES | Directory/aggregator, not a direct competitor |
+| ... | ... | ... |
+
+**Selection criteria** (apply in order):
 
 | Criterion | Why |
 |-----------|-----|
@@ -60,9 +78,13 @@ From all candidates across all languages, select the **top 15-20** for deep anal
 | **Diversity** | Ensure geographic and linguistic spread — avoid 15 US companies |
 | **Quality signals** | Professional site, clear structure, active content — signs of investment in communication |
 
+The goal is 15-20 analyzed in depth, not 50 analyzed superficially. If the user wants to expand the set, warn them: "Analyzing more than 20 competitors trades depth for breadth. I'll need to render and screenshot each site. Want to proceed with all N, or should I adjust the selection?"
+
 ---
 
 ## Phase 3: Deep Analysis
+
+**Agent dispatch:** If parallelizing across competitors, dispatch agents with `model: "sonnet"` (NOT haiku). Deep analysis requires rendering pages, interpreting screenshots, and extracting structured data across three lenses — this demands a capable model.
 
 For each qualified competitor, navigate the site and select the **most representative pages** for extracting the three lenses. Do not follow a fixed list — choose based on the type of business:
 
@@ -76,7 +98,55 @@ For each qualified competitor, navigate the site and select the **most represent
 
 **The agent decides which pages to visit** based on what it finds on the homepage. The goal is 3-5 pages per competitor — enough to extract all three lenses without wasting fetches on low-value pages (legal, careers, blog archives, etc.).
 
-**Use WebFetch.** If blocked (403, empty response, anti-bot), fall back to **Playwright via Bash** to render in a headless browser, bypassing anti-scraping controls.
+### Page Fetching — Mandatory Protocol
+
+For each page, follow this sequence. Do NOT skip steps.
+
+**Step A — WebFetch first.** Attempt to fetch the page with WebFetch Inspect the response:
+- If the HTML contains the actual page content (visible text, navigation, main sections) → proceed to Step C.
+- If the response is blocked (403, 5xx), empty, JS-only shell (`<div id="root"></div>`), or missing the main content → proceed to Step B.
+
+**Step B — Playwright rendering (mandatory fallback).** Use Bash to launch a headless Chromium via Playwright:
+
+```bash
+npx -y playwright@latest install chromium 2>/dev/null; node -e "
+const { chromium } = require('playwright');
+(async () => {
+  const browser = await chromium.launch();
+  const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  await page.goto('URL_HERE', { waitUntil: 'networkidle', timeout: 30000 });
+  await page.screenshot({ path: '/tmp/competitor-screenshot.png', fullPage: true });
+  const html = await page.content();
+  console.log(html.substring(0, 50000));
+  await browser.close();
+})();
+"
+```
+
+If Playwright also fails (site completely blocks headless browsers), mark the competitor as `blocked` in the results and note it — do NOT silently skip it or pretend data was extracted.
+
+**Step C — Screenshot for Design Lens (mandatory for every accessible page).** The Design Lens REQUIRES visual inspection. Raw HTML/CSS is NOT sufficient for extracting visual style, layout patterns, spacing, or component design.
+
+For every page that was successfully fetched (whether via WebFetch or Playwright), take a full-page screenshot:
+
+```bash
+node -e "
+const { chromium } = require('playwright');
+(async () => {
+  const browser = await chromium.launch();
+  const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  await page.goto('URL_HERE', { waitUntil: 'networkidle', timeout: 30000 });
+  await page.screenshot({ path: '/tmp/vibe-cr/COMPETITOR_NAME-PAGE.png', fullPage: true });
+  await browser.close();
+})();
+"
+```
+
+Store screenshots in `/tmp/vibe-cr/` (create the directory first). Read each screenshot with the Read tool to perform visual analysis.
+
+**If you already used Playwright in Step B, reuse that session for the screenshot — do not launch a second browser.**
+
+**HARD RULE:** Do NOT extract Design Lens data from raw HTML alone. If you cannot render and screenshot a page, the Design Lens for that competitor is marked `incomplete — no visual data` in the results. Do not fabricate visual analysis from source code.
 
 Extract ALL three lenses in a single pass per competitor:
 
@@ -106,6 +176,31 @@ Extract ALL three lenses in a single pass per competitor:
 - Form design — field count, progressive disclosure, social auth
 - Social proof — placement, type (numbers, logos, testimonials, reviews)
 - Objection handling — FAQ, comparison tables, guarantee placement
+
+---
+
+## Phase 3.5: Data Quality Gate (mandatory)
+
+**STOP. Before extracting patterns, verify data completeness.** Build this table and present it to the user:
+
+| # | Competitor | Pages targeted | Pages fetched | Pages rendered | Screenshots | Copy Lens | Design Lens | Conversion Lens |
+|---|-----------|---------------|--------------|----------------|-------------|-----------|-------------|-----------------|
+| 1 | Example Corp | 4 | 4 | 4 | 4 | complete | complete | complete |
+| 2 | Blocked Inc | 3 | 0 | 0 | 0 | missing | missing | missing |
+| ... | ... | ... | ... | ... | ... | ... | ... | ... |
+| **Totals** | | **N** | **N** | **N** | **N** | | | |
+
+**Minimum thresholds to proceed:**
+- **Pages fetched:** ≥ 70% of total targeted pages across all competitors
+- **Screenshots taken:** ≥ 70% of fetched pages (needed for Design Lens)
+- **No silent skips:** Every blocked/failed competitor must be explicitly listed with reason
+
+**If thresholds are NOT met:**
+1. Report what failed and why (blocked, timeout, JS-only)
+2. Retry failed competitors with Playwright (if not already attempted)
+3. If still below threshold after retry, ask the user: "I could only fully analyze N of M competitors. The gaps are: [list]. Should I proceed with partial data or try alternative approaches for the blocked sites?"
+
+**Do NOT proceed to Pattern Extraction with incomplete data without user acknowledgment.**
 
 ---
 
@@ -155,9 +250,38 @@ Save results to `.vibe/competitor-research/` in the project root:
 
 ## Phase 6: Summary
 
-Present to the user before any skill proceeds:
-- Number of competitors analyzed, across how many languages/markets
-- Top 3-5 common patterns per lens (one line each)
-- Top 2-3 most interesting differentiators (what makes them stand out)
-- Recommended baseline direction for the user's project
-- Ask user for confirmation before proceeding to the skill's specific workflow
+Present to the user before any skill proceeds. The summary must be **evidence-rich**, not a bullet list of vague observations.
+
+### Data Quality Recap
+- Competitors qualified: N | Fully analyzed: N | Blocked/incomplete: N
+- Total pages fetched: N | Screenshots taken: N
+- Languages covered: [list]
+
+### Common Patterns per Lens (market must-haves)
+
+For each pattern, include:
+- **What:** the specific pattern (not "clean design" — be precise: "sans-serif headings 28-36px, 1.2 line height, weight 600-700")
+- **Prevalence:** N out of M competitors (percentage)
+- **Examples:** name 2-3 specific competitors that exemplify this pattern
+- **Evidence:** concrete data — hex codes, word counts, number of CTAs, form field counts, load times
+
+Minimum 5 patterns per lens, maximum 10.
+
+### Unique Differentiators (competitive strategies worth studying)
+
+For each differentiator:
+- **Who:** which competitor does this
+- **What:** the specific strategy
+- **Why it works:** observable effect (e.g., "only competitor with <3s load time in the set", "highest social proof density — 4 testimonials above fold")
+
+### Anti-Patterns (what to avoid)
+
+Patterns found only in weak/defunct competitors or absent from all strong ones.
+
+### Recommended Baseline
+
+A concrete starting point for the user's project — not "use clean design" but specific, actionable parameters informed by the data above.
+
+### Confirmation
+
+Ask user for confirmation before proceeding to the skill's specific workflow. Include: "All raw data is saved in `.vibe/competitor-research/`. You can review individual competitor analyses there."
