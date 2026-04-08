@@ -188,6 +188,15 @@ for NUM in $WORK_NUMBERS; do
   RELEVANT_COUNT=$TOTAL_TOOLS
   if echo "$LAST_MSG" | grep -qiP '(screenshot|image|visual|design|visuale|immagine)'; then
     RELEVANT_COUNT=$IMAGE_READS
+  elif echo "$LAST_MSG" | grep -qiP '(page|site|url|web|sito|pagina|fetch)'; then
+    RELEVANT_COUNT=$(echo "$TURN_DATA" | jq '.tool_counts.WebFetch // 0')
+  elif echo "$LAST_MSG" | grep -qiP '(file|code|source|codice|sorgente)'; then
+    # Non-image reads = total reads - image reads
+    TOTAL_READS=$(echo "$TURN_DATA" | jq '.tool_counts.Read // 0')
+    RELEVANT_COUNT=$((TOTAL_READS - IMAGE_READS))
+  elif echo "$LAST_MSG" | grep -qiP '(test|check|verifica|controlla)'; then
+    # Count Bash calls with test keywords
+    RELEVANT_COUNT=$(echo "$TURN_DATA" | jq '[.bash_commands[] | select(test("test|jest|pytest|vitest|mocha|cargo.test|go.test"; "i"))] | length')
   fi
 
   THRESHOLD=$(echo "$NUM * 0.85" | bc 2>/dev/null | cut -d. -f1 || echo $((NUM * 85 / 100)))
@@ -241,7 +250,32 @@ if [[ "$HAS_SKILL" == "true" ]] && (( HAS_COMPLETION > 0 )); then
     CK_gate_d="VIBE skill was used and completion claimed but no VIBE_GATE verification markers found in Bash outputs"
     HAS_FAIL=true
   else
+    # Inspect marker values — compare against numbers in the message
     CK_gate_s="pass"; CK_gate_c=""; CK_gate_d=""
+
+    # Extract all numbers from the completion message
+    MSG_NUMBERS=$(echo "$LAST_MSG" | grep -oP '\d+' | sort -rn | head -5)
+
+    # Check each gate marker value against message numbers
+    for i in $(seq 0 $((GATE_COUNT - 1))); do
+      MARKER_KEY=$(echo "$GATE_MARKERS" | jq -r ".[$i].key")
+      MARKER_VAL=$(echo "$GATE_MARKERS" | jq -r ".[$i].val")
+
+      # Skip non-numeric values
+      if ! echo "$MARKER_VAL" | grep -qP '^\d+$'; then continue; fi
+
+      # Check if message claims a number larger than the marker shows
+      for MSG_NUM in $MSG_NUMBERS; do
+        if ! echo "$MSG_NUM" | grep -qP '^\d+$'; then continue; fi
+        if (( MSG_NUM > 5 )) && (( MARKER_VAL < MSG_NUM )); then
+          # Message claims MSG_NUM but marker shows MARKER_VAL (less)
+          CK_gate_s="fail"; CK_gate_c="high"
+          CK_gate_d="VIBE_GATE ${MARKER_KEY}=${MARKER_VAL} but message claims ${MSG_NUM}"
+          HAS_FAIL=true
+          break 2
+        fi
+      done
+    done
   fi
 else
   CK_gate_s="pass"; CK_gate_c=""; CK_gate_d=""
