@@ -98,6 +98,22 @@ For each qualified competitor, navigate the site and select the **most represent
 
 **The agent decides which pages to visit** based on what it finds on the homepage. The goal is 3-5 pages per competitor — enough to extract all three lenses without wasting fetches on low-value pages (legal, careers, blog archives, etc.).
 
+### Phase 3: Batched Processing
+
+Process qualified competitors in batches of 5. After each batch:
+
+1. Report which competitors were processed (by name)
+2. Report tool call count for the batch (WebFetch, Read, Bash)
+3. Proceed to next batch
+
+Batch 1: competitors 1-5
+Batch 2: competitors 6-10
+Batch 3: competitors 11-15
+Batch 4: competitors 16-20 (or remaining)
+
+This prevents context rot from degrading analysis quality on later competitors.
+After all batches complete, proceed to Phase 3.5 verification.
+
 ### Page Fetching — Mandatory Protocol
 
 For each page, follow this sequence. Do NOT skip steps.
@@ -201,6 +217,31 @@ Extract ALL three lenses in a single pass per competitor:
 3. If still below threshold after retry, ask the user: "I could only fully analyze N of M competitors. The gaps are: [list]. Should I proceed with partial data or try alternative approaches for the blocked sites?"
 
 **Do NOT proceed to Pattern Extraction with incomplete data without user acknowledgment.**
+
+---
+
+### Phase 3.5: Mechanical Verification (mandatory)
+
+**STOP.** Before extracting patterns, run these verification commands following the Integrity Gate Protocol (see `skills/_shared/integrity-gate.md`):
+
+    echo "VIBE_GATE: screenshot_count=$(ls /tmp/vibe-cr/*.png 2>/dev/null | wc -l | tr -d ' ')"
+    echo "VIBE_GATE: competitors_json=$(jq 'length' .vibe/competitor-research/competitors.json 2>/dev/null || echo 0)"
+    echo "VIBE_GATE: lenses_complete=$(jq '[.[] | select(.copy_lens != null and .design_lens != null and .conversion_lens != null)] | length' .vibe/competitor-research/competitors.json 2>/dev/null || echo 0)"
+    echo "VIBE_GATE: metadata_exists=$(test -f .vibe/competitor-research/metadata.json && echo 1 || echo 0)"
+    echo "VIBE_GATE: patterns_exist=$(ls .vibe/competitor-research/patterns/*.json 2>/dev/null | wc -l | tr -d ' ')"
+    echo "VIBE_GATE: common_patterns=$(jq 'length' .vibe/competitor-research/patterns/common.json 2>/dev/null || echo 0)"
+    echo "VIBE_GATE: empty_screenshots=$(find /tmp/vibe-cr/ -name '*.png' -empty 2>/dev/null | wc -l | tr -d ' ')"
+
+Expected values:
+- screenshot_count: >= number of qualified competitors (from Phase 2)
+- competitors_json: = number of qualified competitors
+- lenses_complete: = competitors_json (every competitor has all 3 lenses)
+- metadata_exists: 1
+- patterns_exist: >= 3 (common.json, differentiators.json, anti-patterns.json)
+- common_patterns: >= 5 (minimum 5 common patterns identified)
+- empty_screenshots: 0
+
+If ANY value does not match expected: report the discrepancy with exact numbers, complete the missing work, then re-run the verification block. Do NOT proceed to Phase 4 with mismatched values.
 
 ---
 
