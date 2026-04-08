@@ -101,6 +101,38 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/completion-sentinel.sh\"",
+            "statusMessage": "VIBE: integrity check..."
+          },
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/completion-verifier.sh\"",
+            "statusMessage": "VIBE: deep verification..."
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/completion-sentinel.sh\"",
+            "statusMessage": "VIBE: subagent integrity check..."
+          },
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/completion-verifier.sh\"",
+            "statusMessage": "VIBE: subagent deep verification..."
+          }
+        ]
+      }
     ]
   }
 }
