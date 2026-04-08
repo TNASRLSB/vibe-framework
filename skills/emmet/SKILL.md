@@ -181,6 +181,32 @@ For each relevant persona (select based on project type):
 
 Use Playwright in **headed mode** (not headless) with Chrome MCP when available.
 
+### Phase 5.5: Testing Verification Gate (mandatory before report)
+
+After running the test suite, combine the test execution and verification markers in a SINGLE Bash call (see `skills/_shared/integrity-gate.md`).
+
+This is important: `$?` captures the exit code of the PREVIOUS command. If you run the test command and VIBE_GATE echos in separate Bash calls, `$?` would capture the echo's exit code (always 0), not the test runner's.
+
+Run everything in one Bash call:
+
+    [test command for this project, e.g.: npm test, pytest, cargo test]
+    TEST_EXIT=$?
+    echo "VIBE_GATE: last_test_exit=$TEST_EXIT"
+    echo "VIBE_GATE: test_files=$(find . -name '*.test.*' -o -name '*.spec.*' -o -name 'test_*' 2>/dev/null | grep -v node_modules | wc -l | tr -d ' ')"
+
+If the project has a linter and/or type checker, run those in the same or a subsequent Bash call:
+
+    npm run lint 2>/dev/null; echo "VIBE_GATE: lint_exit=$?"
+    npx tsc --noEmit 2>/dev/null; echo "VIBE_GATE: type_check_exit=$?"
+
+Expected values:
+- last_test_exit: 0 (tests passed)
+- test_files: >= 1 (at least one test file created or modified)
+- lint_exit: 0 (no lint errors) — omit if no linter configured
+- type_check_exit: 0 (no type errors) — omit if no TypeScript
+
+NOTE: The test runner executes AS PART of the VIBE_GATE block. The sentinel's Check 3 will see the test command in the Bash call that also contains the VIBE_GATE markers.
+
 ### Phase 6: Report
 
 > **Read** `${CLAUDE_SKILL_DIR}/references/templates.md` for report format.
@@ -287,6 +313,23 @@ This step is non-negotiable:
 5. Run the test → it **must pass**
 
 Only after both checks pass can you claim the bug is fixed.
+
+### Step 6.5: Red-Green Verification Gate (mandatory)
+
+The comment-out validation (Step 6) is not optional. After completing it, verify the red-green cycle with these commands (see `skills/_shared/integrity-gate.md`):
+
+    echo "VIBE_GATE: red_phase_confirmed=1"
+    echo "VIBE_GATE: green_phase_confirmed=1"
+    echo "VIBE_GATE: regression_test_exists=$(find . -name '*.test.*' -newer [fixed-file] 2>/dev/null | wc -l | tr -d ' ')"
+
+These markers MUST only be emitted AFTER actually running the red-green cycle:
+1. Comment out fix -> run test -> test FAILS (red phase)
+2. Restore fix -> run test -> test PASSES (green phase)
+3. New regression test file exists
+
+If you did not perform the red-green cycle, do NOT emit these markers. The sentinel will catch "test claim without execution" (Check 3) if test pass claims appear without Bash test commands in the transcript.
+
+NOTE: `red_phase_confirmed` and `green_phase_confirmed` are self-reported (value "1" is not from $(command)). This is a known trade-off — the red-green cycle cannot be verified mechanically after the fix is restored. The sentinel's Check 3 provides partial coverage by verifying test commands were actually run via Bash. The `regression_test_exists` marker IS mechanical.
 
 ### Step 7: Prevent
 
