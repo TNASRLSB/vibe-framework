@@ -139,6 +139,10 @@ Apply both rulesets to the sharpened draft:
 
 **Critical:** SEO/GEO must NOT flatten the creative quality from Phase 6. If adding a keyword makes a sentence generic, find a better integration point. If a quotable statement requirement makes the text mechanical, rewrite to be both quotable AND human.
 
+**Critical rules enforcement**: If any of these 9 rules is FAIL after Phase 8 validation, you MUST fix the content before proceeding. Do not mark them as "will fix later": T01, T02, T03, C02, G01, X01, X03, X05, S01.
+
+Run the Phase 8.5 verification block AFTER fixing all critical FAIL items.
+
 ### Phase 8: Validate
 
 > **Read** `${CLAUDE_SKILL_DIR}/references/validation.md` for the complete 53+ rule checklist.
@@ -157,6 +161,33 @@ Critical rules that MUST pass:
 6. Schema markup type determined
 7. At least 3 quotable statements per major section
 8. CTA present and clear
+
+### Phase 8.5: Mechanical Verification (mandatory)
+
+After running the validation checklist and before delivering content, run these verification commands (see `skills/_shared/integrity-gate.md`):
+
+    CONTENT_DIR="content"  # adjust to actual output directory
+    MAIN_FILE=$(find "$CONTENT_DIR" -name '*.json' ! -name 'common.json' -type f 2>/dev/null | head -1)
+    echo "VIBE_GATE: content_files=$(find "$CONTENT_DIR" -name '*.json' -type f 2>/dev/null | wc -l | tr -d ' ')"
+    echo "VIBE_GATE: main_file_size=$(wc -c < "$MAIN_FILE" 2>/dev/null || echo 0)"
+    echo "VIBE_GATE: empty_strings=$(jq -r '[.. | select(type == "string" and . == "")] | length' "$MAIN_FILE" 2>/dev/null || echo 0)"
+    echo "VIBE_GATE: word_count=$(jq -r '[.. | select(type == "string")] | join(" ")' "$MAIN_FILE" 2>/dev/null | wc -w | tr -d ' ')"
+    echo "VIBE_GATE: h1_count=$(jq '[.. | objects | select(.tag == "h1" or .type == "h1" or .level == 1 or .element == "h1")] | length' "$MAIN_FILE" 2>/dev/null || echo 0)"
+    echo "VIBE_GATE: schema_present=$(jq 'if .schema then 1 else 0 end' "$MAIN_FILE" 2>/dev/null || echo 0)"
+    echo "VIBE_GATE: common_file=$(test -f "$CONTENT_DIR/common.json" && echo 1 || echo 0)"
+
+Expected values:
+- content_files: >= 2 (page content + common strings minimum)
+- main_file_size: > 0 (non-empty)
+- empty_strings: 0 (no placeholder values)
+- word_count: >= 500 (landing page) or >= 1500 (article)
+- h1_count: 1 (exactly one H1 — query covers tag/type/level/element variants)
+- schema_present: 1 (JSON-LD schema included)
+- common_file: 1 (shared strings file exists)
+
+If ANY value does not match: fix the content, then re-run verification. Do NOT deliver content with mismatched values.
+
+---
 
 ### Phase 9: Structure & Deliver
 
