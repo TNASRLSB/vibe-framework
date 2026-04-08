@@ -1,5 +1,36 @@
 # Changelog
 
+## 4.0.0 — 2026-04-08
+
+### Added — Completion Integrity System
+Three-layer verification system that catches false completion claims, fabricated analysis, and partial work presented as complete. Addresses the "LLM false completion" problem documented across 30+ GitHub issues and academic research.
+
+- **Layer 1 — Completion Sentinel** (`scripts/completion-sentinel.sh`): mechanical Stop hook that parses the conversation transcript to count tool calls, find VIBE_GATE verification markers, and run 6 independent checks against completion claims. Checks: zero-tool completion, context-aware numerical discrepancy, test/build claims without execution, subagent trust without verification, completion scope mismatch, VIBE_GATE marker inspection. Bash 3.2 compatible (macOS).
+- **Layer 2 — Completion Verifier** (`scripts/completion-verifier.sh` + `scripts/completion-verifier-prompt.md`): command-based file/output verification that reads Layer 1 findings and performs mechanical filesystem checks. Agent-based upgrade path via `type: "agent"` hook.
+- **Layer 3 — VIBE_GATE Protocol** (`skills/_shared/integrity-gate.md`): shared protocol for skill-level verification. Skills emit `VIBE_GATE: key=$(command)` markers in Bash tool output. The sentinel reads these from the transcript — output is genuine because the Bash tool actually executes the command. Claude cannot fabricate Bash tool output.
+- **Stop + SubagentStop hooks**: both layers fire on session completion and subagent completion, catching corner-cutting at the source.
+- **Resolution mode**: after blocking a false completion, the sentinel accepts honest partial reports ("I completed 14 of 20") and blocks re-assertions of totality without new evidence. Prevents infinite blocking loops and the Apology Loop pattern.
+- **Integrity event logging**: all catches logged to `/tmp/vibe-integrity-events-{date}.jsonl` for pattern tracking.
+- **Setup integration**: new Step 4.5 in `/vibe:setup` lets users choose integrity mode (strict/balanced/light/off). Default: balanced. `CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING=1` set by default to restore full thinking depth.
+
+### Added — VIBE_GATE Verification Blocks (all 5 skills)
+37 mechanical verification markers across all production skills:
+
+- **Competitor Research**: batch checkpointing (groups of 5) + 7 markers (screenshot count, JSON entries, lens completeness, metadata, patterns, empty files)
+- **Ghostwriter**: critical rules enforcement (9 mandatory PASS rules) + 7 markers (content files, file size, empty strings, word count, H1 count, schema, common file)
+- **Seurat**: mandatory WCAG enforcement + 8 markers (style files, templates, color tokens, spacing, hardcoded text, focus indicators, ARIA landmarks, breakpoints)
+- **Emmet**: testing verification gate + debugging red-green gate, 9 markers (test exit code, test files, lint, type check, red/green phase, regression test)
+- **Baptist**: structured file output (`.vibe/baptist/audit.json`) + 6 markers (audit existence, B=MAP scores, recommendations, ICE scores, benchmarks, sort order)
+
+### Configurable Modes
+
+| Mode | Layer 1 (mechanical) | Layer 2 (file verification) | Layer 3 (skill gates) |
+|------|---------------------|---------------------------|----------------------|
+| strict | Blocks on any failure | Blocks on FAIL | Blocking |
+| balanced (default) | Blocks high-confidence only | Presents to user | Blocking |
+| light | Non-blocking report | Off | Advisory |
+| off | Off | Off | Advisory |
+
 ## 3.9.3 — 2026-04-07
 
 ### Fixed
