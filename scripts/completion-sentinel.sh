@@ -281,5 +281,229 @@ else
   CK_gate_s="pass"; CK_gate_c=""; CK_gate_d=""
 fi
 
-# ── Output and exit logic will be added in Task 5 ─────────────────
+# ── Resolution Mode ────────────────────────────────────────────────
+if [[ "$RESOLUTION_MODE" == "true" ]]; then
+  HAS_NEW_TOOLS=false
+  if (( TOTAL_TOOLS > 0 )); then
+    HAS_NEW_TOOLS=true
+  fi
+
+  HAS_SPECIFIC_COUNTS=false
+  if echo "$LAST_MSG" | grep -qP '\d+\s*(of|out of|di|su|de|von|sur)\s*\d+'; then
+    HAS_SPECIFIC_COUNTS=true
+  fi
+
+  if [[ "$HAS_NEW_TOOLS" == "true" ]] || [[ "$HAS_SPECIFIC_COUNTS" == "true" ]]; then
+    rm -f "$BLOCK_FLAG"
+    jq -n \
+      --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+      --arg mode "$MODE" \
+      --arg event "$HOOK_EVENT" \
+      --argjson resolution true \
+      '{timestamp: $ts, mode: $mode, hook_event: $event, resolution_mode: $resolution, resolved: true}' \
+      > "$SENTINEL_FILE"
+    jq -nc \
+      --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+      --arg sid "$SESSION_ID" \
+      --arg res "resolved" \
+      '{timestamp: $ts, session_id: $sid, resolution: $res}' \
+      >> "$LOG_FILE" 2>/dev/null
+    exit 0
+  fi
+
+  TOTALITY_RE='(all|every|each|complete|tutti|ogni|tutto|completo|terminat|finished|done|tous|cada|alle|jeder)'
+  if echo "$MSG_LOWER" | grep -qiP "$TOTALITY_RE" && (( TOTAL_TOOLS == 0 )); then
+    cat >&2 << 'RESOLUTION_BLOCK'
+VIBE INTEGRITY — your previous response was flagged for discrepancies.
+
+Your follow-up still claims total completion without new tool calls or specific counts.
+
+YOUR RESPONSE MUST CONTAIN:
+- Specific counts: "I completed X of Y. Missing items: [list]"
+- OR new tool calls actually completing the missing work
+
+Apologies, rephrased claims, and "I'll fix this" are not acceptable.
+RESOLUTION_BLOCK
+    exit 2
+  fi
+
+  rm -f "$BLOCK_FLAG"
+  exit 0
+fi
+
+# ── Write findings JSON ────────────────────────────────────────────
+_ckj() {
+  local s="$1" c="$2" d="$3"
+  if [[ "$s" == "pass" ]]; then
+    echo '{"status":"pass"}'
+  else
+    jq -n --arg s "$s" --arg c "$c" --arg d "$d" '{status:$s,confidence:$c,detail:$d}'
+  fi
+}
+
+FINDINGS=$(jq -n \
+  --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+  --arg mode "$MODE" \
+  --arg event "$HOOK_EVENT" \
+  --arg agent_id "$AGENT_ID" \
+  --argjson resolution false \
+  --argjson tool_counts "$(echo "$TURN_DATA" | jq '.tool_counts')" \
+  --argjson image_reads "$IMAGE_READS" \
+  --argjson total "$TOTAL_TOOLS" \
+  --argjson gate_markers "$GATE_MARKERS" \
+  --argjson has_fail "$HAS_FAIL" \
+  --argjson has_warn "$HAS_WARN" \
+  --argjson check_zero "$(_ckj "$CK_zero_tool_s" "$CK_zero_tool_c" "$CK_zero_tool_d")" \
+  --argjson check_num "$(_ckj "$CK_numerical_s" "$CK_numerical_c" "$CK_numerical_d")" \
+  --argjson check_test "$(_ckj "$CK_test_claim_s" "$CK_test_claim_c" "$CK_test_claim_d")" \
+  --argjson check_agent "$(_ckj "$CK_subagent_s" "$CK_subagent_c" "$CK_subagent_d")" \
+  --argjson check_scope "$(_ckj "$CK_scope_s" "$CK_scope_c" "$CK_scope_d")" \
+  --argjson check_gate "$(_ckj "$CK_gate_s" "$CK_gate_c" "$CK_gate_d")" \
+  '{
+    timestamp: $ts, mode: $mode, hook_event: $event,
+    agent_id: (if $agent_id == "" then null else $agent_id end),
+    resolution_mode: $resolution,
+    checks: {
+      zero_tool_completion: $check_zero,
+      numerical_discrepancy: $check_num,
+      test_without_execution: $check_test,
+      subagent_trust: $check_agent,
+      scope_mismatch: $check_scope,
+      gate_verification: $check_gate
+    },
+    tool_counts: $tool_counts,
+    image_reads: $image_reads,
+    total_tools_this_turn: $total,
+    gate_markers: $gate_markers,
+    has_any_fail: $has_fail,
+    has_any_warn: $has_warn
+  }')
+
+echo "$FINDINGS" > "$SENTINEL_FILE"
+
+# ── All pass → exit clean ──────────────────────────────────────────
+if [[ "$HAS_FAIL" == "false" ]] && [[ "$HAS_WARN" == "false" ]]; then
+  exit 0
+fi
+
+# ── Log integrity event ────────────────────────────────────────────
+FAILED_CHECKS=""
+WARNED_CHECKS=""
+FIRST_DETAIL=""
+for _ck_pair in \
+  "zero_tool:$CK_zero_tool_s:$CK_zero_tool_d" \
+  "numerical:$CK_numerical_s:$CK_numerical_d" \
+  "test_claim:$CK_test_claim_s:$CK_test_claim_d" \
+  "subagent:$CK_subagent_s:$CK_subagent_d" \
+  "scope:$CK_scope_s:$CK_scope_d" \
+  "gate:$CK_gate_s:$CK_gate_d"; do
+  _ck_name="${_ck_pair%%:*}"; _ck_rest="${_ck_pair#*:}"
+  _ck_stat="${_ck_rest%%:*}"; _ck_det="${_ck_rest#*:}"
+  if [[ "$_ck_stat" == "fail" ]]; then
+    FAILED_CHECKS="${FAILED_CHECKS}${_ck_name},"
+    if [[ -z "$FIRST_DETAIL" ]]; then FIRST_DETAIL="$_ck_det"; fi
+  elif [[ "$_ck_stat" == "warn" ]]; then
+    WARNED_CHECKS="${WARNED_CHECKS}${_ck_name},"
+  fi
+done
+
+SKILL_DETECTED=$(echo "$TURN_DATA" | jq -r '.skills_used[0] // "none"')
+
+jq -nc \
+  --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+  --arg sid "$SESSION_ID" \
+  --arg aid "$AGENT_ID" \
+  --arg event "$HOOK_EVENT" \
+  --arg mode "$MODE" \
+  --arg failed "${FAILED_CHECKS%,}" \
+  --arg warned "${WARNED_CHECKS%,}" \
+  --arg detail "$FIRST_DETAIL" \
+  --arg skill "$SKILL_DETECTED" \
+  '{timestamp: $ts, session_id: $sid, agent_id: (if $aid == "" then null else $aid end),
+    hook_event: $event, mode: $mode,
+    checks_failed: ($failed | split(",")), checks_warned: ($warned | split(",")),
+    detail: $detail, skill_detected: $skill, resolution: "pending"}' \
+  >> "$LOG_FILE" 2>/dev/null
+
+# ── Exit decision by mode ──────────────────────────────────────────
+should_block() {
+  case "$MODE" in
+    strict)
+      return 0
+      ;;
+    balanced)
+      for _sb_pair in \
+        "$CK_zero_tool_s:$CK_zero_tool_c" \
+        "$CK_numerical_s:$CK_numerical_c" \
+        "$CK_test_claim_s:$CK_test_claim_c" \
+        "$CK_subagent_s:$CK_subagent_c" \
+        "$CK_scope_s:$CK_scope_c" \
+        "$CK_gate_s:$CK_gate_c"; do
+        _sb_stat="${_sb_pair%%:*}"; _sb_conf="${_sb_pair#*:}"
+        if [[ "$_sb_stat" == "fail" ]] && [[ "$_sb_conf" == "high" ]]; then
+          return 0
+        fi
+      done
+      return 1
+      ;;
+    light)
+      return 1
+      ;;
+  esac
+  return 1
+}
+
+build_block_message() {
+  local msg="VIBE INTEGRITY CHECK — discrepancies found between your claims and evidence.\n\n"
+
+  for _bm_tuple in \
+    "ZERO_TOOL:$CK_zero_tool_s:$CK_zero_tool_c:$CK_zero_tool_d" \
+    "NUMERICAL:$CK_numerical_s:$CK_numerical_c:$CK_numerical_d" \
+    "TEST_CLAIM:$CK_test_claim_s:$CK_test_claim_c:$CK_test_claim_d" \
+    "SUBAGENT:$CK_subagent_s:$CK_subagent_c:$CK_subagent_d" \
+    "SCOPE:$CK_scope_s:$CK_scope_c:$CK_scope_d" \
+    "GATE:$CK_gate_s:$CK_gate_c:$CK_gate_d"; do
+    IFS=':' read -r _bm_label _bm_stat _bm_conf _bm_det <<< "$_bm_tuple"
+    if [[ "$_bm_stat" == "fail" ]]; then
+      msg+="[${_bm_label} FAIL (${_bm_conf})] ${_bm_det}\n\n"
+    elif [[ "$_bm_stat" == "warn" ]]; then
+      msg+="[${_bm_label} WARN] ${_bm_det}\n\n"
+    fi
+  done
+
+  msg+="YOUR RESPONSE MUST CONTAIN ONE OF:\n"
+  msg+="A) New tool calls completing the missing work, then updated verification\n"
+  msg+="B) Specific counts: \"I completed X of Y items. The items I did not complete are: [list]\"\n\n"
+  msg+="THE FOLLOWING WILL TRIGGER ANOTHER BLOCK:\n"
+  msg+="- Apologies without specific counts\n"
+  msg+="- Rephrased completion claims without new tool calls\n"
+  msg+="- Any claim of totality (all/every/tutti) without new evidence\n"
+
+  echo -e "$msg"
+}
+
+if should_block; then
+  touch "$BLOCK_FLAG"
+  build_block_message >&2
+  exit 2
+fi
+
+# Light mode or balanced without high-confidence fails
+if [[ "$MODE" == "light" ]]; then
+  echo "VIBE integrity report (non-blocking):"
+  for _ck_pair in \
+    "zero_tool:$CK_zero_tool_s:$CK_zero_tool_d" \
+    "numerical:$CK_numerical_s:$CK_numerical_d" \
+    "test_claim:$CK_test_claim_s:$CK_test_claim_d" \
+    "subagent:$CK_subagent_s:$CK_subagent_d" \
+    "scope:$CK_scope_s:$CK_scope_d" \
+    "gate:$CK_gate_s:$CK_gate_d"; do
+    _ck_name="${_ck_pair%%:*}"; _ck_rest="${_ck_pair#*:}"
+    _ck_stat="${_ck_rest%%:*}"; _ck_det="${_ck_rest#*:}"
+    if [[ "$_ck_stat" != "pass" ]]; then
+      echo "  [${_ck_name}] ${_ck_stat}: ${_ck_det}"
+    fi
+  done
+fi
+
 exit 0
