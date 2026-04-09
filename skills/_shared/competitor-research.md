@@ -326,3 +326,15 @@ A concrete starting point for the user's project — not "use clean design" but 
 ### Confirmation
 
 Ask user for confirmation before proceeding to the skill's specific workflow. Include: "All raw data is saved in `.vibe/competitor-research/`. You can review individual competitor analyses there."
+
+---
+
+### Atomic Decomposition
+
+This protocol processes enumerable items. When the qualified competitor count exceeds the threshold, invoke the decomposer agent.
+
+- **Item type:** Qualified competitors
+- **Enumeration source:** list (from Phase 2 qualification table)
+- **Enumeration hint:** Count rows in the Phase 2 qualification table
+- **Threshold:** 5 (use atomic decomposition when N > 5)
+- **Task mode:** read_only

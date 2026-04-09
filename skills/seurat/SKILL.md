@@ -384,3 +384,15 @@ Scan all component files. For each: name, props, children/slots, import referenc
 When called programmatically: output structured component definitions. Skip competitor research (Steps using shared protocol) when called by other skills -- they provide context directly.
 
 **Integration contract with Ghostwriter:** Seurat's templates define WHICH content keys are needed. Ghostwriter fills those keys. Keys must match exactly. Both skills use the standard section keys defined in `${CLAUDE_SKILL_DIR}/../ghostwriter/references/content-json.md`.
+
+---
+
+### Atomic Decomposition
+
+When auditing WCAG compliance across multiple components, invoke the decomposer agent.
+
+- **Item type:** UI components
+- **Enumeration source:** file
+- **Enumeration hint:** `find {component_dir} -name '*.tsx' -o -name '*.vue' -o -name '*.svelte' | head -50`
+- **Threshold:** 10 (use atomic decomposition when N > 10)
+- **Task mode:** read_only

@@ -332,3 +332,15 @@ Baptist optimizes for genuine conversion — helping users who would benefit to 
 - **Emmet** may flag UX issues needing CRO analysis
 
 When called programmatically, Baptist outputs structured findings for machine consumption.
+
+---
+
+### Atomic Decomposition
+
+When analyzing multiple funnel steps or conversion points, invoke the decomposer agent.
+
+- **Item type:** Funnel steps or pages
+- **Enumeration source:** list or structure
+- **Enumeration hint:** Count steps in the funnel definition
+- **Threshold:** 5 (use atomic decomposition when N > 5)
+- **Task mode:** read_only

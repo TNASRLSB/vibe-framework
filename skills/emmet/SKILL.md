@@ -535,3 +535,15 @@ Emmet is used by other VIBE skills:
 - **Orson** calls Emmet for engine audits before video generation
 
 When called programmatically, Emmet outputs structured data (not prose) for machine consumption.
+
+---
+
+### Atomic Decomposition
+
+When auditing multiple files or components, invoke the decomposer agent.
+
+- **Item type:** Files or components to audit
+- **Enumeration source:** file
+- **Enumeration hint:** `find {src_dir} -name '*.{ext}' -type f`
+- **Threshold:** 10 (use atomic decomposition when N > 10)
+- **Task mode:** read_only

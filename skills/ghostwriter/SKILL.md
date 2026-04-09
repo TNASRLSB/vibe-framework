@@ -355,3 +355,15 @@ When called programmatically: output `content/[lang]/[page].json` following the 
 ## Key Principle
 
 Human readers first. Competitor research provides the foundation. Your voice provides the differentiation. SEO and GEO serve the content, not the other way around. All three layers — every time.
+
+---
+
+### Atomic Decomposition
+
+When analyzing multiple pages for SEO/GEO optimization, invoke the decomposer agent.
+
+- **Item type:** Pages or URLs to analyze
+- **Enumeration source:** list (from sitemap or user-provided URLs)
+- **Enumeration hint:** Count URLs in the analysis target list
+- **Threshold:** 5 (use atomic decomposition when N > 5)
+- **Task mode:** read_only
