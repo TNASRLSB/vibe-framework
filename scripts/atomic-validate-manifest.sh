@@ -33,7 +33,15 @@ if [[ "$TOTAL" != "$ITEMS_LEN" ]]; then
 fi
 
 # Execute enumeration command independently
-ENUM_COUNT=$(eval "$ENUM_CMD" 2>/dev/null | wc -l | tr -d ' ')
+ENUM_OUTPUT=$(eval "$ENUM_CMD" 2>/dev/null)
+ENUM_LINES=$(echo "$ENUM_OUTPUT" | wc -l | tr -d ' ')
+
+# If the command produces a single number (e.g., grep -c), use that number directly
+if [[ "$ENUM_LINES" -eq 1 ]] && echo "$ENUM_OUTPUT" | grep -qP '^\d+$'; then
+  ENUM_COUNT=$(echo "$ENUM_OUTPUT" | tr -d ' ')
+else
+  ENUM_COUNT="$ENUM_LINES"
+fi
 
 if [[ "$ENUM_COUNT" != "$TOTAL" ]]; then
   echo "enumeration_command produced $ENUM_COUNT items, manifest claims $TOTAL" >&2

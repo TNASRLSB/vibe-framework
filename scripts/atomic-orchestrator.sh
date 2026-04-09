@@ -72,7 +72,9 @@ dispatch_item() {
 
   case "$MODEL_NAME" in
     claude)
-      VIBE_INTEGRITY_MODE=off claude -p "$PROMPT" --output-format json --permission-mode auto > "$OUTFILE" 2>&1
+      PERM_MODE="auto"
+      [[ "$TASK_MODE" == "write" ]] && PERM_MODE="acceptEdits"
+      VIBE_INTEGRITY_MODE=off claude -p "$PROMPT" --output-format json --permission-mode "$PERM_MODE" > "$OUTFILE" 2>&1
       ;;
     qwen)
       qwen -p "$PROMPT" -o json -y --auth-type qwen-oauth > "$OUTFILE" 2>&1
