@@ -106,6 +106,24 @@ This result narrows the space of viable mitigation approaches. If same-model ver
 The practical implication remains: mechanical mitigation that does not route through the model's parameters---transcript inspection, tool call counting, file existence verification---is architecturally distinct from prompt-based mitigation.
 The experiment's methodological limitations (discussed in \S\ref{sec:exp-threats}) prevent us from quantifying the full system's effectiveness when hooks are properly activated in interactive mode, but the failure of prompt-based mitigation is itself the central finding.
 
+The C5 experiment (\S\ref{sec:exp-c5}) resolves this impasse for a specific class of tasks.
+Atomic decomposition achieved 1.000 completeness across all 10 analysis tasks and the worst-performing refactoring task (Task~12: C1~=~0.750, C4~=~0.000, C5~=~1.000).
+C5 does not attempt to verify the model's output or modify its behavior.
+It eliminates the conditions under which false completion occurs: when each session processes exactly one item, there is no multi-item tracking to fail, no progress state to misrepresent, and no completion claim to evaluate.
+The model cannot skip items because the orchestrator---a bash script, not an LLM---ensures that every item receives its own session.
+False completion becomes structurally impossible rather than behaviorally discouraged.
+
+This is the paper's central resolution: the Worker-Inspector Paradox is not solved by building a better inspector.
+It is solved, for enumerable tasks, by eliminating the need for inspection.
+When the task structure guarantees that every item is processed, verification is redundant.
+The locus of control shifts from the model (which cannot be trusted to self-monitor) to the orchestrator (which enforces completeness mechanically).
+
+This resolution does not generalize to all tasks.
+Holistic tasks---architecture reviews requiring cross-component synthesis, complex refactoring requiring consistency across files, research tasks requiring integrative reasoning---cannot be decomposed into independent atomic units without destroying the cross-item reasoning that makes them meaningful.
+For these tasks, the Worker-Inspector Paradox remains open.
+The space of viable solutions narrows to non-LLM mechanical verification, adversarially trained verifier models, or human oversight.
+C5 demonstrates that structural approaches can succeed where behavioral and verification approaches fail, but only within the boundary of tasks whose items are independently processable.
+
 
 % ══════════════════════════════════════════════════════════════
 \subsection{Relationship to AI Safety}

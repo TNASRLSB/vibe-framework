@@ -18,16 +18,22 @@ skill-level gate markers to detect discrepancies between completion claims
 and observable evidence.
 Cross-model experimentation with Claude and Qwen on 20~standardized
 tasks (120+ runs) reveals a 35\% overall false completion rate and a
-counterintuitive finding: every mitigation tested made the problem worse.
+counterintuitive finding: three mitigation strategies made the problem
+worse.
 Prompt-based anti-completion instructions increased false completion from
 25\% to 40\%. An independent verification pipeline using a separate model
 instance with no shared context increased false completion from 9.1\% to
 36.4\%, with the verifier approving incomplete work in 82\% of cases.
-The baseline condition---no mitigation---produced the lowest false
-completion rate across all conditions.
-These findings support what we call the \emph{Worker-Inspector Paradox}:
+These findings confirm what we call the \emph{Worker-Inspector Paradox}:
 the paradox extends beyond self-verification to same-model verification,
 as a second instance of the same model shares the same training-induced
 biases and cannot reliably verify the first instance's work.
-Reliable verification of agentic LLM output requires external mechanical
-checks independent of the model's own incentive structure.
+A fifth condition, \emph{atomic decomposition}, resolves the paradox for
+enumerable tasks: a non-LLM orchestrator decomposes each task into
+single-item sessions, achieving 1.000 completeness across all tasks
+tested---including the experiment's worst performer (0.750 baseline,
+0.000 under verification, 1.000 under decomposition).
+The solution is not a better inspector but the structural elimination of
+the need for inspection.
+This approach does not generalize to holistic tasks requiring cross-item
+reasoning, where the paradox remains open.

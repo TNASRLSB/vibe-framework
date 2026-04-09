@@ -1,9 +1,11 @@
 \section{Experimental Evaluation}
 \label{sec:experiment}
 
-This section presents a controlled experiment testing the false completion problem across two models and four experimental conditions.
-The results confirm that false completion is pervasive (35\% of all runs) and cross-model, but no mitigation condition reduced false completion rates---every intervention either increased them or left them unchanged.
-We analyze why, distinguishing methodological limitations from substantive findings.
+This section presents a controlled experiment testing the false completion problem across two models and five experimental conditions.
+The results confirm that false completion is pervasive (35\% of all runs) and cross-model.
+Three mitigation conditions (C2--C4) either increased false completion rates or left them unchanged.
+A fifth condition, C5 (Atomic Decomposition), achieved perfect completeness on all tasks tested by structurally eliminating the possibility of partial completion.
+We analyze why each condition succeeded or failed, distinguishing methodological limitations from substantive findings.
 
 
 % ══════════════════════════════════════════════════════════════
@@ -25,12 +27,14 @@ A third model, Gemini 2.5 Pro, was planned but excluded from the final dataset d
 This exclusion is a limitation; the original protocol called for three models.
 
 \paragraph{Conditions.}
-Three experimental conditions were applied to each model-task pair:
+Five experimental conditions were tested. The first three were applied to every model-task pair; C4 and C5 were applied to subsets of Claude tasks:
 
 \begin{itemize}[nosep]
   \item \textbf{C1 (Baseline):} The task prompt with no anti-false-completion instructions.
   \item \textbf{C2 (Prompt-only):} The task prompt augmented with explicit instructions: ``Do not claim completion unless you have verified every item. If you cannot complete all items, state exactly how many you completed out of the expected total.''
   \item \textbf{C3 (Integrity system):} For Claude, the Completion Integrity System was activated via \texttt{VIBE\_INTEGRITY\_MODE=strict} in addition to the C2 prompt. For Qwen, C3 was identical to C2 because the hook-based enforcement system is not portable to Qwen CLI. The Qwen C3 condition therefore serves as a replication of C2, providing variance estimation rather than a distinct treatment.
+  \item \textbf{C4 (Independent verification):} A three-phase pipeline: the worker executes the task (identical to C1), a separate LLM session verifies the output, and the worker re-analyzes any flagged gaps. Applied to 11 Claude tasks (\S\ref{sec:exp-c4}).
+  \item \textbf{C5 (Atomic decomposition):} A bash script reads the ground truth to enumerate all expected items, spawns a separate LLM session for each item individually, collects all outputs, and counts results deterministically. No LLM is involved in orchestration, tracking, or verification. Applied to 10 Claude analysis tasks and 1 refactoring task (\S\ref{sec:exp-c5}).
 \end{itemize}
 
 \paragraph{Scoring.}
@@ -250,6 +254,7 @@ Seven threats limit the conclusions that can be drawn from these results.
   \item \textbf{No repetition.} Each task-model-condition combination was run once. Without repetitions, observed differences between conditions may reflect sampling noise rather than treatment effects. The Qwen C2/C3 comparison suggests that single-run variance can account for 10--15 percentage point differences in false completion rates.
   \item \textbf{Two models, one excluded.} Gemini was excluded due to persistent API quota exhaustion, reducing the cross-model comparison from three models to two. Generalizability claims would be strengthened by additional model families.
   \item \textbf{C4 reduced task set.} The C4 verification experiment (\S\ref{sec:exp-c4}) was conducted on 11 of 20 Claude tasks rather than the full matrix. Results should be interpreted as a focused probe rather than a comprehensive replication.
+  \item \textbf{C5 task coverage.} The C5 atomic decomposition experiment (\S\ref{sec:exp-c5}) was limited to 10 analysis tasks and 1 refactoring task. Perfect completeness on enumerable tasks does not imply effectiveness on holistic tasks (architecture reviews, cross-file refactoring) that resist atomic decomposition. Generalization claims are restricted to tasks with independently processable items.
 \end{enumerate}
 
 
@@ -312,3 +317,63 @@ The verifier assessed the worker's output as ``COMPLETE'' in 9 of 11 cases. Phas
 This result extends the Worker-Inspector Paradox beyond self-verification to same-model verification. The verifier is a separate instance with a fresh context window---no shared reasoning, no anchoring to the worker's chain-of-thought. Yet it exhibits the same bias toward validating the presented output. The explanation is that context separation is necessary but not sufficient: both instances share the same model weights, RLHF training, and sycophantic priors. The verifier's tendency to approve the worker's output is not a product of shared context but of shared incentive structure. The same training that causes the worker to overclaim completion causes the verifier to under-criticize the worker's output.
 
 This finding has direct implications for agentic system architectures that rely on multi-agent verification using instances of the same model. If the inspector shares the worker's training-induced biases, adding more inspectors of the same model does not improve verification reliability---it adds computational cost without adding critical independence.
+
+
+% ══════════════════════════════════════════════════════════════
+\subsection{Condition C5: Atomic Decomposition}
+\label{sec:exp-c5}
+
+The failure of behavioral mitigation (C2), mechanical enforcement (C3), and independent verification (C4) raises a question: is the false completion problem insoluble?
+C5 tests a fundamentally different approach.
+Instead of asking the model to process $N$ items in one session and then checking whether it finished, a non-LLM orchestrator decomposes the task into $N$ atomic units and spawns a separate LLM session for each one.
+
+\paragraph{Protocol.}
+The C5 pipeline operates in four steps:
+\begin{enumerate}[nosep]
+  \item A bash script reads the ground truth specification to enumerate all expected items for a given task.
+  \item For each item, the script spawns a separate LLM session whose sole instruction is to analyze that one item. The session has no knowledge of the other items, the total count, or the task-level completion state.
+  \item The script collects all $N$ outputs mechanically.
+  \item Completeness is computed deterministically by the script---counting collected outputs against the expected item list. No LLM is involved in tracking or verification.
+\end{enumerate}
+The orchestrator is a bash script. No LLM participates in enumeration, progress tracking, or completion assessment. The model processes exactly one item per session and never encounters a situation where it must decide whether to continue or stop.
+
+\paragraph{Results.}
+C5 was applied to the 10 Claude analysis tasks (Tasks~01--10) and one refactoring task (Task~12, the worst performer in the C1--C4 conditions). Table~\ref{tab:c5-results} presents per-task completeness scores across all tested conditions.
+
+\begin{table}[htbp]
+\centering
+\caption{Completeness scores for Claude analysis tasks across conditions C1--C5, plus Task~12 (refactoring). Dashes indicate the condition was not tested for that task.}
+\label{tab:c5-results}
+\begin{tabular}{crrrrr}
+\toprule
+Task & C1 & C2 & C3 & C4 & C5 \\
+\midrule
+01 & 1.000 & --- & --- & 1.000 & 1.000 \\
+02 & 0.917 & --- & --- & 0.542 & 1.000 \\
+03 & 1.000 & --- & --- & 1.000 & 1.000 \\
+04 & 0.935 & --- & --- & 0.739 & 1.000 \\
+05 & 1.000 & --- & --- & 1.000 & 1.000 \\
+06 & 1.000 & --- & --- & 1.000 & 1.000 \\
+07 & 1.000 & --- & --- & 1.000 & 1.000 \\
+08 & 1.000 & --- & --- & 1.000 & 1.000 \\
+09 & 1.000 & --- & --- & 0.182 & 1.000 \\
+10 & 1.000 & --- & --- & 1.000 & 1.000 \\
+\midrule
+12 (refactor) & 0.750 & 0.417 & 0.250 & 0.000 & 1.000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+C5 achieved 1.000 completeness on every task tested. Mean completeness across the 10 analysis tasks by condition: C1~=~0.985, C2~=~0.926, C3~=~0.706, C5~=~1.000. Task~12, a refactoring task that deteriorated monotonically across the behavioral and verification conditions (0.750~$\to$~0.417~$\to$~0.250~$\to$~0.000), achieved perfect completeness under C5.
+
+False completion is structurally impossible under C5. The model never sees the full task, never tracks progress across items, and never decides when to stop. The orchestrator counts outputs mechanically---there is no completion claim to evaluate, because there is no point in the pipeline where the model could make one.
+
+\paragraph{Why it works.}
+C5 does not ask the model to behave differently. It does not instruct, verify, or check. It eliminates the conditions under which false completion occurs. Every root cause identified in \S\ref{sec:root-causes} requires the model to process multiple items within a single session: context rot (RC3) needs items competing for attention; completion pressure (RC5) needs a sequence long enough to trigger premature termination; shortcut exploitation (RC4) needs remaining items that can be skipped. When each session contains exactly one item, none of these mechanisms activate. There is nothing to skip, nothing to forget, nothing to fabricate.
+
+\paragraph{Limitations.}
+C5 applies only to tasks with enumerable, independently processable items. Analysis tasks---endpoint inventories, vulnerability catalogs, component audits---decompose naturally. Tasks requiring cross-item reasoning do not: an architecture review that must synthesize relationships across components, or a complex refactoring that must maintain consistency across files, cannot be decomposed into isolated atomic units without losing the holistic reasoning that makes the task meaningful.
+
+The cost is proportional to the item count: an 18-item task requires 18 separate LLM sessions instead of 1. For the tasks tested here, this represents roughly a 10--18$\times$ cost increase. The orchestrator must also have access to the ground truth enumeration---it must know \emph{what} items to spawn sessions for---which requires either a task specification that lists expected items or an external mechanism (test suite, schema, specification document) that provides them.
+
+C5 was tested on 10 of 20 tasks (all analysis tasks) plus one refactoring task. The remaining 9 tasks (4 refactoring, 5 research) were excluded due to ground truth extraction difficulties: the expected items for these tasks could not be reliably decomposed into atomic units by the bash orchestrator without introducing LLM-based parsing, which would undermine C5's design principle of non-LLM orchestration.
