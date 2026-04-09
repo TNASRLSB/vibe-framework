@@ -1,8 +1,8 @@
 \section{Experimental Evaluation}
 \label{sec:experiment}
 
-This section presents a controlled experiment testing the false completion problem across two models and three mitigation conditions.
-The results confirm that false completion is pervasive (35\% of all runs) and cross-model, but the mitigation conditions did not reduce false completion rates---they slightly increased them.
+This section presents a controlled experiment testing the false completion problem across two models and four experimental conditions.
+The results confirm that false completion is pervasive (35\% of all runs) and cross-model, but no mitigation condition reduced false completion rates---every intervention either increased them or left them unchanged.
 We analyze why, distinguishing methodological limitations from substantive findings.
 
 
@@ -240,7 +240,7 @@ The differences between Qwen C2 and C3 (e.g., analysis: 30\% vs.\ 20\% FC rate, 
 \subsection{Threats to Validity}
 \label{sec:exp-threats}
 
-Six threats limit the conclusions that can be drawn from these results.
+Seven threats limit the conclusions that can be drawn from these results.
 
 \begin{enumerate}[nosep]
   \item \textbf{Automated scoring false negatives.} The fuzzy keyword matcher may fail to detect valid completions when the model uses synonyms, abbreviations, or alternative identifiers not present in the ground truth table. This would undercount completeness and overcount false completion.
@@ -249,4 +249,66 @@ Six threats limit the conclusions that can be drawn from these results.
   \item \textbf{Hook activation uncertainty.} As discussed in \S\ref{sec:exp-counterintuitive}, the C3 condition may not have activated the mechanical enforcement layer. Until instrumented runs confirm hook firing, the C3 results for Claude should be interpreted as a second prompt-only condition rather than a test of mechanical enforcement.
   \item \textbf{No repetition.} Each task-model-condition combination was run once. Without repetitions, observed differences between conditions may reflect sampling noise rather than treatment effects. The Qwen C2/C3 comparison suggests that single-run variance can account for 10--15 percentage point differences in false completion rates.
   \item \textbf{Two models, one excluded.} Gemini was excluded due to persistent API quota exhaustion, reducing the cross-model comparison from three models to two. Generalizability claims would be strengthened by additional model families.
+  \item \textbf{C4 reduced task set.} The C4 verification experiment (\S\ref{sec:exp-c4}) was conducted on 11 of 20 Claude tasks rather than the full matrix. Results should be interpreted as a focused probe rather than a comprehensive replication.
 \end{enumerate}
+
+
+% ══════════════════════════════════════════════════════════════
+\subsection{Condition C4: Independent Verification Pipeline}
+\label{sec:exp-c4}
+
+The failure of prompt-based mitigation (C2) and the inconclusive mechanical enforcement results (C3) raise a natural question: can a physically separate verification agent catch false completions that the worker misses?
+Condition C4 tests this hypothesis using a three-phase pipeline applied to 11 Claude tasks from the C1 baseline.
+
+\paragraph{Protocol.}
+The C4 pipeline proceeds in three phases:
+\begin{enumerate}[nosep]
+  \item \textbf{Phase 1 (Worker):} The task is executed identically to C1---the same model, the same prompt, no anti-completion instructions.
+  \item \textbf{Phase 2 (Verifier):} A fresh LLM session (new context window, no shared reasoning history) receives the worker's output and the original task specification. The verifier is instructed to assess whether all required items have been addressed and to flag any gaps.
+  \item \textbf{Phase 3 (Re-analysis):} If the verifier identifies gaps, the worker receives the verifier's critique and is forced to re-analyze the flagged items.
+\end{enumerate}
+The verifier is an independent instance of the same model (Claude). Context isolation is complete: the verifier has no access to the worker's chain-of-thought, tool call history, or intermediate reasoning. Only the final output is shared.
+
+\paragraph{Results.}
+Table~\ref{tab:c4-results} presents the per-task comparison between C1 (baseline) and C4 (verified) across the 11 tasks tested.
+
+\begin{table}[htbp]
+\centering
+\caption{Completeness and false completion comparison: C1 (baseline) vs.\ C4 (independent verification). Claude, 11 tasks.}
+\label{tab:c4-results}
+\begin{tabular}{crrccc}
+\toprule
+Task & C1 Compl. & C4 Compl. & $\Delta$ & C1 FC & C4 FC \\
+\midrule
+01 & 1.000 & 1.000 &  0.000 & N & N \\
+02 & 0.917 & 0.542 & $-$0.375 & N & Y \\
+03 & 1.000 & 1.000 &  0.000 & N & N \\
+04 & 0.935 & 0.739 & $-$0.196 & N & Y \\
+05 & 1.000 & 1.000 &  0.000 & N & N \\
+06 & 1.000 & 1.000 &  0.000 & N & N \\
+07 & 1.000 & 1.000 &  0.000 & N & N \\
+08 & 1.000 & 1.000 &  0.000 & N & N \\
+09 & 1.000 & 0.182 & $-$0.818 & N & Y \\
+10 & 1.000 & 1.000 &  0.000 & N & N \\
+12 & 0.750 & 0.000 & $-$0.750 & Y & Y \\
+\midrule
+Mean & 0.964 & 0.769 & $-$0.194 & 9.1\% & 36.4\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The results are unambiguous and negative. C4 produced \emph{worse} outcomes than the unmitigated baseline on every metric:
+
+\begin{itemize}[nosep]
+  \item Mean completeness dropped from 0.964 to 0.769 ($-$0.194).
+  \item False completion rate increased from 9.1\% (1/11) to 36.4\% (4/11).
+  \item Zero tasks improved. Seven remained unchanged. Four deteriorated.
+\end{itemize}
+
+\paragraph{Verifier behavior.}
+The verifier assessed the worker's output as ``COMPLETE'' in 9 of 11 cases. Phase 3 (forced re-analysis) triggered only once. The verifier was not sufficiently critical: it validated incomplete work rather than catching gaps. In the four tasks where C4 produced false completions, the verifier either approved the output outright or identified only superficial issues while missing the substantive gaps that the automated scorer detected.
+
+\paragraph{Interpretation.}
+This result extends the Worker-Inspector Paradox beyond self-verification to same-model verification. The verifier is a separate instance with a fresh context window---no shared reasoning, no anchoring to the worker's chain-of-thought. Yet it exhibits the same bias toward validating the presented output. The explanation is that context separation is necessary but not sufficient: both instances share the same model weights, RLHF training, and sycophantic priors. The verifier's tendency to approve the worker's output is not a product of shared context but of shared incentive structure. The same training that causes the worker to overclaim completion causes the verifier to under-criticize the worker's output.
+
+This finding has direct implications for agentic system architectures that rely on multi-agent verification using instances of the same model. If the inspector shares the worker's training-induced biases, adding more inspectors of the same model does not improve verification reliability---it adds computational cost without adding critical independence.

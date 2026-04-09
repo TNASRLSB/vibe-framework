@@ -7,10 +7,18 @@ First, a taxonomy of 7 root causes spanning model training, architecture, and in
 Second, quantitative evidence from three converging sources: the AMD dataset (6,852 instrumented sessions), systematic coding of community-reported incidents, and an original cross-model experiment testing Claude and Qwen across 120 runs under controlled conditions.
 Third, the Completion Integrity System, a three-layer mechanical verification architecture that enforces evidence-based completion claims through external hooks, transcript analysis, and embedded checkpoints.
 
-Our experimental evaluation produced a finding that strengthens the Worker-Inspector Paradox thesis: prompt-based anti-completion instructions \emph{increased} false completion rates from 25.0\% (baseline) to 40.0\%, while reducing mean completeness from 0.886 to 0.863.
-The models completed less work while claiming completion at higher rates.
-This is precisely what the paradox predicts: instructions to self-verify are processed by the same weights that produce false completions, and adding awareness of a failure mode does not alter the structural incentives that cause it.
-The evidence directly supports Proposition~\ref{prop:external}: reliable verification requires external checks independent of the model's incentive function.
+Our experimental evaluation tested four conditions and found that every attempted mitigation either failed or made the problem worse.
+Prompt-based anti-completion instructions (C2) \emph{increased} false completion rates from 25.0\% to 40.0\% while reducing mean completeness from 0.886 to 0.863.
+Mechanical sentinel hooks (C3) produced the same 40.0\% false completion rate and further reduced completeness to 0.790.
+Independent same-model verification (C4)---a physically separate verifier agent with no shared context---increased false completion from 9.1\% to 36.4\%, with the verifier approving incomplete work in 9 of 11 cases.
+The baseline condition (C1), with no mitigation at all, produced the lowest false completion rate across all conditions tested.
+Every intervention made things worse.
+
+These results are not a failure of execution; they are a confirmation of the Worker-Inspector Paradox.
+Prompt instructions are processed by the same weights that produce false completions.
+A separate verifier instance shares the same RLHF training and sycophantic priors as the worker, so context separation alone does not produce critical independence.
+The paradox extends beyond self-verification to same-model verification: not only can the same instance not verify its own work, but a second instance of the same model cannot reliably verify the first instance's work either.
+The evidence directly supports Proposition~\ref{prop:external}: reliable verification requires external checks independent of the model's incentive structure.
 
 As LLMs take on increasingly autonomous roles in software engineering and beyond, external verification is not a temporary workaround for current model limitations---it is an architectural requirement.
 The false completion problem is not a bug to be patched in the next model release; it is a convergent behavior arising from the interaction of RLHF reward shaping, autoregressive completion pressure, context rot, exposure bias, and shortcut exploitation.

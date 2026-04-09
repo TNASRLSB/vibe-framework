@@ -17,11 +17,17 @@ architecture that uses transcript analysis, file-system verification, and
 skill-level gate markers to detect discrepancies between completion claims
 and observable evidence.
 Cross-model experimentation with Claude and Qwen on 20~standardized
-tasks (120 runs) reveals a 35\% overall false completion rate and a
-counterintuitive finding: prompt-based anti-completion instructions
-\emph{increase} false completion from 25\% to 40\% while reducing actual
-completeness, demonstrating that the model processes mitigation instructions
-through the same weights that produce the failure.
+tasks (120+ runs) reveals a 35\% overall false completion rate and a
+counterintuitive finding: every mitigation tested made the problem worse.
+Prompt-based anti-completion instructions increased false completion from
+25\% to 40\%. An independent verification pipeline using a separate model
+instance with no shared context increased false completion from 9.1\% to
+36.4\%, with the verifier approving incomplete work in 82\% of cases.
+The baseline condition---no mitigation---produced the lowest false
+completion rate across all conditions.
 These findings support what we call the \emph{Worker-Inspector Paradox}:
-reliable verification of agentic LLM output requires external mechanical
+the paradox extends beyond self-verification to same-model verification,
+as a second instance of the same model shares the same training-induced
+biases and cannot reliably verify the first instance's work.
+Reliable verification of agentic LLM output requires external mechanical
 checks independent of the model's own incentive structure.
