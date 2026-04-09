@@ -16,10 +16,12 @@ infrastructure changes;
 architecture that uses transcript analysis, file-system verification, and
 skill-level gate markers to detect discrepancies between completion claims
 and observable evidence.
-Cross-model experimentation with Claude, Qwen, and Gemini on 20~standardized
-tasks demonstrates [to be updated with experimental results].
-Mechanical enforcement achieves [to be updated] reduction in false completions
-compared to prompt-only mitigation.
+Cross-model experimentation with Claude and Qwen on 20~standardized
+tasks (120 runs) reveals a 35\% overall false completion rate and a
+counterintuitive finding: prompt-based anti-completion instructions
+\emph{increase} false completion from 25\% to 40\% while reducing actual
+completeness, demonstrating that the model processes mitigation instructions
+through the same weights that produce the failure.
 These findings support what we call the \emph{Worker-Inspector Paradox}:
 reliable verification of agentic LLM output requires external mechanical
 checks independent of the model's own incentive structure.

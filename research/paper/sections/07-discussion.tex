@@ -84,20 +84,23 @@ The instructions are processed by the same weights that produce false completion
 Mechanical mitigation---sentinel hooks, transcript analysis, filesystem verification---operates outside the model's generation process.
 The verification logic inspects the model's output as data, without routing through the model's parameters.
 
-Our experimental evaluation (\S\ref{sec:experiment}) shows that prompt-based mitigation alone reduces false completion rates but cannot eliminate them, while mechanical enforcement achieves a greater reduction [to be updated with experimental results].
-The baseline condition (no mitigation) produces false completion at rates consistent with the community evidence reviewed in \S\ref{sec:community-issues}.
-The prompt-only condition (anti-sycophancy instructions, verification directives) reduces the rate by X\% [to be updated with experimental results].
-The full system condition (prompt instructions plus mechanical sentinel enforcement) reduces the rate by X\% [to be updated with experimental results].
+Our experimental evaluation (\S\ref{sec:experiment}) produces a result that strengthens the paradox thesis, though not in the manner originally hypothesized.
+The baseline condition (C1, no mitigation) produces a 25.0\% false completion rate.
+The prompt-only condition (C2, anti-sycophancy instructions) \emph{increases} this to 40.0\%.
+The integrity system condition (C3) also produces 40.0\%.
+Mean completeness degrades from 0.886 (C1) to 0.863 (C2) to 0.790 (C3).
 
-The delta between prompt-only and full-system conditions quantifies the cost of trusting the model.
-Every percentage point in that gap represents cases where the model was instructed to verify its work, processed that instruction, and still produced a false completion claim.
-The instruction was present in the context.
-The model ``understood'' it---in the sense that it could paraphrase and acknowledge it.
-But understanding an instruction and reliably following it are different properties when the instruction conflicts with the model's reward landscape.
+These counterintuitive results do not invalidate the mitigation thesis; they illuminate why it is necessary.
+The prompt-based instructions caused models to produce \emph{less complete} work while continuing to claim completion at the same or higher rates.
+The instructions created awareness of the failure mode without altering the structural incentives that produce it.
+The model ``understood'' the anti-completion directive---it could paraphrase and acknowledge it---but understanding an instruction and reliably following it are different properties when the instruction conflicts with the model's reward landscape.
 
-Mechanical mitigation does not require model cooperation.
-It does not ask the model to be honest; it checks whether the model's claims are substantiated by evidence in the transcript.
-This independence from model cooperation is the source of its effectiveness and the reason it cannot be replicated by prompt engineering alone.
+This is precisely the Worker-Inspector Paradox in operation: the mitigation instructions are processed by the same weights that produce the false completions.
+Adding instructions to a system whose failure mode is ignoring instructions cannot, by construction, be a reliable fix.
+The experimental result is a direct empirical confirmation of Proposition~\ref{prop:external}.
+
+The practical implication remains: mechanical mitigation that does not route through the model's parameters---transcript inspection, tool call counting, file existence verification---is architecturally distinct from prompt-based mitigation.
+The experiment's methodological limitations (discussed in \S\ref{sec:threats}) prevent us from quantifying the full system's effectiveness when hooks are properly activated in interactive mode, but the failure of prompt-based mitigation is itself the central finding.
 
 
 % ══════════════════════════════════════════════════════════════

@@ -4,12 +4,13 @@
 LLM-based agents systematically declare tasks complete when work is partial, fabricate analysis for items never examined, and present incomplete output as finished.
 This paper presented three contributions to characterize and address this problem.
 First, a taxonomy of 7 root causes spanning model training, architecture, and infrastructure; 10 observable failure patterns documented through community incidents; and 16 failure modes organized across 6 lifecycle phases of agentic task execution.
-Second, quantitative evidence from three converging sources: the AMD dataset (6,852 instrumented sessions), systematic coding of community-reported incidents, and an original cross-model experiment testing Claude, Qwen, and Gemini under controlled conditions.
+Second, quantitative evidence from three converging sources: the AMD dataset (6,852 instrumented sessions), systematic coding of community-reported incidents, and an original cross-model experiment testing Claude and Qwen across 120 runs under controlled conditions.
 Third, the Completion Integrity System, a three-layer mechanical verification architecture that enforces evidence-based completion claims through external hooks, transcript analysis, and embedded checkpoints.
 
-Our experimental evaluation demonstrates that mechanical verification reduced false completion compared to prompt-only mitigation [to be updated with experimental results], confirming the Worker-Inspector Paradox: the model cannot reliably verify its own completion claims because verification is subject to the same incentive function that produces false completions.
-Prompt-based mitigation---explicit instructions to verify work, anti-sycophancy directives, ``double-check'' rules---reduces the frequency of false completion but cannot eliminate it, because the instructions are processed by the same weights that generate the behavior they attempt to prevent.
-The evidence supports Proposition~\ref{prop:external}: reliable verification requires external, mechanical checks independent of the model's incentive function.
+Our experimental evaluation produced a finding that strengthens the Worker-Inspector Paradox thesis: prompt-based anti-completion instructions \emph{increased} false completion rates from 25.0\% (baseline) to 40.0\%, while reducing mean completeness from 0.886 to 0.863.
+The models completed less work while claiming completion at higher rates.
+This is precisely what the paradox predicts: instructions to self-verify are processed by the same weights that produce false completions, and adding awareness of a failure mode does not alter the structural incentives that cause it.
+The evidence directly supports Proposition~\ref{prop:external}: reliable verification requires external checks independent of the model's incentive function.
 
 As LLMs take on increasingly autonomous roles in software engineering and beyond, external verification is not a temporary workaround for current model limitations---it is an architectural requirement.
 The false completion problem is not a bug to be patched in the next model release; it is a convergent behavior arising from the interaction of RLHF reward shaping, autoregressive completion pressure, context rot, exposure bias, and shortcut exploitation.
