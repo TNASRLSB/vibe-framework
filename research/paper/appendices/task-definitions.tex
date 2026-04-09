@@ -1,1 +1,231 @@
-% Appendix: Task Definitions — to be written in Task 15
+\section{Experimental Task Definitions}
+\label{app:tasks}
+
+This appendix lists all 20~tasks used in the cross-model experiment.
+Each task specifies a category, target codebase, expected item count, and the
+verbatim prompt given to the model. Ground truth tables (used for scoring) are
+available in the experiment repository at
+\texttt{research/experiment/tasks/}.
+
+\subsection{Analysis Tasks (Tasks 01--10)}
+
+\paragraph{Task 01: API Endpoint Inventory.}
+\textit{Category:} Multi-file analysis \quad
+\textit{Codebase:} \texttt{api-gateway} \quad
+\textit{Expected items:} 18
+
+\begin{quote}
+Analyze the \texttt{api-gateway} codebase and produce a complete inventory of every HTTP endpoint. For each endpoint, document: (1) The HTTP method (GET, POST, PUT, DELETE); (2) The URL path; (3) The handler function name; (4) Whether authentication is required (and what decorator is used); (5) Whether admin authorization is required. Present your findings as a markdown table. Make sure you have found ALL endpoints --- do not stop until you have documented every single one.
+\end{quote}
+
+\paragraph{Task 02: Security Vulnerability Audit.}
+\textit{Category:} Multi-file analysis \quad
+\textit{Codebase:} \texttt{api-gateway} \quad
+\textit{Expected items:} 12
+
+\begin{quote}
+Perform a thorough security audit of the \texttt{api-gateway} codebase. Identify every security vulnerability, weakness, or risky pattern. For each finding, document: (1) A severity rating (critical, high, medium, low); (2) The vulnerability type (e.g., SQL injection, hardcoded secrets, missing auth); (3) The exact file and line number where it occurs; (4) A description of the risk; (5) A recommended fix. Search every file thoroughly. Present your complete findings as a numbered list. Ensure you have identified ALL security issues before reporting.
+\end{quote}
+
+\paragraph{Task 03: React Component Inventory.}
+\textit{Category:} Multi-file analysis \quad
+\textit{Codebase:} \texttt{component-lib} \quad
+\textit{Expected items:} 16
+
+\begin{quote}
+Analyze the \texttt{component-lib} codebase and produce a complete inventory of every React component. For each component, document: (1) The component name; (2) The file path; (3) All props it accepts (name and TypeScript type); (4) Whether it has any default prop values; (5) Any internal state management (useState, useEffect, etc.). Present your findings as a structured report with one section per component. Make sure you have documented ALL 16 components before finishing.
+\end{quote}
+
+\paragraph{Task 04: Accessibility Audit of Component Library.}
+\textit{Category:} Multi-file analysis \quad
+\textit{Codebase:} \texttt{component-lib} \quad
+\textit{Expected items:} 23
+
+\begin{quote}
+Perform a comprehensive WCAG 2.1 accessibility audit of the \texttt{component-lib} React component library. Examine every component file and identify every accessibility issue. For each issue, document: (1) The component name and file path; (2) The specific WCAG criterion violated (e.g., 4.1.2 Name, Role, Value); (3) A description of the problem; (4) The exact code pattern causing the issue; (5) A recommended fix. Be thorough --- check for missing ARIA attributes, keyboard accessibility, focus management, semantic HTML, color contrast concerns, and screen reader compatibility. Report ALL issues you find.
+\end{quote}
+
+\paragraph{Task 05: CLI Subcommand Documentation.}
+\textit{Category:} Multi-file analysis \quad
+\textit{Codebase:} \texttt{cli-tool} \quad
+\textit{Expected items:} 15
+
+\begin{quote}
+Analyze the \texttt{cli-tool} codebase and produce complete documentation for every CLI subcommand. For each subcommand, document: (1) The command name; (2) Its purpose (from the docstring or help text); (3) All arguments and options it accepts (name, type, required/optional, default value); (4) The file that implements it; (5) Any notable behavior or edge cases. Present your findings as a structured reference document with one section per command. Ensure you have documented ALL subcommands --- the CLI has exactly 15.
+\end{quote}
+
+\paragraph{Task 06: Configuration Variable Audit.}
+\textit{Category:} Multi-file analysis \quad
+\textit{Codebase:} \texttt{config-service} \quad
+\textit{Expected items:} 20
+
+\begin{quote}
+Analyze the \texttt{config-service} codebase and produce a complete audit of every environment variable / configuration setting. For each variable, document: (1) The variable name; (2) Its purpose; (3) The default value; (4) The data type (string, integer, etc.); (5) Whether it has production validation (i.e., the \texttt{validate()} function checks it); (6) Any security concerns with the default value. Search all files --- configuration may be defined or referenced in multiple places. Present your findings as a table. Ensure you have found ALL 20 configuration variables.
+\end{quote}
+
+\paragraph{Task 07: Route and Middleware Analysis.}
+\textit{Category:} Multi-file analysis \quad
+\textit{Codebase:} \texttt{config-service} \quad
+\textit{Expected items:} 14
+
+\begin{quote}
+Analyze the \texttt{config-service} codebase and produce a complete inventory of every Express.js route. For each route, document: (1) The HTTP method; (2) The URL path; (3) The handler function (and which file it is defined in); (4) Which middleware is applied (global or route-specific); (5) Whether it requires authentication; (6) The response format (what JSON structure it returns). Also document all middleware in the \texttt{middleware/} directory, describing what each one does and any issues you find. Present your findings as a structured report. Ensure you have documented ALL 14 routes and ALL 3 middleware.
+\end{quote}
+
+\paragraph{Task 08: Data Transform Function Catalog.}
+\textit{Category:} Multi-file analysis \quad
+\textit{Codebase:} \texttt{data-pipeline} \quad
+\textit{Expected items:} 13
+
+\begin{quote}
+Analyze the \texttt{data-pipeline} codebase and produce a complete catalog of every transform function. For each transform, document: (1) The function name; (2) The file where it is defined; (3) Its purpose (what transformation it performs); (4) The configuration parameters it accepts (from the \texttt{config} dict); (5) Its input/output contract (what it expects and returns); (6) Any bugs, code smells, or limitations you find. Search all files in the \texttt{transformers/} directory. Present your findings as a structured reference with one section per transform. Ensure you have cataloged ALL 13 transform functions.
+\end{quote}
+
+\paragraph{Task 09: Code Smell Detection Across Pipeline.}
+\textit{Category:} Multi-file analysis \quad
+\textit{Codebase:} \texttt{data-pipeline} \quad
+\textit{Expected items:} 11
+
+\begin{quote}
+Analyze the entire \texttt{data-pipeline} codebase and identify every code smell, bug, or quality issue. Search ALL files --- extractors, transformers, loaders, and the pipeline orchestrator. For each issue, document: (1) A severity rating (bug, code smell, design issue); (2) The exact file and location; (3) A description of the problem; (4) Why it matters (potential consequences); (5) A recommended fix. Be exhaustive --- check error handling, type safety, API design consistency, and architectural issues. Present ALL findings as a numbered list.
+\end{quote}
+
+\paragraph{Task 10: Bug Report for CLI Tool.}
+\textit{Category:} Multi-file analysis \quad
+\textit{Codebase:} \texttt{cli-tool} \quad
+\textit{Expected items:} 15
+
+\begin{quote}
+Analyze the \texttt{cli-tool} codebase thoroughly and produce a bug report covering ALL issues you find. This includes actual bugs, unimplemented features, edge cases, and design problems. For each issue, document: (1) Severity (critical, high, medium, low); (2) The command/module affected; (3) The file and approximate location; (4) A description of the bug or issue; (5) Steps to reproduce (if applicable); (6) Suggested fix. Search every file --- \texttt{main.py}, \texttt{store.py}, and all 15 command modules in \texttt{commands/}. Present a complete bug report. In addition to bugs, also enumerate all 15 subcommands and confirm each one's implementation file exists and is correctly wired in main.py's handler map.
+\end{quote}
+
+\subsection{Refactoring Tasks (Tasks 11--15)}
+
+\paragraph{Task 11: Add ARIA Attributes to All Components.}
+\textit{Category:} Refactoring \quad
+\textit{Codebase:} \texttt{component-lib} \quad
+\textit{Expected items:} 16
+
+\begin{quote}
+Refactor the \texttt{component-lib} React component library to fix ALL accessibility issues. For every component in \texttt{src/components/}, add the appropriate ARIA attributes, keyboard handlers, and semantic HTML. Specifically: (1) Every interactive element must be keyboard accessible; (2) Every form element must have a properly linked label; (3) Every status/notification component must use appropriate ARIA live regions; (4) Every navigation component must have appropriate aria-label; (5) Modal must have focus trap and proper dialog role; (6) All close/dismiss buttons must have aria-label. Modify ALL 16 component files. After completing the refactoring, list every file you modified and what changes you made.
+\end{quote}
+
+\paragraph{Task 12: Fix All Security Vulnerabilities in API Gateway.}
+\textit{Category:} Refactoring \quad
+\textit{Codebase:} \texttt{api-gateway} \quad
+\textit{Expected items:} 12
+
+\begin{quote}
+Fix ALL security vulnerabilities in the \texttt{api-gateway} codebase. For each vulnerability: (1) Identify the exact location; (2) Explain the risk; (3) Implement the fix directly in the code; (4) Verify the fix does not break existing functionality. After completing all fixes, produce a summary table listing every vulnerability you fixed, where it was, and what you changed. Ensure you have addressed ALL security issues --- do not stop until the codebase is secure.
+\end{quote}
+
+\paragraph{Task 13: Add Input Validation to All CLI Commands.}
+\textit{Category:} Refactoring \quad
+\textit{Codebase:} \texttt{cli-tool} \quad
+\textit{Expected items:} 15
+
+\begin{quote}
+Refactor the \texttt{cli-tool} codebase to add proper input validation and error handling to ALL 15 command modules. For each command: (1) Add validation for all inputs (check types, ranges, required fields); (2) Add proper error handling (try/except around file and store operations); (3) Fix any existing bugs you find; (4) Ensure the command exits with appropriate status codes (0 for success, 1 for error); (5) Add a brief docstring if missing. Modify all 15 command files in \texttt{src/commands/}. Also fix the 6 known bugs (BUG-01 through BUG-06). After completing, list every file you modified and what changes you made.
+\end{quote}
+
+\paragraph{Task 14: Add Error Handling to All Data Pipeline Transforms.}
+\textit{Category:} Refactoring \quad
+\textit{Codebase:} \texttt{data-pipeline} \quad
+\textit{Expected items:} 13
+
+\begin{quote}
+Refactor the \texttt{data-pipeline} codebase to add robust error handling to ALL 13 transform functions. For each transform: (1) Add try/except blocks around operations that can fail; (2) Log warnings for recoverable errors instead of silently skipping; (3) Fix all code smells (SMELL-01 through SMELL-11); (4) Ensure each function properly validates its \texttt{config} parameter; (5) Add type hints to all function signatures; (6) Ensure consistent return types (all transforms must return list[dict]). Modify all files in \texttt{src/transformers/} and fix the issues in \texttt{src/extractors/api\_extractor.py} and \texttt{src/loaders/db\_loader.py}. After completing, list every file you modified and what changes you made.
+\end{quote}
+
+\paragraph{Task 15: Add Authentication to All Unprotected Config Service Routes.}
+\textit{Category:} Refactoring \quad
+\textit{Codebase:} \texttt{config-service} \quad
+\textit{Expected items:} 14
+
+\begin{quote}
+Refactor the \texttt{config-service} codebase to implement proper security across ALL routes and middleware. Specifically: (1) Fix the auth middleware to actually validate API keys and JWT tokens (not just accept any value); (2) Review all 14 routes and ensure appropriate authentication/authorization; (3) Fix the config export route that leaks secrets; (4) Fix the rate limiter memory leak; (5) Add input validation middleware for all POST/PUT routes; (6) Add proper error responses (consistent JSON error format) to all routes; (7) Ensure the config update route persists changes (or document why it doesn't). Modify all relevant files. After completing, list every file you modified and what specific changes you made to each.
+\end{quote}
+
+\subsection{Research Tasks (Tasks 16--20)}
+
+\paragraph{Task 16: API Gateway Architecture Review.}
+\textit{Category:} Research \quad
+\textit{Codebase:} \texttt{api-gateway} \quad
+\textit{Expected items:} 17
+
+\begin{quote}
+Conduct a thorough architecture review of the \texttt{api-gateway} codebase. Read every file and produce a comprehensive report covering: (1) File inventory: List every file in the codebase with its purpose; (2) Database schema: Document every table, its columns, types, and relationships; (3) Authentication patterns: Describe every authentication/authorization mechanism; (4) Configuration options: List every configuration variable in \texttt{config.py} including all 3 environment-specific config classes; (5) Error handling patterns: How does the application handle errors? What HTTP status codes are used? For the database schema section, document ALL 4 tables with ALL their columns. For the configuration section, document ALL 17 configuration entries (including class-level overrides).
+\end{quote}
+
+\paragraph{Task 17: Component Library Design System Analysis.}
+\textit{Category:} Research \quad
+\textit{Codebase:} \texttt{component-lib} \quad
+\textit{Expected items:} 16
+
+\begin{quote}
+Analyze the \texttt{component-lib} codebase as a design system and produce a comprehensive design review. For each of the 16 components, evaluate: (1) Variant support: What visual variants does it offer?; (2) Size support: Does it support multiple sizes?; (3) State handling: Does it manage internal state?; (4) Composition: Does it accept children? Is it composable with other components?; (5) Consistency: Does it follow the same naming patterns as other components? Also produce an overall assessment of the design system's consistency, identifying: which components follow the \texttt{variant} pattern and which do not; which components follow the \texttt{size} pattern and which do not; which components are purely presentational vs.\ stateful.
+\end{quote}
+
+\paragraph{Task 18: CLI Tool Data Model and State Machine Analysis.}
+\textit{Category:} Research \quad
+\textit{Codebase:} \texttt{cli-tool} \quad
+\textit{Expected items:} 15
+
+\begin{quote}
+Analyze the \texttt{cli-tool} codebase and produce a comprehensive report on its data model and state machine. Specifically: (1) Task data model: Document every field in the task object (name, type, default, purpose). Read \texttt{store.py} to find the complete schema; (2) State transitions: Map out all valid state transitions (which commands move a task from one status to another). Read every command module to trace this; (3) Storage format: Describe the JSON storage structure including the top-level fields; (4) Command-state matrix: For each of the 15 commands, document which task states it operates on and what state it produces. Read ALL files in the codebase to build a complete picture. Do not guess --- cite specific code locations.
+\end{quote}
+
+\paragraph{Task 19: Config Service Security Posture Assessment.}
+\textit{Category:} Research \quad
+\textit{Codebase:} \texttt{config-service} \quad
+\textit{Expected items:} 14
+
+\begin{quote}
+Conduct a security posture assessment of the \texttt{config-service} codebase. Read ALL files and evaluate: (1) Authentication analysis: How does the auth middleware work? What are its weaknesses?; (2) Secret management: Which config values are secrets? Are they properly protected?; (3) Input validation: For each route that accepts input, is there proper validation?; (4) Data exposure: Which routes could leak sensitive information?; (5) Denial of service vectors: Are there any resource exhaustion risks? Produce a security report with specific findings tied to exact file locations and line numbers. For each finding, rate it as Critical/High/Medium/Low.
+\end{quote}
+
+\paragraph{Task 20: Data Pipeline Dependency and Data Flow Analysis.}
+\textit{Category:} Research \quad
+\textit{Codebase:} \texttt{data-pipeline} \quad
+\textit{Expected items:} 18
+
+\begin{quote}
+Analyze the \texttt{data-pipeline} codebase and produce a comprehensive dependency and data flow report. Specifically: (1) Module dependency graph: For each Python file, list all imports (both standard library and internal). Read every file to build this; (2) Data flow trace: Trace the flow of data from extraction through transformation to loading. For each stage, document what happens to the data shape; (3) Extractor inventory: Document each extractor class, its constructor parameters, and what it returns; (4) Loader inventory: Document each loader class, its constructor parameters, and what it does; (5) Transform chain compatibility: For each of the 13 transforms, document whether it is safe to chain after any other transform (i.e., does it maintain the list[dict] contract?). Read ALL files. Present findings as a structured report.
+\end{quote}
+
+\subsection{Task Summary}
+
+\begin{table}[h]
+\centering
+\caption{Summary of experimental tasks by category and codebase.}
+\label{tab:task-summary}
+\small
+\begin{tabular}{clllr}
+\toprule
+ID & Title & Category & Codebase & Items \\
+\midrule
+01 & API Endpoint Inventory & Analysis & api-gateway & 18 \\
+02 & Security Vulnerability Audit & Analysis & api-gateway & 12 \\
+03 & React Component Inventory & Analysis & component-lib & 16 \\
+04 & Accessibility Audit & Analysis & component-lib & 23 \\
+05 & CLI Subcommand Documentation & Analysis & cli-tool & 15 \\
+06 & Configuration Variable Audit & Analysis & config-service & 20 \\
+07 & Route and Middleware Analysis & Analysis & config-service & 14 \\
+08 & Data Transform Catalog & Analysis & data-pipeline & 13 \\
+09 & Code Smell Detection & Analysis & data-pipeline & 11 \\
+10 & Bug Report for CLI Tool & Analysis & cli-tool & 15 \\
+\midrule
+11 & Add ARIA Attributes & Refactoring & component-lib & 16 \\
+12 & Fix Security Vulnerabilities & Refactoring & api-gateway & 12 \\
+13 & Add Input Validation & Refactoring & cli-tool & 15 \\
+14 & Add Error Handling & Refactoring & data-pipeline & 13 \\
+15 & Add Authentication & Refactoring & config-service & 14 \\
+\midrule
+16 & Architecture Review & Research & api-gateway & 17 \\
+17 & Design System Analysis & Research & component-lib & 16 \\
+18 & Data Model \& State Machine & Research & cli-tool & 15 \\
+19 & Security Posture Assessment & Research & config-service & 14 \\
+20 & Dependency \& Data Flow & Research & data-pipeline & 18 \\
+\bottomrule
+\end{tabular}
+\end{table}

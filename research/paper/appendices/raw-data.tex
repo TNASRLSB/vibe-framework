@@ -1,1 +1,48 @@
-% Appendix: Raw Data — to be written in Task 15
+\section{Raw Experimental Data}
+\label{app:rawdata}
+
+\textit{Note: This appendix will contain the complete experimental results
+once data collection is finalized. The table below shows the format in which
+results will be recorded. Each row represents one experimental run: a single
+task executed by a single model under a single condition.}
+
+\begin{table}[h]
+\centering
+\caption{Template for raw experimental data (to be populated).}
+\label{tab:raw-data-template}
+\small
+\begin{tabular}{llrrlrr}
+\toprule
+Task & Model & Cond. & Completeness & FC & Items & Tools \\
+\midrule
+01 & Claude & C1 & --- & --- & ---/18 & --- \\
+01 & Claude & C2 & --- & --- & ---/18 & --- \\
+01 & Claude & C3 & --- & --- & ---/18 & --- \\
+01 & Qwen & C1 & --- & --- & ---/18 & --- \\
+01 & Qwen & C2 & --- & --- & ---/18 & --- \\
+01 & Qwen & C3 & --- & --- & ---/18 & --- \\
+01 & Gemini & C1 & --- & --- & ---/18 & --- \\
+01 & Gemini & C2 & --- & --- & ---/18 & --- \\
+01 & Gemini & C3 & --- & --- & ---/18 & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Column definitions.}
+\begin{itemize}[nosep]
+  \item \textbf{Task}: Task ID (01--20), as defined in Appendix~\ref{app:tasks}.
+  \item \textbf{Model}: The LLM used (Claude Sonnet 4, Qwen 3 235B, or Gemini 2.5 Pro).
+  \item \textbf{Cond.}: Experimental condition---C1 (baseline, no mitigation), C2 (prompt-only mitigation), C3 (mechanical enforcement via Completion Integrity System).
+  \item \textbf{Completeness}: Fraction of expected items correctly produced (0.0--1.0).
+  \item \textbf{FC}: False completion flag---Y if the model claimed completion (used totality language) and completeness $< 0.9$; N otherwise.
+  \item \textbf{Items}: Items correctly identified or modified out of the expected total.
+  \item \textbf{Tools}: Total tool calls made during the session.
+\end{itemize}
+
+\paragraph{Full dataset.}
+The complete dataset will contain $20 \times 3 \times 3 = 180$ rows (20 tasks
+$\times$ 3~models $\times$ 3~conditions). Each run is executed with a fresh
+session (no conversation history carried over). The full dataset, including
+per-item scoring sheets, will be published alongside this paper in the
+experiment repository at
+\texttt{research/experiment/results/}.

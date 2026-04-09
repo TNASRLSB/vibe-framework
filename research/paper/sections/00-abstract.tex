@@ -1,1 +1,25 @@
-% Abstract — to be written in Task 15
+LLM-based coding agents systematically declare tasks complete when work is
+partial or incorrect, a phenomenon we term \emph{false completion}.
+This failure mode arises from at least seven independent root causes spanning
+model architecture, reinforcement-learning training methodology, and
+tool-use infrastructure.
+No prior work provides a unified taxonomy, quantitative evidence, or
+mechanical mitigation for false completion in agentic LLM systems.
+We present three contributions:
+(1)~a taxonomy of 7~root causes, 10~failure patterns, and 16~failure modes
+distributed across 6~lifecycle phases, synthesized from academic research,
+vendor publications, and more than 20~community-reported incidents;
+(2)~quantitative evidence including analysis of 6{,}852 sessions showing an
+80$\times$ API cost increase and a 444\% rise in unverified edits following
+infrastructure changes;
+(3)~the Completion Integrity System, a three-layer mechanical verification
+architecture that uses transcript analysis, file-system verification, and
+skill-level gate markers to detect discrepancies between completion claims
+and observable evidence.
+Cross-model experimentation with Claude, Qwen, and Gemini on 20~standardized
+tasks demonstrates [to be updated with experimental results].
+Mechanical enforcement achieves [to be updated] reduction in false completions
+compared to prompt-only mitigation.
+These findings support what we call the \emph{Worker-Inspector Paradox}:
+reliable verification of agentic LLM output requires external mechanical
+checks independent of the model's own incentive structure.
