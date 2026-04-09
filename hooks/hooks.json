@@ -114,6 +114,11 @@
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/completion-verifier.sh\"",
             "statusMessage": "VIBE: deep verification..."
+          },
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/atomic-enforcement.sh\"",
+            "statusMessage": "VIBE: atomic verification..."
           }
         ]
       }
