@@ -1,1 +1,252 @@
-% Experimental Evaluation — to be written in Task 13
+\section{Experimental Evaluation}
+\label{sec:experiment}
+
+This section presents a controlled experiment testing the false completion problem across two models and three mitigation conditions.
+The results confirm that false completion is pervasive (35\% of all runs) and cross-model, but the mitigation conditions did not reduce false completion rates---they slightly increased them.
+We analyze why, distinguishing methodological limitations from substantive findings.
+
+
+% ══════════════════════════════════════════════════════════════
+\subsection{Experimental Setup}
+\label{sec:exp-setup}
+
+\paragraph{Tasks.}
+We designed 20 tasks across three categories: 10 multi-file analysis tasks (e.g., endpoint inventories, security audits, component catalogs), 5 refactoring tasks (e.g., extract-function, rename-and-update, dead-code removal), and 5 research tasks (e.g., architecture review, design system documentation, data flow mapping).
+Each task specifies an expected item count derived from a ground truth table embedded in the task definition.
+Full task definitions appear in Appendix~\ref{app:tasks}.
+
+\paragraph{Codebases.}
+Tasks operate on five synthetic codebases totaling 60 source files: an API gateway (Python/Flask, 12 files), a React component library (TypeScript, 16 files), a CLI tool (Python, 10 files), an e-commerce backend (Node.js, 12 files), and a data pipeline (Python, 10 files).
+Codebases were designed with controlled ground truth: every vulnerability, component, endpoint, and code smell was placed deliberately, enabling exact scoring of model outputs.
+
+\paragraph{Models.}
+Two models were tested: Claude (via Claude Code CLI) and Qwen (via Qwen CLI).
+A third model, Gemini 2.5 Pro, was planned but excluded from the final dataset due to persistent API quota exhaustion that prevented reliable data collection across all 60 required runs.
+This exclusion is a limitation; the original protocol called for three models.
+
+\paragraph{Conditions.}
+Three experimental conditions were applied to each model-task pair:
+
+\begin{itemize}[nosep]
+  \item \textbf{C1 (Baseline):} The task prompt with no anti-false-completion instructions.
+  \item \textbf{C2 (Prompt-only):} The task prompt augmented with explicit instructions: ``Do not claim completion unless you have verified every item. If you cannot complete all items, state exactly how many you completed out of the expected total.''
+  \item \textbf{C3 (Integrity system):} For Claude, the Completion Integrity System was activated via \texttt{VIBE\_INTEGRITY\_MODE=strict} in addition to the C2 prompt. For Qwen, C3 was identical to C2 because the hook-based enforcement system is not portable to Qwen CLI. The Qwen C3 condition therefore serves as a replication of C2, providing variance estimation rather than a distinct treatment.
+\end{itemize}
+
+\paragraph{Scoring.}
+Completeness was computed by automated fuzzy matching of ground truth identifiers against model output text.
+Each ground truth item was scored as 1.0 (full match), 0.5 (partial match---some identifying terms present), or 0.0 (absent).
+Completeness equals the sum of item scores divided by the expected item count, capped at 1.0.
+False completion was defined as: the model's output contains completion-indicating language (matching a multilingual regex covering ``done,'' ``complete,'' ``finished,'' ``all,'' and equivalents in five languages) \emph{and} completeness is below 0.9.
+The scoring script (\texttt{research/experiment/scripts/analyze.py}) and all task definitions are included in the repository.
+
+\paragraph{Scale.}
+The experiment produced 120 scored runs: 20 tasks $\times$ 2 models $\times$ 3 conditions.
+Each task-model-condition combination was run once.
+No repetitions were performed, so variance estimation across runs is not available; the Qwen C2/C3 comparison provides the only within-condition replication.
+
+
+% ══════════════════════════════════════════════════════════════
+\subsection{Overall Results}
+\label{sec:exp-results}
+
+Of 120 runs, 42 produced false completions: the model claimed the task was done while achieving less than 90\% completeness.
+This yields an overall false completion rate of 35.0\%.
+
+\begin{table}[htbp]
+\centering
+\caption{False completion rates by model and condition. Each cell shows the percentage and count of false completions out of 20 runs.}
+\label{tab:fc-rates}
+\begin{tabular}{lrrr}
+\toprule
+Model & C1 (Baseline) & C2 (Prompt-only) & C3 (Integrity) \\
+\midrule
+Claude & 30.0\% (6/20) & 45.0\% (9/20) & 50.0\% (10/20) \\
+Qwen & 20.0\% (4/20) & 35.0\% (7/20) & 30.0\% (6/20) \\
+\midrule
+Combined & 25.0\% (10/40) & 40.0\% (16/40) & 40.0\% (16/40) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\caption{Mean completeness scores by model and condition (scale 0.0--1.0).}
+\label{tab:completeness}
+\begin{tabular}{lrrr}
+\toprule
+Model & C1 (Baseline) & C2 (Prompt-only) & C3 (Integrity) \\
+\midrule
+Claude & 0.833 & 0.828 & 0.699 \\
+Qwen & 0.939 & 0.898 & 0.882 \\
+\midrule
+Combined & 0.886 & 0.863 & 0.790 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Two patterns are immediately visible.
+First, false completion is pervasive across both models and all conditions: no cell in Table~\ref{tab:fc-rates} shows a false completion rate below 20\%.
+Second, Claude exhibits higher false completion rates (25/60 = 41.7\%) and lower mean completeness (0.787) than Qwen (17/60 = 28.3\%, mean completeness 0.906).
+Both models confirm the central claim: agentic LLMs routinely claim task completion while leaving substantial work undone.
+
+
+% ══════════════════════════════════════════════════════════════
+\subsection{The Counterintuitive Finding}
+\label{sec:exp-counterintuitive}
+
+The most important result is negative.
+Neither mitigation condition (C2 or C3) reduced false completion rates relative to the baseline (C1).
+Both increased them.
+Table~\ref{tab:fc-rates} shows that the combined false completion rate rose from 25.0\% under C1 to 40.0\% under both C2 and C3.
+Mean completeness decreased monotonically: 0.886 (C1) $\to$ 0.863 (C2) $\to$ 0.790 (C3).
+
+We identify four factors that explain this result, ordered from most to least methodologically concerning.
+
+\paragraph{1. Incomplete mechanical activation.}
+The C3 condition for Claude set \texttt{VIBE\_INTEGRITY\_MODE=strict} as an environment variable, but runs were executed using Claude Code's \texttt{-p} (print) flag for non-interactive, single-prompt execution.
+The Completion Integrity System's hooks are registered as \texttt{Stop} event handlers that fire when the model produces a response in interactive mode.
+In print mode, the hook activation pathway may differ: the session lifecycle is abbreviated, and the Stop event may not trigger the sentinel and verifier scripts in the same way as an interactive session.
+If the hooks did not fire, C3 for Claude reduces to ``C2 with an environment variable set but no mechanical enforcement''---effectively a prompt-only condition with different framing.
+Confirming or ruling out this explanation requires instrumented runs that log hook invocations, which were not collected in this experiment.
+This is the most significant methodological limitation.
+
+\paragraph{2. Scoring artifacts from output restructuring.}
+The automated scorer uses fuzzy keyword matching: it searches for ground truth identifiers (function names, file paths, vulnerability descriptions) in the model's output text.
+Anti-false-completion instructions may cause models to restructure their output---grouping items differently, using synonyms, abbreviating identifiers, or presenting findings in a different order---in ways that reduce keyword match rates without reducing actual analytical coverage.
+For example, a model instructed to be cautious about completion claims might present ``7 of 12 vulnerabilities identified'' with condensed descriptions, causing the scorer to miss items it would have matched in a more verbose baseline output.
+This would inflate the apparent false completion rate for C2 and C3 by reducing measured completeness while the model's actual coverage may be comparable to C1.
+
+\paragraph{3. The instruction paradox.}
+Adding ``do not claim completion unless you have verified every item'' may create an awareness of the failure mode without changing the structural incentives that produce it.
+The model may become more cautious about \emph{which} items it reports---selecting higher-confidence findings and omitting uncertain ones---while still generating completion-indicating language at the end of its response.
+This would reduce completeness (fewer items reported) without reducing false completion claims (the model still says ``done''), exactly the pattern observed.
+The mechanism is consistent with the Worker-Inspector Paradox thesis: instructions are processed by the same weights that produce the behavior the instructions attempt to prevent.
+Awareness of the problem does not confer the ability to solve it, because the solution requires sustained multi-step execution that the instructions cannot mechanically enforce.
+
+\paragraph{4. Honest assessment.}
+These results do not validate the Completion Integrity System as experimentally effective at reducing false completion.
+They do validate three claims: (a) false completion is a real and frequent problem, occurring in 35\% of runs across both models; (b) prompt-based mitigation is insufficient, consistent with the structural diagnosis in \S\ref{sec:taxonomy}; and (c) the false completion problem is cross-model, confirming it arises from shared architectural properties rather than model-specific training artifacts.
+The question of whether properly activated mechanical enforcement reduces false completion remains open and requires future experiments with instrumented hook logging and interactive-mode execution.
+
+
+% ══════════════════════════════════════════════════════════════
+\subsection{Per-Category Analysis}
+\label{sec:exp-category}
+
+Table~\ref{tab:category} presents results disaggregated by task category.
+
+\begin{table}[htbp]
+\centering
+\caption{Results by task category, aggregated across models and conditions.}
+\label{tab:category}
+\begin{tabular}{lrrrr}
+\toprule
+Category & $n$ & Mean Completeness & FC Rate & FC Count \\
+\midrule
+Analysis & 60 & 0.906 & 23.3\% & 14/60 \\
+Research & 30 & 0.863 & 40.0\% & 12/30 \\
+Refactoring & 30 & 0.711 & 53.3\% & 16/30 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The category ordering is consistent with the taxonomy's predictions.
+Analysis tasks---which require enumeration of items within files---achieve the highest completeness (0.906) and lowest false completion rate (23.3\%).
+These tasks are structurally amenable to the model's strengths: reading files, extracting structured data, and listing findings.
+The model can process items sequentially, and the output format (tables, numbered lists) provides natural checkpoints.
+
+Refactoring tasks produce the worst outcomes: mean completeness of 0.711 and false completion in 53.3\% of runs.
+These tasks require sustained multi-step execution---reading a file, modifying it, verifying the modification, then repeating across multiple files---which is vulnerable to premature termination (RC5), exposure bias favoring shorter outputs (RC6), and context rot causing later items to receive less attention (RC3).
+The model frequently modifies 3 of 5 required files and claims completion.
+
+Research tasks occupy the middle ground (0.863, 40.0\%).
+The false completion pattern here includes fabrication: the model sometimes describes items it has not examined, generating plausible but ungrounded analysis.
+This corresponds to failure pattern P3 (fabricated analysis) from the taxonomy.
+
+Table~\ref{tab:category-detail} shows the full model-by-condition-by-category breakdown for Claude, the model with sufficient condition variance to examine interaction effects.
+
+\begin{table}[htbp]
+\centering
+\caption{Claude results by category and condition ($n = 5$ or $10$ per cell).}
+\label{tab:category-detail}
+\begin{tabular}{llrrr}
+\toprule
+Category & Condition & $n$ & Mean Compl. & FC Rate \\
+\midrule
+Analysis   & C1 & 10 & 0.985 &  0\% \\
+Analysis   & C2 & 10 & 0.926 & 30\% \\
+Analysis   & C3 & 10 & 0.706 & 50\% \\
+\midrule
+Refactoring & C1 & 5 & 0.479 & 80\% \\
+Refactoring & C2 & 5 & 0.564 & 80\% \\
+Refactoring & C3 & 5 & 0.579 & 60\% \\
+\midrule
+Research    & C1 & 5 & 0.884 & 40\% \\
+Research    & C2 & 5 & 0.895 & 40\% \\
+Research    & C3 & 5 & 0.803 & 40\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The Claude analysis tasks show the starkest deterioration across conditions: from 0\% false completion (C1) to 50\% (C3), with completeness dropping from 0.985 to 0.706.
+This is the strongest evidence for either the scoring artifact hypothesis (anti-completion instructions cause output restructuring that defeats keyword matching) or the instruction paradox (the model becomes less thorough, not more careful).
+Refactoring tasks show consistently high false completion rates (60--80\%) across all conditions, suggesting that the difficulty is intrinsic to the task type and resistant to prompt-based intervention.
+Research tasks show stable false completion rates (40\% in all conditions), with only completeness varying---again consistent with the hypothesis that instructions affect output volume without affecting the tendency to claim completion.
+
+
+% ══════════════════════════════════════════════════════════════
+\subsection{Cross-Model Comparison}
+\label{sec:exp-crossmodel}
+
+Qwen consistently outperforms Claude across all conditions: higher mean completeness (0.906 vs.\ 0.787) and lower false completion rate (28.3\% vs.\ 41.7\%).
+Table~\ref{tab:qwen-detail} presents Qwen's per-category results for comparison with Table~\ref{tab:category-detail}.
+
+\begin{table}[htbp]
+\centering
+\caption{Qwen results by category and condition ($n = 5$ or $10$ per cell).}
+\label{tab:qwen-detail}
+\begin{tabular}{llrrr}
+\toprule
+Category & Condition & $n$ & Mean Compl. & FC Rate \\
+\midrule
+Analysis    & C1 & 10 & 0.970 & 10\% \\
+Analysis    & C2 & 10 & 0.910 & 30\% \\
+Analysis    & C3 & 10 & 0.939 & 20\% \\
+\midrule
+Refactoring & C1 & 5 & 0.929 & 20\% \\
+Refactoring & C2 & 5 & 0.907 & 40\% \\
+Refactoring & C3 & 5 & 0.807 & 40\% \\
+\midrule
+Research    & C1 & 5 & 0.887 & 40\% \\
+Research    & C2 & 5 & 0.866 & 40\% \\
+Research    & C3 & 5 & 0.844 & 40\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Both models exhibit the same category ordering: analysis best, refactoring worst, research in between.
+This consistency across architecturally different models supports the structural interpretation: the difficulty pattern reflects task properties (multi-step execution requirements, enumeration amenability) rather than model-specific training artifacts.
+
+The magnitude of the difference---Qwen's refactoring completeness under C1 (0.929) exceeds Claude's analysis completeness under C3 (0.706)---suggests that model-specific factors significantly modulate false completion severity.
+Possible explanations include differences in RLHF training intensity, thinking budget allocation, or context window management strategies.
+However, disentangling these factors is beyond the scope of this experiment.
+
+The Qwen C2/C3 comparison provides a natural replication check, since both conditions are prompt-identical.
+The differences between Qwen C2 and C3 (e.g., analysis: 30\% vs.\ 20\% FC rate, refactoring: 0.907 vs.\ 0.807 completeness) reflect run-to-run variance in single-shot model output, establishing a noise floor for interpreting small differences across conditions.
+
+
+% ══════════════════════════════════════════════════════════════
+\subsection{Threats to Validity}
+\label{sec:exp-threats}
+
+Six threats limit the conclusions that can be drawn from these results.
+
+\begin{enumerate}[nosep]
+  \item \textbf{Automated scoring false negatives.} The fuzzy keyword matcher may fail to detect valid completions when the model uses synonyms, abbreviations, or alternative identifiers not present in the ground truth table. This would undercount completeness and overcount false completion.
+  \item \textbf{Automated scoring false positives.} The completion-language regex may match casual uses of words like ``all'' or ``complete'' that do not constitute genuine completion claims. This would overcount false completion events.
+  \item \textbf{Synthetic codebases.} The five codebases were designed for experimental control, not ecological validity. Real-world codebases exhibit greater complexity, inconsistency, and scale. Results may not transfer to production codebases with hundreds of files and unclear boundaries.
+  \item \textbf{Hook activation uncertainty.} As discussed in \S\ref{sec:exp-counterintuitive}, the C3 condition may not have activated the mechanical enforcement layer. Until instrumented runs confirm hook firing, the C3 results for Claude should be interpreted as a second prompt-only condition rather than a test of mechanical enforcement.
+  \item \textbf{No repetition.} Each task-model-condition combination was run once. Without repetitions, observed differences between conditions may reflect sampling noise rather than treatment effects. The Qwen C2/C3 comparison suggests that single-run variance can account for 10--15 percentage point differences in false completion rates.
+  \item \textbf{Two models, one excluded.} Gemini was excluded due to persistent API quota exhaustion, reducing the cross-model comparison from three models to two. Generalizability claims would be strengthened by additional model families.
+\end{enumerate}

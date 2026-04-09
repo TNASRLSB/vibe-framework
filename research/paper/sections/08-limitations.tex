@@ -21,17 +21,17 @@ Cross-model testing in the experimental evaluation uses prompt-only mitigation f
 This means the full-system condition was tested only on Claude, while the prompt-only and baseline conditions provide cross-model comparisons.
 
 \paragraph{Small experimental scale.}
-The experimental evaluation uses 20 tasks across 3 models, yielding 180 total experimental runs across 3 conditions.
+The experimental evaluation uses 20 tasks across 2 models (Gemini was excluded due to API quota exhaustion), yielding 120 total experimental runs across 3 conditions.
 This provides initial evidence for the central claims but lacks statistical power for fine-grained comparisons between models or between task categories.
-Effect sizes for the mechanical vs.\ prompt-only comparison are [to be updated with experimental results], but confidence intervals are wide.
+Effect sizes for the mechanical vs.\ prompt-only comparison are small and in the wrong direction (false completion rates increased from 25\% to 40\%), but confidence intervals are wide given single-run-per-cell design.
 A larger-scale replication is needed to establish precise effect magnitudes and to test for interaction effects between model, task type, and mitigation strategy.
 
-\paragraph{Manual evaluation.}
-Completeness scoring in the experimental evaluation requires human judgment.
-A human evaluator examines each model output against a predefined rubric of required items and assigns a completeness score.
-Inter-rater reliability was not tested: a single evaluator scored all outputs.
-Subjectivity in distinguishing ``found'' (item genuinely analyzed with evidence) from ``partial'' (item mentioned but not substantively analyzed) may affect individual scores.
-The binary classification of false completion events (score below threshold) is less sensitive to this subjectivity than the continuous completeness scores, but the limitation remains.
+\paragraph{Automated scoring limitations.}
+Completeness scoring uses automated fuzzy keyword matching rather than human judgment.
+The scorer searches for ground truth identifiers (function names, file paths, vulnerability descriptions) in model output text, with partial credit for incomplete matches.
+This approach is reproducible and scalable but may produce false negatives when models use synonyms, abbreviations, or alternative phrasings not anticipated in the ground truth tables.
+Conversely, the completion-language regex may produce false positives by matching casual uses of words like ``all'' that do not constitute genuine completion claims.
+The interaction between anti-completion instructions and scoring accuracy---instructions may cause output restructuring that defeats keyword matching---is a particular concern discussed in \S\ref{sec:exp-counterintuitive}.
 
 \paragraph{Single point in time.}
 The experimental results reflect specific model versions at testing time.
