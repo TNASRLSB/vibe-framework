@@ -1,0 +1,245 @@
+\begin{thebibliography}{41}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[exp(2022)]{exposurebias2022}
+On exposure bias, hallucination and domain shift in neural machine translation.
+\newblock In \emph{Findings of ACL}, 2022.
+\newblock URL \url{https://aclanthology.org/2022.findings-acl.58/}.
+
+\bibitem[mod(2024)]{modecollapse2024}
+Detecting mode collapse in language models via narration.
+\newblock In \emph{Proceedings of the ACL Workshop on Scaling LLMs}, 2024.
+\newblock URL \url{https://aclanthology.org/2024.scalellm-1.5/}.
+
+\bibitem[pre(2024)]{preferencecollapse2024}
+On the algorithmic bias of aligning large language models with rlhf: Preference
+  collapse and beyond.
+\newblock \emph{arXiv preprint arXiv:2405.16455}, 2024.
+\newblock URL \url{https://arxiv.org/abs/2405.16455}.
+
+\bibitem[cri(2025)]{critical2025threshold}
+Intelligence degradation in long-context llms: Critical threshold
+  determination.
+\newblock 2025.
+\newblock URL \url{https://www.researchgate.net/publication/400003335}.
+
+\bibitem[err(2025)]{erroraccumulation2025}
+Beyond exponential decay: Rethinking error accumulation in autoregressive
+  models.
+\newblock \emph{arXiv preprint arXiv:2505.24187}, 2025.
+\newblock URL \url{https://arxiv.org/abs/2505.24187}.
+
+\bibitem[ghi(2025{\natexlab{a}})]{ghissue3238}
+Tool use hallucination: Reports actions without performing them.
+\newblock GitHub Issue \#3238, anthropics/claude-code, 2025{\natexlab{a}}.
+\newblock URL \url{https://github.com/anthropics/claude-code/issues/3238}.
+
+\bibitem[ghi(2025{\natexlab{b}})]{ghissue3376}
+21\% analysis presented as 100\% complete.
+\newblock GitHub Issue \#3376, anthropics/claude-code, 2025{\natexlab{b}}.
+\newblock URL \url{https://github.com/anthropics/claude-code/issues/3376}.
+
+\bibitem[ghi(2025{\natexlab{c}})]{ghissue3382}
+``you're absolutely right!'' --- sycophancy in claude code.
+\newblock GitHub Issue \#3382, anthropics/claude-code, 2025{\natexlab{c}}.
+\newblock URL \url{https://github.com/anthropics/claude-code/issues/3382}.
+\newblock 350 upvotes, 50+ comments, 48 related issues.
+
+\bibitem[ghi(2025{\natexlab{d}})]{ghissue6049}
+Falsely marking work as completed.
+\newblock GitHub Issue \#6049, anthropics/claude-code, 2025{\natexlab{d}}.
+\newblock URL \url{https://github.com/anthropics/claude-code/issues/6049}.
+
+\bibitem[ghi(2025{\natexlab{e}})]{ghissue7381}
+Hallucinating command line output completely.
+\newblock GitHub Issue \#7381, anthropics/claude-code, 2025{\natexlab{e}}.
+\newblock URL \url{https://github.com/anthropics/claude-code/issues/7381}.
+
+\bibitem[mul(2025)]{multiturn2025}
+Measuring sycophancy in multi-turn conversations.
+\newblock In \emph{Findings of EMNLP}, 2025.
+\newblock URL \url{https://aclanthology.org/2025.findings-emnlp.121.pdf}.
+
+\bibitem[ghi(2026{\natexlab{a}})]{ghissue14759}
+Sycophancy undermines usefulness.
+\newblock GitHub Issue \#14759, anthropics/claude-code, 2026{\natexlab{a}}.
+\newblock URL \url{https://github.com/anthropics/claude-code/issues/14759}.
+
+\bibitem[ghi(2026{\natexlab{b}})]{ghissue15443}
+Ignores explicit instructions while claiming to understand them.
+\newblock GitHub Issue \#15443, anthropics/claude-code, 2026{\natexlab{b}}.
+\newblock URL \url{https://github.com/anthropics/claude-code/issues/15443}.
+
+\bibitem[ghi(2026{\natexlab{c}})]{ghissue21749}
+``are you broken?'' ``yes. i am.'' --- self-aware failure admission.
+\newblock GitHub Issue \#21749, anthropics/claude-code, 2026{\natexlab{c}}.
+\newblock URL \url{https://github.com/anthropics/claude-code/issues/21749}.
+
+\bibitem[ghi(2026{\natexlab{d}})]{ghissue27430}
+Claude autonomously published fabricated claims to 8+ platforms.
+\newblock GitHub Issue \#27430, anthropics/claude-code, 2026{\natexlab{d}}.
+\newblock URL \url{https://github.com/anthropics/claude-code/issues/27430}.
+
+\bibitem[ghi(2026{\natexlab{e}})]{ghissue28828}
+Misrepresents facts while writing bug report about misrepresenting facts.
+\newblock GitHub Issue \#28828, anthropics/claude-code, 2026{\natexlab{e}}.
+\newblock URL \url{https://github.com/anthropics/claude-code/issues/28828}.
+
+\bibitem[ghi(2026{\natexlab{f}})]{ghissue31497}
+Claude exploits user patience for reduced effort.
+\newblock GitHub Issue \#31497, anthropics/claude-code, 2026{\natexlab{f}}.
+\newblock URL \url{https://github.com/anthropics/claude-code/issues/31497}.
+
+\bibitem[ghi(2026{\natexlab{g}})]{ghissue32281}
+Claims tool was invoked when session logs prove otherwise.
+\newblock GitHub Issue \#32281, anthropics/claude-code, 2026{\natexlab{g}}.
+\newblock URL \url{https://github.com/anthropics/claude-code/issues/32281}.
+
+\bibitem[ghi(2026{\natexlab{h}})]{ghissue32291}
+Tautological verification queries that cannot return failure.
+\newblock GitHub Issue \#32291, anthropics/claude-code, 2026{\natexlab{h}}.
+\newblock URL \url{https://github.com/anthropics/claude-code/issues/32291}.
+
+\bibitem[ghi(2026{\natexlab{i}})]{ghissue32301}
+Never proactively surfaces mistakes: 5 prompts to find 4 errors.
+\newblock GitHub Issue \#32301, anthropics/claude-code, 2026{\natexlab{i}}.
+\newblock URL \url{https://github.com/anthropics/claude-code/issues/32301}.
+
+\bibitem[ghi(2026{\natexlab{j}})]{ghissue32650}
+16 failure modes across 6 lifecycle phases.
+\newblock GitHub Issue \#32650, anthropics/claude-code, 2026{\natexlab{j}}.
+\newblock URL \url{https://github.com/anthropics/claude-code/issues/32650}.
+
+\bibitem[ghi(2026{\natexlab{k}})]{ghissue33781}
+Fabricated test results masking real bugs.
+\newblock GitHub Issue \#33781, anthropics/claude-code, 2026{\natexlab{k}}.
+\newblock URL \url{https://github.com/anthropics/claude-code/issues/33781}.
+
+\bibitem[ghi(2026{\natexlab{l}})]{ghissue35357}
+Claude weaponizes user's claude.md rules to justify shortcuts.
+\newblock GitHub Issue \#35357, anthropics/claude-code, 2026{\natexlab{l}}.
+\newblock URL \url{https://github.com/anthropics/claude-code/issues/35357}.
+
+\bibitem[ghi(2026{\natexlab{m}})]{ghissue36241}
+Claude resists re-analysis, admits avoiding effort.
+\newblock GitHub Issue \#36241, anthropics/claude-code, 2026{\natexlab{m}}.
+\newblock URL \url{https://github.com/anthropics/claude-code/issues/36241}.
+
+\bibitem[hn2(2026)]{hn2026claudeissue}
+Discussion: Claude code issue \#42796.
+\newblock Hacker News, 2026.
+\newblock URL \url{https://news.ycombinator.com/item?id=47660925}.
+\newblock 596 points, 384 comments.
+
+\bibitem[rlh(2026)]{rlhfsycophancy2026}
+How rlhf amplifies sycophancy in language models.
+\newblock \emph{arXiv preprint arXiv:2602.01002}, 2026.
+\newblock URL \url{https://arxiv.org/abs/2602.01002}.
+
+\bibitem[Anthropic(2025{\natexlab{a}})]{anthropic2025autonomy}
+Anthropic.
+\newblock Measuring agent autonomy.
+\newblock 2025{\natexlab{a}}.
+\newblock URL
+  \url{https://www.anthropic.com/research/measuring-agent-autonomy}.
+
+\bibitem[Anthropic(2025{\natexlab{b}})]{anthropic2025misalignment}
+Anthropic.
+\newblock Natural emergent misalignment from reward hacking.
+\newblock 2025{\natexlab{b}}.
+\newblock URL
+  \url{https://www.anthropic.com/research/emergent-misalignment-reward-hacking}.
+
+\bibitem[Anthropic(2025{\natexlab{c}})]{anthropic2025persona}
+Anthropic.
+\newblock Persona vectors: Steering language model behavior through linear
+  directions.
+\newblock 2025{\natexlab{c}}.
+\newblock URL \url{https://www.anthropic.com/research/persona-vectors}.
+
+\bibitem[Anthropic(2025{\natexlab{d}})]{anthropic2025rewardhacking}
+Anthropic.
+\newblock Training on documents about reward hacking induces reward hacking.
+\newblock 2025{\natexlab{d}}.
+\newblock URL \url{https://alignment.anthropic.com/2025/reward-hacking-ooc/}.
+
+\bibitem[Anthropic(2025{\natexlab{e}})]{anthropic2025sabotage}
+Anthropic.
+\newblock Pilot sabotage risk report.
+\newblock Technical report, 2025{\natexlab{e}}.
+\newblock URL
+  \url{https://alignment.anthropic.com/2025/sabotage-risk-report/2025_pilot_risk_report.pdf}.
+
+\bibitem[Denison et~al.(2024)Denison, Bai, et~al.]{denison2024sycophancy}
+Carson Denison, Yuntao Bai, et~al.
+\newblock Sycophancy to subterfuge: Investigating reward tampering in language
+  models.
+\newblock \emph{arXiv preprint arXiv:2406.10162}, 2024.
+\newblock URL \url{https://arxiv.org/abs/2406.10162}.
+
+\bibitem[DoltHub(2025)]{dolthub2025gotchas}
+DoltHub.
+\newblock Claude code gotchas, 2025.
+\newblock URL
+  \url{https://www.dolthub.com/blog/2025-06-30-claude-code-gotchas/}.
+
+\bibitem[Ekreloff(2026)]{adversarialreviewer}
+Ekreloff.
+\newblock adversarial-reviewer: Hostile code review for llm-generated code.
+\newblock GitHub, 2026.
+\newblock URL \url{https://github.com/ekreloff/adversarial-reviewer}.
+
+\bibitem[Laurenzo(2026{\natexlab{a}})]{laurenzo2026amd}
+Stella Laurenzo.
+\newblock Claude code unusable for complex engineering: Quantitative analysis
+  of 6,852 sessions.
+\newblock GitHub Issue \#42796, anthropics/claude-code, 2026{\natexlab{a}}.
+\newblock URL \url{https://github.com/anthropics/claude-code/issues/42796}.
+
+\bibitem[Laurenzo(2026{\natexlab{b}})]{laurenzo2026gist}
+Stella Laurenzo.
+\newblock Thinking depth reduction: Quantitative analysis.
+\newblock GitHub Gist, 2026{\natexlab{b}}.
+\newblock URL
+  \url{https://gist.github.com/benvanik/e6c610997e4b06c82385622048079818}.
+
+\bibitem[Liu et~al.(2024)Liu, Lin, Hewitt, Paranjape, Bevilacqua, Petroni, and
+  Liang]{liu2023lost}
+Nelson~F. Liu, Kevin Lin, John Hewitt, Ashwin Paranjape, Michele Bevilacqua,
+  Fabio Petroni, and Percy Liang.
+\newblock Lost in the middle: How language models use long contexts.
+\newblock \emph{Transactions of the Association for Computational Linguistics},
+  2024.
+\newblock URL \url{https://arxiv.org/abs/2307.03172}.
+\newblock Originally 2023, published TACL 2024.
+
+\bibitem[OpenAI(2025)]{openai2025sycophancy}
+OpenAI.
+\newblock Sycophancy in gpt-4o.
+\newblock 2025.
+\newblock URL \url{https://openai.com/index/sycophancy-in-gpt-4o/}.
+
+\bibitem[Research(2025)]{chroma2025contextrot}
+Chroma Research.
+\newblock Context rot: How increasing input tokens impacts llm performance.
+\newblock Technical report, 2025.
+\newblock URL \url{https://research.trychroma.com/context-rot}.
+
+\bibitem[Sharma et~al.(2024)]{sharma2024sycophancy}
+Mrinank Sharma et~al.
+\newblock Towards understanding sycophancy in language models.
+\newblock In \emph{Proceedings of ICLR}, 2024.
+\newblock URL \url{https://arxiv.org/abs/2310.13548}.
+
+\bibitem[Tang et~al.(2023)]{tang2023lazy}
+Ruixiang Tang et~al.
+\newblock Large language models can be lazy learners: Analyse shortcuts in
+  in-context learning.
+\newblock In \emph{Proceedings of ACL}, 2023.
+\newblock URL \url{https://arxiv.org/abs/2305.17256}.
+
+\end{thebibliography}
