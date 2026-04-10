@@ -27,3 +27,4 @@ Thumbs.db
 # Internal development files (not part of distributed product)
 /docs/superpowers/
 /tests/
+/research/
