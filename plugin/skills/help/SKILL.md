@@ -25,8 +25,6 @@ VIBE v3 is built on three principles:
 |---------|-------------|
 | `/vibe:setup` | First-run configuration — model, effort, LSP, status line, CLAUDE.md (works on empty projects) |
 | `/vibe:help` | This reference |
-| `/vibe:reflect` | Review captured corrections, save to memory |
-| `/vibe:reflect --patterns` | Discover repeated actions that could become skills |
 | `/vibe:pause` | Disable quality hooks for this session |
 | `/vibe:resume` | Re-enable quality hooks |
 | `/vibe:audit` | Interactive project audit — scans project, proposes agents, launches in parallel |
@@ -93,17 +91,14 @@ Each domain skill has two invocation modes: interactive (skill) and autonomous a
 | **orson** | Video asset quality audit (worktree, memory) | @vibe:orson or via /vibe:audit |
 | **scribe** | Document quality audit (worktree, memory) | @vibe:scribe or via /vibe:audit |
 
-## Hooks (automatic — 11 handlers, 6 lifecycle events)
+## Hooks (automatic — 7 handlers, 5 lifecycle events)
 
 | Hook | Trigger | What it does |
 |------|---------|-------------|
-| Setup check | Session start | Injects VIBE status, pending corrections, post-compaction recovery |
-| Auto Dream | Session start | Triggers knowledge consolidation after 5+ sessions and 3+ corrections |
-| Tips | Session start | Shows contextual tips with cooldown based on session history |
-| PreToolUse security | Before bash | Blocks rm -rf /, force push to main, curl\|bash, chmod 777, DB DROP |
-| Lint | After file edit | Runs project linter (eslint, ruff, rustfmt, gofmt). Blocks on failure. |
+| Setup check | Session start | Silent on normal state; emits guidance only on anomalies (settings missing, v1 remnants, no CLAUDE.md, post-compaction recovery) |
+| PreToolUse security | Before bash | Blocks `rm -rf /`, force push to main, `curl\|bash`, `chmod 777`, DB DROP, fork bomb, credential file access |
+| Lint | After file edit | Runs project linter (eslint, prettier, ruff, black, rustfmt, gofmt). Blocks on failure. |
 | Security scan | After file edit | 31 patterns: keys, XSS, injection, credentials, obfuscation. Blocks on detection. |
-| Cost tracking | After skill use | Estimates token usage and cost per skill invocation |
-| Compact save | Before compaction | Saves structured session state (JSON + markdown) for recovery |
-| Correction capture | Every prompt | Detects corrections in 6 languages, queues for /vibe:reflect |
-| Failure loop | After failures | Blocks after 3 consecutive failures, forces replan |
+| Compact save | Before compaction | Saves minimal structured snapshot (git state + pointers to transcript/TaskList/auto-memory). Does not summarize. |
+| Failure loop | After tool failures | Blocks after 3 consecutive Bash/Edit/Write failures, forces replan |
+| Failure reset | After tool success | Zeroes the failure counter |
