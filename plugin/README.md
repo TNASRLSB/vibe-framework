@@ -28,7 +28,7 @@ VIBE v3.5 applies 12 improvements derived from analysis of the Claude Code sourc
 - **Pre-compaction state snapshot** — minimal structured snapshot saved before context compaction (git state + pointer to transcript + recovery checklist), read by `setup-check.sh` when a recent snapshot is detected
 
 **Agent System**
-- **Memory scopes** — all 9 agents declare `memoryScope: project`, `snapshotEnabled: true`, enabling team sharing via snapshots
+- **Project-scope memory** — domain audit agents persist per-run findings (severity, IDs, dates) to a project-local `MEMORY.md` under `.claude/agent-memory/vibe-<agent>/`. A `SubagentStop` hook mechanically syncs the write from the isolated worktree back to the main project, enabling delta analysis and regression detection on subsequent runs.
 - **omitClaudeMd** — read-only agents (reviewer, researcher) skip CLAUDE.md injection for token savings
 
 **Skills**

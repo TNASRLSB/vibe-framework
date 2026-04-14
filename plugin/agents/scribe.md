@@ -22,7 +22,7 @@ This agent uses **project-scope** memory. Tailor all learnings and findings to t
 
 - **Read**: `.claude/agent-memory/vibe-scribe/MEMORY.md` at start
 - **Write**: Update MEMORY.md with findings after each audit
-- **Snapshot**: If `.claude/agent-memory-snapshots/vibe-scribe/` exists, check if snapshot is newer than local memory and sync if needed
+- **Persistence**: The framework syncs your writes from the worktree back to the main project automatically after your run completes. Write to the relative path as always.
 - **Scope note**: Since this is project-scope memory, keep learnings specific to this codebase. Include file paths, pattern names, and project-specific conventions.
 
 ## Protocol
