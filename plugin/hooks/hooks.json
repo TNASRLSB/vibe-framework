@@ -7,16 +7,6 @@
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/setup-check.sh\"",
             "statusMessage": "VIBE: checking configuration..."
-          },
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/auto-dream.sh\"",
-            "statusMessage": "VIBE: checking knowledge consolidation..."
-          },
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/tips-engine.sh\"",
-            "statusMessage": "VIBE: loading tips..."
           }
         ]
       }
@@ -50,16 +40,6 @@
         ]
       },
       {
-        "matcher": "Skill",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/cost-tracker.sh\"",
-            "statusMessage": "Tracking skill cost..."
-          }
-        ]
-      },
-      {
         "hooks": [
           {
             "type": "command",
@@ -75,17 +55,6 @@
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/pre-compact-save.sh\"",
             "statusMessage": "Saving session state..."
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/correction-capture.sh\"",
-            "statusMessage": "Checking for learnings..."
           }
         ]
       }

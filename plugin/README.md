@@ -25,8 +25,7 @@ VIBE v3.5 applies 12 improvements derived from analysis of the Claude Code sourc
 **Infrastructure**
 - **Lazy loading frontmatter** — all skills now declare `whenToUse`, `argumentHint`, and `maxTokenBudget` for context-efficient registration
 - **Frontmatter validation** — `scripts/validate-frontmatter.sh` validates all skill and agent metadata against required schema
-- **Per-skill cost tracking** — estimates token usage and cost per skill invocation (logged to `.vibe/costs/skill-costs.jsonl`)
-- **Session memory extraction** — enhanced pre-compaction hook saves structured JSON session state (branch, errors, files, skills) for reliable recovery
+- **Pre-compaction state snapshot** — minimal structured snapshot saved before context compaction (git state + pointer to transcript + recovery checklist), read by `setup-check.sh` when a recent snapshot is detected
 
 **Agent System**
 - **Memory scopes** — all 9 agents declare `memoryScope: project`, `snapshotEnabled: true`, enabling team sharing via snapshots
@@ -35,8 +34,6 @@ VIBE v3.5 applies 12 improvements derived from analysis of the Claude Code sourc
 **Skills**
 - **Emmet verify** — new `/vibe:emmet verify` workflow: detects stack, starts dev server, exercises changed behavior, checks regressions, reports verdict
 - **Forge 4-round interview** — skill creation now uses structured 4-round interview (high-level, structure, per-step breakdown, final polish) with success criteria per step
-- **Auto Dream** — background knowledge consolidation triggers after 5+ sessions and 3+ corrections, synthesizing learnings into project memory
-- **Contextual tips** — session-aware tips system with cooldowns, shown during startup based on session count and project state
 
 ## What's New in v3
 
@@ -99,7 +96,6 @@ The audit system uses **delta analysis**: on repeated audits it reads agent memo
 | Skill | What it does |
 |-------|-------------|
 | **setup** | First-run configuration wizard. Detects stack, linters, LSP, configures model/effort/status line, generates minimal CLAUDE.md (even on empty projects), optionally maps codebase. |
-| **reflect** | Reviews corrections captured by the hook system. For each, choose: save to project memory, user memory, or discard. `--patterns` mode discovers repeated actions that could become skills. |
 | **pause** | Disables all quality hooks for the current session. For rapid prototyping or exploratory coding where hooks get in the way. |
 | **resume** | Re-enables quality hooks after pause. |
 
@@ -121,7 +117,6 @@ All skills are invocable as `/vibe:<name>`:
 /vibe:scribe create xlsx      # create spreadsheet
 /vibe:forge create my-skill   # create a new skill
 /vibe:audit                   # project-wide audit
-/vibe:reflect --patterns      # discover skill candidates
 ```
 
 Claude also invokes domain skills automatically when relevant to your task — you don't always need to call them explicitly.
@@ -169,32 +164,21 @@ Not every task needs the most powerful model. VIBE assigns each component the mo
 
 ## Hooks
 
-Eleven hook handlers across six lifecycle events run automatically, enforcing quality mechanically:
+Seven hook handlers across five lifecycle events run automatically. Every hook is a mechanical process constraint — a regex or exit-code gate — not a place for semantic judgment (that belongs to the agent and its memory system).
 
 | Hook | When | What it does |
 |------|------|-------------|
-| **Setup check** | Session start | Injects VIBE status, pending corrections reminder, post-compaction recovery |
-| **Auto Dream** | Session start | Checks if knowledge consolidation is needed (5+ sessions, 3+ corrections), outputs guidance |
-| **Tips** | Session start | Shows contextual tips based on session history with cooldown (e.g., "Run /vibe:reflect", "Try /vibe:forge create") |
-| **PreToolUse security** | Before bash commands | Blocks dangerous operations before execution: rm -rf /, force push to main, curl\|bash, chmod 777, database DROP. |
-| **Lint** | After file edit | Detects project linter (eslint, prettier, ruff, black, rustfmt, gofmt) and runs it. Blocks on failure. |
-| **Security scan** | After file edit | 31-pattern scan for: hardcoded keys (API, AWS, Stripe, GitHub, Slack), XSS (innerHTML, document.write, dangerouslySetInnerHTML), injection (eval, SQL interpolation, pickle, yaml.load), credentials (private keys, JWT, Bearer), and more. Blocks on detection. |
-| **Cost tracking** | After skill invocation | Estimates token usage and cost per skill, logs to JSONL for budget awareness |
-| **Compact save** | Before compaction | Saves structured session state (JSON + markdown) including branch, modified files, errors, skills used. SessionStart re-injects post-compaction. |
-| **Correction capture** | Every user prompt | Detects correction patterns in 6 languages (EN, IT, ES, FR, DE, PT). Queues for `/vibe:reflect`. |
-| **Failure loop** | After tool failures | Blocks after 3 consecutive failures: "STOP. Replan or use /vibe:emmet debug." Resets on success. |
+| **Setup check** | Session start | Silent on normal state. Emits guidance only on anomalies: VIBE settings missing, v1 framework remnants, missing CLAUDE.md, post-compaction recovery (`session-state.md` < 5 min old). |
+| **PreToolUse security** | Before bash commands | Blocks dangerous operations before execution: `rm -rf /`, force push to main, `curl\|bash`, `chmod 777`, database DROP, fork bomb, credential file access, network listeners, kill-all-processes. Exit 2 = block. |
+| **Lint** | After file edit | Detects project linter (eslint, prettier, ruff, black, rustfmt, gofmt) and runs it. Skips if no linter installed for the file type. Exit 2 = block on failure. |
+| **Security scan** | After file edit | 31-pattern scan for hardcoded keys (API, AWS AKIA, GCP AIza, Stripe sk_live, GitHub ghp_, Slack xox, JWT, private keys), XSS (`innerHTML`, `document.write`, `dangerouslySetInnerHTML`), injection (eval, SQL interpolation, pickle, yaml.load, subprocess shell=True), credentials (Bearer tokens), misconfig (SSL verify=false, Supabase `USING(true)`), obfuscation (Unicode whitespace, control chars, IFS, jq @system). Exit 2 = block. |
+| **Compact save** | Before compaction | Writes a minimal structured snapshot before Claude Code compacts the context window: timestamp, session ID, git branch + status + diff names, and pointers to the authoritative sources (transcript path, `TaskList`, auto-memory). Does not try to summarize — the transcript file is the real record. |
+| **Failure loop** | After tool failures | Increments a per-session counter on Bash/Edit/Write failures. Exit 2 at 3 consecutive failures with a replanning message. Resets to 0 on any successful tool use. |
+| **Failure reset** | After tool success | Paired with failure loop. Zeroes the counter on successful tool invocations. |
 
-Use `/vibe:pause` to temporarily disable hooks when they get in the way, `/vibe:resume` to re-enable.
+Use `/vibe:pause` to temporarily disable all hooks for the session, `/vibe:resume` to re-enable. Pause writes `/tmp/vibe-paused-${SESSION_ID}` which every hook checks as its first action.
 
-## Self-Learning
-
-VIBE captures your corrections automatically. When you say "no, use tabs not spaces" or "sbagliato, doveva essere così", the correction-capture hook detects the pattern and queues it. Run `/vibe:reflect` to review:
-
-- **Save to project memory** — applies to this project in future sessions
-- **Save to user memory** — applies to all your projects
-- **Discard** — one-time correction, not worth remembering
-
-`/vibe:reflect --patterns` analyzes your session history to find repeated actions that could become reusable skills, then proposes creating them via Forge.
+**Why this set and not more**: earlier versions of VIBE included `correction-capture`, `auto-dream`, `tips-engine`, and `cost-tracker` hooks. A component-level audit against their real output files (19 days of accumulated data) showed the learning pipeline produced 2 captures total (1 false positive, 50% FP rate), 0 consolidations ever, and fabricated cost estimates duplicating Claude Code's own billing. All four were removed. The architecture stayed — it's the content that was wrong. Claude Code's native auto-memory handles the capture/consolidation use case better because it runs in the agent's semantic context, not a bash regex.
 
 ## Emmet's 8 Test Personas
 
@@ -242,7 +226,7 @@ After migration, run `/vibe:setup` in each project to generate a fresh v2-compat
 bash tests/run-tests.sh
 ```
 
-Runs 80+ automated tests covering plugin structure, all skills, all agents, hook scripts (including new PreToolUse and cost tracking), 31 security patterns, failure detection, pause/resume, correction capture, frontmatter validation, and v1 migration cleanup.
+Runs 200+ automated tests covering plugin structure, all skills, all agents, hook scripts (PreToolUse security, lint, scan, failure loop, pre-compact, setup check), 31 security patterns, frontmatter validation, and v1 migration cleanup.
 
 ## License
 

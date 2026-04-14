@@ -25,9 +25,18 @@ if [[ ! -f "$FILE_PATH" ]]; then
   exit 0
 fi
 
-# Skip all VIBE scripts (pattern strings cause false positives)
+# Skip files that contain pattern literals by design (self-scan false positives):
+#   - plugin/scripts/*  (the hook scripts themselves contain the patterns they search for)
+#   - tests/**          (test fixtures contain deliberate bad patterns to verify detection)
+#   - plugin/skills/**/references/**  (reference docs show examples of what to detect)
 PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 if [[ "$FILE_PATH" == "${PLUGIN_ROOT}/scripts/"* ]]; then
+  exit 0
+fi
+if [[ "$FILE_PATH" == */tests/* ]]; then
+  exit 0
+fi
+if [[ "$FILE_PATH" == *"/references/"* ]]; then
   exit 0
 fi
 
