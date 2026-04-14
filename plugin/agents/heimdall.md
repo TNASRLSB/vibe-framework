@@ -9,7 +9,6 @@ isolation: worktree
 effort: max
 model: opus
 memoryScope: project
-snapshotEnabled: true
 omitClaudeMd: false
 ---
 
