@@ -198,34 +198,7 @@ Before delivering ANY output:
 - Keyboard navigation: verify tabindex and focus styles exist for ALL interactive elements
 - Screen reader: verify ARIA roles and labels on landmarks and form elements
 
-If you skip any of these checks, the Phase 6.5 verification below will catch it (focus_indicators=0, aria_landmarks=0) and block delivery.
-
-### Phase 6.5: Mechanical Verification (mandatory)
-
-Before generating final output files, run these verification commands (see `skills/_shared/integrity-gate.md`):
-
-    STYLES_DIR="styles"  # adjust to actual output directory
-    TEMPLATES_DIR="templates"  # adjust to actual output directory
-    echo "VIBE_GATE: style_files=$(find $STYLES_DIR -name '*.css' -o -name '*.js' 2>/dev/null | wc -l | tr -d ' ')"
-    echo "VIBE_GATE: template_files=$(find $TEMPLATES_DIR -name '*.html' -o -name '*.jsx' -o -name '*.vue' -o -name '*.tsx' 2>/dev/null | wc -l | tr -d ' ')"
-    echo "VIBE_GATE: color_tokens=$(grep -c 'color\|--color\|--clr' $STYLES_DIR/tokens.css 2>/dev/null || echo 0)"
-    echo "VIBE_GATE: spacing_tokens=$(grep -c 'spacing\|--space\|--gap' $STYLES_DIR/tokens.css 2>/dev/null || echo 0)"
-    echo "VIBE_GATE: hardcoded_text=$(grep -cP '>[^<{}\n]{10,}</' $TEMPLATES_DIR/*.html 2>/dev/null || echo 0)"
-    echo "VIBE_GATE: focus_indicators=$(grep -c ':focus' $STYLES_DIR/components.css 2>/dev/null || echo 0)"
-    echo "VIBE_GATE: aria_landmarks=$(grep -cE 'role=|aria-' $TEMPLATES_DIR/*.html 2>/dev/null || echo 0)"
-    echo "VIBE_GATE: breakpoints=$(grep -cP '@media.*min-width|@media.*max-width|@screen' $STYLES_DIR/tokens.css $STYLES_DIR/global.css 2>/dev/null || echo 0)"
-
-Expected values:
-- style_files: >= 3 (tokens + theme + global minimum)
-- template_files: >= 1
-- color_tokens: >= 15 (5 scales x 3 shades minimum)
-- spacing_tokens: >= 5
-- hardcoded_text: 0 (all text via data-i18n or content refs)
-- focus_indicators: >= 1 per interactive component type
-- aria_landmarks: >= 3 (navigation, main, contentinfo minimum)
-- breakpoints: >= 3
-
-If hardcoded_text > 0: extract the text into content JSON and replace with data-i18n references before proceeding.
+Skipping any mandatory WCAG check is a quality violation. Do not proceed to output generation without completing all three.
 
 ---
 

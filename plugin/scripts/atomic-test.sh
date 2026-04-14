@@ -54,7 +54,7 @@ Do NOT analyze any item. Only enumerate and write the manifest."
 pushd "$CWD" > /dev/null
 case "$MODEL" in
   claude)
-    VIBE_INTEGRITY_MODE=off claude -p "$DECOMPOSE_PROMPT" --output-format json --permission-mode acceptEdits > "${WORK_DIR}/decomposer-output.json" 2>&1
+    claude -p "$DECOMPOSE_PROMPT" --output-format json --permission-mode acceptEdits > "${WORK_DIR}/decomposer-output.json" 2>&1
     ;;
   qwen)
     qwen -p "$DECOMPOSE_PROMPT" -o json -y --auth-type qwen-oauth > "${WORK_DIR}/decomposer-output.json" 2>&1
