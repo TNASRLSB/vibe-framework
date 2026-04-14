@@ -65,7 +65,7 @@ For each `package.json` found in Step 1.3 (substitute `PKG_PATH` with the actual
 node -e "
 const p = require('PKG_PATH');
 const deps = {...(p.dependencies||{}), ...(p.devDependencies||{})};
-const tools = ['eslint','prettier','biome','oxlint','stylelint','tsc'];
+const tools = ['eslint','prettier','biome','oxlint','stylelint','typescript'];
 tools.forEach(t => { if(deps[t]) console.log('PKG_PATH → ' + t + ': ' + deps[t]); });
 " 2>/dev/null || echo "PKG_PATH: could not read or node not available"
 ```
@@ -122,7 +122,9 @@ grep -E '^[a-zA-Z_-]+:' MAKE_PATH 2>/dev/null | head -20
 
 ### 1.6 Present Diagnosis
 
-Show the user a summary table:
+Show the user a summary table. Two variants depending on whether the manifests found in Step 1.3 span one parent directory (single-workspace) or more (monorepo-like).
+
+**Single-workspace variant** (manifests in 0–1 distinct parent directories):
 
 ```
 VIBE Setup — Diagnosis
@@ -137,6 +139,22 @@ Build cmd: [detected or "not found"]
 Test cmd:  [detected or "not found"]
 Lint cmd:  [detected or "not found"]
 ```
+
+**Monorepo-like variant** (manifests in 2+ distinct parent directories):
+
+```
+VIBE Setup — Diagnosis
+======================
+OS:        [detected]
+Shell:     [detected]
+Stack:     [aggregated union of all detected stacks, e.g. "JS/TS, Python"]
+Linters:   [aggregated union of all detected linters, e.g. "eslint, ruff, mypy"]
+Model:     [current or "not set"]
+Effort:    [current or "not set"]
+Workspaces: [N] detected — per-workspace commands available via @vibe:researcher
+```
+
+Do not attempt to show single Build/Test/Lint rows in the monorepo variant — any single choice would misrepresent the other workspaces. The researcher agent (Step 6) produces the per-workspace breakdown in the CLAUDE.md map.
 
 ---
 
@@ -334,15 +352,34 @@ If `jq` is not available, construct the JSON carefully by hand, preserving all e
 
 ### 5.2 Generate Minimal CLAUDE.md
 
-**Only if no CLAUDE.md exists in the project root. Always generate — even for empty projects.**
-
 Check first:
 
 ```bash
 test -f CLAUDE.md && echo "EXISTS" || echo "MISSING"
 ```
 
-If MISSING, generate a minimal CLAUDE.md using the commands detected in Step 1:
+**If EXISTS**, do not touch it. Inform the user:
+
+> Existing CLAUDE.md found. Skipping generation.
+
+**If MISSING**, decide between single-workspace generation and monorepo delegation based on the manifests found in Step 1.3. Compute the number of distinct parent directories across all manifest paths:
+
+```bash
+# Example: manifests=("./frontend/package.json" "./backend/pyproject.toml")
+# Parent dirs: "./frontend", "./backend" → 2 distinct → monorepo-like
+# Example: manifests=("./package.json")
+# Parent dirs: "." → 1 distinct → single-workspace
+# Example: manifests=("./backend/pyproject.toml" "./backend/setup.cfg")
+# Parent dirs: "./backend" → 1 distinct → single-workspace (multi-config, one project)
+```
+
+**If 2 or more distinct parent directories** (monorepo-like layout), skip seed CLAUDE.md generation and inform the user:
+
+> Multiple manifests across different subdirectories detected. Skipping seed CLAUDE.md — a flat template would be misleading for this repo structure. Run `@vibe:researcher` in Step 6 to generate a proper per-workspace codebase map.
+
+Do **not** write a file in this case. The researcher agent is the right tool to map multi-workspace projects; a flat seed with arbitrary per-workspace commands would be actively harmful to future sessions landing cold in the repo.
+
+**If 0 or 1 distinct parent directories** (single workspace, or empty project), generate a minimal CLAUDE.md using the commands detected in Step 1:
 
 ```markdown
 # [Project Name from directory or package.json]
@@ -353,10 +390,6 @@ Lint: `[detected lint command or "not detected"]`
 ```
 
 For empty projects where no commands were detected, use `"not detected"` for all three. A CLAUDE.md with placeholders is better than none — it gives future sessions an anchor file and signals that VIBE is configured. The user will re-run `/vibe:setup` once code exists, and the file will be updated then.
-
-If EXISTS, do not touch it. Inform the user:
-
-> Existing CLAUDE.md found. Skipping generation.
 
 ---
 
