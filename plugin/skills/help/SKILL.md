@@ -91,14 +91,16 @@ Each domain skill has two invocation modes: interactive (skill) and autonomous a
 | **orson** | Video asset quality audit (worktree, memory) | @vibe:orson or via /vibe:audit |
 | **scribe** | Document quality audit (worktree, memory) | @vibe:scribe or via /vibe:audit |
 
-## Hooks (automatic — 7 handlers, 5 lifecycle events)
+## Hooks (automatic — 9 handlers, 7 lifecycle events)
 
 | Hook | Trigger | What it does |
 |------|---------|-------------|
-| Setup check | Session start | Silent on normal state; emits guidance only on anomalies (settings missing, v1 remnants, no CLAUDE.md, post-compaction recovery) |
+| Setup check | Session start | Silent on normal state; emits guidance only on anomalies (settings missing, v1 remnants, no CLAUDE.md, post-compaction recovery, 5.0 upgrade marker) |
 | PreToolUse security | Before bash | Blocks `rm -rf /`, force push to main, `curl\|bash`, `chmod 777`, DB DROP, fork bomb, credential file access |
 | Lint | After file edit | Runs project linter (eslint, prettier, ruff, black, rustfmt, gofmt). Blocks on failure. |
 | Security scan | After file edit | 31 patterns: keys, XSS, injection, credentials, obfuscation. Blocks on detection. |
 | Compact save | Before compaction | Saves minimal structured snapshot (git state + pointers to transcript/TaskList/auto-memory). Does not summarize. |
 | Failure loop | After tool failures | Blocks after 3 consecutive Bash/Edit/Write failures, forces replan |
 | Failure reset | After tool success | Zeroes the failure counter |
+| Atomic enforcement | Session stop | Validates atomic-decomposition output against manifest item count. Blocks completion if items are unprocessed. |
+| Agent memory sync | Subagent stop | Copies `.claude/agent-memory/vibe-*/` from the subagent's worktree back to the main project so findings persist across runs. Non-blocking. |
