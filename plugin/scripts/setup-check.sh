@@ -68,6 +68,7 @@ status_message=$(printf '%s\n' "${anomalies[@]}")
 
 jq -n --arg msg "$status_message" '{
   hookSpecificOutput: {
+    hookEventName: "SessionStart",
     additionalContext: $msg
   }
 }'
