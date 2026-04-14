@@ -413,7 +413,19 @@ VIBE Setup — Complete
 Restart Claude Code to apply all changes.
 ```
 
-### 7.3 Restart Notice
+### 7.3 Record Version Marker
+
+Write a marker file so the setup-check hook stops prompting the user to rerun `/vibe:setup`. This is how 5.0's one-time upgrade notice is dismissed:
+
+```bash
+MARKER_FILE="$HOME/.claude/vibe-5.0-configured"
+mkdir -p "$(dirname "$MARKER_FILE")"
+date -u +%Y-%m-%dT%H:%M:%SZ > "$MARKER_FILE"
+```
+
+The marker's presence alone is the signal; its content is the UTC timestamp of when setup finished, kept for auditability. If the user later deletes the marker, the anomaly fires again on the next session — which is a valid "remind me to rerun setup" escape hatch.
+
+### 7.4 Restart Notice
 
 > **Important:** Restart Claude Code (`claude` in terminal) for settings changes to take effect.
 > The VIBE Framework is now active. All skills are available via `/vibe:[skill-name]`.

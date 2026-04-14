@@ -50,6 +50,14 @@ if [[ -f "$STATE_FILE" ]]; then
   fi
 fi
 
+# --- Check 5: VIBE 5.0 upgrade marker ---
+# Emitted once on first session after upgrading from 4.x to 5.0 until the
+# user runs /vibe:setup, which writes the marker file in Step 7.3.
+MARKER_FILE="$HOME/.claude/vibe-5.0-configured"
+if [[ ! -f "$MARKER_FILE" ]]; then
+  anomalies+=("VIBE 5.0 detected. Run /vibe:setup to refresh configuration. See CHANGELOG.md for the full 4.x -> 5.0 changes.")
+fi
+
 # --- Emit output only if anomalies present ---
 if [[ ${#anomalies[@]} -eq 0 ]]; then
   echo '{}'
