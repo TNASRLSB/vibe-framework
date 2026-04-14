@@ -331,3 +331,6 @@ When analyzing multiple funnel steps or conversion points, invoke the decomposer
 - **Enumeration hint:** Count steps in the funnel definition
 - **Threshold:** 5 (use atomic decomposition when N > 5)
 - **Task mode:** read_only
+- **Worker model:** sonnet
+- **Worker effort:** medium
+- **Worker fallback:** sonnet

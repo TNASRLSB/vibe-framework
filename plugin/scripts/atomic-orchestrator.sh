@@ -17,10 +17,16 @@ shift || true
 # Parse flags
 MODEL_NAME="claude"
 CONCURRENCY=3
+WORKER_MODEL_OVERRIDE=""
+WORKER_EFFORT_OVERRIDE=""
+WORKER_FALLBACK_OVERRIDE=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --model) MODEL_NAME="$2"; shift 2 ;;
     --batch-size) CONCURRENCY="$2"; shift 2 ;;
+    --worker-model) WORKER_MODEL_OVERRIDE="$2"; shift 2 ;;
+    --worker-effort) WORKER_EFFORT_OVERRIDE="$2"; shift 2 ;;
+    --worker-fallback) WORKER_FALLBACK_OVERRIDE="$2"; shift 2 ;;
     *) shift ;;
   esac
 done
@@ -37,6 +43,11 @@ TASK_MODE=$(jq -r '.task_mode // "read_only"' "$MANIFEST")
 PROMPT_TEMPLATE=$(jq -r '.prompt_template' "$MANIFEST")
 PROJECT_CONTEXT=$(jq -r '.project_context // ""' "$MANIFEST")
 
+# Worker model tiering: CLI override wins, then manifest field, then conservative default.
+WORKER_MODEL="${WORKER_MODEL_OVERRIDE:-$(jq -r '.worker_model // "sonnet"' "$MANIFEST")}"
+WORKER_EFFORT="${WORKER_EFFORT_OVERRIDE:-$(jq -r '.worker_effort // "medium"' "$MANIFEST")}"
+WORKER_FALLBACK="${WORKER_FALLBACK_OVERRIDE:-$(jq -r '.worker_fallback // "sonnet"' "$MANIFEST")}"
+
 if [[ "$TOTAL" != "$ITEMS_LEN" ]]; then
   echo "ERROR: total_items ($TOTAL) != items array length ($ITEMS_LEN)" >&2
   exit 2
@@ -52,7 +63,7 @@ WORK_DIR=$(dirname "$MANIFEST")
 OUTPUT_DIR="${WORK_DIR}/output"
 mkdir -p "$OUTPUT_DIR"
 
-echo "[$(date +%H:%M:%S)] Orchestrator: $TOTAL items, mode=$TASK_MODE, concurrency=$CONCURRENCY, model=$MODEL_NAME"
+echo "[$(date +%H:%M:%S)] Orchestrator: $TOTAL items, mode=$TASK_MODE, concurrency=$CONCURRENCY, model=$MODEL_NAME, worker=$WORKER_MODEL/$WORKER_EFFORT (fallback=$WORKER_FALLBACK)"
 
 # ── Dispatch single item ──────────────────────────────────────────
 dispatch_item() {
@@ -74,7 +85,12 @@ dispatch_item() {
     claude)
       PERM_MODE="auto"
       [[ "$TASK_MODE" == "write" ]] && PERM_MODE="acceptEdits"
-      claude -p "$PROMPT" --output-format json --permission-mode "$PERM_MODE" > "$OUTFILE" 2>&1
+      claude -p "$PROMPT" \
+        --model "$WORKER_MODEL" \
+        --effort "$WORKER_EFFORT" \
+        --fallback-model "$WORKER_FALLBACK" \
+        --output-format json \
+        --permission-mode "$PERM_MODE" > "$OUTFILE" 2>&1
       ;;
     qwen)
       qwen -p "$PROMPT" -o json -y --auth-type qwen-oauth > "$OUTFILE" 2>&1
@@ -171,7 +187,12 @@ $(cat "$RAW_ASSEMBLY")"
 
 case "$MODEL_NAME" in
   claude)
-    claude -p "$POLISH_PROMPT" --output-format json --permission-mode auto > "${WORK_DIR}/polish-raw.json" 2>&1
+    claude -p "$POLISH_PROMPT" \
+      --model "$WORKER_MODEL" \
+      --effort "$WORKER_EFFORT" \
+      --fallback-model "$WORKER_FALLBACK" \
+      --output-format json \
+      --permission-mode auto > "${WORK_DIR}/polish-raw.json" 2>&1
     ;;
   qwen)
     qwen -p "$POLISH_PROMPT" -o json -y --auth-type qwen-oauth > "${WORK_DIR}/polish-raw.json" 2>&1

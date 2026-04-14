@@ -341,3 +341,6 @@ When analyzing multiple pages for SEO/GEO optimization, invoke the decomposer ag
 - **Enumeration hint:** Count URLs in the analysis target list
 - **Threshold:** 5 (use atomic decomposition when N > 5)
 - **Task mode:** read_only
+- **Worker model:** sonnet
+- **Worker effort:** medium
+- **Worker fallback:** sonnet

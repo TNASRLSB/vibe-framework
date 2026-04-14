@@ -369,3 +369,6 @@ When auditing WCAG compliance across multiple components, invoke the decomposer 
 - **Enumeration hint:** `find {component_dir} -name '*.tsx' -o -name '*.vue' -o -name '*.svelte' | head -50`
 - **Threshold:** 10 (use atomic decomposition when N > 10)
 - **Task mode:** read_only
+- **Worker model:** sonnet
+- **Worker effort:** medium
+- **Worker fallback:** sonnet

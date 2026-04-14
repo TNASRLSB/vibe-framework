@@ -313,3 +313,6 @@ This protocol processes enumerable items. When the qualified competitor count ex
 - **Enumeration hint:** Count rows in the Phase 2 qualification table
 - **Threshold:** 5 (use atomic decomposition when N > 5)
 - **Task mode:** read_only
+- **Worker model:** sonnet
+- **Worker effort:** medium
+- **Worker fallback:** sonnet

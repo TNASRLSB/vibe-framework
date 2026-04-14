@@ -32,6 +32,9 @@ The decomposer agent produces a `manifest.json` with this structure:
   "output_format": "markdown | json | text",
   "project_context": "string — architecture summary, conventions, domain knowledge for sub-agents",
   "task_mode": "read_only | write",
+  "worker_model": "sonnet | haiku | opus — model the orchestrator uses for each per-item CLI session (default: sonnet)",
+  "worker_effort": "low | medium | high | max — thinking effort for per-item sessions (default: medium)",
+  "worker_fallback": "sonnet | haiku — fallback model when the primary is rate-limited (default: sonnet)",
   "items": [
     {
       "id": "integer — 1-based sequential",
@@ -49,6 +52,12 @@ The decomposer agent produces a `manifest.json` with this structure:
 - `prompt_template` MUST contain `{item_description}` placeholder
 - `task_mode` MUST be `read_only` or `write`
 - Each item MUST have `id` and `description`
+
+### Worker Model Tiering
+- `worker_model`, `worker_effort`, and `worker_fallback` control the model used by the orchestrator for each per-item CLI session and for the polish step.
+- The orchestrator precedence is: CLI flag (`--worker-model`, `--worker-effort`, `--worker-fallback`) > manifest field > built-in default (`sonnet` / `medium` / `sonnet`).
+- **Opus should never appear as a worker.** Reserve it for conceptual, judgment, and cross-item synthesis layers. Per-item work is structurally single-item analysis and fits Sonnet or Haiku.
+- The decomposer reads the skill's `### Atomic Decomposition` block and writes the `worker_model` / `worker_effort` / `worker_fallback` fields into the manifest so skill authors decide the defaults.
 
 ### Validation Rules
 - The enforcement hook executes `enumeration_command` before orchestration starts
@@ -71,9 +80,12 @@ This skill processes enumerable items. When the item count exceeds the threshold
 - **Enumeration hint:** `grep -rn '@app.route\|@router.' {codebase}`
 - **Threshold:** 10 (use atomic decomposition when N > 10)
 - **Task mode:** read_only
+- **Worker model:** sonnet
+- **Worker effort:** medium
+- **Worker fallback:** sonnet
 ```
 
-The decomposer agent reads this declaration and uses the enumeration hint to construct the manifest.
+The decomposer agent reads this declaration and uses the enumeration hint to construct the manifest, copying the worker model fields into the manifest so the orchestrator dispatches per-item sessions on the chosen model.
 
 ---
 

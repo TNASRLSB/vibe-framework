@@ -504,3 +504,6 @@ When auditing multiple files or components, invoke the decomposer agent.
 - **Enumeration hint:** `find {src_dir} -name '*.{ext}' -type f`
 - **Threshold:** 10 (use atomic decomposition when N > 10)
 - **Task mode:** read_only
+- **Worker model:** sonnet
+- **Worker effort:** medium
+- **Worker fallback:** sonnet

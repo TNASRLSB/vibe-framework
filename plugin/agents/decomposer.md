@@ -40,6 +40,9 @@ Write `manifest.json` with this exact structure:
   "output_format": "markdown",
   "project_context": "2-5 sentence architecture summary",
   "task_mode": "read_only | write",
+  "worker_model": "sonnet",
+  "worker_effort": "medium",
+  "worker_fallback": "sonnet",
   "items": [
     {"id": 1, "description": "...", "context_file": "...", "context_lines": "..."}
   ]
@@ -55,6 +58,7 @@ Write `manifest.json` with this exact structure:
 5. `project_context` should be 2-5 sentences summarizing architecture, conventions, and domain knowledge relevant to the analysis.
 6. `task_mode` is `read_only` for analysis/audit tasks, `write` for refactoring/modification tasks.
 7. The `prompt_template` must include `{item_description}` and should include `{project_context}`, `{context_file}`, `{context_lines}` where relevant.
+8. Read the invoking skill's `### Atomic Decomposition` block and copy its `Worker model`, `Worker effort`, and `Worker fallback` values into the manifest as `worker_model`, `worker_effort`, `worker_fallback`. If the block does not declare them, fall back to `sonnet` / `medium` / `sonnet`. **Never set `worker_model` to `opus`** — Opus is reserved for the decomposer and polish layers, not per-item workers.
 
 ## Verification
 
