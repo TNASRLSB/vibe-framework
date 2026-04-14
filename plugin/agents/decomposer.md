@@ -4,6 +4,8 @@ description: Decomposes enumerable tasks into atomic items and produces a manife
 model: sonnet
 tools: Read, Grep, Glob, Bash, Write
 effort: max
+memory: project
+memoryScope: project
 ---
 
 # Atomic Decomposer
