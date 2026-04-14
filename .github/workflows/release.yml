@@ -1,8 +1,16 @@
-name: Auto Release
+name: Release (manual)
+
+# Manual-only release workflow.
+#
+# Previously this ran automatically on every push to main. That trigger was
+# removed in 5.0 after an auto-bump accidentally consumed the 5.1.0 version
+# slot on top of an intentional 5.0.0 release. Version bumps are now a
+# deliberate human decision: bump plugin/.claude-plugin/plugin.json + write
+# the CHANGELOG entry, then (optionally) dispatch this workflow from the
+# Actions tab to tag and publish a GitHub release.
 
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
 
 jobs:
   release:
