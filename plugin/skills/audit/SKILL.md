@@ -150,7 +150,7 @@ Run a [domain] audit on this project.
 [If --fix:] Apply all fixes including proposals.
 [If --dry-run:] Report only, do not modify any files.
 [If delta available:] Focus on files changed since YYYY-MM-DD: [file list]
-Follow the audit protocol in references/audit-protocol.md.
+Follow the audit protocol in ${CLAUDE_PLUGIN_ROOT}/skills/_shared/audit-protocol.md.
 ```
 
 Launch all agents simultaneously (multiple Agent tool calls in a single message).

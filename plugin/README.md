@@ -139,7 +139,7 @@ Every domain skill has two invocation modes: **interactive** (`/vibe:seurat`) ru
 
 ### Domain Audit Agents
 
-All domain audit agents follow a shared [audit protocol](references/audit-protocol.md): standardized report format, evidence-based findings (no "seems wrong"), severity levels (Critical/Warning/Info), regression detection, and rule proposals.
+All domain audit agents follow a shared [audit protocol](skills/_shared/audit-protocol.md): standardized report format, evidence-based findings (no "seems wrong"), severity levels (Critical/Warning/Info), regression detection, and rule proposals.
 
 | Agent | Domain | Extra Tools | Purpose |
 |-------|--------|-------------|---------|

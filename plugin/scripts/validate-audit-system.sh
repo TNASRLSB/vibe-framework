@@ -27,20 +27,20 @@ echo ""
 
 # 1. Audit protocol exists
 echo "1. Audit Protocol"
-if [ -f "references/audit-protocol.md" ]; then
-  check "references/audit-protocol.md exists" "OK"
+if [ -f "skills/_shared/audit-protocol.md" ]; then
+  check "skills/_shared/audit-protocol.md exists" "OK"
   # Check it has key sections
-  grep -q "## Report Format" references/audit-protocol.md && \
+  grep -q "## Report Format" skills/_shared/audit-protocol.md && \
     check "Has Report Format section" "OK" || \
     check "Has Report Format section" "MISSING"
-  grep -q "## Severity Levels" references/audit-protocol.md && \
+  grep -q "## Severity Levels" skills/_shared/audit-protocol.md && \
     check "Has Severity Levels section" "OK" || \
     check "Has Severity Levels section" "MISSING"
-  grep -q "## Evidence Requirement" references/audit-protocol.md && \
+  grep -q "## Evidence Requirement" skills/_shared/audit-protocol.md && \
     check "Has Evidence Requirement section" "OK" || \
     check "Has Evidence Requirement section" "MISSING"
 else
-  check "references/audit-protocol.md exists" "FILE NOT FOUND"
+  check "skills/_shared/audit-protocol.md exists" "FILE NOT FOUND"
 fi
 echo ""
 
