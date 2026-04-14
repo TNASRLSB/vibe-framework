@@ -1,5 +1,36 @@
 # Changelog
 
+## 5.0.0 — 2026-04-14
+
+Structural simplification + rigorous foundation driven by empirical audit of the 4.x components. Subscription-first (Max 20x / Pro), Opus reserved for the conceptual/judgment layer, Sonnet and Haiku for structured execution and per-item work. Atomic decomposition is the primary pattern for enumerable tasks. Every hook is a mechanical process constraint — no informational emitters.
+
+**No backward compatibility for 4.x configurations.** Upgraders will see a one-time notice from the SessionStart hook instructing them to rerun `/vibe:setup`; the wizard writes a version marker to dismiss the notice.
+
+### Removed
+- **Completion Integrity System (entire feature)** — 4 files deleted (`completion-sentinel.sh` 509 lines, `completion-verifier.sh` 132 lines, `completion-verifier-prompt.md` 86 lines, `skills/_shared/integrity-gate.md` 81 lines) plus VIBE_GATE verification blocks across 5 skills, Step 4.5 "Integrity Mode" section in setup, and 3 `VIBE_INTEGRITY_MODE=off` env prefixes in atomic scripts. Rationale: the paper's own C3 experimental run showed the sentinel produced mean completeness of **0.706 vs 0.985 baseline** — the system designed to catch false completion actually hurt it. Per the author's own empirical finding, the correct action is to delete it. No pieces were reusable; every component was coupled to an emission pattern the agent does not reliably produce.
+- **4 dead hook scripts** (inherited removal from local hook audit): `correction-capture.sh`, `auto-dream.sh`, `tips-engine.sh`, `cost-tracker.sh`. Component-level audit against 19 days of real side-effect files showed 2 captures total (50% false-positive rate), 0 consolidations ever, and fabricated cost estimates duplicating Claude Code's own billing. Claude Code's native auto-memory handles the capture/consolidation use case better because it runs in the agent's semantic context.
+- **`reflect` skill** — orphaned consumer of the deleted `correction-capture.sh` queue, no longer useful without its data source.
+- **`snapshotEnabled: true` vaporware claim** — removed from 9 agent frontmatters and from each agent's Memory Scope "Snapshot" bullet. The flag promised a sync feature that never had an implementation. Replaced by the real mechanism shipped in Item 3 below.
+- **`guardian.md.deprecated`** dead file — superseded by the heimdall + emmet split long before 5.0.
+- **Setup wizard Step 4.5 Integrity Mode** (A/B/C/D Strict/Balanced/Light/Off picker) — removed alongside the integrity system itself. Step 4 Settings table, the jq merge arg, and the `VIBE_INTEGRITY_MODE` env write all cleaned up.
+- **UserPromptSubmit event** — eliminated along with `correction-capture.sh`, its only handler.
+
+### Changed
+- **Hook surface: 9 handlers across 7 lifecycle events** (was 11 across 6 in 3.x, then 7 across 5 after the local hook audit, then 9 across 7 after R4 integrity removal plus Item 3 SubagentStop sync re-introduction). Stop now holds only `atomic-enforcement.sh`; SubagentStop holds only `agent-memory-sync.sh`.
+- **Setup check hook** is silent on normal state and emits guidance only on real anomalies (missing settings, v1 remnants, missing CLAUDE.md, post-compaction recovery, and the new 5.0 upgrade marker). The prior version emitted "VIBE settings: OK" every session as decorative noise.
+- **Compact save hook (`pre-compact-save.sh`)** replaced transcript-grep noise dumps with a minimal structured snapshot: timestamp, session ID, git branch/status/diff, and pointers to the authoritative sources (transcript path, TaskList, auto-memory). ~30 lines instead of ~300.
+- **Security quickscan** skip list expanded to include `tests/**` and `**/references/**` alongside `plugin/scripts/**`. All three classes contain pattern literals by design (test fixtures, reference examples, the hook scripts themselves).
+- **Setup wizard linter detection** now checks `deps['typescript']` instead of `deps['tsc']` — the npm package is named `typescript`; `tsc` is only the binary shipped by it. TypeScript projects were silently dropping TypeScript from the detected linters list.
+- **Setup wizard monorepo handling** — repos with manifests in 2+ distinct parent directories no longer get a misleading flat seed `CLAUDE.md`. Step 5.2 skips generation in the monorepo case and delegates to `@vibe:researcher` (Step 6) for a proper per-workspace codebase map. Step 1.6 gains a monorepo variant of the diagnosis table. Single-workspace behavior unchanged.
+- **Decomposer agent** (`decomposer.md`) instructed to read the invoking skill's worker model declaration and copy it into the manifest. `VIBE_GATE:` markers in its self-verification section renamed to `MANIFEST_CHECK:` — the mechanical self-check still runs; only the sentinel-era prefix is retired.
+- **Repository layout**: distributed plugin content moved into `plugin/` subdirectory; top-level holds `tests/`, `docs/`, `research/`, `vendor/` which are gitignored dev infrastructure. `.claude-plugin/marketplace.json` stays at root with `source: "./plugin"`. All 168 tracked files moved via `git mv`, preserving history.
+
+### Added
+- **Worker-level model tiering for atomic decomposition** (Item 1). The orchestrator now accepts `--worker-model`, `--worker-effort`, `--worker-fallback` flags and reads matching fields from the manifest. Per-item CLI sessions and the polish step run on the declared worker model with precedence: CLI flag > manifest field > default (sonnet / medium / sonnet). **Opus is explicitly disallowed as a worker** — reserved for the decomposer and polish layers. 5 skill declarations now carry Worker model / effort / fallback lines: ghostwriter, seurat, baptist, emmet, and the shared `competitor-research` protocol (all on sonnet/medium/sonnet baseline). Subscription users get atomic decomposition as a daily-usable operation instead of burning Opus quota on single-item work.
+- **Agent memory persistence via SubagentStop sync** (Item 3). New `agent-memory-sync.sh` hook copies `.claude/agent-memory/vibe-*/` from the subagent's isolated worktree back to the main project after each run. 9 domain audit agents (baptist, emmet, ghostwriter, heimdall, orson, researcher, reviewer, scribe, seurat) can now persist per-run findings across sessions. Delta analysis and regression detection work at the main-project level. Audit protocol documents the automatic persistence so agent authors keep writing to the relative path.
+- **Post-upgrade 5.0 notification** (Item 2). New Check 5 in `setup-check.sh` emits a one-time anomaly "VIBE 5.0 detected. Run /vibe:setup..." until the wizard writes `$HOME/.claude/vibe-5.0-configured`. 4.x users upgrading in place see the prompt until they rerun setup.
+- **Canonical audit-protocol path** consistently used across `validate-audit-system.sh`, `skills/audit/SKILL.md`, and `plugin/README.md`. The old `references/audit-protocol.md` references were stale — the file lives at `skills/_shared/audit-protocol.md`.
+
 ## 4.0.0 — 2026-04-08
 
 ### Added — Completion Integrity System
