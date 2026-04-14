@@ -18,7 +18,7 @@ jobs:
       - name: Get current version
         id: current
         run: |
-          VERSION=$(jq -r '.version' .claude-plugin/plugin.json)
+          VERSION=$(jq -r '.version' plugin/.claude-plugin/plugin.json)
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Current version: $VERSION"
 
@@ -66,7 +66,7 @@ jobs:
         if: steps.bump.outputs.bump != 'none'
         run: |
           jq --arg v "${{ steps.new.outputs.version }}" '.version = $v' \
-            .claude-plugin/plugin.json > tmp.json && mv tmp.json .claude-plugin/plugin.json
+            plugin/.claude-plugin/plugin.json > tmp.json && mv tmp.json plugin/.claude-plugin/plugin.json
 
       - name: Generate release notes
         id: notes
@@ -95,7 +95,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add .claude-plugin/plugin.json
+          git add plugin/.claude-plugin/plugin.json
           git commit -m "chore: bump version to ${{ steps.new.outputs.version }}" || echo "No changes to commit"
           git push
 
