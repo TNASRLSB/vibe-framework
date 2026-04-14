@@ -264,7 +264,6 @@ Effort level                   [current]            max
 Skill char budget              [current]            50000
 LSP plugin                     [current]            [detected]-lsp
 Status line                    [current]            [proposed above]
-Integrity mode                 [current]            balanced
 Adaptive thinking              [current]            disabled
 ```
 
@@ -286,35 +285,6 @@ Adaptive thinking              [current]            disabled
 
 ---
 
-## Step 4.5: Integrity Mode
-
-### 4.5.1 Present Options
-
-> **Completion Integrity System**
->
-> VIBE includes a verification system that checks whether Claude's
-> completion claims match actual evidence. It catches corner-cutting,
-> fabricated analysis, and false completion declarations.
->
-> Choose a mode:
->
-> A) **Strict** — Automatic blocking on any discrepancy. Claude
->    cannot declare "done" without evidence. Most protective.
->
-> B) **Balanced** (recommended) — Clear-cut discrepancies blocked
->    automatically. Ambiguous cases presented to you for decision.
->
-> C) **Light** — Non-blocking reports only. You see warnings but
->    Claude is not forced to address them.
->
-> D) **Off** — Integrity checks disabled. Not recommended.
-
-### 4.5.2 Record Choice
-
-Store user's choice for use in Step 5. Default to B if user doesn't explicitly choose.
-
----
-
 ## Step 5: Application
 
 **Only execute this step after the user approves in Step 4.**
@@ -331,11 +301,10 @@ EXISTING=$(cat ~/.claude/settings.json 2>/dev/null || echo '{}')
 Use `jq` to merge (preferred) or construct manually:
 
 ```bash
-echo "$EXISTING" | jq --arg integrity_mode "[user choice from Step 4.5]" '
+echo "$EXISTING" | jq '
   .model = "opus" |
   .env.CLAUDE_CODE_EFFORT_LEVEL = "max" |
   .env.SLASH_COMMAND_TOOL_CHAR_BUDGET = "50000" |
-  .env.VIBE_INTEGRITY_MODE = $integrity_mode |
   .env.CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING = "1"
 ' > ~/.claude/settings.json.tmp && mv ~/.claude/settings.json.tmp ~/.claude/settings.json
 ```
@@ -440,7 +409,6 @@ VIBE Setup — Complete
 [x] CLAUDE.md: [generated/already existed]
 [x] Codebase mapping: [done/skipped]
 [x] Adaptive thinking: disabled (full depth)
-[x] Integrity mode: [chosen mode]
 
 Restart Claude Code to apply all changes.
 ```

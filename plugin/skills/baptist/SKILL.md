@@ -81,9 +81,9 @@ For the weakest factor, generate 3-5 specific recommendations. Each must include
 - **How** (concrete instruction)
 - **ICE score** (see below)
 
-### Step 4.5: Structured Output + Verification Gate
+### Step 4.5: Structured Output
 
-**Structured Output:** Save the audit report to `.vibe/baptist/audit.json` alongside presenting it in conversation:
+Save the audit report to `.vibe/baptist/audit.json` alongside presenting it in conversation:
 
 ```json
 {
@@ -106,24 +106,11 @@ For the weakest factor, generate 3-5 specific recommendations. Each must include
 }
 ```
 
-**Verification:** Before presenting to the user, run these verification commands (see `skills/_shared/integrity-gate.md`):
-
-    echo "VIBE_GATE: audit_exists=$(test -f .vibe/baptist/audit.json && echo 1 || echo 0)"
-    echo "VIBE_GATE: bmap_scores=$(jq 'if (.bmap_scores.motivation and .bmap_scores.ability and .bmap_scores.prompt) then 3 else [.bmap_scores | keys[] | select(. == "motivation" or . == "ability" or . == "prompt")] | length end' .vibe/baptist/audit.json 2>/dev/null || echo 0)"
-    echo "VIBE_GATE: recommendations=$(jq '.recommendations | length' .vibe/baptist/audit.json 2>/dev/null || echo 0)"
-    echo "VIBE_GATE: ice_scored=$(jq '[.recommendations[] | select(.ice.score != null)] | length' .vibe/baptist/audit.json 2>/dev/null || echo 0)"
-    echo "VIBE_GATE: benchmarks=$(jq '.competitor_benchmarks | length' .vibe/baptist/audit.json 2>/dev/null || echo 0)"
-    echo "VIBE_GATE: ice_sorted=$(jq 'if (.recommendations | sort_by(-.ice.score) == .recommendations) then 1 else 0 end' .vibe/baptist/audit.json 2>/dev/null || echo 0)"
-
-Expected values:
-- audit_exists: 1
-- bmap_scores: 3 (motivation, ability, prompt all present)
-- recommendations: >= 3 and <= 5
-- ice_scored: = recommendations (every recommendation has ICE score)
-- benchmarks: >= 1 (at least one competitor benchmark cited)
-- ice_sorted: 1 (recommendations ordered by ICE score descending)
-
-If ANY value does not match: fix the audit report, then re-run verification.
+Required fields in the saved file:
+- `bmap_scores` with all three factors (motivation, ability, prompt)
+- `recommendations` with 3–5 entries, each carrying a full `ice` object (impact, confidence, ease, score)
+- `recommendations` sorted by descending `ice.score`
+- At least one entry in `competitor_benchmarks`
 
 ### Step 5: Cross-Skill Handoff
 

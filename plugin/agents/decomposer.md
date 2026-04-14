@@ -61,9 +61,9 @@ Write `manifest.json` with this exact structure:
 After writing the manifest, verify it:
 
 ```bash
-echo "VIBE_GATE: manifest_items=$(jq '.items | length' manifest.json)"
-echo "VIBE_GATE: manifest_total=$(jq '.total_items' manifest.json)"
-echo "VIBE_GATE: enum_count=$(eval "$(jq -r '.enumeration_command' manifest.json)" | wc -l | tr -d ' ')"
+echo "MANIFEST_CHECK: manifest_items=$(jq '.items | length' manifest.json)"
+echo "MANIFEST_CHECK: manifest_total=$(jq '.total_items' manifest.json)"
+echo "MANIFEST_CHECK: enum_count=$(eval "$(jq -r '.enumeration_command' manifest.json)" | wc -l | tr -d ' ')"
 ```
 
 All three numbers must match. If they don't, fix the manifest before reporting done.

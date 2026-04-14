@@ -74,7 +74,7 @@ dispatch_item() {
     claude)
       PERM_MODE="auto"
       [[ "$TASK_MODE" == "write" ]] && PERM_MODE="acceptEdits"
-      VIBE_INTEGRITY_MODE=off claude -p "$PROMPT" --output-format json --permission-mode "$PERM_MODE" > "$OUTFILE" 2>&1
+      claude -p "$PROMPT" --output-format json --permission-mode "$PERM_MODE" > "$OUTFILE" 2>&1
       ;;
     qwen)
       qwen -p "$PROMPT" -o json -y --auth-type qwen-oauth > "$OUTFILE" 2>&1
@@ -171,7 +171,7 @@ $(cat "$RAW_ASSEMBLY")"
 
 case "$MODEL_NAME" in
   claude)
-    VIBE_INTEGRITY_MODE=off claude -p "$POLISH_PROMPT" --output-format json --permission-mode auto > "${WORK_DIR}/polish-raw.json" 2>&1
+    claude -p "$POLISH_PROMPT" --output-format json --permission-mode auto > "${WORK_DIR}/polish-raw.json" 2>&1
     ;;
   qwen)
     qwen -p "$POLISH_PROMPT" -o json -y --auth-type qwen-oauth > "${WORK_DIR}/polish-raw.json" 2>&1
