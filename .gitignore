@@ -4,27 +4,34 @@ __pycache__/
 .venv/
 
 # Orson engine build output
-skills/orson/engine/dist/
-skills/orson/engine/node_modules/
-skills/orson/engine/audio/.venv/
+plugin/skills/orson/engine/dist/
+plugin/skills/orson/engine/node_modules/
+plugin/skills/orson/engine/audio/.venv/
 
-# Claude Code local state
-.claude/worktrees/
-.claude/settings.local.json
-.claude/projects/
+# Claude Code local state (project-local config and memory)
+.claude/
 
 # Preview files
 *.preview.html
 video-preview.html
 
-# Reference material (internal, not distributed)
-/references/
-
 # OS files
 .DS_Store
 Thumbs.db
 
-# Internal development files (not part of distributed product)
-/docs/superpowers/
+# ─────────────────────────────────────────────────────────
+# Internal-only directories — NOT distributed with the plugin
+# Only `plugin/` and `.claude-plugin/marketplace.json` ship.
+# ─────────────────────────────────────────────────────────
+
+# Test infrastructure — dev only, not part of distributed product
 /tests/
+
+# Internal design specs and implementation plans
+/docs/
+
+# Research output: paper, experiments, datasets
 /research/
+
+# Third-party reference material (Claude Code source dump, etc.)
+/vendor/

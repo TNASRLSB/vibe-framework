@@ -1,249 +1,116 @@
-# VIBE Framework
+# VIBE Framework — repository layout
 
-A Claude Code plugin that maximizes output quality. Specialized methodologies, mechanical quality gates, and intelligent model tiering.
+This repository contains the VIBE plugin source plus development infrastructure (tests, research, design docs). Only the `plugin/` directory is distributed to end users.
 
-Claude Code out-of-the-box optimizes for speed and token savings. VIBE inverts this: **quality above all**, using the right model for each task — Opus for creative and complex reasoning, Sonnet for structured execution, Haiku for high-volume search. Built for developers who want the best Claude can produce without burning through their plan.
-
-## Install
+## Top-level structure
 
 ```
-/plugin marketplace add TNASRLSB/vibe-framework
-/plugin install vibe
-/vibe:setup
+.
+├── .claude-plugin/marketplace.json   Marketplace manifest (points to ./plugin)
+├── plugin/                           The VIBE plugin (distributed)
+├── tests/                            Test infrastructure (dev only)
+├── docs/                             Design specs and implementation plans (dev only)
+├── research/                         Paper, experiments, datasets (dev only)
+└── vendor/                           Third-party reference dumps (dev only)
 ```
 
-`/vibe:setup` configures your environment in one pass: detects your stack, recommends LSP plugins, sets model to `opus` with `effort:max`, configures a status line, and optionally maps your codebase. Restart Claude Code after setup for global settings to take effect.
+Everything outside `plugin/` is gitignored and never reaches end users. The plugin loader uses `${CLAUDE_PLUGIN_ROOT}` and `${CLAUDE_SKILL_DIR}` env vars, which Claude Code resolves at runtime to absolute paths inside `plugin/`.
 
-## What's New in v3.5
+## What's in each top-level directory
 
-VIBE v3.5 applies 12 improvements derived from analysis of the Claude Code source architecture:
-
-**Security**
-- **31 security patterns** (was 9) — added private key detection, AWS/GCP/Stripe/GitHub/Slack credential patterns, innerHTML/document.write XSS, SQL injection via interpolation, disabled SSL verification, pickle/yaml deserialization, subprocess injection, Zsh module attacks, IFS manipulation, unicode obfuscation, control characters, /proc environ exfiltration
-- **PreToolUse hook** — blocks dangerous bash commands (rm -rf /, force push to main, curl|bash, chmod 777, database DROP) *before* execution, not after
-
-**Infrastructure**
-- **Lazy loading frontmatter** — all skills now declare `whenToUse`, `argumentHint`, and `maxTokenBudget` for context-efficient registration
-- **Frontmatter validation** — `scripts/validate-frontmatter.sh` validates all skill and agent metadata against required schema
-- **Per-skill cost tracking** — estimates token usage and cost per skill invocation (logged to `.vibe/costs/skill-costs.jsonl`)
-- **Session memory extraction** — enhanced pre-compaction hook saves structured JSON session state (branch, errors, files, skills) for reliable recovery
-
-**Agent System**
-- **Memory scopes** — all 9 agents declare `memoryScope: project`, `snapshotEnabled: true`, enabling team sharing via snapshots
-- **omitClaudeMd** — read-only agents (reviewer, researcher) skip CLAUDE.md injection for token savings
-
-**Skills**
-- **Emmet verify** — new `/vibe:emmet verify` workflow: detects stack, starts dev server, exercises changed behavior, checks regressions, reports verdict
-- **Forge 4-round interview** — skill creation now uses structured 4-round interview (high-level, structure, per-step breakdown, final polish) with success criteria per step
-- **Auto Dream** — background knowledge consolidation triggers after 5+ sessions and 3+ corrections, synthesizing learnings into project memory
-- **Contextual tips** — session-aware tips system with cooldowns, shown during startup based on session count and project state
-
-## What's New in v3
-
-VIBE v3 introduces **market intelligence** as a core principle. Instead of asking users questions they can't answer ("who is your target audience? what tone do you want?"), skills now discover the answers through global competitor research.
-
-**Three principles:**
-
-1. **Market intelligence over guesswork** — Ghostwriter, Seurat, and Baptist research how the world's best companies in the user's sector communicate, design, and convert — across 5 languages by default (EN, ZH, ES, PT, FR), up to 11 with `--global`. This becomes the baseline. The user's differentiation builds on top.
-
-2. **Process discipline over knowledge** — Skills no longer teach copywriting frameworks, design styles, or security concepts Claude already knows. Instead, they enforce mandatory reasoning steps: audience modeling before writing, multiple options before selecting, anti-AI-pattern detection before delivering, sharpening before publishing.
-
-3. **Mechanical quality gates** — Hooks and agents enforce standards deterministically, not through suggestions Claude might skip.
-
-**In numbers:** Reference files trimmed from ~5,900 to ~2,450 lines (-58%) by removing tutorial content and redundant knowledge. Every remaining line is either a process constraint, a detection pattern, a code example, or tool-specific API reference.
-
-## Skills
-
-### Domain Skills
-
-| Skill | What it does |
-|-------|-------------|
-| **ghostwriter** | Content creation with dual-optimization (SEO + GEO). Global competitor research discovers messaging patterns across 11 languages. Mandatory process: audience modeling, 5 headline options, anti-AI-pattern detection, sharpening pass. 52+ validation rules. |
-| **seurat** | UI design systems informed by competitor visual research. Style selection based on what the market does, not a generic menu. Anti-generic-design constraints. 11 visual styles with Factor-X distinctiveness system. WCAG 2.1 AA mandatory on every component. |
-| **baptist** | Conversion Rate Optimization with competitor benchmarking. "Your checkout has 6 steps, the top 5 in your sector have 3." B=MAP diagnosis, ICE scoring, A/B experiment design with statistical rigor, funnel analysis. |
-| **emmet** | Testing, QA, and debugging. 8 test personas with headed Playwright sessions. Systematic 7-step debugging (comment-out validation mandatory). Tech debt audit. End-to-end verification (`verify`). |
-| **heimdall** | Security analysis for AI-generated code. OWASP Top 10 with vulnerable/fixed code pairs, BaaS misconfiguration detection (Supabase/Firebase), credential scanning with 25+ API key patterns. |
-| **orson** | Programmatic video generation. HTML frames captured by Playwright, encoded with FFmpeg. TTS narration (edge-tts free, ElevenLabs paid), background music, SFX mixing. |
-| **scribe** | Office documents and PDFs. Auto-routes by format. Reference files focus on gotchas and non-obvious patterns only — no tutorials. |
-| **forge** | Meta-skill for creating and auditing skills. 4-round structured interview for skill creation (high-level, structure, per-step breakdown, final polish). Per-step success criteria. Quality checklist includes "Textbook" anti-pattern. |
-
-### Shared Protocol
-
-Ghostwriter, Seurat, and Baptist share a **competitor research protocol** (`_shared/competitor-research.md`). It runs once per project, searches across 5 languages by default (English, Chinese, Spanish, Portuguese, French — covering ~75% of global web commerce), expandable to 11 with `--global`. Discovery agents run on Haiku for efficiency. Three lenses are extracted from each competitor:
-
-- **Copy lens** (Ghostwriter): messaging, tone, value propositions, CTAs
-- **Design lens** (Seurat): visual style, palette, typography, layout patterns
-- **Conversion lens** (Baptist): UX flows, trust signals, friction reducers
-
-Results are stored in `.vibe/competitor-research/` with 30-day freshness. Any skill can trigger the research; all three consume it.
-
-### Audit Orchestrator
-
-| Skill | What it does |
-|-------|-------------|
-| **audit** | Project-wide quality orchestrator. Scans the project, proposes which domain audits are relevant, launches agents in parallel, correlates findings across domains, and proposes project rules. |
+### `plugin/` — the distributed product
 
 ```
-/vibe:audit                    # interactive: scan, propose, confirm, launch
-/vibe:audit --all              # launch all relevant agents without confirmation
-/vibe:audit --status           # quick health check from agent memory (no agents launched)
-/vibe:audit --fix              # auto-merge all agent fixes
-/vibe:audit --dry-run          # report only, no fixes
-/vibe:audit seurat ghostwriter # launch specific agents directly
+plugin/
+├── .claude-plugin/plugin.json    Plugin manifest (name, version, metadata)
+├── agents/                       9 active subagents + 1 deprecated
+├── hooks/hooks.json              Hook registrations (SessionStart, PreToolUse, etc.)
+├── scripts/                      Hook handlers and standalone scripts
+├── skills/                       14 skills + _shared/ resources
+├── CHANGELOG.md                  Plugin release history
+├── README.md                     User-facing readme (what the plugin does)
+├── LICENSE                       MIT
+└── settings.json                 Plugin-level settings
 ```
 
-The audit system uses **delta analysis**: on repeated audits it reads agent memory, compares with current state, and only analyzes what changed. It detects **regressions** (issues fixed then re-emerged) and proposes **project rules** when the same issue appears 3+ times.
+Edit anything inside `plugin/` and the local marketplace install picks it up on the next Claude Code session restart.
 
-### Utility Skills
-
-| Skill | What it does |
-|-------|-------------|
-| **setup** | First-run configuration wizard. Detects stack, linters, LSP, configures model/effort/status line, generates minimal CLAUDE.md (even on empty projects), optionally maps codebase. |
-| **reflect** | Reviews corrections captured by the hook system. For each, choose: save to project memory, user memory, or discard. `--patterns` mode discovers repeated actions that could become skills. |
-| **pause** | Disables all quality hooks for the current session. For rapid prototyping or exploratory coding where hooks get in the way. |
-| **resume** | Re-enables quality hooks after pause. |
-
-### Invoking Skills
-
-All skills are invocable as `/vibe:<name>`:
+### `tests/` — dev-only test infrastructure
 
 ```
-/vibe:emmet test              # full testing cycle
-/vibe:emmet debug             # systematic 7-step debugging
-/vibe:emmet techdebt          # tech debt audit
-/vibe:emmet verify            # verify a code change works end-to-end
-/vibe:heimdall audit          # full security audit
-/vibe:heimdall secrets        # credential scan only
-/vibe:seurat brand            # brand identity from competitor landscape
-/vibe:ghostwriter write       # content creation with competitor research
-/vibe:baptist audit            # conversion audit with competitor benchmarks
-/vibe:orson create            # guided video creation
-/vibe:scribe create xlsx      # create spreadsheet
-/vibe:forge create my-skill   # create a new skill
-/vibe:audit                   # project-wide audit
-/vibe:reflect --patterns      # discover skill candidates
+tests/
+├── run-tests.sh                  Plugin self-test harness
+├── model-validation/             A/B model comparison tests (existing)
+│   ├── PROTOCOL.md
+│   ├── test-cases.md
+│   ├── result-template.md
+│   ├── model-map.md
+│   ├── fixtures/
+│   └── results/
+└── component-validation/         VIBE-vs-baseline component tests
+    └── PROTOCOL.md
 ```
 
-Claude also invokes domain skills automatically when relevant to your task — you don't always need to call them explicitly.
+Two distinct testing concerns coexist:
 
-## Agents
+- **`model-validation/`**: which model (Opus/Sonnet/Haiku) is best for each skill?
+- **`component-validation/`**: does each VIBE component improve Claude Code over a bare session, or is it inert/harmful?
 
-Every domain skill has two invocation modes: **interactive** (`/vibe:seurat`) runs in the main conversation, **audit** (`@vibe:seurat` or via `/vibe:audit`) runs autonomously in an isolated worktree with persistent memory.
+Both are dev-only. They run from a shell, not via the plugin loader.
 
-### General-Purpose Agents
+### `docs/` — design specs and implementation plans
 
-| Agent | Model | Tools | Memory | Purpose |
-|-------|-------|-------|--------|---------|
-| **reviewer** | Sonnet | Read-only | Project | Post-implementation code review from a fresh perspective. Runs in separate context — never reviews its own code. Rates findings as Critical/Warning/Suggestion. |
-| **researcher** | Sonnet | Read-only | Project | Deep codebase exploration in isolated worktree. Returns structured findings (architecture, stack, patterns, concerns) without cluttering your main context. |
+```
+docs/
+├── specs/   Design documents, architecture decisions
+└── plans/   Implementation plans for major features
+```
 
-### Domain Audit Agents
+Historical docs created during VIBE development. Not distributed, kept in repo for context.
 
-All domain audit agents follow a shared [audit protocol](references/audit-protocol.md): standardized report format, evidence-based findings (no "seems wrong"), severity levels (Critical/Warning/Info), regression detection, and rule proposals.
+### `research/` — papers, experiments, datasets
 
-| Agent | Domain | Extra Tools | Purpose |
-|-------|--------|-------------|---------|
-| **seurat** | UI & Accessibility | — | WCAG contrast ratios, semantic HTML, responsive breakpoints, design token consistency, focus management |
-| **ghostwriter** | SEO & Content | WebFetch, WebSearch | Meta tags, schema markup, sitemap, robots.txt, Open Graph, keyword cannibalization, GEO readiness |
-| **baptist** | Conversion (CRO) | WebFetch | Fogg B=MAP on every conversion point, form friction, CTA visibility, trust signals, funnel continuity |
-| **emmet** | Code Quality | — | Test suite, coverage, critical untested paths, debug artifacts, complexity, dependency health, dead code |
-| **heimdall** | Security | — | OWASP Top 10, hardcoded secrets, input validation, auth/authz, CORS, CSP headers, dependency CVEs |
-| **orson** | Video Assets | — | Encoding quality, file size budgets, responsive embeds, poster images, captions/accessibility |
-| **scribe** | Documents | — | Metadata, heading structure, document accessibility, formatting consistency, broken references |
+```
+research/
+├── paper/         False-completion paper (LaTeX + sections)
+├── experiment/    20-task experimental harness, codebases, results, scripts
+└── notes/         Pre-paper research notes
+```
 
-All agents run in isolated worktrees, persist memory across sessions, and produce machine-parseable metrics for trending. The `/vibe:audit` orchestrator launches them in parallel and correlates findings across domains.
+All gitignored. Contains the empirical work on false completion that led to the design of the atomic decomposition system, plus all rerun datasets.
 
-## Model Tiering
+### `vendor/` — third-party reference material
 
-Not every task needs the most powerful model. VIBE assigns each component the model that matches its cognitive demands, validated via blind A/B testing.
+```
+vendor/
+└── claude-code-source/   Claude Code TypeScript source snapshot (~1900 files, 35 MB)
+```
 
-| Tier | Model | Components | Why |
-|------|-------|------------|-----|
-| **Creative & Complex** | Opus | ghostwriter, seurat, heimdall, audit orchestrator | Creative writing, design judgment, novel vulnerability discovery, cross-domain synthesis |
-| **Structured Execution** | Sonnet | baptist, emmet, scribe, orson, reviewer, researcher, forge | Pattern matching, template following, code analysis, format compliance |
-| **High-Volume Search** | Haiku | competitor research discovery agents | Web search + candidate identification across multiple languages |
+Reference dumps used during plugin design (e.g., reading Claude Code's marketplace handling code while designing VIBE features that integrate with it). Not distributed.
 
-**Validation**: Heimdall was A/B tested — Opus found a 3-step token confusion attack chain that Sonnet missed (5.0 vs 4.5). Baptist was A/B tested — both models scored identically on CRO analysis (4.9 vs 4.9). Test fixtures and protocol are in `tests/model-validation/`.
+## Branch strategy
 
-**Recalibration**: when new models ship, rerun the test cases in `tests/model-validation/test-cases.md` to verify assignments still hold. The model map at `tests/model-validation/model-map.md` is the source of truth.
+- **`main`** — stable releases. Tagged versions ship from here.
+- **`dev`** — work in progress. Merged into `main` when promotable.
 
-## Hooks
+## Local development
 
-Eleven hook handlers across six lifecycle events run automatically, enforcing quality mechanically:
-
-| Hook | When | What it does |
-|------|------|-------------|
-| **Setup check** | Session start | Injects VIBE status, pending corrections reminder, post-compaction recovery |
-| **Auto Dream** | Session start | Checks if knowledge consolidation is needed (5+ sessions, 3+ corrections), outputs guidance |
-| **Tips** | Session start | Shows contextual tips based on session history with cooldown (e.g., "Run /vibe:reflect", "Try /vibe:forge create") |
-| **PreToolUse security** | Before bash commands | Blocks dangerous operations before execution: rm -rf /, force push to main, curl\|bash, chmod 777, database DROP. |
-| **Lint** | After file edit | Detects project linter (eslint, prettier, ruff, black, rustfmt, gofmt) and runs it. Blocks on failure. |
-| **Security scan** | After file edit | 31-pattern scan for: hardcoded keys (API, AWS, Stripe, GitHub, Slack), XSS (innerHTML, document.write, dangerouslySetInnerHTML), injection (eval, SQL interpolation, pickle, yaml.load), credentials (private keys, JWT, Bearer), and more. Blocks on detection. |
-| **Cost tracking** | After skill invocation | Estimates token usage and cost per skill, logs to JSONL for budget awareness |
-| **Compact save** | Before compaction | Saves structured session state (JSON + markdown) including branch, modified files, errors, skills used. SessionStart re-injects post-compaction. |
-| **Correction capture** | Every user prompt | Detects correction patterns in 6 languages (EN, IT, ES, FR, DE, PT). Queues for `/vibe:reflect`. |
-| **Failure loop** | After tool failures | Blocks after 3 consecutive failures: "STOP. Replan or use /vibe:emmet debug." Resets on success. |
-
-Use `/vibe:pause` to temporarily disable hooks when they get in the way, `/vibe:resume` to re-enable.
-
-## Self-Learning
-
-VIBE captures your corrections automatically. When you say "no, use tabs not spaces" or "sbagliato, doveva essere così", the correction-capture hook detects the pattern and queues it. Run `/vibe:reflect` to review:
-
-- **Save to project memory** — applies to this project in future sessions
-- **Save to user memory** — applies to all your projects
-- **Discard** — one-time correction, not worth remembering
-
-`/vibe:reflect --patterns` analyzes your session history to find repeated actions that could become reusable skills, then proposes creating them via Forge.
-
-## Emmet's 8 Test Personas
-
-Visual testing runs Playwright in headed mode with persona-specific configurations:
-
-| Persona | Viewport | Network | Tests |
-|---------|----------|---------|-------|
-| First-timer | 1440x900 | Fast | Onboarding, time-to-first-value |
-| Power user | 1920x1080 | Fast | Edge cases, complex workflows |
-| Non-tech | 1280x720 150% zoom | Average | Accessibility, clear language |
-| Mobile-only | 360x640 | Slow 3G | Responsive, touch targets |
-| Screen reader | 1440x900 | Fast | ARIA, focus order, alt text |
-| Distracted | 1440x900 | Fast | State preservation, auto-save |
-| Hostile | 1920x1080 | Fast | Input validation, XSS, SQLi |
-| International | 1440x900 | Average | i18n, UTF-8, RTL layout |
-
-## Migrating from v1
-
-If you previously used VIBE Framework v1 (the one that installed `.claude/morpheus/`, `vibe-framework.sh`, and a large `CLAUDE.md` into each project), run the cleanup script to remove all remnants:
+To work on the plugin with the local marketplace:
 
 ```bash
-# Preview what would be removed (no changes)
-bash scripts/vibe-v1-cleanup.sh --scan ~/your-projects --deep --dry-run
-
-# Run the migration
-bash scripts/vibe-v1-cleanup.sh --scan ~/your-projects --deep --yes
+# One-time setup: register this directory as a marketplace
+claude plugin marketplace add /path/to/this/repo
+claude plugin install vibe@vibe-framework
 ```
 
-The script backs up everything into a timestamped zip before removing, cleans morpheus hooks from both `settings.json` and `settings.local.json`, and scans worktrees and nested projects.
+After any change inside `plugin/`, restart Claude Code to reload the plugin.
 
-After migration, run `/vibe:setup` in each project to generate a fresh v2-compatible `CLAUDE.md`.
-
-## Requirements
-
-- **Claude Code** v2.1.59+
-- **Max 20x subscription** recommended for full capability (Opus skills use `effort:max`). Most skills run on Sonnet and work on lower tiers.
-- **jq** for hook scripts
-- **Optional:** Playwright (for Emmet visual testing and Orson video rendering)
-- **Optional:** FFmpeg + `pip install edge-tts` (for Orson audio)
-- **Optional:** Python 3.6+ (for Scribe document scripts and Heimdall scanners)
-
-## Testing
+To run the plugin self-tests:
 
 ```bash
 bash tests/run-tests.sh
 ```
 
-Runs 80+ automated tests covering plugin structure, all skills, all agents, hook scripts (including new PreToolUse and cost tracking), 31 security patterns, failure detection, pause/resume, correction capture, frontmatter validation, and v1 migration cleanup.
+## Releases
 
-## License
-
-MIT
+`.github/workflows/release.yml` reads `plugin/.claude-plugin/plugin.json` for the version and creates GitHub releases on push to `main`. Conventional commit prefixes (`feat:`, `fix:`, `BREAKING CHANGE:`) determine the bump type.

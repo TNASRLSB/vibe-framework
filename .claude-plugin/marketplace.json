@@ -10,7 +10,7 @@
   "plugins": [
     {
       "name": "vibe",
-      "source": "./",
+      "source": "./plugin",
       "description": "Quality-first framework for Claude Code. 14 skills, 9 agents, 11 hooks. Forces effort:max and opus model for maximum output quality.",
       "author": {
         "name": "TNASRLSB"
