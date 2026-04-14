@@ -81,6 +81,17 @@
           }
         ]
       }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/agent-memory-sync.sh\"",
+            "statusMessage": "VIBE: syncing agent memory..."
+          }
+        ]
+      }
     ]
   }
 }

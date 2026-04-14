@@ -9,7 +9,6 @@ isolation: worktree
 effort: max
 model: sonnet
 memoryScope: project
-snapshotEnabled: true
 omitClaudeMd: false
 ---
 

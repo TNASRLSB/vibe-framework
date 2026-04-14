@@ -105,6 +105,8 @@ All fixes are applied in your isolated worktree. Nothing touches the user's code
    `<!-- metrics: {"date":"YYYY-MM-DD","critical":N,"warning":N,"info":N,"fixed":N,"regressed":N} -->`
 4. Keep the file concise — summarize, don't dump the full report
 
+**Persistence:** Write to the relative path as always. The framework's SubagentStop hook (`agent-memory-sync.sh`) syncs your writes from the isolated worktree to the main project's `.claude/agent-memory/` automatically after your run completes. You do not need to handle persistence yourself.
+
 ## Workflow Summary
 
 1. Read your MEMORY.md (if exists) for previous findings
