@@ -14,7 +14,7 @@ Display the complete VIBE Framework reference. Format it exactly as below, as a 
 
 ## Core Architecture
 
-VIBE v3 is built on three principles:
+VIBE is built on three principles:
 1. **Market intelligence over guesswork** — Ghostwriter, Seurat, and Baptist use global competitor research (11 languages) to build baselines from the world's best, instead of asking questions the user can't answer.
 2. **Process discipline over knowledge** — Skills enforce how Claude reasons (mandatory steps, multiple options, anti-AI-pattern detection), not what it knows.
 3. **Mechanical quality gates** — Hooks and agents enforce standards deterministically, not through suggestions.
@@ -83,6 +83,7 @@ Each domain skill has two invocation modes: interactive (skill) and autonomous a
 |-------|---------|-------------|
 | **reviewer** | Post-implementation code review (separate context, no self-review bias) | "use the reviewer agent" or @vibe:reviewer |
 | **researcher** | Deep codebase exploration (isolated worktree, returns summary) | "use the researcher agent" or @vibe:researcher |
+| **decomposer** | Produces atomic-decomposition manifests for mechanical orchestration (breaks enumerable tasks into per-item sessions) | "use the decomposer agent" or @vibe:decomposer |
 | **seurat** | UI, design system, accessibility audit (worktree, memory) | @vibe:seurat or via /vibe:audit |
 | **ghostwriter** | SEO, GEO, copy, schema markup audit (worktree, memory) | @vibe:ghostwriter or via /vibe:audit |
 | **baptist** | Conversion rate, funnel, CRO audit (worktree, memory) | @vibe:baptist or via /vibe:audit |
@@ -91,16 +92,17 @@ Each domain skill has two invocation modes: interactive (skill) and autonomous a
 | **orson** | Video asset quality audit (worktree, memory) | @vibe:orson or via /vibe:audit |
 | **scribe** | Document quality audit (worktree, memory) | @vibe:scribe or via /vibe:audit |
 
-## Hooks (automatic — 9 handlers, 7 lifecycle events)
+## Hooks (automatic — 10 handlers, 7 lifecycle events)
 
 | Hook | Trigger | What it does |
 |------|---------|-------------|
-| Setup check | Session start | Silent on normal state; emits guidance only on anomalies (settings missing, v1 remnants, no CLAUDE.md, post-compaction recovery, 5.0 upgrade marker) |
+| Setup check | Session start | Silent on normal state; emits guidance only on anomalies (settings missing, v1 remnants, no CLAUDE.md, post-compaction recovery, version-drift marker from `plugin.json` vs `~/.claude/vibe-configured`) |
 | PreToolUse security | Before bash | Blocks `rm -rf /`, force push to main, `curl\|bash`, `chmod 777`, DB DROP, fork bomb, credential file access |
 | Lint | After file edit | Runs project linter (eslint, prettier, ruff, black, rustfmt, gofmt). Blocks on failure. |
 | Security scan | After file edit | 31 patterns: keys, XSS, injection, credentials, obfuscation. Blocks on detection. |
 | Compact save | Before compaction | Saves minimal structured snapshot (git state + pointers to transcript/TaskList/auto-memory). Does not summarize. |
 | Failure loop | After tool failures | Blocks after 3 consecutive Bash/Edit/Write failures, forces replan |
 | Failure reset | After tool success | Zeroes the failure counter |
+| Rhetoric guard | Session stop | Matches last assistant message against 54 rhetorical patterns (ownership dodging, session-length quitting, permission-seeking mid-task). Block decision with targeted correction on match. Rate-capped at 3 fires per session then fail-open. |
 | Atomic enforcement | Session stop | Validates atomic-decomposition output against manifest item count. Blocks completion if items are unprocessed. |
 | Agent memory sync | Subagent stop | Copies `.claude/agent-memory/vibe-*/` from the subagent's worktree back to the main project so findings persist across runs. Non-blocking. |

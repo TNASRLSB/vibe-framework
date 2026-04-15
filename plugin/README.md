@@ -14,6 +14,26 @@ Claude Code out-of-the-box optimizes for speed and token savings. VIBE inverts t
 
 `/vibe:setup` configures your environment in one pass: detects your stack, recommends LSP plugins, sets model to `opus` with `effort:max`, configures a status line, and optionally maps your codebase. Restart Claude Code after setup for global settings to take effect.
 
+## What's New in 5.2
+
+**Rhetoric-guard Stop hook.** A new `plugin/scripts/rhetoric-guard.sh` runs on every Stop event, matching the last assistant message against 54 rhetorical patterns verbatim from benvanik's production-tested `stop-phrase-guard.sh` (referenced in `claude-code#42796`). On match, the hook emits a `{"decision":"block","reason":"..."}` with a targeted correction tied to the matched phrase — *"should I continue"* → *"Do not ask. Continue."*, *"pre-existing"* → *"NOTHING IS PRE-EXISTING. You own every change."*, *"known limitation"* → *"NO KNOWN LIMITATIONS. Fix it or explain the specific technical reason."*, etc. Claude receives the correction as context for the next turn and proceeds without looping. Validated E2E on Claude Code 2.1.108 during VIBE 5.1 R6 research — the scratch prototype caught `should I continue` in a real session, emitted the block, and Claude responded with *"Understood — dropping the trailing question. The summary stands..."* without further prompting.
+
+Three defensive additions beyond benvanik's original, each motivated by a specific failure mode: **first-input diagnostic dump** per session (critical instrumentation addressing the "hook activation uncertainty" confound identified in the 5.0 paper §6.3), **fire-rate cap** (default 3 injections per session then fail-open — defense against the VIBE 4.0 completion-sentinel resolution-loop failure), and **transcript fallback** for edge cases where `last_assistant_message` is empty. Configurable via `VIBE_RG_MAX_FIRES`, `VIBE_RG_LOG_DIR`, `VIBE_RG_DISABLED`. Logs event JSON to `${CLAUDE_PLUGIN_DATA}/rhetoric-guard/`.
+
+**Release automation via `scripts/bump-version.sh`.** Atomically updates `plugin/.claude-plugin/plugin.json`, prepends a CHANGELOG skeleton for the new version, and recounts skills/agents/hooks from the filesystem to refresh `.claude-plugin/marketplace.json`. Replaces the historical pattern where version bumps and docs sync landed in separate commits, producing a public drift window on every release. Dogfooded on the 5.2.0 release.
+
+**`vibe:help` synced.** The help skill was stale since 5.0 — the `decomposer` agent (introduced in 5.0) was missing from the agents table for five months, the hook count still claimed nine handlers, and Setup check still referenced the 5.0-era `vibe-5.0-configured` marker filename. Fixed as part of the 5.2 drift sweep. The bump script now catches this class of drift on future releases.
+
+## What's New in 5.1
+
+**Self-healing `/vibe:setup` wizard.** Setup is now version-agnostic: running it always converges user state to the current plugin version's expected state, regardless of what was there before. A second run on a clean state is a no-op (*"already in sync"*). Architecture: declarative `plugin/setup/expected-state.json` schema + `plugin/setup/reconciler.sh` (detect → diff → present → apply) + versioned marker file + surgical CLAUDE.md region markers. The wizard preserves all user-authored content outside VIBE-managed regions.
+
+**Versioned upgrade marker** (`~/.claude/vibe-configured` with JSON `{"version": "X.Y.Z"}`). Replaces the hardcoded `vibe-5.0-configured` marker used in 5.0. `setup-check.sh` Check 5 now compares the marker's version against the installed plugin's version from `plugin.json` and fires the upgrade notice on any drift — future upgrades naturally trigger a re-run prompt without requiring per-version marker files.
+
+**CLAUDE.md region markers** (`<!-- VIBE:managed-start -->` / `<!-- VIBE:managed-end -->`). Future setup runs replace content between these markers and leave everything else untouched. Legacy files without markers are classified into three outcomes: `LEGACY_WITH_VIBE_TOKENS` (contains 4.x-era strings like `VIBE_GATE`, `reflect skill`, `Completion Integrity`) → backup + regenerate with user approval; `LEGACY_NO_VIBE_TOKENS` (pure user content) → never touched, user warned to delete manually if they want a managed file.
+
+**Deprecation blacklists** for env vars (`VIBE_INTEGRITY_MODE`) and data files (`tips-state.json`, `dream/`, `learnings/`, `costs/`) left over from 4.x. The reconciler removes these during apply, tarballing data files into a timestamped backup first.
+
 ## What's New in 5.0
 
 VIBE 5.0 is a structural simplification and rigorous-foundation pass driven by an empirical audit of the 4.x components. Opus is reserved for the conceptual and judgment layer; Sonnet and Haiku handle structured execution and high-volume work. Atomic decomposition is the primary pattern for enumerable tasks. Every hook is a mechanical process constraint — no informational emitters.
@@ -161,17 +181,18 @@ Not every task needs the most powerful model. VIBE assigns each component the mo
 
 ## Hooks
 
-Nine hook handlers across seven lifecycle events run automatically. Every hook is a mechanical process constraint — a regex or exit-code gate — not a place for semantic judgment (that belongs to the agent and its memory system).
+Ten hook handlers across seven lifecycle events run automatically. Every hook is a mechanical process constraint — a regex or exit-code gate — not a place for semantic judgment (that belongs to the agent and its memory system).
 
 | Hook | When | What it does |
 |------|------|-------------|
-| **Setup check** | Session start | Silent on normal state. Emits guidance only on anomalies: VIBE settings missing, v1 framework remnants, missing CLAUDE.md, post-compaction recovery (`session-state.md` < 5 min old), and the 5.0 upgrade marker on first post-upgrade session. |
+| **Setup check** | Session start | Silent on normal state. Emits guidance only on anomalies: VIBE settings missing, v1 framework remnants, missing CLAUDE.md, post-compaction recovery (`session-state.md` < 5 min old), and version drift between `~/.claude/vibe-configured` and the installed plugin version on first post-upgrade session. |
 | **PreToolUse security** | Before bash commands | Blocks dangerous operations before execution: `rm -rf /`, force push to main, `curl\|bash`, `chmod 777`, database DROP, fork bomb, credential file access, network listeners, kill-all-processes. Exit 2 = block. |
 | **Lint** | After file edit | Detects project linter (eslint, prettier, ruff, black, rustfmt, gofmt) and runs it. Skips if no linter installed for the file type. Exit 2 = block on failure. |
 | **Security scan** | After file edit | 31-pattern scan for hardcoded keys (API, AWS AKIA, GCP AIza, Stripe sk_live, GitHub ghp_, Slack xox, JWT, private keys), XSS (`innerHTML`, `document.write`, `dangerouslySetInnerHTML`), injection (eval, SQL interpolation, pickle, yaml.load, subprocess shell=True), credentials (Bearer tokens), misconfig (SSL verify=false, Supabase `USING(true)`), obfuscation (Unicode whitespace, control chars, IFS, jq @system). Exit 2 = block. |
 | **Compact save** | Before compaction | Writes a minimal structured snapshot before Claude Code compacts the context window: timestamp, session ID, git branch + status + diff names, and pointers to the authoritative sources (transcript path, `TaskList`, auto-memory). Does not try to summarize — the transcript file is the real record. |
 | **Failure loop** | After tool failures | Increments a per-session counter on Bash/Edit/Write failures. Exit 2 at 3 consecutive failures with a replanning message. Resets to 0 on any successful tool use. |
 | **Failure reset** | After tool success | Paired with failure loop. Zeroes the counter on successful tool invocations. |
+| **Rhetoric guard** | Session stop | Matches the last assistant message against 54 rhetorical patterns (ownership dodging, session-length quitting, permission-seeking mid-task) verbatim from benvanik's production-tested `stop-phrase-guard.sh`. On match, emits `{"decision":"block","reason":"..."}` with a targeted correction tied to the matched phrase. Rate-capped at 3 fires per session, then fail-open. Runs before Atomic enforcement on the Stop event; the two are orthogonal. |
 | **Atomic enforcement** | Session stop | Validates that atomic-decomposition tasks produced output for every item declared in the manifest. Blocks a completion claim that would leave items unprocessed. |
 | **Agent memory sync** | Subagent stop | Copies `.claude/agent-memory/vibe-*/` from the subagent's isolated worktree back to the main project, so domain audit agents can persist per-run findings across sessions. Non-blocking. |
 
