@@ -1,5 +1,10 @@
 # Changelog
 
+## 5.0.1 — 2026-04-15
+
+### Fixed
+- **SessionStart hook output validation** — `setup-check.sh` emitted `hookSpecificOutput` without the required `hookEventName` field, causing Claude Code 2.1.x to log `Hook JSON output validation failed — hookSpecificOutput is missing required field "hookEventName"` on every session start where an anomaly was detected (missing settings, v1 remnants, missing CLAUDE.md, post-compaction recovery, or the 5.0 upgrade marker). Fixed by adding `hookEventName: "SessionStart"` to the emitted object. Verified by running `setup-check.sh` manually with a forced anomaly path — output now passes CC 2.1.x validation. The warning was non-blocking (the hook output was discarded, not the session), but visible on every startup with an anomaly.
+
 ## 5.0.0 — 2026-04-14
 
 Structural simplification + rigorous foundation driven by empirical audit of the 4.x components. Subscription-first (Max 20x / Pro), Opus reserved for the conceptual/judgment layer, Sonnet and Haiku for structured execution and per-item work. Atomic decomposition is the primary pattern for enumerable tasks. Every hook is a mechanical process constraint — no informational emitters.
