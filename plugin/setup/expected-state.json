@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "version": "5.1.0",
+  "envVarsOwned": {
+    "CLAUDE_CODE_EFFORT_LEVEL": "max",
+    "SLASH_COMMAND_TOOL_CHAR_BUDGET": "50000",
+    "CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING": "1"
+  },
+  "envVarsDeprecated": [
+    "VIBE_INTEGRITY_MODE"
+  ],
+  "dataFilesDeprecated": [
+    "tips-state.json",
+    "dream",
+    "learnings",
+    "costs"
+  ],
+  "claudeMdLegacyTokens": [
+    "reflect skill",
+    "VIBE_GATE",
+    "Completion Integrity",
+    "Morpheus: Context Awareness",
+    "Claude Operating System",
+    "adapt-framework"
+  ],
+  "claudeMdManagedMarkerStart": "<!-- VIBE:managed-start -->",
+  "claudeMdManagedMarkerEnd": "<!-- VIBE:managed-end -->",
+  "markerFilePath": "~/.claude/vibe-configured"
+}
