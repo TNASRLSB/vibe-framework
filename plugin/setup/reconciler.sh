@@ -163,6 +163,63 @@ with open("$settings_path", "w") as f:
 PYEOF
 }
 
+# --- data file detection --------------------------------------------------
+cmd_detect_data() {
+    local data_dir="${1:-}"
+    [[ -n "$data_dir" ]] || die "detect-data: data dir required"
+
+    python3 <<PYEOF
+import json, os, sys
+
+schema = json.load(open("$SCHEMA_FILE"))
+deprecated = schema["dataFilesDeprecated"]
+data_dir = "$data_dir"
+
+to_remove = []
+if os.path.isdir(data_dir):
+    for name in deprecated:
+        path = os.path.join(data_dir, name)
+        if os.path.exists(path):
+            to_remove.append(name)
+
+print(json.dumps({"to_remove": to_remove}))
+PYEOF
+}
+
+cmd_apply_data() {
+    local data_dir="${1:-}"
+    [[ -n "$data_dir" ]] || die "apply-data: data dir required"
+
+    local diff_json
+    diff_json=$(cat)
+
+    local names
+    names=$(echo "$diff_json" | python3 -c "import json,sys; print('\n'.join(json.load(sys.stdin).get('to_remove', [])))")
+    [[ -z "$names" ]] && return 0
+
+    local ts
+    ts=$(date -u +%Y%m%d-%H%M%S)
+    local parent
+    parent="$(dirname "$data_dir")"
+    local backup="$parent/vibe-deprecated-backup-$ts.tar.gz"
+
+    local targets=()
+    while IFS= read -r name; do
+        [[ -z "$name" ]] && continue
+        if [[ -e "$data_dir/$name" ]]; then
+            targets+=("$(basename "$data_dir")/$name")
+        fi
+    done <<< "$names"
+
+    if [[ ${#targets[@]} -gt 0 ]]; then
+        tar -czf "$backup" -C "$parent" "${targets[@]}" 2>/dev/null
+        while IFS= read -r name; do
+            [[ -z "$name" ]] && continue
+            rm -rf "$data_dir/$name"
+        done <<< "$names"
+    fi
+}
+
 # --- dispatch -------------------------------------------------------------
 main() {
     require_schema
@@ -174,6 +231,8 @@ main() {
         check-version)   cmd_check_version "$@" ;;
         detect-env)      cmd_detect_env "$@" ;;
         apply-env)       cmd_apply_env "$@" ;;
+        detect-data)     cmd_detect_data "$@" ;;
+        apply-data)      cmd_apply_data "$@" ;;
         "" )             die "no subcommand" ;;
         *)               die "unknown subcommand: $sub" ;;
     esac
