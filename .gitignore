@@ -8,6 +8,14 @@ plugin/skills/orson/engine/dist/
 plugin/skills/orson/engine/node_modules/
 plugin/skills/orson/engine/audio/.venv/
 
+# Orson background music tracks (downloaded on first use via
+# plugin/skills/orson/engine/audio/download-library.sh). These are
+# Mixkit CC0 tracks ~3.1-4.7 MB each — shipping them in git bloats the
+# plugin from ~1 MB to ~42 MB for no functional benefit. audio-selector.ts
+# already throws a clear error pointing to the download script when
+# tracks are missing, so fresh installs get automatic guidance.
+plugin/skills/orson/engine/audio/tracks/*.mp3
+
 # Claude Code local state (project-local config and memory)
 .claude/
 
