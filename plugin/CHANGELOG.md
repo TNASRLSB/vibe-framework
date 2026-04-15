@@ -1,5 +1,24 @@
 # Changelog
 
+## 5.2.0 — 2026-04-15
+
+### Added
+- **Rhetoric-guard Stop hook** (`plugin/scripts/rhetoric-guard.sh`). Matches the last assistant message against 54 rhetorical patterns verbatim from benvanik's production-tested `stop-phrase-guard.sh` (referenced in `anthropics/claude-code#42796`, 2026-04-06 thread, production-tested on IREE/MLX compiler workload). On match, emits `{"decision":"block","reason":"..."}` with a targeted correction tied to the matched phrase — *"should I continue"* → *"Do not ask. Continue."*, *"pre-existing"* → *"NOTHING IS PRE-EXISTING. You own every change."*, *"known limitation"* → *"NO KNOWN LIMITATIONS. Fix it or explain the specific technical reason."*, etc. Claude receives the correction as context for the next turn and proceeds without looping. Closes the shipping gap of the VIBE 5.1 R6 research (concluded 2026-04-15, empirically validated E2E on Claude Code 2.1.108, but the implementation never landed in 5.1). Three defensive additions beyond benvanik's original: first-input diagnostic dump per session (instrumentation addressing the "hook activation uncertainty" confound identified in the 5.0 paper §6.3), fire-rate cap (default 3 injections per session then fail-open — defense against the VIBE 4.0 completion-sentinel resolution-loop failure mode), and transcript fallback for edge cases where `last_assistant_message` is empty. Configurable via `VIBE_RG_MAX_FIRES`, `VIBE_RG_LOG_DIR`, `VIBE_RG_DISABLED`. Event logs written to `${CLAUDE_PLUGIN_DATA}/rhetoric-guard/`. Registered on the Stop event before `atomic-enforcement.sh`; the two are orthogonal and either can emit a block.
+
+- **`scripts/bump-version.sh` release automation.** Atomically updates `plugin/.claude-plugin/plugin.json` version field, prepends a CHANGELOG skeleton for the new version (idempotent — skipped if a section for the target already exists), prepends a "What's New in X.Y" skeleton to `plugin/README.md` (idempotent), and recounts skills/agents/hooks from the filesystem to refresh `.claude-plugin/marketplace.json` description counts. Verifies `plugin/skills/help/SKILL.md` hook count matches reality and that every agent has a row in the help agents table (warns, does not auto-fix). Validates semver, forbids regression or no-op bumps, supports `--dry-run` and `--force`. Stages changed files via `git add` but does not commit — the human writes the real CHANGELOG and README prose before the release commit. Closes the historical pattern where version bumps and docs sync landed in separate commits ("chore: bump" followed by reactive "docs: sync READMEs to X state"), producing a public drift window on every release. Dogfooded on this 5.2.0 release — the script bumped plugin.json, prepended the 5.2.0 CHANGELOG skeleton, and verified marketplace.json counts were already accurate from the 5.2 drift sweep.
+
+### Changed
+- **Hook surface grows from 9 to 10 handlers** (still across 7 lifecycle events). `rhetoric-guard.sh` adds one handler on the Stop event.
+
+- **`plugin/README.md` and `plugin/skills/help/SKILL.md` synced to 5.2 state.** The plugin README gained "What's New in 5.2" and "What's New in 5.1" sections — the 5.1 content was never shipped in a README update at the time, caught as part of the 5.2 drift sweep. The help skill had three stale claims since 5.0: the `decomposer` agent (added in commit `63a5f64` five months ago) was missing from the agents table; the Hooks header still said "9 handlers"; the Setup check description still referenced the 5.0-era `vibe-5.0-configured` marker filename (renamed to version-agnostic `vibe-configured` in 5.1). All three fixed. The `bump-version.sh` drift check now catches this class of mismatch automatically on every future release.
+
+- **`.claude-plugin/marketplace.json` plugin description** updated from `"9 hooks"` to `"10 hooks"`. The `bump-version.sh` script automates this field's recount on every bump, driven by a live scan of `plugin/hooks/hooks.json`.
+
+### Migration from 5.1
+- **Automatic.** Users on 5.1.x who upgrade to 5.2.0 get the new `rhetoric-guard.sh` hook loaded automatically by the plugin manifest on next session. The hook is enabled by default — to disable, set `VIBE_RG_DISABLED=1` in `~/.claude/settings.json` env.
+- **SessionStart notice** fires once after the upgrade until `/vibe:setup` is run (the 5.1 self-healing wizard detects the marker version drift from `5.1.x` to `5.2.0` and prompts for reconciliation). The wizard run writes `{"version":"5.2.0",...}` to `~/.claude/vibe-configured` and dismisses the notice.
+- **No config changes required** for the rhetoric-guard defaults (3 fires per session cap, log dir under `${CLAUDE_PLUGIN_DATA}/rhetoric-guard`). Users who want to tune can set the `VIBE_RG_*` env vars.
+
 ## 5.1.0 — 2026-04-15
 
 ### Added
