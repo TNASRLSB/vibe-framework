@@ -337,6 +337,56 @@ PYEOF
     esac
 }
 
+# --- diff presenter -------------------------------------------------------
+cmd_present_diff() {
+    local diff_json
+    diff_json=$(cat)
+    _VIBE_DIFF="$diff_json" python3 - <<'PYEOF'
+import json, sys, os
+
+diff = json.loads(os.environ["_VIBE_DIFF"])
+env = diff.get("env", {})
+data = diff.get("data", {})
+cmd = diff.get("claude_md", {})
+
+env_empty = not env.get("to_add") and not env.get("to_update") and not env.get("to_remove")
+data_empty = not data.get("to_remove")
+claude_untouched = not cmd.get("will_touch", False)
+
+if env_empty and data_empty and claude_untouched:
+    print("VIBE Reconciler — Already in sync with current version.")
+    print("No changes needed.")
+    sys.exit(0)
+
+print("VIBE Reconciler — Changes detected")
+print("=" * 40)
+
+if env.get("to_add"):
+    print("\nENV — to add:")
+    for k, v in env["to_add"].items():
+        print(f"  + {k} = {v}")
+if env.get("to_update"):
+    print("\nENV — to update:")
+    for k, v in env["to_update"].items():
+        print(f"  ~ {k} = {v}")
+if env.get("to_remove"):
+    print("\nENV — to remove (deprecated):")
+    for k in env["to_remove"]:
+        print(f"  - {k}")
+
+if data.get("to_remove"):
+    print("\nDATA FILES — to remove (deprecated, backed up first):")
+    for name in data["to_remove"]:
+        print(f"  - {name}")
+
+print(f"\nCLAUDE.md — classification: {cmd.get('mode', 'UNKNOWN')}")
+if cmd.get("will_touch"):
+    print("  (this file will be modified)")
+else:
+    print("  (no changes to this file)")
+PYEOF
+}
+
 # --- dispatch -------------------------------------------------------------
 main() {
     require_schema
@@ -352,6 +402,7 @@ main() {
         apply-data)         cmd_apply_data "$@" ;;
         classify-claude-md) cmd_classify_claude_md "$@" ;;
         apply-claude-md)    cmd_apply_claude_md "$@" ;;
+        present-diff)       cmd_present_diff "$@" ;;
         "" )                die "no subcommand" ;;
         *)                  die "unknown subcommand: $sub" ;;
     esac
