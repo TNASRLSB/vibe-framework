@@ -23,10 +23,10 @@ Everything outside `plugin/` is gitignored and never reaches end users. The plug
 ```
 plugin/
 ├── .claude-plugin/plugin.json    Plugin manifest (name, version, metadata)
-├── agents/                       9 active subagents + 1 deprecated
+├── agents/                       10 subagents (7 domain audits + reviewer, researcher, decomposer)
 ├── hooks/hooks.json              Hook registrations (SessionStart, PreToolUse, etc.)
 ├── scripts/                      Hook handlers and standalone scripts
-├── skills/                       14 skills + _shared/ resources
+├── skills/                       13 skills + _shared/ resources
 ├── CHANGELOG.md                  Plugin release history
 ├── README.md                     User-facing readme (what the plugin does)
 ├── LICENSE                       MIT
@@ -90,8 +90,8 @@ Reference dumps used during plugin design (e.g., reading Claude Code's marketpla
 
 ## Branch strategy
 
-- **`main`** — stable releases. Tagged versions ship from here.
-- **`dev`** — work in progress. Merged into `main` when promotable.
+- **`main`** — stable releases. Tagged versions ship from here. Feature work happens on short-lived topic branches merged back to `main`.
+- **`safety/*`** — safety branches preserving recovery points before major refactors (e.g. `safety/pre-5.0-cleanup-2026-04-14`). Not expected to be pushed.
 
 ## Local development
 
@@ -113,4 +113,6 @@ bash tests/run-tests.sh
 
 ## Releases
 
-`.github/workflows/release.yml` reads `plugin/.claude-plugin/plugin.json` for the version and creates GitHub releases on push to `main`. Conventional commit prefixes (`feat:`, `fix:`, `BREAKING CHANGE:`) determine the bump type.
+`.github/workflows/release.yml` is a **manually-dispatched** workflow (Actions tab → Run workflow). It reads `plugin/.claude-plugin/plugin.json` for the current version, infers the bump type from conventional commits since the last tag (`feat:` → minor, `fix:`/`perf:`/`refactor:` → patch, `BREAKING CHANGE:` → major), updates the version, commits, tags, and creates the GitHub release.
+
+The previous auto-on-push trigger was removed in 5.0 after an auto-bump consumed a version slot unintentionally. Version bumps are now a deliberate human action — manual CHANGELOG writeup and manual dispatch.

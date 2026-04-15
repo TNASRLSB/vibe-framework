@@ -14,40 +14,35 @@ Claude Code out-of-the-box optimizes for speed and token savings. VIBE inverts t
 
 `/vibe:setup` configures your environment in one pass: detects your stack, recommends LSP plugins, sets model to `opus` with `effort:max`, configures a status line, and optionally maps your codebase. Restart Claude Code after setup for global settings to take effect.
 
-## What's New in v3.5
+## What's New in 5.0
 
-VIBE v3.5 applies 12 improvements derived from analysis of the Claude Code source architecture:
+VIBE 5.0 is a structural simplification and rigorous-foundation pass driven by an empirical audit of the 4.x components. Opus is reserved for the conceptual and judgment layer; Sonnet and Haiku handle structured execution and high-volume work. Atomic decomposition is the primary pattern for enumerable tasks. Every hook is a mechanical process constraint — no informational emitters.
 
-**Security**
-- **31 security patterns** (was 9) — added private key detection, AWS/GCP/Stripe/GitHub/Slack credential patterns, innerHTML/document.write XSS, SQL injection via interpolation, disabled SSL verification, pickle/yaml deserialization, subprocess injection, Zsh module attacks, IFS manipulation, unicode obfuscation, control characters, /proc environ exfiltration
-- **PreToolUse hook** — blocks dangerous bash commands (rm -rf /, force push to main, curl|bash, chmod 777, database DROP) *before* execution, not after
+**Worker-level model tiering for atomic decomposition.** The orchestrator accepts `--worker-model`, `--worker-effort`, `--worker-fallback` flags and matching manifest fields. Per-item sessions and the polish step run on the declared worker model (default: sonnet / medium / sonnet). **Opus is explicitly disallowed as a worker** — reserved for the decomposer and polish layers. Subscription users get atomic decomposition as a daily-usable operation instead of burning Opus quota on single-item work. Five skills carry worker model declarations: ghostwriter, seurat, baptist, emmet, and the shared competitor-research protocol.
 
-**Infrastructure**
-- **Lazy loading frontmatter** — all skills now declare `whenToUse`, `argumentHint`, and `maxTokenBudget` for context-efficient registration
-- **Frontmatter validation** — `scripts/validate-frontmatter.sh` validates all skill and agent metadata against required schema
-- **Pre-compaction state snapshot** — minimal structured snapshot saved before context compaction (git state + pointer to transcript + recovery checklist), read by `setup-check.sh` when a recent snapshot is detected
+**Agent memory persistence via SubagentStop sync.** A new `agent-memory-sync.sh` hook copies `.claude/agent-memory/vibe-*/` from the subagent's isolated worktree back to the main project after each run. Nine memory-persisting agents (reviewer, researcher, baptist, emmet, ghostwriter, heimdall, orson, scribe, seurat) can now retain per-run findings across sessions, enabling delta analysis and regression detection at the main-project level.
 
-**Agent System**
-- **Project-scope memory** — domain audit agents persist per-run findings (severity, IDs, dates) to a project-local `MEMORY.md` under `.claude/agent-memory/vibe-<agent>/`. A `SubagentStop` hook mechanically syncs the write from the isolated worktree back to the main project, enabling delta analysis and regression detection on subsequent runs.
-- **omitClaudeMd** — read-only agents (reviewer, researcher) skip CLAUDE.md injection for token savings
+**Simplified hook surface: 9 handlers across 7 lifecycle events.** Four dead hook scripts were removed after a component-level audit against 19 days of real output files showed they didn't work (`correction-capture`, `auto-dream`, `tips-engine`, `cost-tracker`). The `reflect` skill — an orphaned consumer of the `correction-capture` queue — went with them. Claude Code's native auto-memory handles the capture/consolidation use case better because it runs in the agent's semantic context, not a bash regex.
 
-**Skills**
-- **Emmet verify** — new `/vibe:emmet verify` workflow: detects stack, starts dev server, exercises changed behavior, checks regressions, reports verdict
-- **Forge 4-round interview** — skill creation now uses structured 4-round interview (high-level, structure, per-step breakdown, final polish) with success criteria per step
+**Completion Integrity System removed (was added in 4.0).** The three-layer sentinel system (~1000 lines across 15 files) was removed in favor of atomic decomposition, which achieves what the sentinel tried to guarantee — structurally. Each atomic task is spawned in its own session with exactly one item to process, making partial completion impossible at the architectural level rather than trying to catch it after the fact.
 
-## What's New in v3
+**Post-upgrade 5.0 notification.** Users upgrading from 4.x in place see a one-time SessionStart anomaly ("VIBE 5.0 detected. Run `/vibe:setup`...") until the wizard writes the `$HOME/.claude/vibe-5.0-configured` marker. **No backward compatibility for 4.x configurations** — the wizard must be rerun once.
 
-VIBE v3 introduces **market intelligence** as a core principle. Instead of asking users questions they can't answer ("who is your target audience? what tone do you want?"), skills now discover the answers through global competitor research.
+**Repository layout reorganized.** Distributed plugin content is now under `plugin/`; the top-level holds `tests/`, `docs/`, `research/`, `vendor/` which are gitignored dev infrastructure. All 168 tracked files moved via `git mv`, preserving history.
 
-**Three principles:**
+### 5.0.1
+
+**SessionStart hook output validation fix.** `setup-check.sh` emitted `hookSpecificOutput` without the required `hookEventName` field, causing a non-blocking Claude Code 2.1.x validation warning on every session start where an anomaly was detected (missing settings, v1 remnants, missing CLAUDE.md, post-compaction recovery, or the 5.0 upgrade marker). Fixed by adding `hookEventName: "SessionStart"` to the emitted object.
+
+## Core Principles
+
+VIBE is built on three principles that have stayed consistent since v3:
 
 1. **Market intelligence over guesswork** — Ghostwriter, Seurat, and Baptist research how the world's best companies in the user's sector communicate, design, and convert — across 5 languages by default (EN, ZH, ES, PT, FR), up to 11 with `--global`. This becomes the baseline. The user's differentiation builds on top.
 
-2. **Process discipline over knowledge** — Skills no longer teach copywriting frameworks, design styles, or security concepts Claude already knows. Instead, they enforce mandatory reasoning steps: audience modeling before writing, multiple options before selecting, anti-AI-pattern detection before delivering, sharpening before publishing.
+2. **Process discipline over knowledge** — Skills enforce mandatory reasoning steps: audience modeling before writing, multiple options before selecting, anti-AI-pattern detection before delivering, sharpening before publishing. They don't teach copywriting frameworks, design styles, or security concepts Claude already knows.
 
 3. **Mechanical quality gates** — Hooks and agents enforce standards deterministically, not through suggestions Claude might skip.
-
-**In numbers:** Reference files trimmed from ~5,900 to ~2,450 lines (-58%) by removing tutorial content and redundant knowledge. Every remaining line is either a process constraint, a detection pattern, a code example, or tool-specific API reference.
 
 ## Skills
 
@@ -98,6 +93,7 @@ The audit system uses **delta analysis**: on repeated audits it reads agent memo
 | **setup** | First-run configuration wizard. Detects stack, linters, LSP, configures model/effort/status line, generates minimal CLAUDE.md (even on empty projects), optionally maps codebase. |
 | **pause** | Disables all quality hooks for the current session. For rapid prototyping or exploratory coding where hooks get in the way. |
 | **resume** | Re-enables quality hooks after pause. |
+| **help** | Displays all VIBE Framework skills, agents, hooks, and commands in one clean reference. Use for onboarding or quick discovery (`/vibe:help`). |
 
 ### Invoking Skills
 
@@ -131,6 +127,7 @@ Every domain skill has two invocation modes: **interactive** (`/vibe:seurat`) ru
 |-------|-------|-------|--------|---------|
 | **reviewer** | Sonnet | Read-only | Project | Post-implementation code review from a fresh perspective. Runs in separate context — never reviews its own code. Rates findings as Critical/Warning/Suggestion. |
 | **researcher** | Sonnet | Read-only | Project | Deep codebase exploration in isolated worktree. Returns structured findings (architecture, stack, patterns, concerns) without cluttering your main context. |
+| **decomposer** | Sonnet | Read+Write | Project | Atomic decomposition orchestration. Enumerates items for a task (endpoints, components, files, URLs) and writes a manifest for the atomic orchestrator to spawn per-item sessions. Used automatically by skills that declare atomic decomposition. |
 
 ### Domain Audit Agents
 
