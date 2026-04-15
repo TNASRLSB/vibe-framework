@@ -50,12 +50,20 @@ if [[ -f "$STATE_FILE" ]]; then
   fi
 fi
 
-# --- Check 5: VIBE 5.0 upgrade marker ---
-# Emitted once on first session after upgrading from 4.x to 5.0 until the
-# user runs /vibe:setup, which writes the marker file in Step 7.3.
-MARKER_FILE="$HOME/.claude/vibe-5.0-configured"
-if [[ ! -f "$MARKER_FILE" ]]; then
-  anomalies+=("VIBE 5.0 detected. Run /vibe:setup to refresh configuration. See CHANGELOG.md for the full 4.x -> 5.0 changes.")
+# --- Check 5: VIBE configured marker (version-aware) ---
+# Fires when:
+#   - marker missing (fresh install or pre-5.1 user)
+#   - marker version differs from installed plugin version (user just upgraded)
+# Both states mean: user should re-run /vibe:setup to reconcile state.
+PLUGIN_JSON="${CLAUDE_PLUGIN_ROOT:-}/.claude-plugin/plugin.json"
+RECONCILER="${CLAUDE_PLUGIN_ROOT:-}/setup/reconciler.sh"
+if [[ -f "$PLUGIN_JSON" ]] && [[ -x "$RECONCILER" ]]; then
+  PLUGIN_VERSION=$(python3 -c "import json; print(json.load(open('$PLUGIN_JSON'))['version'])" 2>/dev/null || echo "")
+  if [[ -n "$PLUGIN_VERSION" ]]; then
+    if ! "$RECONCILER" check-version "$PLUGIN_VERSION" >/dev/null 2>&1; then
+      anomalies+=("VIBE $PLUGIN_VERSION detected — run /vibe:setup to reconcile configuration. See CHANGELOG.md for what changed.")
+    fi
+  fi
 fi
 
 # --- Emit output only if anomalies present ---
