@@ -76,6 +76,11 @@
         "hooks": [
           {
             "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/rhetoric-guard.sh\"",
+            "statusMessage": "VIBE: rhetoric check..."
+          },
+          {
+            "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/atomic-enforcement.sh\"",
             "statusMessage": "VIBE: atomic verification..."
           }

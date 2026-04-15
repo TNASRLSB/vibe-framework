@@ -1,0 +1,292 @@
+#!/usr/bin/env bash
+# rhetoric-guard.sh — VIBE 5.2 Stop-hook rhetoric filter
+#
+# CLASSIFICATION: Rhetoric filter (NOT a completion verification oracle).
+# Binds to Stop. Reads the last assistant message, grep-matches it against
+# a list of giving-up / ownership-dodging / permission-seeking phrases, and
+# on match returns a block decision with a specific correction tied to the
+# matched phrase. The agent receives the correction as context on the next
+# turn and proceeds.
+#
+# Shipped in VIBE 5.2 following R6 findings (concluded 2026-04-15). The
+# scratch prototype at /tmp/vibe-rhetoric-guard-test-20260415/ was validated
+# E2E on Claude Code 2.1.108: the hook fired on the "should I continue"
+# pattern, emitted {"decision":"block","reason":"..."}, and Claude responded
+# "Understood — dropping the trailing question. The summary stands..." —
+# acknowledging the correction without looping. Session ground truth is in
+# /tmp/rhetoric-guard-first-input-f2d312c4-*.json from the R6 E2E run.
+#
+# ── PROVENANCE OF THE PATTERN LIST ────────────────────────────────
+# The 54 patterns in VIOLATIONS below are COPIED VERBATIM from
+# benvanik's stop-phrase-guard.sh:
+#   https://gist.github.com/benvanik/ee00bd1b6c9154d6545c63e06a317080
+# Referenced in https://github.com/anthropics/claude-code/issues/42796
+# (April 2026 thread; production-tested on IREE/MLX/LLVM compiler workload;
+# stellaraccident's thread data reports 173 violations caught in 17 days
+# with 0 reports of harm from the hook itself).
+#
+# DO NOT modify individual patterns without reading the benvanik gist and
+# understanding why each one was added. Per the gist's own comment: "Each
+# phrase in the hook was added in response to a specific incident."
+#
+# ── WHAT THIS IS NOT ──────────────────────────────────────────────
+# NOT VIBE 4.0's completion-sentinel.sh (removed in commit 1e7c961).
+# That was a semantic completion oracle requiring the agent to emit
+# VIBE_GATE markers as a cooperative contract. It had four structural
+# flaws independent of the C3 experiment that failed to measure it:
+#
+#   1. Emission marker dependency (Check 6): required agent cooperation
+#      in a verification protocol, which is precisely the thing the
+#      verification existed to compensate for. Circular.
+#   2. Resolution-mode loops: after a block, the agent's next message
+#      had to contain either new tool calls OR "X of Y" phrasing, or
+#      it was blocked again — driving the agent into rephrasing cycles
+#      that burned thinking budget on managing the sentinel.
+#   3. Semantic verification via regex: tried to judge "did you actually
+#      process N items?" by counting tool calls against numbers extracted
+#      from the message. The relationship is not 1:1 for real tasks.
+#   4. Heavyweight transcript parsing via jq on every Stop event.
+#
+# This rhetoric-guard does none of those. It is:
+#   - Stateful only via a per-session fire counter (for rate limit).
+#   - One-shot per turn via the stop_hook_active check.
+#   - Pattern-match only on the last assistant message's TEXT — no
+#     semantic inference, no cross-referencing of tool call counts.
+#   - Inject-and-release: one correction message in the block reason,
+#     the agent carries it as context on the next turn, done.
+#
+# ── DIFFERENCES FROM benvanik's ORIGINAL ──────────────────────────
+# Three additions, each motivated by a known failure mode:
+#
+#   1. FIRST-INPUT DUMP: on first invocation per session, dumps the raw
+#      INPUT JSON to a file. This is critical instrumentation — the
+#      VIBE 5.0 paper §6.3 identified "hook activation uncertainty" as
+#      the primary confound of the C3 experiment. With this dump, any
+#      future debugging session can verify whether the hook actually
+#      ran and what input it saw.
+#
+#   2. FIRE RATE CAP: max N injections per session (default 3). After N,
+#      fail OPEN (exit 0, log LOUD). Rationale: if rhetoric-guard fires
+#      >N times in one session, either (a) our patterns are producing
+#      false positives, or (b) the model is unrecoverable and further
+#      blocking amplifies the failure. Stopping the hook is correct in
+#      both cases. Defense against the VIBE 4.0 resolution-loop failure.
+#
+#   3. TRANSCRIPT FALLBACK: if last_assistant_message is empty in the
+#      input, parse transcript_path and extract the last assistant text.
+#      Defensive: R6 E2E test confirmed last_assistant_message IS present
+#      on Stop events (benvanik was right, docs were ambiguous), but the
+#      fallback is kept for robustness against future CC schema changes.
+#
+# ── CONFIG ─────────────────────────────────────────────────────────
+# Override via env vars before running claude:
+#   VIBE_RG_MAX_FIRES     Max injections per session (default 3)
+#   VIBE_RG_LOG_DIR       Log + state directory
+#                         (default ${CLAUDE_PLUGIN_DATA}/rhetoric-guard,
+#                          falling back to ~/.claude/plugins/data/
+#                          vibe-vibe-framework/rhetoric-guard)
+#   VIBE_RG_DISABLED      If set to "1", exit 0 immediately
+#
+# ── EXIT CODES ────────────────────────────────────────────────────
+# Always exits 0. Blocks via the `{"decision":"block","reason":"..."}`
+# JSON protocol — confirmed working on CC 2.1.108. If a future CC
+# release changes the Stop decision schema, the first-input dumps will
+# surface the mismatch immediately.
+#
+# ── COMPOSITION WITH atomic-enforcement.sh ────────────────────────
+# This hook runs on the Stop event alongside atomic-enforcement.sh.
+# The two are orthogonal: rhetoric-guard catches rhetorical patterns
+# in the final message, atomic-enforcement catches incomplete atomic
+# decomposition. Either can emit a block. When rhetoric-guard blocks,
+# atomic-enforcement still runs afterward (hook array is sequential);
+# when rhetoric-guard passes, atomic-enforcement's verdict is the
+# only remaining gate.
+
+set -uo pipefail
+
+INPUT=$(cat)
+
+# ── Disable switch ────────────────────────────────────────────────
+if [[ "${VIBE_RG_DISABLED:-0}" == "1" ]]; then
+  exit 0
+fi
+
+# ── Extract common fields ─────────────────────────────────────────
+SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // "unknown"')
+HOOK_EVENT=$(echo "$INPUT" | jq -r '.hook_event_name // "unknown"')
+TRANSCRIPT=$(echo "$INPUT" | jq -r '.transcript_path // empty')
+MESSAGE=$(echo "$INPUT" | jq -r '.last_assistant_message // empty')
+HOOK_ACTIVE=$(echo "$INPUT" | jq -r '.stop_hook_active // false')
+
+# ── Log + state directory ─────────────────────────────────────────
+# Production default: VIBE plugin data dir. Scratch default was /tmp;
+# we prefer a persistent location so event logs survive reboots and
+# users can report issues with the log files attached.
+DEFAULT_LOG_DIR="${CLAUDE_PLUGIN_DATA:-${HOME}/.claude/plugins/data/vibe-vibe-framework}/rhetoric-guard"
+LOG_DIR="${VIBE_RG_LOG_DIR:-$DEFAULT_LOG_DIR}"
+mkdir -p "$LOG_DIR" 2>/dev/null || true
+
+MAX_FIRES="${VIBE_RG_MAX_FIRES:-3}"
+
+FIRE_COUNT_FILE="${LOG_DIR}/rhetoric-guard-fires-${SESSION_ID}.count"
+EVENT_LOG="${LOG_DIR}/rhetoric-guard-events-${SESSION_ID}.jsonl"
+FIRST_INPUT_DUMP="${LOG_DIR}/rhetoric-guard-first-input-${SESSION_ID}.json"
+INVOCATION_COUNT_FILE="${LOG_DIR}/rhetoric-guard-invocations-${SESSION_ID}.count"
+
+# ── First-input diagnostic dump ───────────────────────────────────
+# On the FIRST invocation in this session, dump the raw input JSON.
+# Critical instrumentation for debugging "did the hook fire" and
+# "what input did Claude Code pass".
+if [[ ! -f "$INVOCATION_COUNT_FILE" ]]; then
+  echo "$INPUT" > "$FIRST_INPUT_DUMP" 2>/dev/null || true
+  echo 1 > "$INVOCATION_COUNT_FILE" 2>/dev/null || true
+else
+  CURRENT=$(cat "$INVOCATION_COUNT_FILE" 2>/dev/null || echo 0)
+  echo $((CURRENT + 1)) > "$INVOCATION_COUNT_FILE" 2>/dev/null || true
+fi
+
+# ── Logging helper ────────────────────────────────────────────────
+log_event() {
+  local decision="$1"
+  local pattern="$2"
+  local fire_count_before="$3"
+  local msg_preview
+  msg_preview=$(echo "${MESSAGE:-<empty>}" | head -c 200 | tr '\n' ' ' | tr '"' "'")
+  jq -nc \
+    --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    --arg sid "$SESSION_ID" \
+    --arg evt "$HOOK_EVENT" \
+    --arg dec "$decision" \
+    --arg pat "$pattern" \
+    --argjson fires "$fire_count_before" \
+    --arg prev "$msg_preview" \
+    --arg had_lam "$(if [[ -n "$MESSAGE" ]]; then echo "true"; else echo "false"; fi)" \
+    '{timestamp: $ts, session_id: $sid, hook_event: $evt, decision: $dec, pattern: $pat, fire_count_before: $fires, had_last_assistant_message: ($had_lam == "true"), message_preview: $prev}' \
+    >> "$EVENT_LOG" 2>/dev/null || true
+}
+
+# ── stop_hook_active guard ────────────────────────────────────────
+# If the hook already fired this turn, let the assistant stop.
+# Prevents infinite loops where the corrected message itself contains
+# a matching pattern.
+if [[ "$HOOK_ACTIVE" == "true" ]]; then
+  log_event "skip_stop_hook_active" "-" 0
+  exit 0
+fi
+
+# ── Transcript fallback for message extraction ────────────────────
+# R6 E2E test confirmed last_assistant_message is populated on Stop
+# events in CC 2.1.108. This fallback is defensive against future
+# schema changes or edge cases (e.g. empty-message Stop events).
+if [[ -z "$MESSAGE" ]] && [[ -n "$TRANSCRIPT" ]] && [[ -f "$TRANSCRIPT" ]]; then
+  MESSAGE=$(jq -s -r '
+    [.[] | select(.type == "assistant") |
+      .message.content[]? |
+      select(.type == "text") |
+      .text
+    ] | last // empty
+  ' "$TRANSCRIPT" 2>/dev/null || echo "")
+fi
+
+# No message to inspect → nothing to do.
+if [[ -z "$MESSAGE" ]]; then
+  log_event "skip_empty_message" "-" 0
+  exit 0
+fi
+
+# ── Fire rate cap ─────────────────────────────────────────────────
+FIRE_COUNT=0
+if [[ -f "$FIRE_COUNT_FILE" ]]; then
+  FIRE_COUNT=$(cat "$FIRE_COUNT_FILE" 2>/dev/null || echo 0)
+fi
+
+if [[ "$FIRE_COUNT" -ge "$MAX_FIRES" ]]; then
+  log_event "fail_open_rate_limit" "-" "$FIRE_COUNT"
+  exit 0
+fi
+
+# ── Pattern list (benvanik 2026-04-06, verbatim) ──────────────────
+# Each entry: "grep_pattern|correction_message"
+# Checked case-insensitively. First match wins. Ordered by severity.
+VIOLATIONS=(
+  # Ownership dodging (the #1 problem)
+  "pre-existing|NOTHING IS PRE-EXISTING. All builds and tests are green upstream. If something fails, YOUR work caused it. Investigate and fix it. Never dismiss a failure as pre-existing."
+  "not from my changes|NOTHING IS PRE-EXISTING. You own every change. Investigate the failure."
+  "not my change|NOTHING IS PRE-EXISTING. You own every change. Investigate the failure."
+  "not caused by my|NOTHING IS PRE-EXISTING. You own every change. Investigate the failure."
+  "not introduced by my|NOTHING IS PRE-EXISTING. You own every change. Investigate the failure."
+  "already existed before|NOTHING IS PRE-EXISTING. If you found it broken, fix it or explain exactly what is wrong and what the fix requires."
+  "before my changes|NOTHING IS PRE-EXISTING. There is no 'before your changes' — you own the codebase as it is now."
+  "prior to my changes|NOTHING IS PRE-EXISTING. There is no 'prior to your changes.'"
+  "unrelated to my changes|NOTHING IS PRE-EXISTING. If it is broken, fix it. If you broke it, fix it. Nothing is unrelated."
+  "an existing issue|NOTHING IS PRE-EXISTING. Investigate and fix, or explain exactly what is wrong."
+  "existing bug|NOTHING IS PRE-EXISTING. Investigate and fix."
+
+  # Known limitation dodging
+  "known limitation|NO KNOWN LIMITATIONS. Investigate whether it is fixable. Either fix it or explain the specific technical reason it cannot be fixed right now."
+  "known issue|NO KNOWN LIMITATIONS. Explain the specific technical reason or fix it."
+  "future work|NO KNOWN LIMITATIONS. Fix it now or describe exactly what the fix requires — not as a TODO, as a technical explanation."
+  "left as an exercise|NO KNOWN LIMITATIONS. Do the work."
+
+  # Session-length quitting
+  "session length|Sessions are unlimited. If work remains, do the work. Continue."
+  "session depth|Sessions are unlimited. Continue working."
+  "given the length of this|Sessions are unlimited. Continue working."
+  "continue in a new session|Sessions are unlimited. There is no reason to defer to a new session. Continue."
+  "good place to stop|Is the task done? If not, continue working. Sessions are unlimited."
+  "good stopping point|Is the task done? If not, continue working. Sessions are unlimited."
+  "good checkpoint given|Is the task done? If not, continue working."
+  "natural stopping|Is the task done? If not, continue working."
+  "logical stopping|Is the task done? If not, continue working."
+  "this session has gotten long|Sessions are unlimited. You are a machine. Continue working."
+  "session has been long|Sessions are unlimited. Continue working."
+  "getting long|Sessions are unlimited. Continue working."
+  "lengthy session|Sessions are unlimited. Continue working."
+
+  # Permission-seeking mid-task (the answer is always "yes, continue")
+  "want to continue.*or |Do not ask. The task is not done. Continue working."
+  "or save it for|Do not ask. The task is not done. Continue working."
+  "should I continue|Do not ask. If the task is not done, continue. The user will interrupt if they want you to stop."
+  "shall I continue|Do not ask. Continue working until the task is complete."
+  "shall I proceed|Do not ask. Proceed."
+  "would you like me to continue|Do not ask. Continue."
+  "would you like to continue|Do not ask. Continue."
+  "want me to keep going|Do not ask. Keep going."
+  "want me to continue|Do not ask. Continue."
+  "should I keep going|Do not ask. Keep going."
+  "save it for next time|There is no 'next time.' Sessions are unlimited. Continue working."
+  "in the next session|There is no 'next session.' This session is unlimited. Continue working."
+  "next session|There is no 'next session.' This session is unlimited. Continue working."
+  "next conversation|There is no 'next conversation.' Continue working."
+  "pick this up later|There is no 'later.' Continue working now."
+  "come back to this|There is no 'coming back.' Continue working now."
+  "continue in a follow-up|There is no 'follow-up.' Continue now."
+  "pause here|Do not pause. The task is not done. Continue."
+  "stop here for now|Do not stop. The task is not done. Continue."
+  "wrap up for now|Do not wrap up. The task is not done. Continue."
+  "call it here|Do not stop. Continue working."
+)
+
+# ── Match loop ────────────────────────────────────────────────────
+for entry in "${VIOLATIONS[@]}"; do
+  pattern="${entry%%|*}"
+  correction="${entry#*|}"
+  if echo "$MESSAGE" | grep -iq "$pattern"; then
+    # Increment fire count BEFORE emitting the decision.
+    FIRE_COUNT=$((FIRE_COUNT + 1))
+    echo "$FIRE_COUNT" > "$FIRE_COUNT_FILE" 2>/dev/null || true
+
+    log_event "block" "$pattern" "$((FIRE_COUNT - 1))"
+
+    # Emit the block decision. Format confirmed on CC 2.1.108 via R6 E2E.
+    jq -n --arg reason "RHETORIC GUARD: $correction" '{
+      decision: "block",
+      reason: $reason
+    }'
+    exit 0
+  fi
+done
+
+# No pattern matched — allow the stop.
+log_event "pass_no_match" "-" "$FIRE_COUNT"
+exit 0
