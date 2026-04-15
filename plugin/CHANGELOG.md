@@ -1,5 +1,25 @@
 # Changelog
 
+## 5.1.0 — 2026-04-15
+
+### Added
+- **Self-healing `/vibe:setup` wizard.** Setup is now version-agnostic: running it always converges user state to the current plugin version's expected state, regardless of what was there before. A second run on a clean state is a no-op ("already in sync"). Architecture: declarative `expected-state.json` schema + `reconciler.sh` (detect → diff → present → apply) + versioned marker file + surgical CLAUDE.md region markers. The wizard preserves all user-authored content outside VIBE-managed regions.
+
+- **Versioned upgrade marker** (`~/.claude/vibe-configured` with JSON `{"version": "X.Y.Z"}`). Replaces the hardcoded `vibe-5.0-configured` marker. Enables "after every update, suggest re-running `/vibe:setup`" — `setup-check.sh` Check 5 compares the marker's version against the installed plugin's version and fires the notice on any drift.
+
+- **CLAUDE.md region markers.** New template includes `<!-- VIBE:managed-start -->` / `<!-- VIBE:managed-end -->` wrappers. Future setup runs replace content between these markers and leave everything else untouched. Legacy files without markers are classified into three outcomes: `LEGACY_WITH_VIBE_TOKENS` (contains 4.x-era strings like `VIBE_GATE`, `reflect skill`, `Completion Integrity`) → backup + regenerate with user approval; `LEGACY_NO_VIBE_TOKENS` (pure user content) → never touched, user warned to delete manually if they want a managed file.
+
+- **Deprecation blacklists** for env vars (`VIBE_INTEGRITY_MODE`) and data files (`tips-state.json`, `dream/`, `learnings/`, `costs/`). The reconciler removes these during apply, tarballing data files into a timestamped backup first.
+
+### Changed
+- **`setup-check.sh` Check 5** rewritten for version comparison. Reads the installed plugin version from `${CLAUDE_PLUGIN_ROOT}/.claude-plugin/plugin.json` and compares against the marker's `version` field.
+- **`setup/SKILL.md` Steps 5 and 7.3** now delegate to `reconciler.sh` for all state mutation. The wizard keeps its user-facing role (diagnosis, proposal, approval, summary) and the reconciler owns detection/diff/apply.
+
+### Migration from 5.0.x
+- First invocation after upgrading: SessionStart hook emits *"VIBE 5.1.0 detected — run /vibe:setup to reconcile configuration"*.
+- Running `/vibe:setup` writes the new versioned marker, migrates existing CLAUDE.md files that contain only the 5.0 managed template (surgical replace — no data loss), and removes any residual 4.x env vars or data files still present.
+- Custom CLAUDE.md content with no VIBE markers is left untouched (classified as `LEGACY_NO_VIBE_TOKENS`). Users who want a managed file in this case must delete their CLAUDE.md and re-run setup.
+
 ## 5.0.2 — 2026-04-15
 
 ### Changed
