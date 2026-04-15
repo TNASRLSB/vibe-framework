@@ -3,6 +3,23 @@
 # bump-version.sh — atomic VIBE Framework version bump
 # ============================================================================
 #
+# ── AUDIENCE ─────────────────────────────────────────────────────────────
+# Maintainer-only. End users of the VIBE plugin never see this script:
+# it lives at /scripts/ at the repo root (outside plugin/) and does NOT
+# ship with the installed plugin — when a user runs
+# `/plugin install vibe@vibe-framework`, Claude Code copies only the
+# `plugin/` subtree and `.claude-plugin/marketplace.json` into its cache.
+# Everything under /scripts/, /tests/, /docs/, /research/, /vendor/ is
+# repo-level infrastructure for the maintainer, not runtime content.
+#
+# Tracked in the public repo — as opposed to gitignored with /tests/,
+# /docs/, /research/, /vendor/ — because release automation is operational
+# tooling, not internal work-in-progress. The process-constraints-over-
+# knowledge philosophy that VIBE encodes in its skills applies here: the
+# release process deserves to be a visible constraint in the repo, not
+# tacit knowledge in the maintainer's head. Anyone auditing or forking
+# the framework can read this file and see exactly how versions are cut.
+#
 # Rationale: historically, VIBE version bumps have produced drift windows
 # because the version number lives in 4+ places (plugin.json, CHANGELOG,
 # README "What's New", marketplace.json counts, vibe:help counts). Bumps
