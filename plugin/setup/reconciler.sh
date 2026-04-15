@@ -77,6 +77,92 @@ cmd_check_version() {
     [[ "$actual" == "$expected" ]]
 }
 
+# --- env state detection --------------------------------------------------
+cmd_detect_env() {
+    local settings_path="${1:-}"
+    [[ -n "$settings_path" ]] || die "detect-env: settings path required"
+
+    python3 <<PYEOF
+import json, sys
+
+schema = json.load(open("$SCHEMA_FILE"))
+owned = schema["envVarsOwned"]
+deprecated = schema["envVarsDeprecated"]
+
+try:
+    with open("$settings_path") as f:
+        settings = json.load(f)
+except FileNotFoundError:
+    settings = {}
+except json.JSONDecodeError:
+    print("reconciler: settings file is invalid JSON", file=sys.stderr)
+    sys.exit(2)
+
+current_env = settings.get("env", {}) or {}
+
+to_add = {}
+to_update = {}
+to_remove = []
+
+for key, expected_value in owned.items():
+    if key not in current_env:
+        to_add[key] = expected_value
+    elif str(current_env[key]) != str(expected_value):
+        to_update[key] = expected_value
+
+for key in deprecated:
+    if key in current_env:
+        to_remove.append(key)
+
+diff = {"to_add": to_add, "to_update": to_update, "to_remove": to_remove}
+print(json.dumps(diff))
+PYEOF
+}
+
+cmd_apply_env() {
+    local settings_path="${1:-}"
+    [[ -n "$settings_path" ]] || die "apply-env: settings path required"
+
+    local diff_json
+    diff_json=$(cat)
+
+    local is_empty
+    is_empty=$(echo "$diff_json" | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+print('yes' if (not d.get('to_add') and not d.get('to_update') and not d.get('to_remove')) else 'no')
+")
+    if [[ "$is_empty" == "yes" ]]; then
+        return 0
+    fi
+
+    local ts
+    ts=$(date -u +%Y%m%d-%H%M%S)
+    cp "$settings_path" "$settings_path.bak-$ts"
+
+    python3 <<PYEOF
+import json
+
+diff = json.loads('''$diff_json''')
+
+with open("$settings_path") as f:
+    settings = json.load(f)
+
+env = settings.setdefault("env", {})
+
+for k, v in diff.get("to_add", {}).items():
+    env[k] = v
+for k, v in diff.get("to_update", {}).items():
+    env[k] = v
+for k in diff.get("to_remove", []):
+    env.pop(k, None)
+
+with open("$settings_path", "w") as f:
+    json.dump(settings, f, indent=2)
+    f.write("\n")
+PYEOF
+}
+
 # --- dispatch -------------------------------------------------------------
 main() {
     require_schema
@@ -86,6 +172,8 @@ main() {
         write-marker)    cmd_write_marker "$@" ;;
         read-marker)     cmd_read_marker "$@" ;;
         check-version)   cmd_check_version "$@" ;;
+        detect-env)      cmd_detect_env "$@" ;;
+        apply-env)       cmd_apply_env "$@" ;;
         "" )             die "no subcommand" ;;
         *)               die "unknown subcommand: $sub" ;;
     esac
