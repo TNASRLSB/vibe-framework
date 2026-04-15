@@ -220,21 +220,140 @@ cmd_apply_data() {
     fi
 }
 
+# --- CLAUDE.md classification ---------------------------------------------
+cmd_classify_claude_md() {
+    local path="${1:-}"
+    [[ -n "$path" ]] || die "classify-claude-md: path required"
+
+    if [[ ! -f "$path" ]]; then
+        echo "MISSING"
+        return 0
+    fi
+
+    python3 <<PYEOF
+import json
+
+schema = json.load(open("$SCHEMA_FILE"))
+start = schema["claudeMdManagedMarkerStart"]
+end = schema["claudeMdManagedMarkerEnd"]
+tokens = schema["claudeMdLegacyTokens"]
+
+with open("$path") as f:
+    content = f.read()
+
+if start in content and end in content:
+    print("MANAGED_REGION_PRESENT")
+elif any(t in content for t in tokens):
+    print("LEGACY_WITH_VIBE_TOKENS")
+else:
+    print("LEGACY_NO_VIBE_TOKENS")
+PYEOF
+}
+
+# --- CLAUDE.md apply ------------------------------------------------------
+cmd_apply_claude_md() {
+    local path="${1:-}"
+    shift || true
+    [[ -n "$path" ]] || die "apply-claude-md: path required"
+
+    local project_name="Project"
+    local build_cmd="not detected"
+    local test_cmd="not detected"
+    local lint_cmd="not detected"
+    local mode=""
+    local approve_regenerate="false"
+
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --project-name)       project_name="$2"; shift 2 ;;
+            --build)              build_cmd="$2"; shift 2 ;;
+            --test)               test_cmd="$2"; shift 2 ;;
+            --lint)               lint_cmd="$2"; shift 2 ;;
+            --mode)               mode="$2"; shift 2 ;;
+            --approve-regenerate) approve_regenerate="true"; shift ;;
+            *)                    die "apply-claude-md: unknown flag $1" ;;
+        esac
+    done
+
+    local template="$SCRIPT_DIR/claude-md-template.md"
+    [[ -f "$template" ]] || die "template not found: $template"
+
+    local rendered
+    rendered=$(python3 <<PYEOF
+tpl = open("$template").read()
+out = (tpl
+    .replace("{{PROJECT_NAME}}", "$project_name")
+    .replace("{{BUILD_CMD}}", "$build_cmd")
+    .replace("{{TEST_CMD}}", "$test_cmd")
+    .replace("{{LINT_CMD}}", "$lint_cmd"))
+print(out)
+PYEOF
+)
+
+    case "$mode" in
+        MISSING)
+            printf '%s' "$rendered" > "$path"
+            ;;
+        MANAGED_REGION_PRESENT)
+            python3 <<PYEOF
+import json, re
+
+schema = json.load(open("$SCHEMA_FILE"))
+start = schema["claudeMdManagedMarkerStart"]
+end = schema["claudeMdManagedMarkerEnd"]
+
+with open("$path") as f:
+    content = f.read()
+
+rendered = """$rendered"""
+m = re.search(re.escape(start) + r".*?" + re.escape(end), rendered, re.DOTALL)
+if not m:
+    raise SystemExit("rendered template missing markers")
+new_region = m.group(0)
+
+pattern = re.escape(start) + r".*?" + re.escape(end)
+new_content = re.sub(pattern, lambda _: new_region, content, count=1, flags=re.DOTALL)
+
+with open("$path", "w") as f:
+    f.write(new_content)
+PYEOF
+            ;;
+        LEGACY_WITH_VIBE_TOKENS)
+            if [[ "$approve_regenerate" != "true" ]]; then
+                echo "reconciler: LEGACY_WITH_VIBE_TOKENS requires --approve-regenerate" >&2
+                return 1
+            fi
+            local ts
+            ts=$(date -u +%Y%m%d-%H%M%S)
+            cp "$path" "$path.bak-$ts"
+            printf '%s' "$rendered" > "$path"
+            ;;
+        LEGACY_NO_VIBE_TOKENS)
+            return 0
+            ;;
+        *)
+            die "apply-claude-md: invalid mode '$mode'"
+            ;;
+    esac
+}
+
 # --- dispatch -------------------------------------------------------------
 main() {
     require_schema
     local sub="${1:-}"
     shift || true
     case "$sub" in
-        write-marker)    cmd_write_marker "$@" ;;
-        read-marker)     cmd_read_marker "$@" ;;
-        check-version)   cmd_check_version "$@" ;;
-        detect-env)      cmd_detect_env "$@" ;;
-        apply-env)       cmd_apply_env "$@" ;;
-        detect-data)     cmd_detect_data "$@" ;;
-        apply-data)      cmd_apply_data "$@" ;;
-        "" )             die "no subcommand" ;;
-        *)               die "unknown subcommand: $sub" ;;
+        write-marker)       cmd_write_marker "$@" ;;
+        read-marker)        cmd_read_marker "$@" ;;
+        check-version)      cmd_check_version "$@" ;;
+        detect-env)         cmd_detect_env "$@" ;;
+        apply-env)          cmd_apply_env "$@" ;;
+        detect-data)        cmd_detect_data "$@" ;;
+        apply-data)         cmd_apply_data "$@" ;;
+        classify-claude-md) cmd_classify_claude_md "$@" ;;
+        apply-claude-md)    cmd_apply_claude_md "$@" ;;
+        "" )                die "no subcommand" ;;
+        *)                  die "unknown subcommand: $sub" ;;
     esac
 }
 
