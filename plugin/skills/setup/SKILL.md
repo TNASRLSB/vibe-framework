@@ -285,80 +285,93 @@ Adaptive thinking              [current]            disabled
 
 ---
 
-## Step 5: Application
+## Step 5: Reconciliation
 
 **Only execute this step after the user approves in Step 4.**
 
-### 5.1 Update User Settings
+The wizard delegates state mutation to `reconciler.sh`. Do **not** write to `~/.claude/settings.json` or `CLAUDE.md` directly from this skill — the reconciler is the only component that mutates user config.
 
-Merge recommended values into `~/.claude/settings.json`. Never overwrite the file — always read, merge, write.
+### 5.1 Compute the Combined Diff
 
-```bash
-# Read existing settings (or start with empty object)
-EXISTING=$(cat ~/.claude/settings.json 2>/dev/null || echo '{}')
-```
-
-Use `jq` to merge (preferred) or construct manually:
+Ask the reconciler for the env and data diffs, plus the CLAUDE.md classification, then combine them into a single JSON payload:
 
 ```bash
-echo "$EXISTING" | jq '
-  .model = "opus" |
-  .env.CLAUDE_CODE_EFFORT_LEVEL = "max" |
-  .env.SLASH_COMMAND_TOOL_CHAR_BUDGET = "50000" |
-  .env.CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING = "1"
-' > ~/.claude/settings.json.tmp && mv ~/.claude/settings.json.tmp ~/.claude/settings.json
+SCHEMA=${CLAUDE_PLUGIN_ROOT}/setup/expected-state.json
+RECONCILER=${CLAUDE_PLUGIN_ROOT}/setup/reconciler.sh
+
+ENV_DIFF=$("$RECONCILER" detect-env "$HOME/.claude/settings.json" 2>/dev/null || echo '{"to_add":{},"to_update":{},"to_remove":[]}')
+DATA_DIR="$HOME/.claude/plugins/data/vibe-vibe-framework"
+DATA_DIFF=$("$RECONCILER" detect-data "$DATA_DIR" 2>/dev/null || echo '{"to_remove":[]}')
+CLAUDE_MODE=$("$RECONCILER" classify-claude-md "$CLAUDE_PROJECT_DIR/CLAUDE.md")
+
+# "will_touch" is true unless mode is LEGACY_NO_VIBE_TOKENS (user-owned file)
+case "$CLAUDE_MODE" in
+  LEGACY_NO_VIBE_TOKENS) WILL_TOUCH=false ;;
+  *) WILL_TOUCH=true ;;
+esac
+
+COMBINED=$(python3 -c "
+import json, sys
+print(json.dumps({
+    'env': json.loads('''$ENV_DIFF'''),
+    'data': json.loads('''$DATA_DIFF'''),
+    'claude_md': {'mode': '$CLAUDE_MODE', 'will_touch': $WILL_TOUCH}
+}))
+")
 ```
 
-If the user approved the status line in Step 3, include it in the merge.
+### 5.2 Present the Diff to the User
 
-If `jq` is not available, construct the JSON carefully by hand, preserving all existing keys.
-
-**Critical rules:**
-- Never delete existing keys
-- Never overwrite `permissions`, `allowedTools`, `trust`, or `mcpServers`
-- If a key already has the recommended value, skip it
-- Create `~/.claude/` directory if it does not exist
-
-### 5.2 Generate Minimal CLAUDE.md
-
-Check first:
+Pipe the combined diff into the presenter and show it:
 
 ```bash
-test -f CLAUDE.md && echo "EXISTS" || echo "MISSING"
+echo "$COMBINED" | "$RECONCILER" present-diff
 ```
 
-**If EXISTS**, do not touch it. Inform the user:
+If the presenter reports "Already in sync", skip to Step 7 — there is nothing to apply.
 
-> Existing CLAUDE.md found. Skipping generation.
+### 5.3 Get Explicit Approval
 
-**If MISSING**, decide between single-workspace generation and monorepo delegation based on the manifests found in Step 1.3. Compute the number of distinct parent directories across all manifest paths:
+> I will apply the changes above. `~/.claude/settings.json` will get a timestamped backup before any mutation. Any deprecated data files will be tarballed into a backup before removal. Your CLAUDE.md will be handled according to its classification (above).
+>
+> **Approve?** (yes/no)
+
+**Do not proceed without explicit approval.**
+
+### 5.4 Apply
+
+Execute each diff type. For CLAUDE.md, read the detected build/test/lint commands from Step 1 and pass them as flags. If the mode is `LEGACY_WITH_VIBE_TOKENS`, ask the user one more time for `--approve-regenerate` (this branch replaces a file that may have content) — do not pass the flag otherwise.
 
 ```bash
-# Example: manifests=("./frontend/package.json" "./backend/pyproject.toml")
-# Parent dirs: "./frontend", "./backend" → 2 distinct → monorepo-like
-# Example: manifests=("./package.json")
-# Parent dirs: "." → 1 distinct → single-workspace
-# Example: manifests=("./backend/pyproject.toml" "./backend/setup.cfg")
-# Parent dirs: "./backend" → 1 distinct → single-workspace (multi-config, one project)
+# Env
+echo "$ENV_DIFF" | "$RECONCILER" apply-env "$HOME/.claude/settings.json"
+
+# Data
+echo "$DATA_DIFF" | "$RECONCILER" apply-data "$DATA_DIR"
+
+# CLAUDE.md
+APPROVE_REGEN=""
+if [[ "$CLAUDE_MODE" == "LEGACY_WITH_VIBE_TOKENS" ]]; then
+  # Ask user: "Your CLAUDE.md contains 4.x-era VIBE markers (reflect skill, VIBE_GATE, etc.).
+  # I will back it up and regenerate it. Proceed? (yes/no)"
+  # If yes:
+  APPROVE_REGEN="--approve-regenerate"
+fi
+
+"$RECONCILER" apply-claude-md "$CLAUDE_PROJECT_DIR/CLAUDE.md" \
+    --project-name "$PROJECT_NAME" \
+    --build "$BUILD_CMD" \
+    --test "$TEST_CMD" \
+    --lint "$LINT_CMD" \
+    --mode "$CLAUDE_MODE" \
+    $APPROVE_REGEN
 ```
 
-**If 2 or more distinct parent directories** (monorepo-like layout), skip seed CLAUDE.md generation and inform the user:
+### 5.5 Warn on LEGACY_NO_VIBE_TOKENS
 
-> Multiple manifests across different subdirectories detected. Skipping seed CLAUDE.md — a flat template would be misleading for this repo structure. Run `@vibe:researcher` in Step 6 to generate a proper per-workspace codebase map.
+If the mode was `LEGACY_NO_VIBE_TOKENS`, inform the user:
 
-Do **not** write a file in this case. The researcher agent is the right tool to map multi-workspace projects; a flat seed with arbitrary per-workspace commands would be actively harmful to future sessions landing cold in the repo.
-
-**If 0 or 1 distinct parent directories** (single workspace, or empty project), generate a minimal CLAUDE.md using the commands detected in Step 1:
-
-```markdown
-# [Project Name from directory or package.json]
-
-Build: `[detected build command or "not detected"]`
-Test: `[detected test command or "not detected"]`
-Lint: `[detected lint command or "not detected"]`
-```
-
-For empty projects where no commands were detected, use `"not detected"` for all three. A CLAUDE.md with placeholders is better than none — it gives future sessions an anchor file and signals that VIBE is configured. The user will re-run `/vibe:setup` once code exists, and the file will be updated then.
+> Your CLAUDE.md has no VIBE region markers and no 4.x-era markers, so I assume it is user-authored and I will not touch it. If you want a VIBE-managed CLAUDE.md, delete this file and re-run `/vibe:setup`.
 
 ---
 
@@ -415,15 +428,14 @@ Restart Claude Code to apply all changes.
 
 ### 7.3 Record Version Marker
 
-Write a marker file so the setup-check hook stops prompting the user to rerun `/vibe:setup`. This is how 5.0's one-time upgrade notice is dismissed:
+Delegate marker writing to the reconciler. The marker is version-aware: future upgrades will detect the drift and suggest re-running setup.
 
 ```bash
-MARKER_FILE="$HOME/.claude/vibe-5.0-configured"
-mkdir -p "$(dirname "$MARKER_FILE")"
-date -u +%Y-%m-%dT%H:%M:%SZ > "$MARKER_FILE"
+PLUGIN_VERSION=$(python3 -c "import json; print(json.load(open('$CLAUDE_PLUGIN_ROOT/.claude-plugin/plugin.json'))['version'])")
+"$RECONCILER" write-marker "$PLUGIN_VERSION"
 ```
 
-The marker's presence alone is the signal; its content is the UTC timestamp of when setup finished, kept for auditability. If the user later deletes the marker, the anomaly fires again on the next session — which is a valid "remind me to rerun setup" escape hatch.
+The marker file is `~/.claude/vibe-configured` (version in JSON content, not in filename). If the user later deletes it, the anomaly in `setup-check.sh` Check 5 fires again on the next session — the "remind me to re-run setup" escape hatch.
 
 ### 7.4 Restart Notice
 
