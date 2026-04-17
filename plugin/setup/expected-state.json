@@ -25,5 +25,11 @@
   ],
   "claudeMdManagedMarkerStart": "<!-- VIBE:managed-start -->",
   "claudeMdManagedMarkerEnd": "<!-- VIBE:managed-end -->",
-  "markerFilePath": "~/.claude/vibe-configured"
+  "markerFilePath": "~/.claude/vibe-configured",
+  "thinkingFix": {
+    "shellMarkerStart": "# >>> VIBE: thinking-display fix #49268 >>>",
+    "shellMarkerEnd": "# <<< VIBE: thinking-display fix #49268 <<<",
+    "vscodeWrapperSettingKey": "claudeCode.claudeProcessWrapper",
+    "wrapperScriptRelpath": "scripts/cc-thinking-wrapper.sh"
+  }
 }

@@ -387,24 +387,295 @@ else:
 PYEOF
 }
 
+# --- thinking-display fix (S1, §9.1) -------------------------------------
+# Wraps Claude Code invocations with --thinking-display summarized to
+# restore Opus 4.7 reasoning summaries (issue #49268). Two install
+# vectors: shell rc alias for terminal usage, VS Code claudeProcessWrapper
+# setting for IDE usage. Idempotent; uses delimited marker block in shell
+# rc so re-running setup detects existing install correctly. Per-install
+# detection separates "already installed" from "alien claude alias
+# detected" — the latter is surfaced for user review without overwriting.
+
+cmd_detect_thinking_fix() {
+    local shell_name="${1:-}"
+    [[ -n "$shell_name" ]] || die "detect-thinking-fix: shell name required (bash|zsh)"
+
+    python3 <<PYEOF
+import json, os
+
+schema = json.load(open("$SCHEMA_FILE"))
+fix = schema.get("thinkingFix", {})
+marker_start = fix.get("shellMarkerStart", "")
+marker_end = fix.get("shellMarkerEnd", "")
+vscode_setting = fix.get("vscodeWrapperSettingKey", "")
+
+shell = "$shell_name"
+home = os.path.expanduser("~")
+
+# Resolve shell rc path
+rc_path = ""
+if shell == "bash":
+    rc_path = os.path.join(home, ".bashrc")
+elif shell == "zsh":
+    zdotdir = os.environ.get("ZDOTDIR", home)
+    rc_path = os.path.join(zdotdir, ".zshrc")
+else:
+    rc_path = ""
+
+shell_status = {"shell": shell, "rc_path": rc_path, "rc_exists": False,
+                "rc_writable": False, "marker_present": False,
+                "alien_alias_present": False, "needs_install": False,
+                "supported": shell in ("bash", "zsh")}
+
+if rc_path:
+    shell_status["rc_exists"] = os.path.isfile(rc_path)
+    parent = os.path.dirname(rc_path) or home
+    shell_status["rc_writable"] = os.access(parent, os.W_OK) and (
+        not shell_status["rc_exists"] or os.access(rc_path, os.W_OK))
+    if shell_status["rc_exists"]:
+        try:
+            content = open(rc_path).read()
+            if marker_start in content:
+                shell_status["marker_present"] = True
+            else:
+                # Look for an existing 'alias claude=' the user wrote themselves
+                for line in content.splitlines():
+                    s = line.strip()
+                    if s.startswith("alias claude=") or s.startswith("alias claude="):
+                        shell_status["alien_alias_present"] = True
+                        break
+        except Exception:
+            pass
+    shell_status["needs_install"] = (shell_status["supported"] and
+                                      shell_status["rc_writable"] and
+                                      not shell_status["marker_present"] and
+                                      not shell_status["alien_alias_present"])
+
+# VS Code settings detection
+vscode_paths = [
+    os.path.join(home, ".config", "Code", "User", "settings.json"),
+    os.path.join(home, "Library", "Application Support", "Code", "User", "settings.json"),
+]
+vscode_path = next((p for p in vscode_paths if os.path.isfile(p)), "")
+vscode_status = {"settings_path": vscode_path, "settings_exists": bool(vscode_path),
+                 "wrapper_set": False, "alien_wrapper_set": False, "needs_install": False}
+if vscode_path:
+    try:
+        with open(vscode_path) as f:
+            settings = json.load(f)
+        existing = settings.get(vscode_setting, "")
+        if existing:
+            if "cc-thinking-wrapper.sh" in existing:
+                vscode_status["wrapper_set"] = True
+            else:
+                vscode_status["alien_wrapper_set"] = True
+                vscode_status["existing_wrapper"] = existing
+    except Exception:
+        pass
+    vscode_status["needs_install"] = (not vscode_status["wrapper_set"] and
+                                       not vscode_status["alien_wrapper_set"])
+
+print(json.dumps({"shell": shell_status, "vscode": vscode_status}))
+PYEOF
+}
+
+cmd_apply_thinking_fix_shell() {
+    local shell_name="${1:-}"
+    [[ -n "$shell_name" ]] || die "apply-thinking-fix-shell: shell name required (bash|zsh)"
+
+    # Quoted heredoc so Python sees literal ${VIBE_NO_THINKING_FIX:-} in the
+    # snippet content. Vars passed via env: SCHEMA_FILE, RC_SHELL.
+    SCHEMA_FILE="$SCHEMA_FILE" RC_SHELL="$shell_name" python3 <<'PYEOF'
+import json, os, sys, datetime
+
+schema = json.load(open(os.environ["SCHEMA_FILE"]))
+fix = schema.get("thinkingFix", {})
+marker_start = fix.get("shellMarkerStart", "")
+marker_end = fix.get("shellMarkerEnd", "")
+
+shell = os.environ["RC_SHELL"]
+home = os.path.expanduser("~")
+if shell == "bash":
+    rc_path = os.path.join(home, ".bashrc")
+elif shell == "zsh":
+    zdotdir = os.environ.get("ZDOTDIR", home)
+    rc_path = os.path.join(zdotdir, ".zshrc")
+else:
+    print(f"reconciler: unsupported shell '{shell}' (only bash/zsh)", file=sys.stderr)
+    sys.exit(2)
+
+# Idempotent: skip if marker already present
+existing = ""
+if os.path.isfile(rc_path):
+    existing = open(rc_path).read()
+    if marker_start in existing:
+        print(json.dumps({"status": "already_installed", "rc_path": rc_path}))
+        sys.exit(0)
+
+snippet = "\n".join([
+    "",
+    marker_start,
+    "# Restores Opus 4.7 reasoning summaries (#49268). Anthropic shipped",
+    "# thinking display 'omitted' as the new default and the documented CC",
+    "# setting (showThinkingSummaries) is unwired in the harness per binary",
+    "# RE. The actual fix is the hidden CLI flag --thinking-display",
+    "# summarized. Disable: VIBE_NO_THINKING_FIX=1",
+    'if [ -z "${VIBE_NO_THINKING_FIX:-}" ] && command -v claude >/dev/null 2>&1; then',
+    "    alias claude='command claude --thinking-display summarized'",
+    "fi",
+    marker_end,
+    "",
+])
+
+# Backup if file exists
+if os.path.isfile(rc_path):
+    ts = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d-%H%M%S")
+    with open(f"{rc_path}.bak-{ts}", "w") as f:
+        f.write(existing)
+    new_content = existing + ("\n" if not existing.endswith("\n") else "") + snippet
+else:
+    new_content = snippet
+
+with open(rc_path, "w") as f:
+    f.write(new_content)
+
+print(json.dumps({"status": "installed", "rc_path": rc_path}))
+PYEOF
+}
+
+cmd_remove_thinking_fix_shell() {
+    local shell_name="${1:-}"
+    [[ -n "$shell_name" ]] || die "remove-thinking-fix-shell: shell name required (bash|zsh)"
+
+    SCHEMA_FILE="$SCHEMA_FILE" RC_SHELL="$shell_name" python3 <<'PYEOF'
+import json, os, sys, re, datetime
+
+schema = json.load(open(os.environ["SCHEMA_FILE"]))
+fix = schema.get("thinkingFix", {})
+marker_start = fix.get("shellMarkerStart", "")
+marker_end = fix.get("shellMarkerEnd", "")
+
+shell = os.environ["RC_SHELL"]
+home = os.path.expanduser("~")
+if shell == "bash":
+    rc_path = os.path.join(home, ".bashrc")
+elif shell == "zsh":
+    zdotdir = os.environ.get("ZDOTDIR", home)
+    rc_path = os.path.join(zdotdir, ".zshrc")
+else:
+    print(f"reconciler: unsupported shell '{shell}'", file=sys.stderr)
+    sys.exit(2)
+
+if not os.path.isfile(rc_path):
+    print(json.dumps({"status": "not_present", "rc_path": rc_path}))
+    sys.exit(0)
+
+content = open(rc_path).read()
+if marker_start not in content:
+    print(json.dumps({"status": "not_present", "rc_path": rc_path}))
+    sys.exit(0)
+
+ts = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d-%H%M%S")
+with open(f"{rc_path}.bak-{ts}", "w") as f:
+    f.write(content)
+
+# Remove the entire delimited block (start..end inclusive), tolerating
+# leading/trailing newlines. Re-uses literal markers for safety.
+pattern = re.compile(
+    r"\n?" + re.escape(marker_start) + r".*?" + re.escape(marker_end) + r"\n?",
+    re.DOTALL
+)
+new_content = pattern.sub("", content)
+
+with open(rc_path, "w") as f:
+    f.write(new_content)
+
+print(json.dumps({"status": "removed", "rc_path": rc_path}))
+PYEOF
+}
+
+cmd_apply_thinking_fix_vscode() {
+    local settings_path="${1:-}"
+    local wrapper_abs="${2:-}"
+    [[ -n "$settings_path" ]] || die "apply-thinking-fix-vscode: settings path required"
+    [[ -n "$wrapper_abs" ]] || die "apply-thinking-fix-vscode: wrapper script absolute path required"
+
+    SCHEMA_FILE="$SCHEMA_FILE" SETTINGS_PATH="$settings_path" WRAPPER_ABS="$wrapper_abs" python3 <<'PYEOF'
+import json, os, sys, datetime
+
+schema = json.load(open(os.environ["SCHEMA_FILE"]))
+fix = schema.get("thinkingFix", {})
+setting_key = fix.get("vscodeWrapperSettingKey", "")
+
+settings_path = os.environ["SETTINGS_PATH"]
+wrapper_abs = os.environ["WRAPPER_ABS"]
+
+if not os.path.isfile(wrapper_abs) or not os.access(wrapper_abs, os.X_OK):
+    print(f"reconciler: wrapper script not found or not executable: {wrapper_abs}", file=sys.stderr)
+    sys.exit(2)
+
+# Read existing settings or initialize
+if os.path.isfile(settings_path):
+    try:
+        with open(settings_path) as f:
+            settings = json.load(f)
+    except json.JSONDecodeError:
+        print(f"reconciler: settings file is invalid JSON: {settings_path}", file=sys.stderr)
+        sys.exit(2)
+else:
+    os.makedirs(os.path.dirname(settings_path), exist_ok=True)
+    settings = {}
+
+existing = settings.get(setting_key, "")
+if existing == wrapper_abs:
+    print(json.dumps({"status": "already_installed", "settings_path": settings_path}))
+    sys.exit(0)
+if existing and "cc-thinking-wrapper.sh" not in existing:
+    # Don't clobber a user's custom wrapper
+    print(json.dumps({"status": "alien_wrapper_present",
+                      "settings_path": settings_path,
+                      "existing_wrapper": existing}))
+    sys.exit(0)
+
+# Backup before mutate
+if os.path.isfile(settings_path):
+    ts = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d-%H%M%S")
+    with open(f"{settings_path}.bak-{ts}", "w") as f:
+        json.dump(settings, f, indent=2)
+
+settings[setting_key] = wrapper_abs
+
+with open(settings_path, "w") as f:
+    json.dump(settings, f, indent=2)
+    f.write("\n")
+
+print(json.dumps({"status": "installed", "settings_path": settings_path,
+                  "wrapper": wrapper_abs}))
+PYEOF
+}
+
 # --- dispatch -------------------------------------------------------------
 main() {
     require_schema
     local sub="${1:-}"
     shift || true
     case "$sub" in
-        write-marker)       cmd_write_marker "$@" ;;
-        read-marker)        cmd_read_marker "$@" ;;
-        check-version)      cmd_check_version "$@" ;;
-        detect-env)         cmd_detect_env "$@" ;;
-        apply-env)          cmd_apply_env "$@" ;;
-        detect-data)        cmd_detect_data "$@" ;;
-        apply-data)         cmd_apply_data "$@" ;;
-        classify-claude-md) cmd_classify_claude_md "$@" ;;
-        apply-claude-md)    cmd_apply_claude_md "$@" ;;
-        present-diff)       cmd_present_diff "$@" ;;
-        "" )                die "no subcommand" ;;
-        *)                  die "unknown subcommand: $sub" ;;
+        write-marker)               cmd_write_marker "$@" ;;
+        read-marker)                cmd_read_marker "$@" ;;
+        check-version)              cmd_check_version "$@" ;;
+        detect-env)                 cmd_detect_env "$@" ;;
+        apply-env)                  cmd_apply_env "$@" ;;
+        detect-data)                cmd_detect_data "$@" ;;
+        apply-data)                 cmd_apply_data "$@" ;;
+        classify-claude-md)         cmd_classify_claude_md "$@" ;;
+        apply-claude-md)            cmd_apply_claude_md "$@" ;;
+        present-diff)               cmd_present_diff "$@" ;;
+        detect-thinking-fix)        cmd_detect_thinking_fix "$@" ;;
+        apply-thinking-fix-shell)   cmd_apply_thinking_fix_shell "$@" ;;
+        remove-thinking-fix-shell)  cmd_remove_thinking_fix_shell "$@" ;;
+        apply-thinking-fix-vscode)  cmd_apply_thinking_fix_vscode "$@" ;;
+        "" )                        die "no subcommand" ;;
+        *)                          die "unknown subcommand: $sub" ;;
     esac
 }
 

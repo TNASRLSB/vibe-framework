@@ -373,6 +373,38 @@ If the mode was `LEGACY_NO_VIBE_TOKENS`, inform the user:
 
 > Your CLAUDE.md has no VIBE region markers and no 4.x-era markers, so I assume it is user-authored and I will not touch it. If you want a VIBE-managed CLAUDE.md, delete this file and re-run `/vibe:setup`.
 
+### 5.6 Opus 4.7 thinking-display fix (#49268)
+
+Opus 4.7 ships with thinking content `display: "omitted"` as the new default. The documented `showThinkingSummaries` CC setting is unwired in the harness (binary-RE confirmed). The real fix is the hidden CLI flag `--thinking-display summarized`. This step opt-in installs it in two places: shell rc alias (terminal) and VS Code `claudeCode.claudeProcessWrapper` (IDE). Opt-out: `VIBE_NO_THINKING_FIX=1`.
+
+```bash
+SHELL_NAME=$(basename "$SHELL")  # bash | zsh | fish | …
+TF_STATE=$("$RECONCILER" detect-thinking-fix "$SHELL_NAME" 2>/dev/null)
+```
+
+The detect call returns `{shell:{...}, vscode:{...}}` with per-vector flags: `marker_present`, `needs_install`, `alien_alias_present` / `alien_wrapper_set`. Skip vectors where `marker_present` or alien flags are true (already configured or user owns it). For `supported: false` shells (fish/ksh/...), surface a manual instruction instead of auto-applying.
+
+Ask the user one prompt:
+
+> Opus 4.7 hides reasoning summaries by default (#49268). Install fix?
+> `[a]` both (shell + VS Code)  `[s]` shell only  `[v]` VS Code only  `[n]` skip
+
+Apply per choice:
+
+```bash
+# Shell
+"$RECONCILER" apply-thinking-fix-shell "$SHELL_NAME"
+
+# VS Code — use the absolute wrapper path from the cached plugin install
+WRAPPER_ABS="${CLAUDE_PLUGIN_ROOT}/scripts/cc-thinking-wrapper.sh"
+VSCODE_SETTINGS=$(echo "$TF_STATE" | jq -r '.vscode.settings_path')
+"$RECONCILER" apply-thinking-fix-vscode "$VSCODE_SETTINGS" "$WRAPPER_ABS"
+```
+
+Each apply returns JSON with a `status` field: `installed` (tell user to `source ~/.bashrc` or restart terminal), `already_installed` (no-op), `alien_wrapper_present` (skipped — user has custom wrapper, surface for manual review). Removed via `apply-thinking-fix-shell` → `remove-thinking-fix-shell` (future `--reset` mode). For unsupported shells, fall back to a manual instruction:
+
+> Your shell isn't auto-installable. Add: `alias claude='command claude --thinking-display summarized'` to your rc. Or set `VIBE_NO_THINKING_FIX=1`.
+
 ---
 
 ## Step 6: Codebase Mapping (Optional)
