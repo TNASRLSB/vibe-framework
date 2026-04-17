@@ -1,5 +1,23 @@
 # Changelog
 
+## 5.2.1 — 2026-04-17
+
+### Added
+- **`session-end-cleanup.sh` SessionEnd hook** (`plugin/scripts/session-end-cleanup.sh`). Removes per-session `/tmp/vibe-paused-${SESSION_ID}` and `/tmp/vibe-failures-${SESSION_ID}` flag files when the session ends. Closes the `/vibe:pause` flag-leak (B3 in the 5.3 audit) where pause flags accumulated across recycled session IDs and silently disabled hooks for new sessions that happened to share an ID with a previously-paused session. Hook surface grows from 10 to 11 handlers across 8 lifecycle events (SessionEnd added). Always exits 0; cleanup actions logged to `${CLAUDE_PLUGIN_DATA}/sessions/cleanup.log`.
+
+- **Rhetoric-guard Strategy E v1 preprocessing** (`plugin/scripts/rhetoric-guard.sh`). Two-stage filter applied to the assistant message before pattern matching: Stage 1a strips fenced code blocks (` ``` `) via an awk state-machine fence tracker, and Stage 1b strips inline backticks (`` ` `` ... `` ` ``) via a length-capped sed. Closes the false-positive class (B7 in the 5.3 audit) where rhetoric-guard fired on its own pattern names quoted inside discussion of the rhetoric guard itself — for example a session that referenced `pre-existing` or `good stopping point` as category labels in a design doc, rather than as ownership-dodging or session-quitting language. Two new env vars: `VIBE_RG_BYPASS_DISABLED=1` reverts to literal matching (5.2.0 behavior), `VIBE_RG_BYPASS_VERBOSE=1` writes a per-session diagnostic log of original-vs-filtered messages to `${CLAUDE_PLUGIN_DATA}/rhetoric-guard/rhetoric-guard-bypass-${SESSION_ID}.log`. Strategy E v2 (double-quoted strings) and v3 (HIGH-risk meta-keyword suppression) are scoped to 5.3.0 per the staged rollout in the audit §14.5.
+
+### Fixed
+- **`failure-reset.sh` PostToolUse matcher missing** (B1). The PostToolUse entry calling `failure-reset.sh` had no `matcher` field, so it fired on every tool use including Read. This made the `failure-loop-detect.sh` counter game-able: a sequence of `Edit-fail → Read-pass → Edit-fail → Edit-fail` would reset the counter after the Read and never trigger the 3-failure block. Added `"matcher": "Bash|Edit|Write"` to scope the reset hook to the same tool set as the failure detector. Verified by walking the HC3 sequence: counter no longer reset by Read; 3rd Edit-fail correctly blocks.
+
+- **`agent-memory-sync.sh` `find -maxdepth 4` fragility** (B2). The hardcoded depth limit broke memory sync in monorepos where worktrees nest deeper than 4 levels. Removed the `-maxdepth` flag entirely — the `-path "*/.claude/agent-memory/vibe-*"` pattern is structurally specific (vibe-* directories only appear under `.claude/agent-memory/`), so depth limiting added no safety, only fragility. Verified on a 5-deep nested fake repo: memory content correctly synced from worktree to main project.
+
+- **`setup` skill "Be concise" anti-pattern** (B4). Removed the "Be concise, " prefix from `plugin/skills/setup/SKILL.md` step 12 (the wizard's opening directive). Per Anthropic's Opus 4.7 migration guidance, explicit length-control instructions are now Cat-A anti-patterns: 4.7 calibrates response length to perceived complexity natively, and "Be concise" risks truncating critical wizard output (proposed config diffs, anomaly explanations).
+
+### Migration from 5.2.0
+- **Automatic.** SessionEnd hook loads on next session start. No env vars to set, no user action required.
+- **Strategy E preprocessing is on by default.** If you depended on the rhetoric-guard's literal pattern matching (e.g. you intentionally wanted it to fire on quoted pattern names in your own session discussion), set `VIBE_RG_BYPASS_DISABLED=1` to revert. Most users want the new default.
+- **Marketplace count.** `marketplace.json` description updated from `"10 hooks"` to `"11 hooks"`. Reflects the new SessionEnd handler.
 ## 5.2.0 — 2026-04-15
 
 ### Added

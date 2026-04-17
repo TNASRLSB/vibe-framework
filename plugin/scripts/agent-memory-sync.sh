@@ -27,6 +27,10 @@ while IFS= read -r -d '' source_dir; do
   mkdir -p "$target_dir" 2>/dev/null || continue
 
   cp -R "$source_dir/." "$target_dir/" 2>/dev/null || true
-done < <(find "$WORKTREE_ROOT" -maxdepth 4 -type d -path "*/.claude/agent-memory/vibe-*" -print0 2>/dev/null)
+# No -maxdepth: the path pattern "*/.claude/agent-memory/vibe-*" is specific
+# enough that depth-limiting buys nothing — vibe-* dirs only ever appear under
+# .claude/agent-memory/. Removing the limit fixes monorepo nested layouts where
+# worktrees are deeper than 4 levels from WORKTREE_ROOT.
+done < <(find "$WORKTREE_ROOT" -type d -path "*/.claude/agent-memory/vibe-*" -print0 2>/dev/null)
 
 exit 0

@@ -80,12 +80,16 @@
 #
 # ── CONFIG ─────────────────────────────────────────────────────────
 # Override via env vars before running claude:
-#   VIBE_RG_MAX_FIRES     Max injections per session (default 3)
-#   VIBE_RG_LOG_DIR       Log + state directory
-#                         (default ${CLAUDE_PLUGIN_DATA}/rhetoric-guard,
-#                          falling back to ~/.claude/plugins/data/
-#                          vibe-vibe-framework/rhetoric-guard)
-#   VIBE_RG_DISABLED      If set to "1", exit 0 immediately
+#   VIBE_RG_MAX_FIRES        Max injections per session (default 3)
+#   VIBE_RG_LOG_DIR          Log + state directory
+#                            (default ${CLAUDE_PLUGIN_DATA}/rhetoric-guard,
+#                             falling back to ~/.claude/plugins/data/
+#                             vibe-vibe-framework/rhetoric-guard)
+#   VIBE_RG_DISABLED         If set to "1", exit 0 immediately
+#   VIBE_RG_BYPASS_DISABLED  If set to "1", skip preprocessing (raw 5.2
+#                            matching — no fenced-block or backtick strip)
+#   VIBE_RG_BYPASS_VERBOSE   If set to "1", log original + filtered message
+#                            to ${LOG_DIR}/rhetoric-guard-bypass-${SESSION}.log
 #
 # ── EXIT CODES ────────────────────────────────────────────────────
 # Always exits 0. Blocks via the `{"decision":"block","reason":"..."}`
@@ -194,6 +198,39 @@ if [[ -z "$MESSAGE" ]]; then
   exit 0
 fi
 
+# ── Preprocessing (Stage 1a + 1b) ─────────────────────────────────
+# Strip code contexts before matching to prevent false positives when
+# pattern names appear quoted in design docs, audits, or code blocks.
+# Set VIBE_RG_BYPASS_DISABLED=1 to skip preprocessing (raw 5.2 behavior).
+# Set VIBE_RG_BYPASS_VERBOSE=1 to log original + filtered message.
+BYPASS_DISABLED="${VIBE_RG_BYPASS_DISABLED:-0}"
+BYPASS_VERBOSE="${VIBE_RG_BYPASS_VERBOSE:-0}"
+
+MESSAGE_FILTERED="$MESSAGE"
+
+if [[ "$BYPASS_DISABLED" != "1" ]]; then
+  # Stage 1a: strip fenced code blocks (``` ... ```) — awk state machine.
+  # Replaces entire fenced block content with empty lines to preserve
+  # paragraph boundaries so surrounding prose still matches correctly.
+  MESSAGE_FILTERED=$(echo "$MESSAGE_FILTERED" | awk '
+    BEGIN { in_fence = 0 }
+    /^[[:space:]]*```/ { in_fence = !in_fence; print ""; next }
+    { if (!in_fence) print; else print "" }
+  ')
+
+  # Stage 1b: strip inline backtick spans (` ... ` and `` ... ``).
+  # Length-capped to 200 chars to avoid swallowing paragraphs when
+  # backticks are unmatched (e.g. stray backtick in prose).
+  MESSAGE_FILTERED=$(echo "$MESSAGE_FILTERED" | sed -E 's/`+[^`]{1,200}`+/ /g')
+fi
+
+if [[ "$BYPASS_VERBOSE" == "1" ]]; then
+  { echo "--- $(date -u +%FT%TZ) session=$SESSION_ID ---"
+    echo "ORIGINAL (first 500): ${MESSAGE:0:500}"
+    echo "FILTERED (first 500): ${MESSAGE_FILTERED:0:500}"
+  } >> "${LOG_DIR}/rhetoric-guard-bypass-${SESSION_ID}.log" 2>/dev/null || true
+fi
+
 # ── Fire rate cap ─────────────────────────────────────────────────
 FIRE_COUNT=0
 if [[ -f "$FIRE_COUNT_FILE" ]]; then
@@ -271,7 +308,7 @@ VIOLATIONS=(
 for entry in "${VIOLATIONS[@]}"; do
   pattern="${entry%%|*}"
   correction="${entry#*|}"
-  if echo "$MESSAGE" | grep -iq "$pattern"; then
+  if echo "$MESSAGE_FILTERED" | grep -iq "$pattern"; then
     # Increment fire count BEFORE emitting the decision.
     FIRE_COUNT=$((FIRE_COUNT + 1))
     echo "$FIRE_COUNT" > "$FIRE_COUNT_FILE" 2>/dev/null || true

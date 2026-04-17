@@ -43,3 +43,6 @@ Thumbs.db
 
 # Third-party reference material (Claude Code source dump, etc.)
 /vendor/
+
+# Atomic decomposition manifests (per-task internal coordination files)
+/.atomic-decomp/
