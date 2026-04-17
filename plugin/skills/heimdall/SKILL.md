@@ -1,7 +1,7 @@
 ---
 name: heimdall
 description: Security analysis for AI-generated code. Detects vulnerabilities, credential exposure, BaaS misconfigurations, and OWASP Top 10. Use when generating code, reviewing security, or auditing configurations.
-effort: max
+effort: xhigh
 model: opus
 whenToUse: "Use when generating code, reviewing security, or auditing configurations. Examples: '/vibe:heimdall scan', '/vibe:heimdall audit', '/vibe:heimdall deps'"
 argumentHint: "[scan|audit|deps|headers|secrets]"

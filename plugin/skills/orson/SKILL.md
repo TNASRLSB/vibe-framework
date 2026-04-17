@@ -35,6 +35,8 @@ Orson uses a **frame-addressing** model, not CSS animation time. Every frame is 
 3. Playwright captures a screenshot (PNG or JPEG)
 4. The buffer is piped to FFmpeg for encoding
 
+When inspecting a captured frame for visual QA via Opus 4.7, render at viewport ≥ 2560×1440 with `deviceScaleFactor: 2` so the model sees native 2576px input with 1:1 pixel coordinate output. Coordinates from the model map directly to DOM positions without scale-factor math, which is essential when validating element placement, text rendering, or animation precision frame-by-frame.
+
 ### Animation Primitives
 
 Four core animation types defined via global functions in the runtime:

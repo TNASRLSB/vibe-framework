@@ -51,6 +51,21 @@ Use these patterns as the benchmark: "The top competitors in your sector all hav
 
 ### Step 2: Page Assessment
 
+When the input is a `[url]` rather than a `[screenshot]`, capture the page yourself before assessing. Use a Playwright headless render at viewport ≥ 2560×1440 with `deviceScaleFactor: 2` so Opus 4.7 vision sees native 2576px input with 1:1 pixel coordinate output. Coordinates returned by the model on visual elements (CTA, form, fold line) map directly to DOM positions without scale-factor math, which matters when proposing pixel-precise repositioning. Capturing at 1440px discards the model's full visual bandwidth.
+
+```bash
+node -e "
+const { chromium } = require('playwright');
+(async () => {
+  const browser = await chromium.launch();
+  const page = await browser.newPage({ viewport: { width: 2560, height: 1440 }, deviceScaleFactor: 2 });
+  await page.goto('URL_HERE', { waitUntil: 'networkidle' });
+  await page.screenshot({ path: '/tmp/baptist-audit.png', fullPage: true, scale: 'device' });
+  await browser.close();
+})();
+"
+```
+
 Identify the page type and its primary conversion goal:
 
 | Page Type | Primary Conversion |

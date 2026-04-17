@@ -129,7 +129,7 @@ npx -y playwright@latest install chromium 2>/dev/null; node -e "
 const { chromium } = require('playwright');
 (async () => {
   const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  const page = await browser.newPage({ viewport: { width: 2560, height: 1440 }, deviceScaleFactor: 2 });
   await page.goto('URL_HERE', { waitUntil: 'networkidle', timeout: 30000 });
   await page.screenshot({ path: '/tmp/competitor-screenshot.png', fullPage: true });
   const html = await page.content();
@@ -150,9 +150,9 @@ node -e "
 const { chromium } = require('playwright');
 (async () => {
   const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  const page = await browser.newPage({ viewport: { width: 2560, height: 1440 }, deviceScaleFactor: 2 });
   await page.goto('URL_HERE', { waitUntil: 'networkidle', timeout: 30000 });
-  await page.screenshot({ path: '/tmp/vibe-cr/COMPETITOR_NAME-PAGE.png', fullPage: true });
+  await page.screenshot({ path: '/tmp/vibe-cr/COMPETITOR_NAME-PAGE.png', fullPage: true, scale: 'device' });
   await browser.close();
 })();
 "

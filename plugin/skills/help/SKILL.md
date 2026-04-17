@@ -92,7 +92,7 @@ Each domain skill has two invocation modes: interactive (skill) and autonomous a
 | **orson** | Video asset quality audit (worktree, memory) | @vibe:orson or via /vibe:audit |
 | **scribe** | Document quality audit (worktree, memory) | @vibe:scribe or via /vibe:audit |
 
-## Hooks (automatic — 11 handlers, 8 lifecycle events)
+## Hooks (automatic — 12 handlers, 8 lifecycle events)
 
 | Hook | Trigger | What it does |
 |------|---------|-------------|
@@ -103,7 +103,8 @@ Each domain skill has two invocation modes: interactive (skill) and autonomous a
 | Compact save | Before compaction | Saves minimal structured snapshot (git state + pointers to transcript/TaskList/auto-memory). Does not summarize. |
 | Failure loop | After tool failures | Blocks after 3 consecutive Bash/Edit/Write failures, forces replan |
 | Failure reset | After tool success | Zeroes the failure counter |
-| Rhetoric guard | Session stop | Matches last assistant message against 54 rhetorical patterns (ownership dodging, session-length quitting, permission-seeking mid-task). Block decision with targeted correction on match. Rate-capped at 3 fires per session then fail-open. |
+| Rhetoric guard | Session stop | Matches last assistant message against 58 rhetorical patterns (ownership dodging, session-length quitting, permission-seeking mid-task) with Strategy E preprocessing (strips code-fences, backticks, double-quoted strings, markdown link labels) and HIGH-risk meta-keyword suppression. Block decision with targeted correction on match. Rate-capped at 3 fires per session then fail-open. |
+| Side-effect verify | Session stop | Detects when the assistant commits to a write/save/persist operation in prose but doesn't actually invoke a Write/Edit/NotebookEdit tool in the same turn (#49764). Emits an advisory `additionalContext` for the next turn. Strategy E preprocessing avoids self-citation FPs. Capped at 1 fire per session. |
 | Atomic enforcement | Session stop | Validates atomic-decomposition output against manifest item count. Blocks completion if items are unprocessed. |
 | Agent memory sync | Subagent stop | Copies `.claude/agent-memory/vibe-*/` from the subagent's worktree back to the main project so findings persist across runs. Non-blocking. |
 | Session-end cleanup | Session end | Removes per-session `/tmp/vibe-paused-${SESSION_ID}` and `/tmp/vibe-failures-${SESSION_ID}` flag files so they don't accumulate across recycled session IDs. Non-blocking. |

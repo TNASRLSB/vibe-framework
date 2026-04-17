@@ -34,6 +34,25 @@ Check `$ARGUMENTS` to determine mode:
 
 ---
 
+## Screenshot Conventions
+
+When capturing screenshots for design QA, audit, or visual verification, always render at viewport ≥ 2560×1440 with `deviceScaleFactor: 2`. Opus 4.7 vision supports native 2576px input with 1:1 pixel coordinate output — coordinates returned by the model are directly usable in Playwright `page.click({ position: { x, y } })` without any scale-factor math. Capturing at 1440px wastes the model's pixel-level accuracy on Design Lens and produces coordinate values that need post-multiplication. Use `{ scale: 'device' }` on `page.screenshot()` when you need the underlying device-pixel raster.
+
+```bash
+node -e "
+const { chromium } = require('playwright');
+(async () => {
+  const browser = await chromium.launch();
+  const page = await browser.newPage({ viewport: { width: 2560, height: 1440 }, deviceScaleFactor: 2 });
+  await page.goto(URL, { waitUntil: 'networkidle' });
+  await page.screenshot({ path: '/tmp/design-qa.png', fullPage: true, scale: 'device' });
+  await browser.close();
+})();
+"
+```
+
+---
+
 ## Workflow Overview
 
 ```

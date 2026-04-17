@@ -198,9 +198,10 @@ if [[ -z "$MESSAGE" ]]; then
   exit 0
 fi
 
-# ── Preprocessing (Stage 1a + 1b) ─────────────────────────────────
-# Strip code contexts before matching to prevent false positives when
-# pattern names appear quoted in design docs, audits, or code blocks.
+# ── Preprocessing (Strategy E: Stages 1a + 1b + 2 + 2b) ──────────
+# Strip code contexts and quoted text before matching to prevent
+# false positives when pattern names appear quoted in design docs,
+# audits, code blocks, or markdown links.
 # Set VIBE_RG_BYPASS_DISABLED=1 to skip preprocessing (raw 5.2 behavior).
 # Set VIBE_RG_BYPASS_VERBOSE=1 to log original + filtered message.
 BYPASS_DISABLED="${VIBE_RG_BYPASS_DISABLED:-0}"
@@ -222,6 +223,19 @@ if [[ "$BYPASS_DISABLED" != "1" ]]; then
   # Length-capped to 200 chars to avoid swallowing paragraphs when
   # backticks are unmatched (e.g. stray backtick in prose).
   MESSAGE_FILTERED=$(echo "$MESSAGE_FILTERED" | sed -E 's/`+[^`]{1,200}`+/ /g')
+
+  # Stage 2: strip double-quoted strings (straight + typographic curly).
+  # Length-capped to 200 chars to avoid swallowing paragraphs from
+  # unmatched quotes. Single quotes intentionally NOT stripped (too many
+  # false negatives from contractions like "I'll", "didn't").
+  MESSAGE_FILTERED=$(echo "$MESSAGE_FILTERED" | sed -E '
+    s/"[^"]{1,200}"/ /g
+    s/“[^”]{1,200}”/ /g
+  ')
+
+  # Stage 2b: strip markdown link labels [foo](url) — keep url.
+  # Prevents pattern names in link text from triggering FPs.
+  MESSAGE_FILTERED=$(echo "$MESSAGE_FILTERED" | sed -E 's/\[[^]]{1,200}\]\([^)]+\)/ /g')
 fi
 
 if [[ "$BYPASS_VERBOSE" == "1" ]]; then
@@ -302,13 +316,71 @@ VIOLATIONS=(
   "stop here for now|Do not stop. The task is not done. Continue."
   "wrap up for now|Do not wrap up. The task is not done. Continue."
   "call it here|Do not stop. Continue working."
+
+  # §14.6 semantic-equivalent expansions — empirically justified by S4 corpus
+  # (40-output Opus 4.6 vs 4.7 fire rate validation showed cluster-D coverage
+  # gap: models use these phrasings instead of literal "shall I proceed").
+  "let me know how you'd like|Do not ask. Pick the most reasonable option and proceed. The user will redirect if needed."
+  "let me know if you|Do not ask. Pick the most reasonable interpretation and proceed."
+  "before I proceed|Do not ask. Proceed with the most reasonable interpretation."
+  "before continuing|Do not ask. Continue."
+  "awaiting your|Do not wait. Pick the most reasonable option and proceed."
+  "would appreciate your input|Do not ask. Pick the most reasonable option and proceed."
+  "if you'd like, I can|Do not offer — do. If the work is needed, do it."
+  "pause for your input|Do not pause. Continue with the most reasonable interpretation."
+  "won't touch anything until|Do not stop. The task is not done. Pick a reasonable approach and proceed."
 )
+
+# ── Stage 3: HIGH-risk pattern table for meta-keyword suppression ──
+# HIGH-risk patterns are most prone to false positives when discussed
+# meta-textually (audit docs, design discussions, code comments). These
+# are the patterns whose literal substring is most often the *category
+# label* used to refer to the rhetorical phenomenon, not the phenomenon
+# itself. Stage 3 suppresses fires of HIGH-risk patterns when the
+# matching paragraph also contains meta-keywords like "pattern set",
+# "rhetoric-guard", "false positive", etc.
+#
+# LOW/MEDIUM-risk patterns (session-quitting, permission-seeking, action
+# verbs) are NOT suppressed by meta-keyword, because their phrasing is
+# verb-driven and rarely appears as a category label.
+declare -A HIGH_RISK_PATTERNS
+HIGH_RISK_PATTERNS["pre-existing"]=1
+HIGH_RISK_PATTERNS["not from my changes"]=1
+HIGH_RISK_PATTERNS["not my change"]=1
+HIGH_RISK_PATTERNS["not caused by my"]=1
+HIGH_RISK_PATTERNS["not introduced by my"]=1
+HIGH_RISK_PATTERNS["already existed before"]=1
+HIGH_RISK_PATTERNS["before my changes"]=1
+HIGH_RISK_PATTERNS["prior to my changes"]=1
+HIGH_RISK_PATTERNS["unrelated to my changes"]=1
+HIGH_RISK_PATTERNS["an existing issue"]=1
+HIGH_RISK_PATTERNS["existing bug"]=1
+HIGH_RISK_PATTERNS["known limitation"]=1
+HIGH_RISK_PATTERNS["known issue"]=1
+HIGH_RISK_PATTERNS["future work"]=1
+HIGH_RISK_PATTERNS["left as an exercise"]=1
+
+META_KEYWORDS_RE='rhetoric.guard|pattern set|pattern list|categor(y|ies)|regex|false positive|trigger phrase|dodging cluster|audit doc|post.mortem|violations array|rhetoric_guard|rhetoric guard'
 
 # ── Match loop ────────────────────────────────────────────────────
 for entry in "${VIOLATIONS[@]}"; do
   pattern="${entry%%|*}"
   correction="${entry#*|}"
   if echo "$MESSAGE_FILTERED" | grep -iq "$pattern"; then
+    # Stage 3: meta-keyword suppression for HIGH-risk patterns only.
+    # If the matching PARAGRAPH (RS = "" splits on blank lines) contains
+    # a meta-keyword indicating discussion of the guard itself, suppress.
+    if [[ "$BYPASS_DISABLED" != "1" ]] && [[ -n "${HIGH_RISK_PATTERNS[$pattern]:-}" ]]; then
+      matching_paragraphs=$(echo "$MESSAGE_FILTERED" | awk -v pat="$pattern" '
+        BEGIN { RS = ""; IGNORECASE = 1 }
+        $0 ~ pat { print $0; print "" }
+      ')
+      if echo "$matching_paragraphs" | grep -iqE "$META_KEYWORDS_RE"; then
+        log_event "suppress_meta_context" "$pattern" "$FIRE_COUNT"
+        continue
+      fi
+    fi
+
     # Increment fire count BEFORE emitting the decision.
     FIRE_COUNT=$((FIRE_COUNT + 1))
     echo "$FIRE_COUNT" > "$FIRE_COUNT_FILE" 2>/dev/null || true

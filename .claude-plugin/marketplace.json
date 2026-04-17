@@ -11,7 +11,7 @@
     {
       "name": "vibe",
       "source": "./plugin",
-      "description": "Quality-first framework for Claude Code. 13 skills, 10 agents, 11 hooks. Forces effort:max and opus model for maximum output quality.",
+      "description": "Quality-first framework for Claude Code. 13 skills, 10 agents, 12 hooks. Forces effort:max and opus model for maximum output quality.",
       "author": {
         "name": "TNASRLSB"
       },

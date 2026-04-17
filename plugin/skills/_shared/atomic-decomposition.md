@@ -50,6 +50,7 @@ The decomposer agent produces a `manifest.json` with this structure:
 - `total_items` MUST equal length of `items` array
 - `enumeration_command` MUST produce the same count when executed independently
 - `prompt_template` MUST contain `{item_description}` placeholder
+- `prompt_template` SHOULD end with the canonical anti-fanout footer: `"Do not spawn a subagent for work you can complete directly in a single response."` Opus 4.7 spawns fewer subagents by default than 4.6, but a per-item worker that recursively spawns sub-subagents collapses the atomic-decomp guarantee (one item, one isolated session). The footer line keeps workers single-shot.
 - `task_mode` MUST be `read_only` or `write`
 - Each item MUST have `id` and `description`
 

@@ -82,6 +82,11 @@
           },
           {
             "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/side-effect-verify.sh\"",
+            "statusMessage": "VIBE: side-effect verify..."
+          },
+          {
+            "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/atomic-enforcement.sh\"",
             "statusMessage": "VIBE: atomic verification..."
           }
