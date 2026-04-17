@@ -26,9 +26,42 @@ fi
 
 ISSUES=()
 
-# Check 1: Dangerous rm commands
+# Check 1: Dangerous rm commands (with /tmp, /var/tmp, /dev/shm whitelist).
+# Plain regex `(/|...)` matched any leading `/`, including legitimate
+# /tmp cleanup like `rm -rf /tmp/test-fixture`. Now we check that EVERY
+# path argument lives under a sanctioned ephemeral root before allowing.
+# If any path is outside the whitelist (or the command is malformed),
+# block and surface the issue.
 if echo "$COMMAND" | grep -qP 'rm\s+(-[rfRF]+\s+)*(/|~|\$HOME|\.\./)' 2>/dev/null; then
-  ISSUES+=("Dangerous rm targeting root, home, or parent directory")
+  rm_verdict=$(echo "$COMMAND" | awk '
+    BEGIN { found_rm = 0; saw_path = 0; all_safe = 1 }
+    {
+      for (i = 1; i <= NF; i++) {
+        tok = $i
+        # Strip trailing semicolon/operator chars that bash glues
+        sub(/[;&|<>].*$/, "", tok)
+        if (tok == "") continue
+        if (tok == "rm") { found_rm = 1; continue }
+        if (!found_rm) continue
+        if (substr(tok, 1, 1) == "-") continue           # flag
+        # Stop scanning when shell separator hit (next command)
+        if (tok ~ /^(&&|\|\||;)$/) break
+        saw_path = 1
+        # Whitelisted ephemeral roots
+        if (tok ~ /^\/tmp\//      || tok == "/tmp")      continue
+        if (tok ~ /^\/var\/tmp\// || tok == "/var/tmp")  continue
+        if (tok ~ /^\/dev\/shm\// || tok == "/dev/shm")  continue
+        all_safe = 0; break
+      }
+    }
+    END {
+      if (found_rm && saw_path && all_safe) print "SAFE"
+      else print "UNSAFE"
+    }
+  ')
+  if [[ "$rm_verdict" != "SAFE" ]]; then
+    ISSUES+=("Dangerous rm targeting root, home, or parent directory")
+  fi
 fi
 
 # Check 2: Git force push to main/master

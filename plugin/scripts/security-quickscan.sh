@@ -30,7 +30,15 @@ fi
 #   - tests/**          (test fixtures contain deliberate bad patterns to verify detection)
 #   - plugin/skills/**/references/**  (reference docs show examples of what to detect)
 PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
-if [[ "$FILE_PATH" == "${PLUGIN_ROOT}/scripts/"* ]]; then
+# Match either the cached install path or the dev/source path. CC sets
+# CLAUDE_PLUGIN_ROOT to the cache dir (~/.claude/plugins/cache/...), but
+# the file being edited typically lives in the source repo at a
+# different path (e.g. ~/VIBEPROJECTS/VIBE_FRAMEWORK/plugin/scripts/...).
+# A literal cache-prefix comparison misses dev-path edits and the script
+# self-scans, producing a cascade of false positives on its own pattern
+# constants.
+if [[ "$FILE_PATH" == "${PLUGIN_ROOT}/scripts/"* ]] || \
+   [[ "$FILE_PATH" == */plugin/scripts/* ]]; then
   exit 0
 fi
 if [[ "$FILE_PATH" == */tests/* ]]; then
@@ -136,7 +144,11 @@ if echo "$CONTENT" | grep -nP '/proc/[^/]*/environ' >/dev/null 2>&1; then
 fi
 
 # Pattern 16: rm -rf targeting dangerous paths
-if echo "$CONTENT" | grep -nP 'rm\s+-[rfRF]+\s+(/\s|/\b|\$HOME|~/|\.\./\.\.)' >/dev/null 2>&1; then
+# Whitelist ephemeral roots (/tmp, /var/tmp, /dev/shm) via negative
+# lookahead — covers legitimate test fixtures, regex constants in
+# security tooling, and routine cleanup scripts that previously fired
+# this scanner spuriously.
+if echo "$CONTENT" | grep -nP 'rm\s+-[rfRF]+\s+(/\s|/(?!tmp\b|var/tmp\b|dev/shm\b)|\$HOME|~/|\.\./\.\.)' >/dev/null 2>&1; then
   ISSUES+=("rm -rf targeting root, home, or parent traversal detected — data loss risk")
 fi
 
