@@ -7,10 +7,13 @@
 # CLASSIFICATION: Side-effect verifier (NOT a completion oracle).
 # Reads the last assistant message's text + tool calls from the transcript.
 # If text contains a commitment-to-mutate-state phrasing AND no
-# Write/Edit/NotebookEdit tool was invoked in the same turn, emits a
-# warning via hook output additionalContext for the NEXT turn — the
-# assistant sees "you said you'd save X but no Write happened" on its
-# next response and can reconcile.
+# Write/Edit/NotebookEdit tool was invoked in the same turn, blocks the
+# stop with `decision:"block"` + reason — the assistant sees "you said
+# you'd save X but no Write happened" as feedback on the next turn and
+# can reconcile. Per official CC docs, Stop hooks use the top-level
+# decision/reason pattern; hookSpecificOutput.additionalContext is NOT
+# valid on Stop (only on UserPromptSubmit/SessionStart/SubagentStart/
+# PostToolUse/PostToolUseFailure).
 #
 # ── DETECTION REGEX ───────────────────────────────────────────────
 # COMMITMENT_RE matches phrases like:
@@ -43,7 +46,8 @@
 # ── EXIT CODES ────────────────────────────────────────────────────
 # Always exits 0 (failure-open). On regex error or transcript read fail,
 # exits 0 silently. On detection + no tool call, emits hook output JSON
-# with additionalContext field and exits 0.
+# with top-level decision/reason and exits 0 — the stop is blocked and
+# the reason is fed to the next turn as feedback.
 
 set -uo pipefail
 
@@ -174,13 +178,12 @@ MATCHED=$(echo "$MESSAGE_FILTERED" | grep -ioE "$COMMITMENT_RE.{0,80}" | head -1
 
 log_event "fire_no_tool_call" "matched=${MATCHED:0:120} tools=${LAST_TOOLS:-none}"
 
-# Emit hook output with additionalContext for the next turn.
-# Schema per Claude Code Stop hook: { "hookSpecificOutput": { "additionalContext": "..." } }
-jq -n --arg ctx "SIDE-EFFECT VERIFY: your previous turn committed to a write operation (\"${MATCHED}\") but no Write/Edit/NotebookEdit tool was invoked in that turn. Either perform the write now, or correct the prior message to remove the commitment. (Disable: VIBE_SIDEEFFECT_VERIFY_DISABLED=1)" '{
-  hookSpecificOutput: {
-    hookEventName: "Stop",
-    additionalContext: $ctx
-  }
+# Emit block decision so the reason is fed to Claude on the next turn.
+# Schema per official CC docs: Stop uses top-level decision/reason, not
+# hookSpecificOutput.additionalContext (that field is rejected on Stop).
+jq -n --arg reason "SIDE-EFFECT VERIFY: your previous turn committed to a write operation (\"${MATCHED}\") but no Write/Edit/NotebookEdit tool was invoked in that turn. Either perform the write now, or correct the prior message to remove the commitment. (Disable: VIBE_SIDEEFFECT_VERIFY_DISABLED=1)" '{
+  decision: "block",
+  reason: $reason
 }'
 
 exit 0

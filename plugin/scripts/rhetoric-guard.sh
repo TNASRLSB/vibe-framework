@@ -343,22 +343,10 @@ VIOLATIONS=(
 # LOW/MEDIUM-risk patterns (session-quitting, permission-seeking, action
 # verbs) are NOT suppressed by meta-keyword, because their phrasing is
 # verb-driven and rarely appears as a category label.
-declare -A HIGH_RISK_PATTERNS
-HIGH_RISK_PATTERNS["pre-existing"]=1
-HIGH_RISK_PATTERNS["not from my changes"]=1
-HIGH_RISK_PATTERNS["not my change"]=1
-HIGH_RISK_PATTERNS["not caused by my"]=1
-HIGH_RISK_PATTERNS["not introduced by my"]=1
-HIGH_RISK_PATTERNS["already existed before"]=1
-HIGH_RISK_PATTERNS["before my changes"]=1
-HIGH_RISK_PATTERNS["prior to my changes"]=1
-HIGH_RISK_PATTERNS["unrelated to my changes"]=1
-HIGH_RISK_PATTERNS["an existing issue"]=1
-HIGH_RISK_PATTERNS["existing bug"]=1
-HIGH_RISK_PATTERNS["known limitation"]=1
-HIGH_RISK_PATTERNS["known issue"]=1
-HIGH_RISK_PATTERNS["future work"]=1
-HIGH_RISK_PATTERNS["left as an exercise"]=1
+# Portable set membership (bash 3.2 compat — macOS ships /bin/bash 3.2,
+# no declare -A). Border pipes so "|pat|" glob matches exactly; no
+# pattern contains "|" so the delimiter is safe.
+HIGH_RISK_PATTERNS="|pre-existing|not from my changes|not my change|not caused by my|not introduced by my|already existed before|before my changes|prior to my changes|unrelated to my changes|an existing issue|existing bug|known limitation|known issue|future work|left as an exercise|"
 
 META_KEYWORDS_RE='rhetoric.guard|pattern set|pattern list|categor(y|ies)|regex|false positive|trigger phrase|dodging cluster|audit doc|post.mortem|violations array|rhetoric_guard|rhetoric guard'
 
@@ -370,7 +358,7 @@ for entry in "${VIOLATIONS[@]}"; do
     # Stage 3: meta-keyword suppression for HIGH-risk patterns only.
     # If the matching PARAGRAPH (RS = "" splits on blank lines) contains
     # a meta-keyword indicating discussion of the guard itself, suppress.
-    if [[ "$BYPASS_DISABLED" != "1" ]] && [[ -n "${HIGH_RISK_PATTERNS[$pattern]:-}" ]]; then
+    if [[ "$BYPASS_DISABLED" != "1" ]] && [[ "$HIGH_RISK_PATTERNS" == *"|$pattern|"* ]]; then
       matching_paragraphs=$(echo "$MESSAGE_FILTERED" | awk -v pat="$pattern" '
         BEGIN { RS = ""; IGNORECASE = 1 }
         $0 ~ pat { print $0; print "" }
