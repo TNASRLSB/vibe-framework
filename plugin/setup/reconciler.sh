@@ -246,6 +246,19 @@ with open(path, "w") as f:
 PYEOF
 }
 
+# --- Managed content generation (5.4.0) -----------------------------------
+cmd_generate_managed_content() {
+    local project_root="${1:-}"
+    local settings_path="${2:-}"
+    [[ -n "$project_root" ]] || die "generate-managed-content: project root required"
+    [[ -n "$settings_path" ]] || settings_path="$HOME/.claude/settings.json"
+
+    local generator="$SCRIPT_DIR/smart-generator.sh"
+    [[ -x "$generator" ]] || die "smart-generator not found or not executable: $generator"
+
+    "$generator" --project-root "$project_root" --settings "$settings_path"
+}
+
 # --- data file detection --------------------------------------------------
 cmd_detect_data() {
     local data_dir="${1:-}"
@@ -345,6 +358,8 @@ cmd_apply_claude_md() {
     local lint_cmd="not detected"
     local mode=""
     local approve_regenerate="false"
+    local project_root="${CLAUDE_PROJECT_DIR:-$PWD}"
+    local settings_path="$HOME/.claude/settings.json"
 
     while [[ $# -gt 0 ]]; do
         case "$1" in
@@ -354,6 +369,8 @@ cmd_apply_claude_md() {
             --lint)               lint_cmd="$2"; shift 2 ;;
             --mode)               mode="$2"; shift 2 ;;
             --approve-regenerate) approve_regenerate="true"; shift ;;
+            --project-root)       project_root="$2"; shift 2 ;;
+            --settings)           settings_path="$2"; shift 2 ;;
             *)                    die "apply-claude-md: unknown flag $1" ;;
         esac
     done
@@ -362,14 +379,54 @@ cmd_apply_claude_md() {
     [[ -f "$template" ]] || die "template not found: $template"
 
     local rendered
-    rendered=$(python3 <<PYEOF
-tpl = open("$template").read()
+    rendered=$(TEMPLATE_PATH="$template" \
+               PROJECT_NAME_ARG="$project_name" \
+               BUILD_CMD_ARG="$build_cmd" \
+               TEST_CMD_ARG="$test_cmd" \
+               LINT_CMD_ARG="$lint_cmd" \
+               SCRIPT_DIR_ARG="$SCRIPT_DIR" \
+               PROJECT_ROOT_ARG="$project_root" \
+               SETTINGS_PATH_ARG="$settings_path" \
+               python3 <<'PYEOF'
+import json, os, subprocess, sys
+
+tpl = open(os.environ["TEMPLATE_PATH"]).read()
 out = (tpl
-    .replace("{{PROJECT_NAME}}", "$project_name")
-    .replace("{{BUILD_CMD}}", "$build_cmd")
-    .replace("{{TEST_CMD}}", "$test_cmd")
-    .replace("{{LINT_CMD}}", "$lint_cmd"))
-print(out)
+    .replace("{{PROJECT_NAME}}", os.environ.get("PROJECT_NAME_ARG", ""))
+    .replace("{{BUILD_CMD}}",   os.environ.get("BUILD_CMD_ARG", ""))
+    .replace("{{TEST_CMD}}",    os.environ.get("TEST_CMD_ARG", ""))
+    .replace("{{LINT_CMD}}",    os.environ.get("LINT_CMD_ARG", "")))
+
+# Splice in the 4 VIBE-managed blocks from smart-generator.sh.
+# Failures / empty blocks fall back to an inline unavailable marker so
+# setup completes even if the generator errors.
+FALLBACK = "_(VIBE smart-generator: unavailable — placeholder left blank.)_"
+blocks = {}
+generator = os.path.join(os.environ["SCRIPT_DIR_ARG"], "smart-generator.sh")
+try:
+    gen = subprocess.run(
+        ["bash", generator,
+         "--project-root", os.environ["PROJECT_ROOT_ARG"],
+         "--settings",     os.environ["SETTINGS_PATH_ARG"]],
+        capture_output=True, text=True, check=False,
+    )
+    if gen.returncode == 0 and gen.stdout.strip():
+        blocks = json.loads(gen.stdout)
+except Exception:
+    blocks = {}
+
+for key, placeholder in [
+    ("project_context",  "{{PROJECT_CONTEXT_BLOCK}}"),
+    ("model_pattern",    "{{MODEL_PATTERN_BLOCK}}"),
+    ("capability_audit", "{{CAPABILITY_AUDIT_BLOCK}}"),
+    ("harness_limits",   "{{HARNESS_LIMITS_BLOCK}}"),
+]:
+    val = blocks.get(key, "")
+    if not val or not str(val).strip():
+        val = FALLBACK
+    out = out.replace(placeholder, val)
+
+sys.stdout.write(out)
 PYEOF
 )
 
@@ -378,17 +435,18 @@ PYEOF
             printf '%s' "$rendered" > "$path"
             ;;
         MANAGED_REGION_PRESENT)
-            python3 <<PYEOF
-import json, re
+            SCHEMA_ARG="$SCHEMA_FILE" PATH_ARG="$path" RENDERED_ARG="$rendered" python3 <<'PYEOF'
+import json, os, re
 
-schema = json.load(open("$SCHEMA_FILE"))
+schema = json.load(open(os.environ["SCHEMA_ARG"]))
 start = schema["claudeMdManagedMarkerStart"]
 end = schema["claudeMdManagedMarkerEnd"]
 
-with open("$path") as f:
+path = os.environ["PATH_ARG"]
+with open(path) as f:
     content = f.read()
 
-rendered = """$rendered"""
+rendered = os.environ["RENDERED_ARG"]
 m = re.search(re.escape(start) + r".*?" + re.escape(end), rendered, re.DOTALL)
 if not m:
     raise SystemExit("rendered template missing markers")
@@ -397,7 +455,7 @@ new_region = m.group(0)
 pattern = re.escape(start) + r".*?" + re.escape(end)
 new_content = re.sub(pattern, lambda _: new_region, content, count=1, flags=re.DOTALL)
 
-with open("$path", "w") as f:
+with open(path, "w") as f:
     f.write(new_content)
 PYEOF
             ;;
@@ -759,6 +817,7 @@ main() {
         apply-thinking-fix-vscode)  cmd_apply_thinking_fix_vscode "$@" ;;
         detect-hooks)               cmd_detect_hooks "$@" ;;
         apply-hooks)                cmd_apply_hooks "$@" ;;
+        generate-managed-content)   cmd_generate_managed_content "$@" ;;
         "" )                        die "no subcommand" ;;
         *)                          die "unknown subcommand: $sub" ;;
     esac
