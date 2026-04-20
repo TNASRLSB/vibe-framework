@@ -107,4 +107,8 @@ python3 -c "
 import json, sys
 sys.stderr.write(json.dumps({'reason': '''$REASON''', 'continue': False}) + '\n')
 " 2>&1 >/dev/null
+if [[ "${VIBE_READ_DISCIPLINE_ADVISORY:-0}" == "1" ]]; then
+    # Advisory: log already written above; do not block.
+    exit 0
+fi
 exit 2
