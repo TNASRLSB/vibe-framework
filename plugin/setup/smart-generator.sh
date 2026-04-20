@@ -153,7 +153,54 @@ MODEL_PATTERN=$(cat <<EOF
 - Available on this machine: opus-4-7 (${OPUS_47}), opus-4-6 (${OPUS_46}), sonnet-4-6 (${SONNET_46}), haiku-4-5 (${HAIKU_45}).
 EOF
 )
-CAPABILITY_AUDIT=""
+# --- Capability-Coverage audit (§2.2.3) -----------------------------------
+CAPABILITY_AUDIT=$(SETTINGS_ARG="$SETTINGS_PATH" python3 <<'PYEOF'
+import json, os
+
+path = os.environ["SETTINGS_ARG"]
+try:
+    settings = json.load(open(path))
+except Exception:
+    settings = {}
+
+hooks = settings.get("hooks", {}) or {}
+
+def find(cmd_keyword):
+    for event, bucket in hooks.items():
+        if not isinstance(bucket, list):
+            continue
+        for entry in bucket:
+            if not isinstance(entry, dict):
+                continue
+            for hc in entry.get("hooks", []) or []:
+                if not isinstance(hc, dict):
+                    continue
+                if cmd_keyword in str(hc.get("command", "")):
+                    return True
+    return False
+
+caps = [
+    ("rhetoric-guard",     "rhetoric-guard.sh"),
+    ("side-effect-verify", "side-effect-verify.sh"),
+    ("atomic-enforcement", "atomic-enforcement.sh"),
+    ("read-discipline",    "read-discipline.sh"),
+    ("read-before-edit",   "read-before-edit.sh"),
+    ("pre-tool-security",  "pre-tool-security.sh"),
+]
+
+lines = []
+missing = []
+for label, keyword in caps:
+    if find(keyword):
+        lines.append(f"- ✓ **{label}** armed")
+    else:
+        lines.append(f"- ✗ **{label}** missing — run `/vibe:setup` to arm")
+        missing.append(label)
+
+header = "All VIBE failure-mode defenses armed." if not missing else f"{len(missing)} defense(s) missing. Run `/vibe:setup` to reconcile."
+print(header + "\n\n" + "\n".join(lines))
+PYEOF
+)
 HARNESS_LIMITS=""
 
 PROJECT_CONTEXT="$PROJECT_CONTEXT" \
