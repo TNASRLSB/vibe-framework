@@ -2,7 +2,10 @@
 name: seurat
 description: UI design system generation, wireframing, page layout, brand identity, and WCAG accessibility. Use when building interfaces, components, forms, dashboards, or any frontend work.
 effort: max
-model: opus
+model:
+  primary: opus-4-7
+  effort: xhigh
+  fallback: opus-4-6
 whenToUse: "Use when building interfaces, components, forms, dashboards, or any frontend work. Examples: '/vibe:seurat design', '/vibe:seurat tokens', '/vibe:seurat audit'"
 argumentHint: "[design|tokens|audit|brand|wireframe]"
 maxTokenBudget: 50000

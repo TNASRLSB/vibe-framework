@@ -2,7 +2,10 @@
 name: ghostwriter
 description: Dual-platform search optimization (SEO + GEO for AI search) and persuasive copywriting. Use when creating content for websites, landing pages, articles, or any text that needs to rank and convert.
 effort: max
-model: opus
+model:
+  primary: opus-4-7
+  effort: xhigh
+  fallback: opus-4-6
 whenToUse: "Use when creating content for websites, landing pages, articles, or any text that needs to rank and convert. Examples: '/vibe:ghostwriter write', '/vibe:ghostwriter audit', '/vibe:ghostwriter schema'"
 argumentHint: "[write|audit|schema|meta|geo]"
 maxTokenBudget: 50000

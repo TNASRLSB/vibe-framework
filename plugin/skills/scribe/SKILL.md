@@ -2,7 +2,10 @@
 name: scribe
 description: Create, read, edit Office documents (xlsx, docx, pptx) and PDFs. Use when user wants spreadsheets, Word documents, presentations, or PDF files.
 effort: max
-model: sonnet
+model:
+  primary: sonnet-4-6
+  effort: medium
+  fallback: opus-4-6
 whenToUse: "Use when user wants spreadsheets, Word documents, presentations, or PDF files. Examples: '/vibe:scribe xlsx', '/vibe:scribe docx', '/vibe:scribe pdf'"
 argumentHint: "[xlsx|docx|pptx|pdf|read|convert]"
 maxTokenBudget: 40000
