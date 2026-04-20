@@ -39,13 +39,109 @@ done
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-# --- Emit empty stub JSON; fill in later tasks ----------------------------
+# --- Project scan module --------------------------------------------------
+scan_project() {
+    PROJECT_ARG="$PROJECT_ROOT" python3 <<'PYEOF'
+import json, os, re
+root = os.environ["PROJECT_ARG"]
+
+def read(p):
+    try:
+        with open(os.path.join(root, p)) as f:
+            return f.read()
+    except Exception:
+        return ""
+
+stack = []
+framework = ""
+test_cmd = ""
+build_cmd = ""
+lint_cmd = ""
+
+pkg_raw = read("package.json")
+if pkg_raw:
+    try:
+        pkg = json.loads(pkg_raw)
+        stack.append("Node.js / JavaScript (package.json)")
+        scripts = pkg.get("scripts", {}) or {}
+        test_cmd  = scripts.get("test", "")
+        build_cmd = scripts.get("build", scripts.get("start", ""))
+        lint_cmd  = scripts.get("lint", "")
+        deps = {**(pkg.get("dependencies") or {}), **(pkg.get("devDependencies") or {})}
+        if "express" in deps: framework = "Express"
+        elif "next" in deps: framework = "Next.js"
+        elif "react" in deps: framework = "React"
+        elif "vue" in deps: framework = "Vue"
+    except Exception:
+        pass
+
+if os.path.exists(os.path.join(root, "pyproject.toml")):
+    stack.append("Python (pyproject.toml)")
+    py = read("pyproject.toml")
+    if "fastapi" in py.lower(): framework = framework or "FastAPI"
+    elif "django" in py.lower(): framework = framework or "Django"
+    elif "flask" in py.lower(): framework = framework or "Flask"
+elif os.path.exists(os.path.join(root, "requirements.txt")):
+    stack.append("Python (requirements.txt)")
+
+if os.path.exists(os.path.join(root, "Cargo.toml")):
+    stack.append("Rust (Cargo.toml)")
+if os.path.exists(os.path.join(root, "go.mod")):
+    stack.append("Go (go.mod)")
+
+if os.path.exists(os.path.join(root, "Makefile")) and not test_cmd:
+    test_cmd = "make test"; build_cmd = build_cmd or "make build"
+
+# Detect up to 5 load-bearing directory conventions (src/*, routes/, handlers/, etc.)
+conventions = []
+for name in ("src/routes", "src/middleware", "src/handlers", "src/components",
+             "src/models", "src/services", "app", "pages", "notebooks",
+             "ios", "android", "controllers"):
+    full = os.path.join(root, name)
+    if os.path.isdir(full):
+        conventions.append(name)
+    if len(conventions) >= 5:
+        break
+
+# Entry point heuristic
+entry = ""
+for cand in ("src/index.js", "src/main.py", "src/lib.rs", "cmd/main.go",
+             "main.py", "index.js", "app.js"):
+    if os.path.exists(os.path.join(root, cand)):
+        entry = cand
+        break
+
+lines = []
+if stack: lines.append(f"- **Stack:** {', '.join(stack)}")
+if framework: lines.append(f"- **Framework:** {framework}")
+if entry: lines.append(f"- **Entry point:** `{entry}`")
+if build_cmd: lines.append(f"- **Build:** `{build_cmd}`")
+if test_cmd:  lines.append(f"- **Test:** `{test_cmd}`")
+if lint_cmd:  lines.append(f"- **Lint:** `{lint_cmd}`")
+if conventions:
+    lines.append(f"- **Conventions:** {', '.join('`'+c+'`' for c in conventions)}")
+
+print("\n".join(lines) if lines else "_No project stack detected — VIBE will adapt to whatever the user provides._")
+PYEOF
+}
+
+PROJECT_CONTEXT=$(scan_project)
+
+# Placeholder for sub-modules added in next tasks; for now, empties
+MODEL_PATTERN=""
+CAPABILITY_AUDIT=""
+HARNESS_LIMITS=""
+
+PROJECT_CONTEXT="$PROJECT_CONTEXT" \
+MODEL_PATTERN="$MODEL_PATTERN" \
+CAPABILITY_AUDIT="$CAPABILITY_AUDIT" \
+HARNESS_LIMITS="$HARNESS_LIMITS" \
 python3 <<'PYEOF'
-import json
+import json, os
 print(json.dumps({
-    "project_context": "",
-    "model_pattern": "",
-    "capability_audit": "",
-    "harness_limits": "",
+    "project_context":  os.environ["PROJECT_CONTEXT"],
+    "model_pattern":    os.environ["MODEL_PATTERN"],
+    "capability_audit": os.environ["CAPABILITY_AUDIT"],
+    "harness_limits":   os.environ["HARNESS_LIMITS"],
 }))
 PYEOF
