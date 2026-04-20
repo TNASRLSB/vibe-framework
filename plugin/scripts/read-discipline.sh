@@ -50,5 +50,61 @@ if [[ "$SIZE" -ge "$THRESHOLD_BYTES" ]]; then
     exit 0
 fi
 
-# --- TODO next task: transcript override, log, block -----------------------
-exit 0
+# --- Transcript override check --------------------------------------------
+TRANSCRIPT_PATH=$(printf '%s' "$INPUT" | python3 -c "import json,sys; print(json.load(sys.stdin).get('transcript_path',''))" 2>/dev/null || echo "")
+
+OVERRIDE="no"
+if [[ -n "$TRANSCRIPT_PATH" && -f "$TRANSCRIPT_PATH" ]]; then
+    OVERRIDE=$(FILE_ARG="$FILE" TRANSCRIPT_ARG="$TRANSCRIPT_PATH" python3 <<'PYEOF'
+import json, os, re
+file_path = os.environ["FILE_ARG"]
+transcript = os.environ["TRANSCRIPT_ARG"]
+base = os.path.basename(file_path)
+region_kw = re.compile(r"\b(line|lines|righe|offset|from line|between lines|range|rows)\b", re.IGNORECASE)
+try:
+    with open(transcript) as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                msg = json.loads(line)
+            except Exception:
+                continue
+            if msg.get("type") != "user":
+                continue
+            content = msg.get("message", {}).get("content", "")
+            if isinstance(content, list):
+                content = " ".join(str(b.get("text","")) for b in content if isinstance(b, dict))
+            content = str(content)
+            if (file_path in content or base in content) and region_kw.search(content):
+                print("yes")
+                raise SystemExit
+    print("no")
+except SystemExit:
+    pass
+except Exception:
+    print("no")
+PYEOF
+)
+fi
+
+if [[ "$OVERRIDE" == "yes" ]]; then
+    exit 0
+fi
+
+# --- Log event -----------------------------------------------------------
+LOG_DIR="${CLAUDE_PLUGIN_DATA:-$HOME/.claude/plugins/data/vibe-vibe-framework}"
+mkdir -p "$LOG_DIR" 2>/dev/null || true
+LOG_FILE="$LOG_DIR/read-discipline-events.jsonl"
+TS=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+printf '{"ts":"%s","file":"%s","size":%s,"limit":"%s","offset":"%s","blocked":true}\n' \
+    "$TS" "$FILE" "$SIZE" "$LIMIT" "$OFFSET" >> "$LOG_FILE" 2>/dev/null || true
+
+# --- Block ---------------------------------------------------------------
+REASON="Read-discipline: partial read (limit=${LIMIT:-∅} offset=${OFFSET:-∅}) on file smaller than 400 KB (${SIZE} bytes). Read the file fully. Set VIBE_READ_DISCIPLINE_DISABLED=1 to bypass, or request a specific region explicitly in your prompt (mention 'lines N-M')."
+python3 -c "
+import json, sys
+sys.stderr.write(json.dumps({'reason': '''$REASON''', 'continue': False}) + '\n')
+" 2>&1 >/dev/null
+exit 2
