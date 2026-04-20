@@ -5,6 +5,58 @@
 
 set -uo pipefail
 
+# --- Single-file validation mode (VIBE 5.4.0) --------------------------------
+# When called with a file argument, validate that file's model: block and exit.
+if [[ $# -ge 1 && -f "$1" ]]; then
+  FILE="$1"
+
+# --- Optional model block validation (VIBE 5.4.0) ------------------------
+python3 <<PYEOF
+import re, sys, yaml
+
+path = "$FILE"
+with open(path) as f:
+    content = f.read()
+
+m = re.match(r"---\s*\n(.*?)\n---\s*\n", content, re.DOTALL)
+if not m:
+    sys.exit(0)  # no frontmatter, nothing to validate here
+
+try:
+    fm = yaml.safe_load(m.group(1)) or {}
+except Exception as e:
+    sys.stderr.write(f"validate-frontmatter: YAML parse error: {e}\n")
+    sys.exit(1)
+
+model = fm.get("model")
+if model is None:
+    sys.exit(0)  # model block is optional
+
+if not isinstance(model, dict):
+    sys.stderr.write("validate-frontmatter: 'model' must be a mapping\n")
+    sys.exit(1)
+
+KNOWN_MODELS = {"opus-4-7", "opus-4-6", "sonnet-4-6", "haiku-4-5"}
+EFFORT_LEVELS = {"low", "medium", "high", "xhigh", "max"}
+
+primary = model.get("primary")
+effort = model.get("effort")
+fallback = model.get("fallback")
+
+if primary not in KNOWN_MODELS:
+    sys.stderr.write(f"validate-frontmatter: model.primary '{primary}' not in {sorted(KNOWN_MODELS)}\n")
+    sys.exit(1)
+if effort not in EFFORT_LEVELS:
+    sys.stderr.write(f"validate-frontmatter: model.effort '{effort}' not in {sorted(EFFORT_LEVELS)}\n")
+    sys.exit(1)
+if fallback is not None and fallback not in KNOWN_MODELS:
+    sys.stderr.write(f"validate-frontmatter: model.fallback '{fallback}' not in {sorted(KNOWN_MODELS)}\n")
+    sys.exit(1)
+PYEOF
+  [[ $? -eq 0 ]] || exit 1
+  exit 0
+fi
+
 PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 ERRORS=()
 WARNINGS=()
