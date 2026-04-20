@@ -201,7 +201,16 @@ header = "All VIBE failure-mode defenses armed." if not missing else f"{len(miss
 print(header + "\n\n" + "\n".join(lines))
 PYEOF
 )
-HARNESS_LIMITS=""
+# --- Harness limits (§2.2.4) ---------------------------------------------
+HARNESS_LIMITS=$(cat <<'EOF'
+VIBE is an armor on top of Claude Code, itself a harness on top of the Claude model.
+
+- VIBE **can** override defaults (effort tier, thinking display), inject context (CLAUDE.md, skill descriptions), and react to model signals (rhetoric-guard, side-effect-verify, read-discipline).
+- VIBE **cannot** force the model to think beyond the Anthropic harness ceiling, bypass redaction, or modify Claude Code's hidden system prompt.
+
+Expect VIBE to extract the maximum from the exposed surface — not to "fix a nerfed model". If Claude Code regresses on a dimension Anthropic controls, VIBE mitigates where hooks can reach; it does not substitute for the model.
+EOF
+)
 
 PROJECT_CONTEXT="$PROJECT_CONTEXT" \
 MODEL_PATTERN="$MODEL_PATTERN" \
