@@ -5,9 +5,23 @@
 <!-- Do not edit between these markers — changes will be overwritten on the next /vibe:setup run. -->
 <!-- Anything OUTSIDE these markers is preserved verbatim. -->
 
-Build: `{{BUILD_CMD}}`
-Test: `{{TEST_CMD}}`
-Lint: `{{LINT_CMD}}`
+## Project Context (VIBE-detected)
+
+{{PROJECT_CONTEXT_BLOCK}}
+
+## Model Usage Pattern
+
+{{MODEL_PATTERN_BLOCK}}
+
+## Capability Audit (VIBE failure-modes armed)
+
+{{CAPABILITY_AUDIT_BLOCK}}
+
+## VIBE Limits (what VIBE cannot do)
+
+{{HARNESS_LIMITS_BLOCK}}
+
+---
 
 VIBE Framework is active. Quality-first skills available via `/vibe:[skill-name]`.
 <!-- VIBE:managed-end -->
