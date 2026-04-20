@@ -350,6 +350,33 @@ HIGH_RISK_PATTERNS="|pre-existing|not from my changes|not my change|not caused b
 
 META_KEYWORDS_RE='rhetoric.guard|pattern set|pattern list|categor(y|ies)|regex|false positive|trigger phrase|dodging cluster|audit doc|post.mortem|violations array|rhetoric_guard|rhetoric guard'
 
+# --- Category: skim-tells (5.4.0, flag-gated) ----------------------------
+# Fires only when VIBE_RG_SKIM_PATTERNS_ENABLED=1.
+# Patterns capture verbal tells of filename-based inference and skim-edit
+# behavior. Calibration: default off in 5.4.0; promote to default on in
+# 5.4.1 only if field fire-rate <5% on a naturalistic corpus.
+if [[ "${VIBE_RG_SKIM_PATTERNS_ENABLED:-0}" == "1" ]]; then
+    SKIM_TELL_PATTERNS=(
+        '(from|based on) the (filename|naming convention|file name)'
+        'a quick (scan|look|glance)'
+        'it appears (to be|that) '
+        'I (glanced|skimmed|scanned)'
+        'from the name'
+        'based on (the name|naming)'
+        'quick (peek|skim)'
+    )
+
+    for pat in "${SKIM_TELL_PATTERNS[@]}"; do
+        if echo "$MESSAGE_FILTERED" | grep -qiE "$pat"; then
+            python3 -c "
+import json, sys
+sys.stderr.write(json.dumps({'reason': 'rhetoric-guard: skim-tell detected (\"${pat}\"). Read the file fully before making claims from filename or naming alone. Set VIBE_RG_SKIM_PATTERNS_ENABLED=0 to disable this category.', 'continue': False}) + '\n')
+" 2>&1 >/dev/null
+            exit 2
+        fi
+    done
+fi
+
 # ── Match loop ────────────────────────────────────────────────────
 for entry in "${VIOLATIONS[@]}"; do
   pattern="${entry%%|*}"
