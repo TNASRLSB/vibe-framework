@@ -42,5 +42,13 @@ if [[ -z "$FILE" ]] || [[ ! -f "$FILE" ]]; then
     exit 0
 fi
 
-# --- TODO next task: size check, transcript check, log+block --------------
+# --- Size check (byte-based, 400 KB threshold) ----------------------------
+THRESHOLD_BYTES=$((400 * 1024))
+if SIZE=$(stat -c%s "$FILE" 2>/dev/null); then :; else SIZE=$(stat -f%z "$FILE" 2>/dev/null || echo 0); fi
+
+if [[ "$SIZE" -ge "$THRESHOLD_BYTES" ]]; then
+    exit 0
+fi
+
+# --- TODO next task: transcript override, log, block -----------------------
 exit 0
