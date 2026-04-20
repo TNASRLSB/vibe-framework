@@ -38,5 +38,58 @@ if [[ "$TOOL" == "Write" && ! -f "$FILE" ]]; then
     exit 0
 fi
 
-# --- TODO next task: transcript scan, full-read detection, block ----------
-exit 0
+# --- Transcript scan for full Read of target ------------------------------
+if [[ -z "$TRANSCRIPT_PATH" || ! -f "$TRANSCRIPT_PATH" ]]; then
+    # No transcript available; be conservative and allow (should not happen in CC)
+    exit 0
+fi
+
+FULL_READ=$(FILE_ARG="$FILE" TRANSCRIPT_ARG="$TRANSCRIPT_PATH" python3 <<'PYEOF'
+import json, os
+
+file_path = os.environ["FILE_ARG"]
+transcript = os.environ["TRANSCRIPT_ARG"]
+
+try:
+    with open(transcript) as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                msg = json.loads(line)
+            except Exception:
+                continue
+            if msg.get("type") != "assistant":
+                continue
+            content = msg.get("message", {}).get("content", [])
+            if not isinstance(content, list):
+                continue
+            for block in content:
+                if not isinstance(block, dict):
+                    continue
+                if block.get("type") == "tool_use" and block.get("name") == "Read":
+                    inp = block.get("input", {}) or {}
+                    if inp.get("file_path") == file_path:
+                        if not inp.get("limit") and not inp.get("offset"):
+                            print("yes")
+                            raise SystemExit
+    print("no")
+except SystemExit:
+    pass
+except Exception:
+    print("no")
+PYEOF
+)
+
+if [[ "$FULL_READ" == "yes" ]]; then
+    exit 0
+fi
+
+# --- Block ---------------------------------------------------------------
+REASON="Read-before-edit: about to ${TOOL} ${FILE} but the file has not been fully Read in this transcript. Run Read with no limit/offset first. Set VIBE_READ_BEFORE_EDIT_DISABLED=1 to bypass."
+python3 -c "
+import json, sys
+sys.stderr.write(json.dumps({'reason': '''$REASON''', 'continue': False}) + '\n')
+" 2>&1 >/dev/null
+exit 2
