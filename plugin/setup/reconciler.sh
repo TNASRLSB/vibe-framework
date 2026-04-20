@@ -163,6 +163,89 @@ with open("$settings_path", "w") as f:
 PYEOF
 }
 
+# --- Hook registration ----------------------------------------------------
+cmd_detect_hooks() {
+    local settings_path="${1:-}"
+    [[ -n "$settings_path" ]] || die "detect-hooks: settings path required"
+
+    SETTINGS_ARG="$settings_path" SCHEMA_ARG="$SCHEMA_FILE" python3 <<'PYEOF'
+import json, os
+
+schema = json.load(open(os.environ["SCHEMA_ARG"]))
+hooks = schema.get("vibeHooks", [])
+
+path = os.environ["SETTINGS_ARG"]
+try:
+    settings = json.load(open(path))
+except Exception:
+    settings = {}
+
+existing = settings.get("hooks", {})
+to_add, to_update = [], []
+
+for h in hooks:
+    ev = h["event"]
+    bucket = existing.get(ev, [])
+    found = False
+    for entry in bucket if isinstance(bucket, list) else []:
+        if not isinstance(entry, dict):
+            continue
+        if entry.get("matcher") == h["matcher"]:
+            hook_cmds = entry.get("hooks", [])
+            cmds = [hc.get("command") for hc in hook_cmds if isinstance(hc, dict)]
+            if h["command"] in cmds:
+                found = True
+                break
+            else:
+                to_update.append(h)
+                found = True
+                break
+    if not found:
+        to_add.append(h)
+
+print(json.dumps({"to_add": to_add, "to_update": to_update}))
+PYEOF
+}
+
+cmd_apply_hooks() {
+    local settings_path="${1:-}"
+    [[ -n "$settings_path" ]] || die "apply-hooks: settings path required"
+
+    local diff_json
+    diff_json=$(cat)
+
+    SETTINGS_ARG="$settings_path" DIFF_ARG="$diff_json" python3 <<'PYEOF'
+import json, os
+
+path = os.environ["SETTINGS_ARG"]
+diff = json.loads(os.environ["DIFF_ARG"])
+
+adds = diff.get("to_add", []) + diff.get("to_update", [])
+if not adds:
+    raise SystemExit(0)
+
+try:
+    settings = json.load(open(path))
+except Exception:
+    settings = {}
+
+hooks = settings.setdefault("hooks", {})
+
+for h in adds:
+    bucket = hooks.setdefault(h["event"], [])
+    # Remove any existing entry with same matcher to avoid duplicates
+    bucket[:] = [e for e in bucket if not (isinstance(e, dict) and e.get("matcher") == h["matcher"])]
+    bucket.append({
+        "matcher": h["matcher"],
+        "hooks": [{"type": "command", "command": h["command"]}],
+    })
+
+with open(path, "w") as f:
+    json.dump(settings, f, indent=2)
+    f.write("\n")
+PYEOF
+}
+
 # --- data file detection --------------------------------------------------
 cmd_detect_data() {
     local data_dir="${1:-}"
@@ -674,6 +757,8 @@ main() {
         apply-thinking-fix-shell)   cmd_apply_thinking_fix_shell "$@" ;;
         remove-thinking-fix-shell)  cmd_remove_thinking_fix_shell "$@" ;;
         apply-thinking-fix-vscode)  cmd_apply_thinking_fix_vscode "$@" ;;
+        detect-hooks)               cmd_detect_hooks "$@" ;;
+        apply-hooks)                cmd_apply_hooks "$@" ;;
         "" )                        die "no subcommand" ;;
         *)                          die "unknown subcommand: $sub" ;;
     esac

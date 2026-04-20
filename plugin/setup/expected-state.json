@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "5.1.0",
+  "version": "5.4.0",
   "envVarsOwned": {
     "CLAUDE_CODE_EFFORT_LEVEL": "max",
     "SLASH_COMMAND_TOOL_CHAR_BUDGET": "50000",
@@ -31,5 +31,24 @@
     "shellMarkerEnd": "# <<< VIBE: thinking-display fix #49268 <<<",
     "vscodeWrapperSettingKey": "claudeCode.claudeProcessWrapper",
     "wrapperScriptRelpath": "scripts/cc-thinking-wrapper.sh"
+  },
+  "vibeHooks": [
+    {
+      "id": "read-discipline",
+      "matcher": "Read",
+      "event": "PreToolUse",
+      "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/read-discipline.sh"
+    },
+    {
+      "id": "read-before-edit",
+      "matcher": "Edit|Write",
+      "event": "PreToolUse",
+      "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/read-before-edit.sh"
+    }
+  ],
+  "skimPatternFlag": {
+    "name": "VIBE_RG_SKIM_PATTERNS_ENABLED",
+    "default": "0",
+    "description": "Enables rhetoric-guard skim-tell patterns. Promote to default=1 in 5.4.1 only if field fire-rate <5%."
   }
 }
