@@ -266,3 +266,19 @@ Runs 200+ automated tests covering plugin structure, all skills, all agents, hoo
 ## License
 
 MIT
+
+## What VIBE can (and cannot) do
+
+VIBE is armor on top of Claude Code, itself a harness on top of the Claude model.
+
+**VIBE can:**
+- Override Claude Code defaults (effort tier, thinking display, adaptive thinking).
+- Inject context (CLAUDE.md, skill descriptions, hook reasons) so the model sees project-specific facts on turn one.
+- React to model output signals (rhetoric-guard, side-effect-verify, read-discipline) and intervene before bad actions ship.
+
+**VIBE cannot:**
+- Force the model to think beyond the ceiling Anthropic's harness exposes.
+- Bypass thinking-block redaction.
+- Modify Claude Code's hidden system prompt.
+
+Expect VIBE to extract the maximum from the surface Anthropic exposes — not to "fix" a regression inside the harness itself. If you want the raw model to behave differently, that is an Anthropic-side change; what VIBE controls is everything between the model response and your terminal.

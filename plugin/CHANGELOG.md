@@ -1,5 +1,35 @@
 # Changelog
 
+## 5.4.0 — 2026-04-20
+
+### Added — Reading Armor (master spec §2.1)
+
+- **`read-discipline.sh`** PreToolUse hook on `Read`. Blocks partial reads (`limit`/`offset`) on files smaller than 400 KB absent an explicit region request in the user transcript. Escape hatch: `VIBE_READ_DISCIPLINE_DISABLED=1`. Diagnostic log at `${CLAUDE_PLUGIN_DATA}/read-discipline-events.jsonl`.
+- **`read-before-edit.sh`** PreToolUse hook on `Edit` / `Write`. Blocks mutations on files that were never fully Read in the current transcript (Writes on non-existing files exempt). Escape hatch: `VIBE_READ_BEFORE_EDIT_DISABLED=1`.
+- **Rhetoric-guard skim-tells** category. 7 new patterns (`from the filename`, `a quick scan`, `it appears that`, etc.). Gated by `VIBE_RG_SKIM_PATTERNS_ENABLED=1` (default off in 5.4.0).
+
+### Added — Smart Arc Reactor (master spec §2.2)
+
+- **CLAUDE.md Smart Generator.** `/vibe:setup` now injects four managed sub-sections into CLAUDE.md: *Project Context* (stack, framework, entry point, 3–5 load-bearing conventions), *Model Usage Pattern* (Opus-planning / Sonnet-implementation routing), *Capability Audit* (which VIBE failure-mode defenses are armed), *VIBE Limits* (harness positioning). Hard budget: 1200 tokens total, enforced post-generation.
+
+### Added — Skill Model/Effort Matrix (master spec §2.3)
+
+- **Declarative `model:` block** in SKILL.md frontmatter. Subkeys: `primary`, `effort` (low/medium/high/xhigh/max), `fallback`. Resolved at invocation by `model-matrix-resolver.sh`.
+- **A/B harness** at `tests/model-validation/run-ab.sh` plus two fixtures (`heimdall-h2`, `audit-orchestrator`). `tests/model-validation/results/` stores decision records.
+- **Defaults updated from A/B evidence** for `heimdall` and `audit` (see `results/2026-04-2X-*-ab.md`). Seven other skills (seurat, baptist, ghostwriter, emmet, scribe, orson, forge) declare routing explicitly per plan task 15.
+
+### Changed
+
+- **`expected-state.json`** schema version stays at 1; `version` field bumps to `5.4.0`. New keys: `vibeHooks`, `skimPatternFlag`.
+- **`claude-md-template.md`** replaces the 5.1 minimal managed block with four placeholders filled by the smart generator.
+- **`reconciler.sh`** gains `generate-managed-content`, `detect-hooks`, `apply-hooks` subcommands; `apply-claude-md` splices the four blocks.
+- **`setup-check.sh`** adds Check 6: missing `vibeHooks` in user `settings.json` triggers a setup reminder.
+- **`validate-frontmatter.sh`** accepts the optional `model:` block.
+
+### Migration from 5.3.x
+
+First invocation after upgrading fires Check 5 (version marker drift, from 5.1) and Check 6 (new hooks not yet registered). Running `/vibe:setup` reconciles both. No user data loss; all legacy managed regions are surgically replaced with the new 4-block layout. Users with hand-authored CLAUDE.md (no VIBE markers) are untouched.
+
 ## 5.3.0 — 2026-04-19
 
 ### Added
