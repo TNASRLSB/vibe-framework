@@ -212,16 +212,59 @@ Expect VIBE to extract the maximum from the exposed surface — not to "fix a ne
 EOF
 )
 
+# --- Budget enforcement (1200-token hard cap) -----------------------------
 PROJECT_CONTEXT="$PROJECT_CONTEXT" \
 MODEL_PATTERN="$MODEL_PATTERN" \
 CAPABILITY_AUDIT="$CAPABILITY_AUDIT" \
 HARNESS_LIMITS="$HARNESS_LIMITS" \
+FORCE_BLOAT="${SMART_GEN_FORCE_BLOAT:-0}" \
 python3 <<'PYEOF'
-import json, os
-print(json.dumps({
-    "project_context":  os.environ["PROJECT_CONTEXT"],
-    "model_pattern":    os.environ["MODEL_PATTERN"],
-    "capability_audit": os.environ["CAPABILITY_AUDIT"],
-    "harness_limits":   os.environ["HARNESS_LIMITS"],
-}))
+import json, os, sys
+
+blocks = {
+    "project_context":  os.environ.get("PROJECT_CONTEXT", ""),
+    "model_pattern":    os.environ.get("MODEL_PATTERN", ""),
+    "capability_audit": os.environ.get("CAPABILITY_AUDIT", ""),
+    "harness_limits":   os.environ.get("HARNESS_LIMITS", ""),
+}
+
+# Apply artificial bloat for tests
+if os.environ.get("FORCE_BLOAT") == "1":
+    blocks["project_context"] = blocks["project_context"] + ("\n- " + "x"*80) * 200
+
+# Per-block budgets in chars (≈ tokens * 4)
+CAPS = {
+    "project_context":  2400,   # 600 tokens
+    "model_pattern":    1000,   # 250 tokens
+    "capability_audit": 800,    # 200 tokens
+    "harness_limits":   600,    # 150 tokens
+}
+TOTAL_CAP = 4800                # 1200 tokens total
+
+truncated = False
+
+# Step 1: per-block truncation
+for key, body in list(blocks.items()):
+    cap = CAPS[key]
+    if len(body) > cap:
+        blocks[key] = body[:cap].rstrip() + "\n_(VIBE smart-generator: section truncated to fit token budget.)_"
+        truncated = True
+
+# Step 2: overall total — if still over, shave project_context (largest)
+def total_len():
+    return sum(len(v) for v in blocks.values())
+
+while total_len() > TOTAL_CAP:
+    longest = max(blocks, key=lambda k: len(blocks[k]))
+    over = total_len() - TOTAL_CAP
+    trim_to = max(200, len(blocks[longest]) - over - 50)
+    blocks[longest] = blocks[longest][:trim_to].rstrip() + "\n_(truncated)_"
+    truncated = True
+    if all(len(v) <= 200 for v in blocks.values()):
+        break
+
+if truncated:
+    sys.stderr.write("smart-generator: content exceeded budget, truncated to fit. Consider trimming project scan targets.\n")
+
+print(json.dumps(blocks))
 PYEOF
