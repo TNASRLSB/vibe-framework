@@ -127,8 +127,32 @@ PYEOF
 
 PROJECT_CONTEXT=$(scan_project)
 
-# Placeholder for sub-modules added in next tasks; for now, empties
-MODEL_PATTERN=""
+# --- Model operational pattern (§2.2.2) -----------------------------------
+probe_model() {
+    local id="$1"
+    # Best-effort probe: if `claude` CLI exists, a quick `--model <id>` is
+    # sufficient to tell us the id is recognized without actually consuming
+    # meaningful tokens. We don't fail the generator if claude is missing.
+    if command -v claude >/dev/null 2>&1; then
+        if claude -p --model "$id" --print-only-model-id >/dev/null 2>&1; then
+            echo "yes"; return
+        fi
+    fi
+    echo "unknown"
+}
+
+OPUS_47=$(probe_model "opus-4-7")
+OPUS_46=$(probe_model "opus-4-6")
+SONNET_46=$(probe_model "sonnet-4-6")
+HAIKU_45=$(probe_model "haiku-4-5")
+
+MODEL_PATTERN=$(cat <<EOF
+- **Planning / spec / judgement:** Opus 4.7 (creative, architectural) or Opus 4.6 (instruction-heavy, longer-query). Pick 4.6 if the task is specification-dense or requires strict rule-following.
+- **Mechanical implementation** (porting, refactor-to-spec, test writing): delegate to **Sonnet 4.6** via subagent or \`claude -p --model sonnet-4-6\`.
+- **Classification / throughput / candidate identification:** Haiku 4.5.
+- Available on this machine: opus-4-7 (${OPUS_47}), opus-4-6 (${OPUS_46}), sonnet-4-6 (${SONNET_46}), haiku-4-5 (${HAIKU_45}).
+EOF
+)
 CAPABILITY_AUDIT=""
 HARNESS_LIMITS=""
 
