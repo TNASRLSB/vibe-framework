@@ -92,8 +92,9 @@ Each domain skill has two invocation modes: interactive (skill) and autonomous a
 | **heimdall** | Security, OWASP, credentials, CVE audit (worktree, memory) | @vibe:heimdall or via /vibe:audit |
 | **orson** | Video asset quality audit (worktree, memory) | @vibe:orson or via /vibe:audit |
 | **scribe** | Document quality audit (worktree, memory) | @vibe:scribe or via /vibe:audit |
+| **pragmatic** | Opt-in pragmatic mode agent — reduces hedging + sycophancy via Askell-style preamble (Tier C of §2.6 Pragmatic Priming) | @vibe:pragmatic or `claude --agent pragmatic` |
 
-## Hooks (automatic — 12 handlers, 8 lifecycle events)
+## Hooks (automatic — 15 handlers, 9 lifecycle events)
 
 | Hook | Trigger | What it does |
 |------|---------|-------------|
