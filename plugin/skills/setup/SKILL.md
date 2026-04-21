@@ -410,6 +410,42 @@ Each apply returns JSON with a `status` field: `installed` (tell user to `source
 
 > Your shell isn't auto-installable. Add: `alias claude='command claude --thinking-display summarized'` to your rc. Or set `VIBE_NO_THINKING_FIX=1`.
 
+### 5.7 Pragmatic Priming (Optional, 5.5.0 §2.6 Tier A)
+
+Opus 4.7 shows documented anxiety tells + sycophancy + hedging under some prompt conditions (`feedback_honesty_patterns`, Stella Laurenzo thread). Askell-inspired priming (~30 tokens prepended to system prompt, cached via prompt caching) reduces these patterns with O(1) per-conversation cost.
+
+This step offers to install the Tier A shell wrapper variant. **Tier B** (UserPromptSubmit hook, `VIBE_PRAGMATIC_MODE=1` opt-in) and **Tier C** (custom `@pragmatic` agent) are available independently post-setup — see `plugin/scripts/pragmatic-priming.sh` + `plugin/agents/pragmatic.md`.
+
+Ask the user:
+
+> Opus 4.7 hedging/sycophancy mitigation via Askell-style priming (~30 token preamble, cached via prompt caching, O(1) per conversation). Install Tier A shell wrapper? `[y]` yes / `[n]` skip.
+
+If yes:
+
+```bash
+PROMPT_SRC="${CLAUDE_PLUGIN_ROOT}/skills/setup/references/pragmatic-prompt.txt"
+PROMPT_DST="$HOME/.claude/vibe-pragmatic-prompt.txt"
+
+if [[ -f "$PROMPT_SRC" ]]; then
+    cp "$PROMPT_SRC" "$PROMPT_DST"
+    echo "Written: $PROMPT_DST"
+else
+    echo "ERROR: pragmatic-prompt.txt template not found in plugin. Skipping."
+fi
+```
+
+Then present to user (does NOT auto-modify shell rc — user choice per Arc Reactor Agnostic):
+
+> Installed `~/.claude/vibe-pragmatic-prompt.txt`. To activate, extend your existing `alias claude='...'` line in your shell rc with the `--append-system-prompt` flag:
+>
+> ```
+> alias claude='command claude --thinking-display summarized --append-system-prompt "$(cat ~/.claude/vibe-pragmatic-prompt.txt)"'
+> ```
+>
+> After editing, run `source ~/.bashrc` (or your rc) to reload. Opt-out: delete the `vibe-pragmatic-prompt.txt` file or revert the alias.
+
+If no: skip silently.
+
 ---
 
 ## Step 6: Codebase Mapping (Optional)
