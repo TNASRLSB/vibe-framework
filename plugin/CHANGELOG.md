@@ -1,5 +1,17 @@
 # Changelog
 
+## 5.4.2 — 2026-04-21
+
+### Changed
+- **emmet primary → `opus-4-6`.** A/B on new `emmet-bugs` fixture (15 seeded issues across runtime errors, logic bugs, missing coverage, tech debt): 3 runs × 2 models. `opus-4-6 = 100%` coverage (45/45), `opus-4-7 = 80%` (36/45, with Run 1 emitting only 6/15 — apparent compression-to-severity-summary bias on enumerated output). 20pt delta meets switch threshold. See `tests/model-validation/results/2026-04-21-emmet-ab.md`.
+
+### Internal (no shipped change)
+- audit A/B re-run on hardened 20-issue fixture (`audit-orchestrator`). Both models returned 100%, fixture still saturated — `opus-4-7` retained. Next-cycle redesign deferred: adversarial distractors + out-of-tree ground truth needed since inline `<!-- issue N -->` markers are probably leaking. See `tests/model-validation/results/2026-04-21-audit-ab.md`.
+- `emmet-bugs` A/B fixture added (15 issues; 4 categories). Disk-only — `tests/` gitignored.
+
+### Migration from 5.4.1
+- No user action required. Existing sessions continue working. Next `/vibe:emmet` invocation will route to `opus-4-6` automatically via the resolver.
+
 ## 5.4.1 — 2026-04-21
 
 ### Changed
