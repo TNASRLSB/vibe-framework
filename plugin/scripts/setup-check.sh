@@ -66,38 +66,6 @@ if [[ -f "$PLUGIN_JSON" ]] && [[ -x "$RECONCILER" ]]; then
   fi
 fi
 
-# --- Check 6: VIBE 5.4 hooks registration ---------------------------------
-# Fires when expected-state.json declares vibeHooks but they are not present
-# in ~/.claude/settings.json under the PreToolUse bucket.
-SCHEMA_FILE="${CLAUDE_PLUGIN_ROOT:-}/setup/expected-state.json"
-SETTINGS_FILE="$HOME/.claude/settings.json"
-if [[ -f "$SCHEMA_FILE" && -f "$SETTINGS_FILE" ]]; then
-  MISSING=$(python3 <<PYEOF
-import json
-schema = json.load(open("$SCHEMA_FILE"))
-settings = json.load(open("$SETTINGS_FILE"))
-hooks_schema = schema.get("vibeHooks", []) or []
-hooks_user = settings.get("hooks", {}) or {}
-miss = []
-for h in hooks_schema:
-    bucket = hooks_user.get(h["event"], [])
-    found = False
-    for entry in bucket if isinstance(bucket, list) else []:
-        if not isinstance(entry, dict): continue
-        for hc in entry.get("hooks", []) or []:
-            if isinstance(hc, dict) and h["command"] in str(hc.get("command", "")):
-                found = True; break
-        if found: break
-    if not found:
-        miss.append(h["id"])
-print(" ".join(miss))
-PYEOF
-)
-  if [[ -n "$MISSING" ]]; then
-    anomalies+=("VIBE 5.4 hooks not registered: $MISSING. Run /vibe:setup to arm.")
-  fi
-fi
-
 # --- Emit output only if anomalies present ---
 if [[ ${#anomalies[@]} -eq 0 ]]; then
   echo '{}'
