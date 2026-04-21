@@ -23,10 +23,10 @@ Everything outside `plugin/` is gitignored and never reaches end users. The plug
 ```
 plugin/
 ├── .claude-plugin/plugin.json    Plugin manifest (name, version, metadata)
-├── agents/                       10 subagents (7 domain audits + reviewer, researcher, decomposer)
-├── hooks/hooks.json              Hook registrations (SessionStart, PreToolUse, etc.)
+├── agents/                       11 subagents (7 domain audits + reviewer, researcher, decomposer, pragmatic)
+├── hooks/hooks.json              Hook registrations (9 lifecycle events, 15 handlers)
 ├── scripts/                      Hook handlers and standalone scripts
-├── skills/                       13 skills + _shared/ resources
+├── skills/                       14 skills + _shared/ resources
 ├── CHANGELOG.md                  Plugin release history
 ├── README.md                     User-facing readme (what the plugin does)
 ├── LICENSE                       MIT
