@@ -9,8 +9,10 @@
 #   VIBE_READ_DISCIPLINE_DISABLED=1   bypass entirely
 #
 # Exit:
-#   0  allow
-#   2  block (emits JSON {"reason": "...", "continue": false} on stderr)
+#   0 always — block signal travels via stdout JSON (PreToolUse modern
+#   contract: hookSpecificOutput.permissionDecision="deny" with reason).
+#   Legacy exit 2 + stderr was losing reason text to CC's "No stderr
+#   output" fallback when buffering/race conditions swallowed stderr.
 # ============================================================================
 
 set -uo pipefail
@@ -101,14 +103,22 @@ TS=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 printf '{"ts":"%s","file":"%s","size":%s,"limit":"%s","offset":"%s","blocked":true}\n' \
     "$TS" "$FILE" "$SIZE" "$LIMIT" "$OFFSET" >> "$LOG_FILE" 2>/dev/null || true
 
-# --- Block ---------------------------------------------------------------
+# --- Block via PreToolUse modern contract (stdout JSON + exit 0) ---------
 REASON="Read-discipline: partial read (limit=${LIMIT:-∅} offset=${OFFSET:-∅}) on file smaller than 400 KB (${SIZE} bytes). Read the file fully. Set VIBE_READ_DISCIPLINE_DISABLED=1 to bypass, or request a specific region explicitly in your prompt (mention 'lines N-M')."
-python3 -c "
-import json, sys
-sys.stderr.write(json.dumps({'reason': '''$REASON''', 'continue': False}) + '\n')
-"
+
 if [[ "${VIBE_READ_DISCIPLINE_ADVISORY:-0}" == "1" ]]; then
     # Advisory: log already written above; do not block.
     exit 0
 fi
-exit 2
+
+REASON="$REASON" python3 <<'PYEOF'
+import json, os
+print(json.dumps({
+    "hookSpecificOutput": {
+        "hookEventName": "PreToolUse",
+        "permissionDecision": "deny",
+        "permissionDecisionReason": os.environ["REASON"],
+    }
+}))
+PYEOF
+exit 0
