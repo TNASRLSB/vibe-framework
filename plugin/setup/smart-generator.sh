@@ -121,36 +121,23 @@ if lint_cmd:  lines.append(f"- **Lint:** `{lint_cmd}`")
 if conventions:
     lines.append(f"- **Conventions:** {', '.join('`'+c+'`' for c in conventions)}")
 
-print("\n".join(lines) if lines else "_No project stack detected — VIBE will adapt to whatever the user provides._")
+print("\n".join(lines) if lines else "_No code stack auto-detected. Fill this block manually for content/KB/docs projects, or rely on skills that don't depend on stack (ghostwriter, scribe, seurat)._")
 PYEOF
 }
 
 PROJECT_CONTEXT=$(scan_project)
 
 # --- Model operational pattern (§2.2.2) -----------------------------------
-probe_model() {
-    local id="$1"
-    # Best-effort probe: if `claude` CLI exists, a quick `--model <id>` is
-    # sufficient to tell us the id is recognized without actually consuming
-    # meaningful tokens. We don't fail the generator if claude is missing.
-    if command -v claude >/dev/null 2>&1; then
-        if claude -p --model "$id" --print-only-model-id >/dev/null 2>&1; then
-            echo "yes"; return
-        fi
-    fi
-    echo "unknown"
-}
+# Note (5.5.1 fix): the 5.4.0 version called `claude -p --model X --print-only-model-id`
+# to probe per-model availability, but that flag does not exist in the Claude Code
+# CLI. Every probe returned "unknown", producing a useless line. Removed entirely:
+# the static guidance below is self-contained and Claude Code surfaces the real
+# error if the user tries to invoke an unavailable model.
 
-OPUS_47=$(probe_model "opus-4-7")
-OPUS_46=$(probe_model "opus-4-6")
-SONNET_46=$(probe_model "sonnet-4-6")
-HAIKU_45=$(probe_model "haiku-4-5")
-
-MODEL_PATTERN=$(cat <<EOF
+MODEL_PATTERN=$(cat <<'EOF'
 - **Planning / spec / judgement:** Opus 4.7 (creative, architectural) or Opus 4.6 (instruction-heavy, longer-query). Pick 4.6 if the task is specification-dense or requires strict rule-following.
-- **Mechanical implementation** (porting, refactor-to-spec, test writing): delegate to **Sonnet 4.6** via subagent or \`claude -p --model sonnet-4-6\`.
+- **Mechanical implementation** (porting, refactor-to-spec, test writing): delegate to **Sonnet 4.6** via subagent or `claude -p --model sonnet-4-6`.
 - **Classification / throughput / candidate identification:** Haiku 4.5.
-- Available on this machine: opus-4-7 (${OPUS_47}), opus-4-6 (${OPUS_46}), sonnet-4-6 (${SONNET_46}), haiku-4-5 (${HAIKU_45}).
 EOF
 )
 # --- Capability-Coverage audit (§2.2.3) -----------------------------------
@@ -213,12 +200,12 @@ PYEOF
 )
 # --- Harness limits (§2.2.4) ---------------------------------------------
 HARNESS_LIMITS=$(cat <<'EOF'
-VIBE is an armor on top of Claude Code, itself a harness on top of the Claude model.
+VIBE is armor on top of Claude Code, itself a harness on top of the Claude model.
 
-- VIBE **can** override defaults (effort tier, thinking display), inject context (CLAUDE.md, skill descriptions), and react to model signals (rhetoric-guard, side-effect-verify, read-discipline).
-- VIBE **cannot** force the model to think beyond the Anthropic harness ceiling, bypass redaction, or modify Claude Code's hidden system prompt.
+- **Can:** override defaults (effort, thinking-display), inject context (CLAUDE.md, skill descriptions), react to model signals (rhetoric-guard, side-effect-verify, read-discipline).
+- **Cannot:** force reasoning beyond Anthropic's harness ceiling, bypass redaction, modify Claude Code's hidden system prompt.
 
-Expect VIBE to extract the maximum from the exposed surface — not to "fix a nerfed model". If Claude Code regresses on a dimension Anthropic controls, VIBE mitigates where hooks can reach; it does not substitute for the model.
+Expect VIBE to extract the maximum from the exposed surface; it does not substitute for the model itself.
 EOF
 )
 
