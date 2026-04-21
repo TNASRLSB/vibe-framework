@@ -1,5 +1,46 @@
 # Changelog
 
+## 5.5.1 — 2026-04-22
+
+"A/B consolidation patch" — resolves the 6 A/B items deferred from 5.5.0 §11.4 (empirical model-default decisions), plus two user-visible hook/hygiene fixes. Net plugin surface change: one-line setup skill annotation + PreToolUse hook contract fix + `.gitignore` restore. All 6 A/B outcomes confirm the 5.5.0 incumbent — **zero default switches**.
+
+### Fixed
+
+- **PreToolUse read-discipline hook reasons now surface in CC UX (§2.9 follow-up).** In 5.5.0, `read-discipline.sh` and `read-before-edit.sh` emitted `{"reason": "..."}` as a bare JSON object on **stderr** with `exit 2` per the CC hook spec as then-documented. CC Edit/Write tool error messages still reported `"PreToolUse hook error: ... No stderr output"` even though smoke tests confirmed stderr had the JSON. Root cause: CC's current hook contract expects PreToolUse decisions as `{"decision": "block", "reason": "..."}` on **stdout** (same pattern Stop-hook-class events use), not a bare-reason object on stderr. Both hooks migrated: JSON now goes to stdout with the top-level `decision` + `reason` keys, exit 0. Smoke-tested against live Edit/Write — the actionable reason (`"Read X first"` / `"partial read blocked (limit=N offset=M on file smaller than 400 KB)"`) now appears inline in CC's block message instead of the opaque "No stderr output" placeholder. (commit `f34a864`)
+- **`.gitignore` `/references/` entry restored.** The entry dropped out of `.gitignore` during the 5.5.0 `/scripts/` audience-test refactor (`/references/` is maintainer-side vendored CC source, not plugin runtime). Committed inadvertently by an earlier plugin sweep. Restored; the untracked `?? references/` state returns to gitignored. (commit `5d66b59`)
+
+### Changed
+
+- **Setup skill Step 5.7 annotation (§2.6 A4).** `plugin/skills/setup/SKILL.md` Step 5.7 (Pragmatic Priming opt-in install) gains a one-line empirical-validation reference pointing to the A4 A/B decision doc. No behavior change — users still see the same opt-in line and copy it manually per Arc Reactor Agnostic. The annotation exists so a user evaluating whether to enable Tier A can see the measured effect size up front. (commit `3afbe1c`)
+
+### A/B decisions (§11.4 resolution, no plugin code change)
+
+All decision docs and raw results live in `docs/` + `tests/model-validation/results/` (both gitignored, maintainer-side). Summary is here because the *decisions* shape what the next upgrade cycle does and do not:
+
+- **A1 Audit v2 (§2.1).** Coverage A/B on fixture v2 (20 real issues + 8 distractors, out-of-tree answer-key). `opus-4-6` mean score 1.250 vs `opus-4-7` mean 1.358 across 3 runs each. Δ = +0.108 coverage-score, well below the 0.40 switch threshold. **KEEP `opus-4-7` on `/vibe:audit`.** Qualitative: 4-7 flags 30% fewer distractors, which matters for audit orchestration because each flagged finding spawns a downstream triage task. Decision doc: `docs/2026-04-22-audit-v2-ab.md`.
+- **A2 Seurat pairwise (§2.2).** Blinded pairwise-judge on InferenceBox landing-page prompt (`opus-4-7` judge, N=5 pairs, coin-flip label swap). `opus-4-7` wins **5/5** against `opus-4-6`. `opus-4-6` win rate = 0.000, below 0.30 switch threshold. **KEEP `opus-4-7` on `/vibe:seurat`.** Qualitative: 5/5 judge rationales cite creative distinctiveness (axis 5) in 4-7's favor — 4-7 consistently shows the product via mocked interface elements (JSON diff, side-by-side panels) vs 4-6's generic hero-plus-feature-cards default. One pair had a 4-6 tool-refusal hallucination (same failure mode observed in A3). Decision doc: `docs/2026-04-22-seurat-pairwise-ab.md`. Harness fix required: `--tools ""` added to dispatch (see §A/B harness note below).
+- **A3 Forge (§2.3).** Coverage A/B on forge-spec 18-item checklist. `opus-4-6` mean 0.63 vs `opus-4-7` mean 0.87 across 3 runs each. Δ = +0.24 coverage, above the 0.20 switch threshold **in favor of current primary**. **KEEP `opus-4-7` on `/vibe:forge`.** Qualitative: 4-6 exhibits a "hallucinate prior assistant turn and refuse to re-emit" failure mode on single-turn generate-only prompts (3/6 runs affected); 4-7 does not. Decision doc: `docs/2026-04-22-forge-ab.md`.
+- **A4 Pragmatic hedge-reduction (§2.6).** Hedge-word density A/B on 20 decision-type prompts (40 `claude -p --model opus-4-7` calls: 20 unprimed + 20 primed with the Askell 5-bullet preamble). Unprimed density 0.00480 hedge-words/word; primed density 0.00048. **Density reduction: 90%**, well above the 30% ship threshold. Absolute hedge-word count 10 → 2 across the 20 primed outputs. Qualitative: primed outputs are ~40% longer but eliminate the documented opus-4-7 sycophantic deflection tell (*"want me to dig into your actual query patterns before you commit?"* → definitive rules). **SHIP Tier A as retroactive validation** (Tier A was already shipped as opt-in in 5.5.0 §2.6 via `/vibe:setup` Step 5.7 — no auto-enable per Arc Reactor Agnostic). Decision doc: `docs/2026-04-22-pragmatic-hedge-ab.md`.
+- **A5 vibe:reviewer vs /ultrareview (§2.4).** Empirical comparison between the VIBE `@vibe:reviewer` agent (Sonnet, in-session, free-at-point-of-use, project-scope memory, dev-loop) and CC's built-in `/ultrareview` (remote, billable as Extra Usage, GitHub-PR-gated, stateless, interactive confirmation dialog). Tools are **complementary, not substitutive** — different entry points (mid-dev vs PR), different cost profiles, different memory models, different self-review framing. The iron-man-mandate test (`feedback_iron_man_mandate`) confirms `vibe:reviewer` exploits the CC project-scope agent-memory primitive in a way `/ultrareview` cannot. **KEEP `@vibe:reviewer` as-is.** No retire, no refactor. Decision doc: `docs/2026-04-22-vibe-reviewer-ultrareview-decision.md`.
+- **A6 Apply A5 decision (§2.4 conditional).** A6 was contingent on A5 deciding retire-or-refactor. Since A5 = keep, **A6 closes N/A** (no plugin change required).
+
+### A/B harness note (tests/model-validation, gitignored)
+
+`tests/model-validation/run-pairwise.sh` gained two fixes during A2 execution. Both are maintainer infrastructure (not shipped with the plugin); documented here so future A/B runs reproduce:
+
+1. **`--tools ""` on every dispatch.** `--disable-slash-commands` only blocks user-typed `/cmd` — it does **not** prevent the model from invoking the `Skill` tool autonomously. On seurat-flavored prompts, `opus-4-7` autonomously invoked the Skill tool (visible in `--output-format stream-json`: first assistant event was `tool_use: Skill(['skill'])`), which triggered full skill loading with `isolation: worktree` and hung the dispatch for 30+ minutes before CC session timeout. Adding `--tools ""` forces text-only generation.
+2. **Non-clobbering error branch.** Previous pattern `|| echo "FAIL" > "$OUT"` would overwrite any partial stdout on non-zero exit. New pattern tests `if [[ ! -s "$OUT" ]]` before writing "FAIL", preserving partial outputs for forensic inspection.
+
+### Migration from 5.5.0
+
+- **Automatic.** The two user-visible hook fixes (read-discipline stderr → stdout contract + `.gitignore` restore) take effect on the next session. No `/vibe:setup` rerun required. No user action needed.
+- **No default switches.** Every A/B decision validated the 5.5.0 incumbent. Users upgrading from 5.5.0 see no model change in any skill or agent.
+
+### Deferred to 5.5.2+
+
+- **Seurat pairwise extension to baptist / ghostwriter / orson.** 5.5.0 §2.2 noted these as "ship-if-budget" secondary pairwise A/B targets. With the harness validated by the A2 seurat run, these become candidates for a future patch cycle (low priority — no reported quality issues on the current primaries).
+- **Audit-fixture grader tightening.** A1 notes document a grader-level cross-file regex over-match (e.g., d2 `aria-disabled` regex trips when a model correctly reports issue-12 on the same `about.html` file). The A/B verdict is unchanged (both models pay the same tax), but v3 of the fixture would rebuild the distractor regexes to be file-aware. Low priority until a re-A/B is needed.
+
 ## 5.5.0 — 2026-04-21
 
 "Pending Consolidation + Intelligent Spec Routing" — 9-item consolidation ciclo integrating 7 pending ex-§11.4 of 5.4.x master spec + 2 emergent (spec-routing agent + hook stderr dogfooding fix). Infrastructure ship: core user-facing features and fixes complete; A/B empirical decisions (skill default switches) deferred to 5.5.1 patch cycle per explicit scope discipline.
