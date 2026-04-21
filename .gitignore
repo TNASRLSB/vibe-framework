@@ -46,3 +46,8 @@ Thumbs.db
 
 # Atomic decomposition manifests (per-task internal coordination files)
 /.atomic-decomp/
+
+# Internal reference material (user research dumps, competitor analyses, etc.)
+# Entry was accidentally dropped during the 5.0.0 layout refactor (359b84b);
+# restored in 5.5.1 to prevent accidental leaks on git add -A.
+/references/
