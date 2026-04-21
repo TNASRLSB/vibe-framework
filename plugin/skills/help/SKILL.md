@@ -27,6 +27,7 @@ VIBE is built on three principles:
 | `/vibe:help` | This reference |
 | `/vibe:pause` | Disable quality hooks for this session |
 | `/vibe:resume` | Re-enable quality hooks |
+| `/vibe:spec <request>` | Intelligent spec routing — classifies request (creative vs instruction-heavy), dispatches to optimal Opus variant, writes plan-for-executor ready doc to `docs/plans/` |
 | `/vibe:audit` | Interactive project audit — scans project, proposes agents, launches in parallel |
 | `/vibe:audit --status` | Quick health check from agent memory (no agents launched) |
 | `/vibe:audit --all` | Launch all relevant agents without confirmation |
