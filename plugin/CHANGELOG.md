@@ -1,5 +1,20 @@
 # Changelog
 
+## 5.4.3 — 2026-04-21
+
+### Fixed
+- **Read-discipline hooks now functional.** In 5.4.0 the `read-discipline` and `read-before-edit` PreToolUse hooks were registered via `vibeHooks` in `~/.claude/settings.json` by the reconciler. The registered command used `${CLAUDE_PLUGIN_ROOT}`, which Claude Code only substitutes for hooks defined in a plugin's `hooks/hooks.json`. In user `settings.json` the variable stayed literal, so every Read/Edit/Write produced a `PreToolUse hook error: Failed to run …${CLAUDE_PLUGIN_ROOT}…` and the hook body never executed. Net effect: the blocking enforcement advertised by 5.4.0 was silently inert, `read-discipline-events.jsonl` only accumulated test-suite entries, and the "dogfooding passivo attivo" note in the 5.4.2 ship summary described a measurement of noise, not signal. Hooks are now declared in `plugin/hooks/hooks.json` where `${CLAUDE_PLUGIN_ROOT}` resolves; the user-settings path is retired.
+
+### Changed
+- **`plugin/hooks/hooks.json`** gains two `PreToolUse` entries: `Read` → `read-discipline.sh`, `Edit|Write` → `read-before-edit.sh`. Both were previously intended to be registered by the reconciler into user settings; they are now plugin-native and portable across every install without a reconcile step.
+- **`plugin/setup/expected-state.json`** drops the `vibeHooks` block (no longer applicable; registration is handled by the plugin manifest).
+- **`plugin/setup/reconciler.sh`** removes the `detect-hooks` and `apply-hooks` subcommands (dead code after the registration path changed).
+- **`plugin/scripts/setup-check.sh`** removes Check 6 (the SessionStart nag about missing `vibeHooks`). The anomaly it flagged no longer exists.
+- **`plugin/setup/smart-generator.sh`** capability audit now probes both `~/.claude/settings.json` and `${CLAUDE_PLUGIN_ROOT}/hooks/hooks.json` when deciding which failure-mode defenses are armed. Previously it looked only at user settings, which meant plugin-native hooks (rhetoric-guard, side-effect-verify, atomic-enforcement, pre-tool-security) were erroneously reported as "missing" in every generated CLAUDE.md since 5.4.0 — a latent bug masked by the overlapping vibeHooks path.
+
+### Migration from 5.4.2
+- One-time user action: open `~/.claude/settings.json` and delete the top-level `"hooks": { "PreToolUse": [ … read-discipline.sh / read-before-edit.sh … ] }` block. `/vibe:setup` will not re-add it. No other change is required; the two hooks are already active via the plugin manifest on the first new session after upgrade.
+
 ## 5.4.2 — 2026-04-21
 
 ### Changed
