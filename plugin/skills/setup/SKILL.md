@@ -348,6 +348,9 @@ Execute each diff type. For CLAUDE.md, read the detected build/test/lint command
 # Env
 echo "$ENV_DIFF" | "$RECONCILER" apply-env "$HOME/.claude/settings.json"
 
+# Top-level settings (5.5.0: persist model default)
+echo "$TOP_DIFF" | "$RECONCILER" apply-top-level "$HOME/.claude/settings.json"
+
 # Data
 echo "$DATA_DIFF" | "$RECONCILER" apply-data "$DATA_DIR"
 
