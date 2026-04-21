@@ -21,6 +21,26 @@
             "statusMessage": "VIBE: pre-execution security check..."
           }
         ]
+      },
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/read-discipline.sh\"",
+            "statusMessage": "VIBE: read-discipline check..."
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/read-before-edit.sh\"",
+            "statusMessage": "VIBE: read-before-edit check..."
+          }
+        ]
       }
     ],
     "PostToolUse": [

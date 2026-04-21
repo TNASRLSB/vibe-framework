@@ -154,7 +154,7 @@ MODEL_PATTERN=$(cat <<EOF
 EOF
 )
 # --- Capability-Coverage audit (§2.2.3) -----------------------------------
-CAPABILITY_AUDIT=$(SETTINGS_ARG="$SETTINGS_PATH" python3 <<'PYEOF'
+CAPABILITY_AUDIT=$(SETTINGS_ARG="$SETTINGS_PATH" PLUGIN_ROOT_ARG="${CLAUDE_PLUGIN_ROOT:-}" python3 <<'PYEOF'
 import json, os
 
 path = os.environ["SETTINGS_ARG"]
@@ -165,18 +165,28 @@ except Exception:
 
 hooks = settings.get("hooks", {}) or {}
 
+plugin_hooks = {}
+plugin_root = os.environ.get("PLUGIN_ROOT_ARG", "")
+if plugin_root:
+    try:
+        with open(os.path.join(plugin_root, "hooks", "hooks.json")) as f:
+            plugin_hooks = json.load(f).get("hooks", {}) or {}
+    except Exception:
+        plugin_hooks = {}
+
 def find(cmd_keyword):
-    for event, bucket in hooks.items():
-        if not isinstance(bucket, list):
-            continue
-        for entry in bucket:
-            if not isinstance(entry, dict):
+    for source in (hooks, plugin_hooks):
+        for event, bucket in source.items():
+            if not isinstance(bucket, list):
                 continue
-            for hc in entry.get("hooks", []) or []:
-                if not isinstance(hc, dict):
+            for entry in bucket:
+                if not isinstance(entry, dict):
                     continue
-                if cmd_keyword in str(hc.get("command", "")):
-                    return True
+                for hc in entry.get("hooks", []) or []:
+                    if not isinstance(hc, dict):
+                        continue
+                    if cmd_keyword in str(hc.get("command", "")):
+                        return True
     return False
 
 caps = [

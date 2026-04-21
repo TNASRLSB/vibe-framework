@@ -32,20 +32,6 @@
     "vscodeWrapperSettingKey": "claudeCode.claudeProcessWrapper",
     "wrapperScriptRelpath": "scripts/cc-thinking-wrapper.sh"
   },
-  "vibeHooks": [
-    {
-      "id": "read-discipline",
-      "matcher": "Read",
-      "event": "PreToolUse",
-      "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/read-discipline.sh"
-    },
-    {
-      "id": "read-before-edit",
-      "matcher": "Edit|Write",
-      "event": "PreToolUse",
-      "command": "bash ${CLAUDE_PLUGIN_ROOT}/scripts/read-before-edit.sh"
-    }
-  ],
   "skimPatternFlag": {
     "name": "VIBE_RG_SKIM_PATTERNS_ENABLED",
     "default": "0",
