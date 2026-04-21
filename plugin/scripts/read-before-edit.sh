@@ -91,13 +91,13 @@ REASON="Read-before-edit: about to ${TOOL} ${FILE} but the file has not been ful
 python3 -c "
 import json, sys
 sys.stderr.write(json.dumps({'reason': '''$REASON''', 'continue': False}) + '\n')
-" 2>&1 >/dev/null
+"
 if [[ "${VIBE_READ_BEFORE_EDIT_ADVISORY:-0}" == "1" ]]; then
     # Advisory: tell stderr what would have blocked but let the tool run.
     python3 -c "
 import json, sys
 sys.stderr.write(json.dumps({'reason': '''ADVISORY — $REASON''', 'continue': True}) + '\n')
-" 2>&1 >/dev/null
+"
     exit 0
 fi
 exit 2
