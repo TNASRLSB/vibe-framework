@@ -259,7 +259,7 @@ Configuration Proposal
 
 Setting                        Current              Recommended
 ─────────────────────────────────────────────────────────────────
-Model                          [current]            opus
+Model                          [current]            opus (persisted via reconciler)
 Effort level                   [current]            max
 Skill char budget              [current]            50000
 LSP plugin                     [current]            [detected]-lsp
