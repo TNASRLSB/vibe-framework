@@ -269,7 +269,7 @@ Adaptive thinking              [current]            disabled
 
 ### 4.2 Explain the Recommendations
 
-- **opus:** The highest capability model. Claude Code automatically uses extended context (1M tokens) when your plan supports it — no manual configuration needed.
+- **opus:** The highest capability model. Claude Code automatically uses extended context (1M tokens) when your plan supports it — no manual configuration needed. VIBE reconciler persiste questo setting in `~/.claude/settings.json` via §2.8b apply-top-level, quindi ogni nuova sessione `claude` parte su Opus by default.
 - **effort: max:** Forces Claude to think thoroughly on every response. No shortcuts, no lazy outputs. This is the core of what VIBE does.
 - **SLASH_COMMAND_TOOL_CHAR_BUDGET: 50000:** Ensures all 12 skills appear in the autocomplete menu. The default budget (~20K chars) is too small when multiple plugins are installed; raising it to 50K prevents skills from being silently truncated.
 - **LSP:** Enables Claude to use language-aware diagnostics for catching errors before they reach you.
