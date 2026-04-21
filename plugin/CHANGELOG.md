@@ -1,5 +1,60 @@
 # Changelog
 
+## 5.5.0 — 2026-04-21
+
+"Pending Consolidation + Intelligent Spec Routing" — 9-item consolidation ciclo integrating 7 pending ex-§11.4 of 5.4.x master spec + 2 emergent (spec-routing agent + hook stderr dogfooding fix). Infrastructure ship: core user-facing features and fixes complete; A/B empirical decisions (skill default switches) deferred to 5.5.1 patch cycle per explicit scope discipline.
+
+### Added
+
+- **§2.8b Session model default persistence.** `/vibe:setup` now writes `settings["model"] = "opus"` via new reconciler sub-commands `detect-top-level` + `apply-top-level`. `cmd_present_diff` extended to show the top-level change before user approves (closes `feedback_honesty_patterns` Pattern 2 latent where wizard claimed "[x] Model set to opus" but reconciler never wrote it in 5.4.x). Schema: `expected-state.json` gains `settingsTopLevel.model` without bumping `schemaVersion` (optional field with fallback `schema.get('settingsTopLevel', {})`).
+- **§2.8c `/vibe:spec` skill.** Intelligent spec routing with hybrid classifier. Word-boundary keyword matching (strong-signal rule `max≥2 AND max≥2*min`) + `haiku-4-5` LLM fallback on ambiguous/no-signal cases + `opus-4-7` final fallback. Scope estimator picks single-doc vs split based on `token_count > 800 OR scope_matches ≥ 2`. Dispatcher uses `claude -p --model <resolved> --effort xhigh` CLI pattern (parallel to atomic-orchestrator 5.0+ worker dispatch). Template `spec-writer-prompt.md` embeds plan-for-executor principle inline (Arc Reactor Agnostic: no maintainer-memory cross-ref). Classifier A/B: **20/20 PASS** on N=20 fixture (10 creative + 10 instruction), zero LLM fallbacks needed. Env escape hatch: `VIBE_SPEC_FORCE_MODEL=<model-id>`.
+- **§2.6 Pragmatic Priming 3-tier** (Askell-inspired ~30-token preamble, mitigates documented Opus 4.7 hedging + sycophancy tells).
+  - **Tier A (shell wrapper, recommended):** `/vibe:setup` Step 5.7 offers opt-in install. Copies `plugin/skills/setup/references/pragmatic-prompt.txt` to `~/.claude/vibe-pragmatic-prompt.txt` and surfaces the exact `alias claude='... --append-system-prompt ...'` line for user to add (does NOT auto-modify shell rc per Arc Reactor Agnostic). O(1) token cost per conversation (cached via prompt caching).
+  - **Tier B (UserPromptSubmit hook, fallback):** `plugin/scripts/pragmatic-priming.sh` gated strictly `VIBE_PRAGMATIC_MODE=1` (exact string match; any other value including `0`, `true`, unset = OFF). Emits preamble as `additionalContext` on every user prompt. O(N) token cost per conversation turn. Registered on new `UserPromptSubmit` lifecycle event (plugin surface grows 8→9 lifecycle events).
+  - **Tier C (per-task agent):** `plugin/agents/pragmatic.md`. Invoke via `@vibe:pragmatic` or `claude --agent pragmatic`. Strongest scoping, zero persistent config.
+- **§2.2 Pairwise-judge A/B harness** (`tests/model-validation/run-pairwise.sh`, maintainer dev infra). Novel blinded A/B for subjective skills: coin-flip label swap + opus-4-7 as third-model judge + JSON logs both `coin` and `judge_choice` for correct attribution. Decision rule: win rate ≥70% → switch default. Seurat fixture ready (criteria.md + prompt.md). **A/B execution deferred 5.5.1.**
+- **§2.1 Audit fixture v2** (disk-only, `tests/model-validation/fixtures/audit-orchestrator-v2/`). Out-of-tree ground truth (`answer-key.json`), 20 real issues + 8 adversarial distractors across 8 files. **Zero inline `<!-- issue N -->` markers** (the leakage suspected of saturating v1 at 100/100). Revised coverage formula: `score = 2 * TP_rate - FP_rate`. A/B re-run deferred 5.5.1.
+- **§2.3 Forge coverage A/B fixture** (disk-only, `tests/model-validation/fixtures/forge/`). Seed spec prompt (`/vibe:pr-review` SKILL generation) + 18-item checklist ground truth. A/B run deferred 5.5.1.
+- **§2.7 Context injection audit infrastructure.** `scripts/dev-injection-audit.sh` (maintainer dev tool, tracked but non shipped — `scripts/` is maintainer-side per audience test). Enumerates every plugin injection point: CLAUDE.md managed region, skill descriptions, agent prompts, PreToolUse hook reasons, UserPromptSubmit Tier B, Stop hook feedback, shared protocol files. Estimates token cost (chars÷4) + tags frequency (once/per-turn/on-block/per-invocation). Baseline generated: ~1200-token CLAUDE.md + ~$TOTAL_SKILL_DESC-token skill descriptions on initial session load. Paper v2 phase 1 now **unblocked** (structural injection baseline measurable); T36 measurement A/B + T37 cut recommendations deferred to 5.6.0.
+
+### Changed
+
+- **`plugin/hooks/hooks.json`** gains `UserPromptSubmit` entry for `pragmatic-priming.sh` (8→9 lifecycle events, 12→13 hook handlers when Tier B active; unchanged when Tier B off since hook exits 0 without side effects).
+- **`plugin/skills/setup/SKILL.md`** Step 4.1 proposal table + Step 4.2 explanation bullet annotated with persistence mechanism. Step 5.1 COMBINED JSON builder + Step 5.4 Apply block extended with `apply-top-level` invocation. New Step 5.7 Pragmatic Priming opt-in install flow.
+- **`plugin/setup/reconciler.sh`** gains `cmd_detect_top_level`, `cmd_apply_top_level` (patterned after `cmd_detect_env`/`cmd_apply_env`, with `.bak-top-$ts` backup naming differentiated from env's `.bak-$ts`). `cmd_present_diff` extended to render `SETTINGS (top-level)` section between ENV and DATA blocks.
+- **`plugin/skills/help/SKILL.md`** registers `/vibe:spec` in the skills table.
+- **`plugin/setup/expected-state.json`** gains optional `settingsTopLevel.model = "opus"` top-level key.
+
+### Fixed
+
+- **§2.9 Hook stderr output now reaches CC.** Removed `2>&1 >/dev/null` redirect pattern (3 occurrences: 2 in `read-before-edit.sh` block + advisory branches, 1 in `read-discipline.sh` block). Bash LEFT-TO-RIGHT evaluation made the JSON reason leak to hook stdout instead of stderr, so CC reported `"No stderr output"` instead of the actionable reason ("Read X first" / "partial read blocked"). Bug was latent since the hooks shipped in 5.4.0; caught via dogfooding during 5.5.0 spec authoring session itself (author was blocked editing their own spec file and had to user-interrupt to investigate). Header contract `"emits JSON {reason} on stderr"` now actually honored. **Residual:** CC still reports `"No stderr output"` via Edit/Write tool invocations despite fix — see 5.5.1 patch candidate below.
+- **§2.8a Wizard honesty.** Step 4.1 + Step 4.2 now accurately describe that model setting is persisted via reconciler (not "set" in the abstract). Closes `feedback_honesty_patterns` Pattern 2 latent violation — claim "Model set to opus" becomes true post-§2.8b.
+
+### Internal (no shipped change)
+
+- **Audit fixture v2** (`tests/model-validation/fixtures/audit-orchestrator-v2/`): 20 issues + 8 distractors + out-of-tree answer-key.json. Ready for 5.5.1 A/B re-run.
+- **Forge fixture** (`tests/model-validation/fixtures/forge/`): seed + 18-item checklist. Ready for 5.5.1 A/B.
+- **Seurat pairwise fixture** (`tests/model-validation/fixtures/seurat-pairwise/`): 5-axis criteria + InferenceBox landing page prompt.
+- **Classifier fixture** (`tests/vibe-spec/classifier-fixture.md`): 20-prompt labeled + `run-ab.sh` runner. Validation **20/20 = 100% PASS** on first run (decision doc in `docs/2026-04-21-classifier-ab.md`).
+- **`scripts/dev-analyze-skim-rate.sh`** maintainer tool. Skim-pattern promotion decision: **INSUFFICIENT DATA** → flag stays gated off, 5.6.0 prerequisites documented.
+- **`scripts/dev-injection-audit.sh`** maintainer tool. Map phase complete, measure phase deferred 5.6.0.
+
+### Migration from 5.4.3
+
+- **Automatic on next `/vibe:setup` run.** The reconciler now detects + proposes + applies the top-level `model` setting. User sees the change in the diff before approving. Users with custom `model` in their settings.json: reconciler detects mismatch and offers update; decline to keep custom.
+- **No env changes required** for default behavior. Tier B Pragmatic Priming is opt-in via `VIBE_PRAGMATIC_MODE=1`; unset/other values = disabled.
+- **No marketplace descriptor changes** needed beyond version field. `bump-version.sh` handles plugin.json + marketplace.json + README What's New.
+- **UserPromptSubmit hook new lifecycle event.** Users on 5.4.x pausing/resuming VIBE hooks: the new event is registered but only fires when `VIBE_PRAGMATIC_MODE=1` explicitly enabled, so no behavior change for default users.
+
+### Deferred to 5.5.1 (patch cycle, A/B execution-heavy)
+
+- §2.1 audit v2 A/B re-run on `opus-4-6` vs `opus-4-7` + default decision
+- §2.2 Seurat pairwise validation (confirm harness works end-to-end + default decision; then optionally baptist/ghostwriter/orson)
+- §2.3 Forge coverage A/B + default decision
+- §2.4 vibe:reviewer empirical `/ultrareview` comparison + decision (keep/refactor/retire; if refactor, implementation in 5.5.2 dedicated plan per scope rule)
+- §2.6 Pragmatic hedge-reduction A/B (target ≥30% hedge-word density reduction)
+- §2.9 hook stderr CC-opacity follow-up: investigate why CC reports `"No stderr output"` despite stderr having content (likely CC PreToolUse hook contract requires specific JSON shape on stdout vs stderr)
+
 ## 5.4.3 — 2026-04-21
 
 ### Fixed
