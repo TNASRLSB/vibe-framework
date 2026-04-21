@@ -163,6 +163,76 @@ with open("$settings_path", "w") as f:
 PYEOF
 }
 
+# --- Top-level settings detection + apply (5.5.0, §2.8b) -----------------
+cmd_detect_top_level() {
+    local settings_path="${1:-}"
+    [[ -n "$settings_path" ]] || die "detect-top-level: settings path required"
+
+    python3 <<PYEOF
+import json, sys
+
+schema = json.load(open("$SCHEMA_FILE"))
+owned = schema.get("settingsTopLevel", {})
+
+try:
+    with open("$settings_path") as f:
+        settings = json.load(f)
+except FileNotFoundError:
+    settings = {}
+except json.JSONDecodeError:
+    print("reconciler: settings file is invalid JSON", file=sys.stderr)
+    sys.exit(2)
+
+to_set = {}
+
+for key, expected_value in owned.items():
+    if key not in settings:
+        to_set[key] = expected_value
+    elif str(settings.get(key)) != str(expected_value):
+        to_set[key] = expected_value
+
+print(json.dumps({"to_set": to_set}))
+PYEOF
+}
+
+cmd_apply_top_level() {
+    local settings_path="${1:-}"
+    [[ -n "$settings_path" ]] || die "apply-top-level: settings path required"
+
+    local diff_json
+    diff_json=$(cat)
+
+    local is_empty
+    is_empty=$(echo "$diff_json" | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+print('yes' if not d.get('to_set') else 'no')
+")
+    if [[ "$is_empty" == "yes" ]]; then
+        return 0
+    fi
+
+    local ts
+    ts=$(date -u +%Y%m%d-%H%M%S)
+    cp "$settings_path" "$settings_path.bak-top-$ts"
+
+    python3 <<PYEOF
+import json
+
+diff = json.loads('''$diff_json''')
+
+with open("$settings_path") as f:
+    settings = json.load(f)
+
+for k, v in diff.get("to_set", {}).items():
+    settings[k] = v  # TOP-LEVEL, not settings["env"][k]
+
+with open("$settings_path", "w") as f:
+    json.dump(settings, f, indent=2)
+    f.write("\n")
+PYEOF
+}
+
 # --- Managed content generation (5.4.0) -----------------------------------
 cmd_generate_managed_content() {
     local project_root="${1:-}"
@@ -723,6 +793,8 @@ main() {
         check-version)              cmd_check_version "$@" ;;
         detect-env)                 cmd_detect_env "$@" ;;
         apply-env)                  cmd_apply_env "$@" ;;
+        detect-top-level)           cmd_detect_top_level "$@" ;;
+        apply-top-level)            cmd_apply_top_level "$@" ;;
         detect-data)                cmd_detect_data "$@" ;;
         apply-data)                 cmd_apply_data "$@" ;;
         classify-claude-md)         cmd_classify_claude_md "$@" ;;
