@@ -474,14 +474,16 @@ import json, sys, os
 
 diff = json.loads(os.environ["_VIBE_DIFF"])
 env = diff.get("env", {})
+top = diff.get("top_level", {})
 data = diff.get("data", {})
 cmd = diff.get("claude_md", {})
 
 env_empty = not env.get("to_add") and not env.get("to_update") and not env.get("to_remove")
+top_empty = not top.get("to_set")
 data_empty = not data.get("to_remove")
 claude_untouched = not cmd.get("will_touch", False)
 
-if env_empty and data_empty and claude_untouched:
+if env_empty and top_empty and data_empty and claude_untouched:
     print("VIBE Reconciler — Already in sync with current version.")
     print("No changes needed.")
     sys.exit(0)
@@ -501,6 +503,11 @@ if env.get("to_remove"):
     print("\nENV — to remove (deprecated):")
     for k in env["to_remove"]:
         print(f"  - {k}")
+
+if top.get("to_set"):
+    print("\nSETTINGS (top-level) — to set:")
+    for k, v in top["to_set"].items():
+        print(f"  + {k} = {v}")
 
 if data.get("to_remove"):
     print("\nDATA FILES — to remove (deprecated, backed up first):")
