@@ -3,12 +3,11 @@
 # model-matrix-resolver.sh — VIBE 5.4 Skill Model/Effort Matrix resolver
 # ----------------------------------------------------------------------------
 # Reads YAML frontmatter of a SKILL.md and emits the resolved model routing
-# as JSON on stdout: {"primary": "...", "effort": "...", "fallback": "..."}
+# as JSON on stdout: {"primary": "...", "effort": "..."}
 #
 # Defaults when the frontmatter has no model: block:
 #   primary:  opus-4-7
 #   effort:   xhigh
-#   fallback: opus-4-6
 # ============================================================================
 
 set -uo pipefail
@@ -44,7 +43,6 @@ if not isinstance(model, dict):
 resolved = {
     "primary": model.get("primary") or "opus-4-7",
     "effort":  model.get("effort")  or "xhigh",
-    "fallback": model.get("fallback") or "opus-4-6",
 }
 print(json.dumps(resolved))
 PYEOF

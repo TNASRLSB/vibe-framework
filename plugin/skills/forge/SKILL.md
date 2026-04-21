@@ -5,7 +5,6 @@ effort: max
 model:
   primary: opus-4-7
   effort: high
-  fallback: opus-4-6
 disable-model-invocation: true
 whenToUse: "Use when creating new skills, improving existing ones, or auditing skill quality. Examples: '/vibe:forge create', '/vibe:forge audit', '/vibe:forge improve'"
 argumentHint: "[create|audit|improve|template]"

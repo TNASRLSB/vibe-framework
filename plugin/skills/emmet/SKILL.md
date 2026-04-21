@@ -5,7 +5,6 @@ effort: max
 model:
   primary: opus-4-7
   effort: high
-  fallback: opus-4-6
 whenToUse: "Use when writing tests, finding bugs, debugging code, auditing quality, or doing pre-deploy checks. Examples: '/vibe:emmet test', '/vibe:emmet debug', '/vibe:emmet verify'"
 argumentHint: "[test|debug|techdebt|map|setup|verify]"
 maxTokenBudget: 40000

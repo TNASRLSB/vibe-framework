@@ -5,7 +5,6 @@ effort: xhigh
 model:
   primary: opus-4-6
   effort: xhigh
-  fallback: opus-4-6
 whenToUse: "Use when generating code, reviewing security, or auditing configurations. Examples: '/vibe:heimdall scan', '/vibe:heimdall audit', '/vibe:heimdall deps'"
 argumentHint: "[scan|audit|deps|headers|secrets]"
 maxTokenBudget: 50000

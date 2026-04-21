@@ -41,16 +41,12 @@ EFFORT_LEVELS = {"low", "medium", "high", "xhigh", "max"}
 
 primary = model.get("primary")
 effort = model.get("effort")
-fallback = model.get("fallback")
 
 if primary not in KNOWN_MODELS:
     sys.stderr.write(f"validate-frontmatter: model.primary '{primary}' not in {sorted(KNOWN_MODELS)}\n")
     sys.exit(1)
 if effort not in EFFORT_LEVELS:
     sys.stderr.write(f"validate-frontmatter: model.effort '{effort}' not in {sorted(EFFORT_LEVELS)}\n")
-    sys.exit(1)
-if fallback is not None and fallback not in KNOWN_MODELS:
-    sys.stderr.write(f"validate-frontmatter: model.fallback '{fallback}' not in {sorted(KNOWN_MODELS)}\n")
     sys.exit(1)
 PYEOF
   [[ $? -eq 0 ]] || exit 1

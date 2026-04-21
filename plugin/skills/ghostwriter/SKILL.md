@@ -5,7 +5,6 @@ effort: max
 model:
   primary: opus-4-7
   effort: xhigh
-  fallback: opus-4-6
 whenToUse: "Use when creating content for websites, landing pages, articles, or any text that needs to rank and convert. Examples: '/vibe:ghostwriter write', '/vibe:ghostwriter audit', '/vibe:ghostwriter schema'"
 argumentHint: "[write|audit|schema|meta|geo]"
 maxTokenBudget: 50000
