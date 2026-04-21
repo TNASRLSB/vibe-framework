@@ -1,5 +1,17 @@
 # Changelog
 
+## 5.4.1 — 2026-04-21
+
+### Changed
+- **Heimdall primary → `opus-4-6`.** A/B run in 5.4.0 (3 runs × 2 models on `heimdall-h2` fixture) found `opus-4-6 = 100%` coverage vs `opus-4-7 = 93.3%`. Gap 6.7pt is below the plan's 20pt switch threshold, but the miss pattern (2/3 runs of 4.7 claimed `src/views/comment.html` absent when it exists) is exactly the read-discipline failure mode VIBE was built to compensate. Qualitative override of the 20pt rule applied. See `tests/model-validation/results/2026-04-20-heimdall-ab.md`.
+- **Model matrix schema simplified: dropped `fallback` field.** Per-skill fallback was redundant: runtime transient failures are handled by Claude Code's `--fallback-model` CLI flag; model retirement is handled by bumping `primary`, not by a persistent per-skill declaration. Schema now requires only `primary` and `effort`. Applied across `validate-frontmatter.sh`, `model-matrix-resolver.sh`, and all 9 declaring `SKILL.md` files.
+
+### Internal (no shipped change)
+- Audit-orchestrator A/B fixture hardened from 12 seeded issues to 20 (8 subtle additions across security, SEO/GEO, a11y) — prep for 5.4.2 A/B re-run (prior 5.4.0 run saturated at 100/100, uninformative).
+
+### Migration from 5.4.0
+- No action required. Existing SKILL.md frontmatters with a `fallback:` line continue to validate (validator now silently ignores the field); they can be cleaned up opportunistically. Resolver output no longer includes `fallback`, but no consumer depended on it (Claude Code's own fallback mechanism is unchanged).
+
 ## 5.4.0 — 2026-04-20
 
 ### Added — Reading Armor (master spec §2.1)
