@@ -300,6 +300,7 @@ SCHEMA=${CLAUDE_PLUGIN_ROOT}/setup/expected-state.json
 RECONCILER=${CLAUDE_PLUGIN_ROOT}/setup/reconciler.sh
 
 ENV_DIFF=$("$RECONCILER" detect-env "$HOME/.claude/settings.json" 2>/dev/null || echo '{"to_add":{},"to_update":{},"to_remove":[]}')
+TOP_DIFF=$("$RECONCILER" detect-top-level "$HOME/.claude/settings.json" 2>/dev/null || echo '{"to_set":{}}')
 DATA_DIR="$HOME/.claude/plugins/data/vibe-vibe-framework"
 DATA_DIFF=$("$RECONCILER" detect-data "$DATA_DIR" 2>/dev/null || echo '{"to_remove":[]}')
 CLAUDE_MODE=$("$RECONCILER" classify-claude-md "$CLAUDE_PROJECT_DIR/CLAUDE.md")
@@ -314,6 +315,7 @@ COMBINED=$(python3 -c "
 import json, sys
 print(json.dumps({
     'env': json.loads('''$ENV_DIFF'''),
+    'top_level': json.loads('''$TOP_DIFF'''),
     'data': json.loads('''$DATA_DIFF'''),
     'claude_md': {'mode': '$CLAUDE_MODE', 'will_touch': $WILL_TOUCH}
 }))
