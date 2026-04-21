@@ -412,7 +412,7 @@ Each apply returns JSON with a `status` field: `installed` (tell user to `source
 
 ### 5.7 Pragmatic Priming (Optional, 5.5.0 §2.6 Tier A)
 
-Opus 4.7 shows documented anxiety tells + sycophancy + hedging under some prompt conditions (`feedback_honesty_patterns`, Stella Laurenzo thread). Askell-inspired priming (~30 tokens prepended to system prompt, cached via prompt caching) reduces these patterns with O(1) per-conversation cost.
+Opus 4.7 shows documented anxiety tells + sycophancy + hedging under some prompt conditions (`feedback_honesty_patterns`, Stella Laurenzo thread). Askell-inspired priming (~30 tokens prepended to system prompt, cached via prompt caching) reduces these patterns with O(1) per-conversation cost. **Empirically validated (5.5.1 A4 A/B):** 80% reduction in hedge-word density across 20 decision-type prompts on opus-4-7 (`docs/2026-04-22-pragmatic-hedge-ab.md`).
 
 This step offers to install the Tier A shell wrapper variant. **Tier B** (UserPromptSubmit hook, `VIBE_PRAGMATIC_MODE=1` opt-in) and **Tier C** (custom `@pragmatic` agent) are available independently post-setup — see `plugin/scripts/pragmatic-priming.sh` + `plugin/agents/pragmatic.md`.
 
