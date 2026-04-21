@@ -9,8 +9,10 @@
 #   VIBE_READ_BEFORE_EDIT_DISABLED=1  bypass entirely
 #
 # Exit:
-#   0  allow
-#   2  block
+#   0 always — block signal travels via stdout JSON (PreToolUse modern
+#   contract: hookSpecificOutput.permissionDecision="deny" with reason).
+#   Legacy exit 2 + stderr was losing reason text to CC's "No stderr
+#   output" fallback when buffering/race conditions swallowed stderr.
 # ============================================================================
 
 set -uo pipefail
@@ -86,18 +88,23 @@ if [[ "$FULL_READ" == "yes" ]]; then
     exit 0
 fi
 
-# --- Block ---------------------------------------------------------------
+# --- Block via PreToolUse modern contract (stdout JSON + exit 0) ---------
 REASON="Read-before-edit: about to ${TOOL} ${FILE} but the file has not been fully Read in this transcript. Run Read with no limit/offset first. Set VIBE_READ_BEFORE_EDIT_DISABLED=1 to bypass."
-python3 -c "
-import json, sys
-sys.stderr.write(json.dumps({'reason': '''$REASON''', 'continue': False}) + '\n')
-"
+
 if [[ "${VIBE_READ_BEFORE_EDIT_ADVISORY:-0}" == "1" ]]; then
-    # Advisory: tell stderr what would have blocked but let the tool run.
-    python3 -c "
-import json, sys
-sys.stderr.write(json.dumps({'reason': '''ADVISORY — $REASON''', 'continue': True}) + '\n')
-"
+    # Advisory: surface the reason on stderr for visibility, don't block.
+    echo "ADVISORY — $REASON" >&2
     exit 0
 fi
-exit 2
+
+REASON="$REASON" python3 <<'PYEOF'
+import json, os
+print(json.dumps({
+    "hookSpecificOutput": {
+        "hookEventName": "PreToolUse",
+        "permissionDecision": "deny",
+        "permissionDecisionReason": os.environ["REASON"],
+    }
+}))
+PYEOF
+exit 0
