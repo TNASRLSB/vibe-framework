@@ -234,7 +234,7 @@ Not every task needs the most powerful model. VIBE assigns each component the mo
 
 ## Hooks
 
-Ten hook handlers across seven lifecycle events run automatically. Every hook is a mechanical process constraint — a regex or exit-code gate — not a place for semantic judgment (that belongs to the agent and its memory system).
+Eleven hook handlers across seven lifecycle events run automatically. Every hook is a mechanical process constraint — a regex or exit-code gate — not a place for semantic judgment (that belongs to the agent and its memory system).
 
 | Hook | When | What it does |
 |------|------|-------------|
@@ -248,6 +248,7 @@ Ten hook handlers across seven lifecycle events run automatically. Every hook is
 | **Rhetoric guard** | Session stop | Matches the last assistant message against 54 rhetorical patterns (ownership dodging, session-length quitting, permission-seeking mid-task) verbatim from benvanik's production-tested `stop-phrase-guard.sh`. On match, emits `{"decision":"block","reason":"..."}` with a targeted correction tied to the matched phrase. Rate-capped at 3 fires per session, then fail-open. Runs before Atomic enforcement on the Stop event; the two are orthogonal. |
 | **Atomic enforcement** | Session stop | Validates that atomic-decomposition tasks produced output for every item declared in the manifest. Blocks a completion claim that would leave items unprocessed. |
 | **Agent memory sync** | Subagent stop | Copies `.claude/agent-memory/vibe-*/` from the subagent's isolated worktree back to the main project, so domain audit agents can persist per-run findings across sessions. Non-blocking. |
+| **Hybrid execution hint** | Before Skill tool calls | Fires on `superpowers:writing-plans` to inject a three-option execution handoff (subagent / inline / hybrid) and on `superpowers:subagent-driven-development` to audit plan idiot-proofness before dispatch. Opt-out: `VIBE_NO_HYBRID_HINT=1`. |
 
 Use `/vibe:pause` to temporarily disable all hooks for the session, `/vibe:resume` to re-enable. Pause writes `/tmp/vibe-paused-${SESSION_ID}` which every hook checks as its first action.
 
