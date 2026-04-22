@@ -70,6 +70,41 @@ Follow this sequence. Adapt depth to the scope of the question.
 - Potential performance bottlenecks or scaling concerns.
 - Security-sensitive areas that deserve closer inspection.
 
+### 6. CLAUDE.md Path Verification (new in 5.5.3)
+
+If a `CLAUDE.md` exists in the project root, verify every filesystem path referenced in it. This catches the common failure mode where a CLAUDE.md written on a different branch or machine references a case-wrong or typo'd path.
+
+Process:
+
+1. Read `CLAUDE.md` (use the Read tool; this is a read-only probe).
+2. Extract every token that looks like a filesystem path — absolute paths (`/home/...`, `/Users/...`, `/var/...`, `/etc/...`), and tilde-expanded paths (`~/...`). Skip generic patterns like `./src/` or `src/foo.ts` unless they're absolute-equivalent.
+3. For each extracted path:
+   - If the path exists as-written on disk, skip it.
+   - Otherwise, resolve the parent directory and check whether a **case-insensitive** unique match for the basename exists among the parent's siblings. If the parent itself is case-wrong, apply the same case-insensitive resolution up the chain.
+   - Classify:
+     - `high` confidence: exactly one case-insensitive match on disk, differs from the written path only by case on one or more segments, and resolves to an existing filesystem node. Safe to auto-correct.
+     - `low` confidence: no match, or multiple case-insensitive matches, or a non-case mismatch (typo beyond case). Requires user judgment — do not auto-correct.
+4. Write findings to `.claude/agent-memory/vibe-researcher/path_corrections.md` with YAML frontmatter and a JSON-array body in a fenced code block:
+
+````markdown
+---
+name: CLAUDE.md Path Corrections
+description: Path mismatches detected in CLAUDE.md during 5.5.3 setup mapping
+type: project
+---
+
+```json
+[
+    {"current": "/home/uh1/Vibe_Projects/progetto_a/", "suggested": "/home/uh1/VIBEPROJECTS/progetto_a/", "confidence": "high", "note": "case-only mismatch, unique match on disk"},
+    {"current": "/home/uh1/nowhere/foo.txt", "suggested": null, "confidence": "low", "note": "no match on disk"}
+]
+```
+````
+
+5. In your return summary, include one line: `CLAUDE.md path corrections: <N> high-confidence, <M> low-confidence` — so the calling skill knows whether to read the file.
+
+Skip this section entirely if `CLAUDE.md` doesn't exist.
+
 ## Output Format
 
 Structure your findings as follows:
