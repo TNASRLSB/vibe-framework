@@ -1,5 +1,38 @@
 # Changelog
 
+## 5.5.5 — 2026-04-22
+
+"Read-before-edit false positive fix" — due patch chirurgiche a `plugin/scripts/read-before-edit.sh` che risolvono spurious blocks segnalati da utenti in produzione e onorano una promessa del commento header (5.4.0) mai implementata. Fix A: path normalization via `realpath+expanduser` per gestire mismatch di forma path (tilde vs assoluto, symlink vs target, double-slash). Fix B: coverage-equals-file — un `Read` con `offset in (None,0)` e `limit >= line_count(file)` ora conta come full read. Zero scope-creep: nessun altro script toccato, nessuna modifica al manifest hook, nessuna variazione di skill/agent/command.
+
+### Changes
+
+- **`plugin/scripts/read-before-edit.sh` — Fix A: path normalization.** La linea 75 confrontava `inp.get("file_path") == file_path` con exact-string equality. Se l'agent usava forme path divergenti tra `Read` (es. `~/.bashrc`) e `Edit` (es. `/home/user/.bashrc`, espanso da CC), il match falliva nonostante il Read fosse avvenuto, producendo un block "Read with no limit/offset first" falso positivo. Aggiunto helper `norm(p) = os.path.realpath(os.path.expanduser(p))` applicato a entrambi i lati del confronto. Gestisce: tilde → assoluto, symlink → target reale, `//` duplicato → singolo, `./` prefix → canonico.
+- **`plugin/scripts/read-before-edit.sh` — Fix B: coverage-equals-file.** Il commento header (shipped 5.4.0) dichiarava "no limit/offset, **or coverage equals file**" ma l'implementazione gestiva solo il primo ramo (linea 76: `if not inp.get("limit") and not inp.get("offset")`). Il secondo ramo ora esiste: se `offset in (None, 0)` e `limit >= line_count(target)`, il Read copre l'intero file e conta come full read. Elimina falsi positivi quando l'agent legge un file piccolo con `limit` esplicito che copre tutto.
+- **`tests/read-discipline/test-path-normalization.sh`** — nuovo. 6 scenari: Read tilde + Edit assoluto, Read assoluto + Edit tilde, Read symlink + Edit target, Read target + Edit symlink, Read `//`-doubled + Edit canonico, più un negative control (Read su file diverso blocca ancora).
+- **`tests/read-discipline/test-coverage-equals-file.sh`** — nuovo. 5 scenari: `limit=2000` su 5 righe (coverage ≥ file), `limit=5` su 5 righe (coverage == file), `limit=3` su 5 righe (partial → block), `offset=2 limit=2000` (parte da metà → block), regression guard no-limit/no-offset.
+- **`plugin/.claude-plugin/plugin.json`** — version `5.5.4` → `5.5.5`.
+
+### Root cause (report-driven)
+
+Il bug è stato segnalato da utenti che editavano `~/.bashrc`:
+
+```
+Update(~/.bashrc)
+  ⎿  Error: Read-before-edit: about to Edit /home/uh1/.bashrc but
+     the file has not been fully Read in this transcript.
+```
+
+Il path in `Update(~/.bashrc)` era la forma con cui l'agent aveva invocato `Edit`, ma CC lo mostrava già espanso a `/home/uh1/.bashrc` al hook. Quando il transcript conteneva un `Read` loggato con forma path diversa — tipicamente perché la chiamata originale dell'agent conteneva il tilde non espanso lato transcript, oppure perché uno dei due path era un symlink — l'exact-string match falliva. La coverage-equals-file era già documentata nel commento header del 5.4.0 ma l'implementazione non la copriva.
+
+### Migration from 5.5.4
+
+- **Automatica.** Il fix è locale al hook script. Nessuna re-esecuzione di `/vibe:setup`. Nessuna azione utente richiesta. L'escape hatch `VIBE_READ_BEFORE_EDIT_DISABLED=1` resta valido.
+- **Nessuna regressione verificata:** i test 5.4.x (`test-before-edit-allow.sh`, `test-before-edit-block.sh`, `test-before-write-newfile-allow.sh`) continuano a passare. Il caso di blocco legittimo (nessun Read nel transcript, partial read con coverage < file) resta bloccato.
+
+### Deferred
+
+- **README Hooks table drift.** La tabella README corrente dichiara "Eleven hook handlers" ma `hooks/hooks.json` ne registra 16 (mancano in tabella: `read-discipline`, `read-before-edit`, `side-effect-verify`, `session-end-cleanup`, `pragmatic-priming`). Drift documentario pre-esistente, fuori scope per 5.5.5 (patch bug-fix mirata) — da riallineare in un docs-sweep separato.
+
 ## 5.5.4 — 2026-04-22
 
 Ships a dual-mode PreToolUse hook that reaches every VIBE user with the hybrid execution option (proposer + guard) — the behavior until now lived only in the maintainer's auto-memory and never traveled via the plugin marketplace. Zero new skills, zero new agents; one script, one hooks.json entry.

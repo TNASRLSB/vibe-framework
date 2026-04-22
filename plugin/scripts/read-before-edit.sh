@@ -52,6 +52,27 @@ import json, os
 file_path = os.environ["FILE_ARG"]
 transcript = os.environ["TRANSCRIPT_ARG"]
 
+def norm(p):
+    if not p:
+        return ""
+    try:
+        return os.path.realpath(os.path.expanduser(p))
+    except Exception:
+        return p
+
+target = norm(file_path)
+target_line_count = None
+
+def file_lines():
+    global target_line_count
+    if target_line_count is None:
+        try:
+            with open(target, errors="ignore") as rf:
+                target_line_count = sum(1 for _ in rf)
+        except Exception:
+            target_line_count = -1
+    return target_line_count
+
 try:
     with open(transcript) as f:
         for line in f:
@@ -70,12 +91,21 @@ try:
             for block in content:
                 if not isinstance(block, dict):
                     continue
-                if block.get("type") == "tool_use" and block.get("name") == "Read":
-                    inp = block.get("input", {}) or {}
-                    if inp.get("file_path") == file_path:
-                        if not inp.get("limit") and not inp.get("offset"):
-                            print("yes")
-                            raise SystemExit
+                if block.get("type") != "tool_use" or block.get("name") != "Read":
+                    continue
+                inp = block.get("input", {}) or {}
+                if norm(inp.get("file_path")) != target:
+                    continue
+                limit = inp.get("limit")
+                offset = inp.get("offset")
+                if not limit and not offset:
+                    print("yes")
+                    raise SystemExit
+                if offset in (None, 0) and isinstance(limit, int) and limit > 0:
+                    lc = file_lines()
+                    if lc >= 0 and limit >= lc:
+                        print("yes")
+                        raise SystemExit
     print("no")
 except SystemExit:
     pass
