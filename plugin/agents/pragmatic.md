@@ -2,10 +2,8 @@
 name: pragmatic
 description: Opt-in pragmatic mode agent — reduces hedging and sycophancy via Askell-style preamble. Invoke per-task when you want a direct, opinionated response without committing to Tier A (shell wrapper) or Tier B (UserPromptSubmit hook).
 tools: "*"
+model: opus
 effort: xhigh
-model:
-  primary: opus-4-7
-  effort: xhigh
 memoryScope: project
 memory: active
 ---
