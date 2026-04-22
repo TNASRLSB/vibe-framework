@@ -199,20 +199,47 @@ Also check installed plugins:
 ls ~/.claude/plugins/ 2>/dev/null
 ```
 
-### 2.4 Recommend LSP
+### 2.4 Install / Confirm LSP
 
-If the LSP for the primary language is not detected:
+For each primary language detected in §2.1 whose LSP plugin per the mapping in §2.2 is NOT in the list from §2.3, auto-install it:
 
-> **Recommendation:** Install `[plugin-name]` for [language] support.
-> This enables real-time type checking, go-to-definition, and diagnostics.
->
-> ```
-> claude plugin install [plugin-name]
-> ```
+```bash
+# $PRIMARY_LANGS is the list of detected primaries (space-separated).
+# $INSTALLED_LSPS is the list from §2.3.
 
-If already installed, confirm:
+for lang in $PRIMARY_LANGS; do
+    case "$lang" in
+        typescript|javascript) plugin="typescript-lsp" ;;
+        python)                plugin="pyright-lsp" ;;
+        rust)                  plugin="rust-analyzer-lsp" ;;
+        go)                    plugin="gopls-lsp" ;;
+        java)                  plugin="jdtls-lsp" ;;
+        php)                   plugin="php-lsp" ;;
+        csharp|"c#")           plugin="csharp-lsp" ;;
+        swift)                 plugin="swift-lsp" ;;
+        c|cpp|"c++")           plugin="clangd-lsp" ;;
+        kotlin)                plugin="kotlin-lsp" ;;
+        *)                     plugin="" ;;
+    esac
+    if [[ -z "$plugin" ]]; then continue; fi
+    if echo "$INSTALLED_LSPS" | grep -qw "$plugin"; then
+        echo "LSP: $plugin already installed for $lang."
+        continue
+    fi
+    echo "LSP: installing $plugin for $lang..."
+    if claude plugin install "$plugin" 2>&1 | tail -5; then
+        echo "LSP: $plugin installed."
+    else
+        echo "LSP: auto-install of $plugin failed. Install manually with: claude plugin install $plugin"
+    fi
+done
+```
 
-> **LSP:** `[plugin-name]` is installed. [Language] diagnostics are active.
+Rationale: the detection in §2.1–§2.3 has the answer; asking the user to manually run the install after setup exits is a drop-off point that leaves them without diagnostics. If the install fails (network, plugin registry), the command falls back to the existing manual-install recommendation.
+
+If no primary language is detected (e.g., empty project), this section is a silent no-op — §2.1's detection already produces an empty `$PRIMARY_LANGS` in that case.
+
+Note: the variables `$PRIMARY_LANGS` and `$INSTALLED_LSPS` are part of the wizard's natural-language contract — CC composes them from §2.1 (file-extension sort | head) and §2.3 (grep of settings + ls of `~/.claude/plugins/`) respectively. If they're not already promoted to named variables in the current SKILL.md, lightly restructure §2.1 and §2.3 to emit them (e.g., `PRIMARY_LANGS=$(... | awk '{print $2}' | head -N)` at the end of the detect block). Keep the restructure minimal — only enough that §2.4 has access to the two variables.
 
 ---
 
