@@ -94,7 +94,7 @@ Each domain skill has two invocation modes: interactive (skill) and autonomous a
 | **scribe** | Document quality audit (worktree, memory) | @vibe:scribe or via /vibe:audit |
 | **pragmatic** | Opt-in pragmatic mode agent — reduces hedging + sycophancy via Askell-style preamble (Tier C of §2.6 Pragmatic Priming) | @vibe:pragmatic or `claude --agent pragmatic` |
 
-## Hooks (automatic — 15 handlers, 9 lifecycle events)
+## Hooks (automatic — 16 handlers, 9 lifecycle events)
 
 | Hook | Trigger | What it does |
 |------|---------|-------------|
@@ -110,3 +110,4 @@ Each domain skill has two invocation modes: interactive (skill) and autonomous a
 | Atomic enforcement | Session stop | Validates atomic-decomposition output against manifest item count. Blocks completion if items are unprocessed. |
 | Agent memory sync | Subagent stop | Copies `.claude/agent-memory/vibe-*/` from the subagent's worktree back to the main project so findings persist across runs. Non-blocking. |
 | Session-end cleanup | Session end | Removes per-session `/tmp/vibe-paused-${SESSION_ID}` and `/tmp/vibe-failures-${SESSION_ID}` flag files so they don't accumulate across recycled session IDs. Non-blocking. |
+| Hybrid execution hint | Before Skill tool calls | Fires on `superpowers:writing-plans` to inject a three-option execution handoff (subagent / inline / hybrid) and on `superpowers:subagent-driven-development` to audit plan idiot-proofness before dispatch. Opt-out: `VIBE_NO_HYBRID_HINT=1`. |
