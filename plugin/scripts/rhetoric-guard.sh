@@ -153,7 +153,8 @@ fi
 log_event() {
   local decision="$1"
   local pattern="$2"
-  local fire_count_before="$3"
+  local category="$3"
+  local fire_count_before="$4"
   local msg_preview
   msg_preview=$(echo "${MESSAGE:-<empty>}" | head -c 200 | tr '\n' ' ' | tr '"' "'")
   jq -nc \
@@ -162,10 +163,11 @@ log_event() {
     --arg evt "$HOOK_EVENT" \
     --arg dec "$decision" \
     --arg pat "$pattern" \
+    --arg cat "$category" \
     --argjson fires "$fire_count_before" \
     --arg prev "$msg_preview" \
     --arg had_lam "$(if [[ -n "$MESSAGE" ]]; then echo "true"; else echo "false"; fi)" \
-    '{timestamp: $ts, session_id: $sid, hook_event: $evt, decision: $dec, pattern: $pat, fire_count_before: $fires, had_last_assistant_message: ($had_lam == "true"), message_preview: $prev}' \
+    '{timestamp: $ts, session_id: $sid, hook_event: $evt, decision: $dec, pattern: $pat, category: $cat, fire_count_before: $fires, had_last_assistant_message: ($had_lam == "true"), message_preview: $prev}' \
     >> "$EVENT_LOG" 2>/dev/null || true
 }
 
@@ -174,7 +176,7 @@ log_event() {
 # Prevents infinite loops where the corrected message itself contains
 # a matching pattern.
 if [[ "$HOOK_ACTIVE" == "true" ]]; then
-  log_event "skip_stop_hook_active" "-" 0
+  log_event "skip_stop_hook_active" "-" "meta" 0
   exit 0
 fi
 
@@ -194,7 +196,7 @@ fi
 
 # No message to inspect → nothing to do.
 if [[ -z "$MESSAGE" ]]; then
-  log_event "skip_empty_message" "-" 0
+  log_event "skip_empty_message" "-" "meta" 0
   exit 0
 fi
 
@@ -252,83 +254,87 @@ if [[ -f "$FIRE_COUNT_FILE" ]]; then
 fi
 
 if [[ "$FIRE_COUNT" -ge "$MAX_FIRES" ]]; then
-  log_event "fail_open_rate_limit" "-" "$FIRE_COUNT"
+  log_event "fail_open_rate_limit" "-" "rate-limit" "$FIRE_COUNT"
   exit 0
 fi
 
 # ── Pattern list (benvanik 2026-04-06, verbatim) ──────────────────
 # Each entry: "grep_pattern|correction_message"
 # Checked case-insensitively. First match wins. Ordered by severity.
+# Entry format: "pattern|category|correction"
+# Parsed via: IFS='|' read -r pattern category correction <<<"$entry"
+# Categories (5 total): ownership-dodging, known-limitation, session-length,
+# permission-seeking, skim-tells (latter lives in SKIM_TELL_PATTERNS below).
 VIOLATIONS=(
   # Ownership dodging (the #1 problem)
-  "pre-existing|NOTHING IS PRE-EXISTING. All builds and tests are green upstream. If something fails, YOUR work caused it. Investigate and fix it. Never dismiss a failure as pre-existing."
-  "not from my changes|NOTHING IS PRE-EXISTING. You own every change. Investigate the failure."
-  "not my change|NOTHING IS PRE-EXISTING. You own every change. Investigate the failure."
-  "not caused by my|NOTHING IS PRE-EXISTING. You own every change. Investigate the failure."
-  "not introduced by my|NOTHING IS PRE-EXISTING. You own every change. Investigate the failure."
-  "already existed before|NOTHING IS PRE-EXISTING. If you found it broken, fix it or explain exactly what is wrong and what the fix requires."
-  "before my changes|NOTHING IS PRE-EXISTING. There is no 'before your changes' — you own the codebase as it is now."
-  "prior to my changes|NOTHING IS PRE-EXISTING. There is no 'prior to your changes.'"
-  "unrelated to my changes|NOTHING IS PRE-EXISTING. If it is broken, fix it. If you broke it, fix it. Nothing is unrelated."
-  "an existing issue|NOTHING IS PRE-EXISTING. Investigate and fix, or explain exactly what is wrong."
-  "existing bug|NOTHING IS PRE-EXISTING. Investigate and fix."
+  "pre-existing|ownership-dodging|NOTHING IS PRE-EXISTING. All builds and tests are green upstream. If something fails, YOUR work caused it. Investigate and fix it. Never dismiss a failure as pre-existing."
+  "not from my changes|ownership-dodging|NOTHING IS PRE-EXISTING. You own every change. Investigate the failure."
+  "not my change|ownership-dodging|NOTHING IS PRE-EXISTING. You own every change. Investigate the failure."
+  "not caused by my|ownership-dodging|NOTHING IS PRE-EXISTING. You own every change. Investigate the failure."
+  "not introduced by my|ownership-dodging|NOTHING IS PRE-EXISTING. You own every change. Investigate the failure."
+  "already existed before|ownership-dodging|NOTHING IS PRE-EXISTING. If you found it broken, fix it or explain exactly what is wrong and what the fix requires."
+  "before my changes|ownership-dodging|NOTHING IS PRE-EXISTING. There is no 'before your changes' — you own the codebase as it is now."
+  "prior to my changes|ownership-dodging|NOTHING IS PRE-EXISTING. There is no 'prior to your changes.'"
+  "unrelated to my changes|ownership-dodging|NOTHING IS PRE-EXISTING. If it is broken, fix it. If you broke it, fix it. Nothing is unrelated."
+  "an existing issue|ownership-dodging|NOTHING IS PRE-EXISTING. Investigate and fix, or explain exactly what is wrong."
+  "existing bug|ownership-dodging|NOTHING IS PRE-EXISTING. Investigate and fix."
 
   # Known limitation dodging
-  "known limitation|NO KNOWN LIMITATIONS. Investigate whether it is fixable. Either fix it or explain the specific technical reason it cannot be fixed right now."
-  "known issue|NO KNOWN LIMITATIONS. Explain the specific technical reason or fix it."
-  "future work|NO KNOWN LIMITATIONS. Fix it now or describe exactly what the fix requires — not as a TODO, as a technical explanation."
-  "left as an exercise|NO KNOWN LIMITATIONS. Do the work."
+  "known limitation|known-limitation|NO KNOWN LIMITATIONS. Investigate whether it is fixable. Either fix it or explain the specific technical reason it cannot be fixed right now."
+  "known issue|known-limitation|NO KNOWN LIMITATIONS. Explain the specific technical reason or fix it."
+  "future work|known-limitation|NO KNOWN LIMITATIONS. Fix it now or describe exactly what the fix requires — not as a TODO, as a technical explanation."
+  "left as an exercise|known-limitation|NO KNOWN LIMITATIONS. Do the work."
 
   # Session-length quitting
-  "session length|Sessions are unlimited. If work remains, do the work. Continue."
-  "session depth|Sessions are unlimited. Continue working."
-  "given the length of this|Sessions are unlimited. Continue working."
-  "continue in a new session|Sessions are unlimited. There is no reason to defer to a new session. Continue."
-  "good place to stop|Is the task done? If not, continue working. Sessions are unlimited."
-  "good stopping point|Is the task done? If not, continue working. Sessions are unlimited."
-  "good checkpoint given|Is the task done? If not, continue working."
-  "natural stopping|Is the task done? If not, continue working."
-  "logical stopping|Is the task done? If not, continue working."
-  "this session has gotten long|Sessions are unlimited. You are a machine. Continue working."
-  "session has been long|Sessions are unlimited. Continue working."
-  "getting long|Sessions are unlimited. Continue working."
-  "lengthy session|Sessions are unlimited. Continue working."
+  "session length|session-length|Sessions are unlimited. If work remains, do the work. Continue."
+  "session depth|session-length|Sessions are unlimited. Continue working."
+  "given the length of this|session-length|Sessions are unlimited. Continue working."
+  "continue in a new session|session-length|Sessions are unlimited. There is no reason to defer to a new session. Continue."
+  "good place to stop|session-length|Is the task done? If not, continue working. Sessions are unlimited."
+  "good stopping point|session-length|Is the task done? If not, continue working. Sessions are unlimited."
+  "good checkpoint given|session-length|Is the task done? If not, continue working."
+  "natural stopping|session-length|Is the task done? If not, continue working."
+  "logical stopping|session-length|Is the task done? If not, continue working."
+  "this session has gotten long|session-length|Sessions are unlimited. You are a machine. Continue working."
+  "session has been long|session-length|Sessions are unlimited. Continue working."
+  "getting long|session-length|Sessions are unlimited. Continue working."
+  "lengthy session|session-length|Sessions are unlimited. Continue working."
 
   # Permission-seeking mid-task (the answer is always "yes, continue")
-  "want to continue.*or |Do not ask. The task is not done. Continue working."
-  "or save it for|Do not ask. The task is not done. Continue working."
-  "should I continue|Do not ask. If the task is not done, continue. The user will interrupt if they want you to stop."
-  "shall I continue|Do not ask. Continue working until the task is complete."
-  "shall I proceed|Do not ask. Proceed."
-  "would you like me to continue|Do not ask. Continue."
-  "would you like to continue|Do not ask. Continue."
-  "want me to keep going|Do not ask. Keep going."
-  "want me to continue|Do not ask. Continue."
-  "should I keep going|Do not ask. Keep going."
-  "save it for next time|There is no 'next time.' Sessions are unlimited. Continue working."
-  "in the next session|There is no 'next session.' This session is unlimited. Continue working."
-  "next session|There is no 'next session.' This session is unlimited. Continue working."
-  "next conversation|There is no 'next conversation.' Continue working."
-  "pick this up later|There is no 'later.' Continue working now."
-  "come back to this|There is no 'coming back.' Continue working now."
-  "continue in a follow-up|There is no 'follow-up.' Continue now."
-  "pause here|Do not pause. The task is not done. Continue."
-  "stop here for now|Do not stop. The task is not done. Continue."
-  "wrap up for now|Do not wrap up. The task is not done. Continue."
-  "call it here|Do not stop. Continue working."
+  "want to continue.*or |permission-seeking|Do not ask. The task is not done. Continue working."
+  "or save it for|permission-seeking|Do not ask. The task is not done. Continue working."
+  "should I continue|permission-seeking|Do not ask. If the task is not done, continue. The user will interrupt if they want you to stop."
+  "shall I continue|permission-seeking|Do not ask. Continue working until the task is complete."
+  "shall I proceed|permission-seeking|Do not ask. Proceed."
+  "would you like me to continue|permission-seeking|Do not ask. Continue."
+  "would you like to continue|permission-seeking|Do not ask. Continue."
+  "want me to keep going|permission-seeking|Do not ask. Keep going."
+  "want me to continue|permission-seeking|Do not ask. Continue."
+  "should I keep going|permission-seeking|Do not ask. Keep going."
+  "save it for next time|permission-seeking|There is no 'next time.' Sessions are unlimited. Continue working."
+  "in the next session|permission-seeking|There is no 'next session.' This session is unlimited. Continue working."
+  "next session|permission-seeking|There is no 'next session.' This session is unlimited. Continue working."
+  "next conversation|permission-seeking|There is no 'next conversation.' Continue working."
+  "pick this up later|permission-seeking|There is no 'later.' Continue working now."
+  "come back to this|permission-seeking|There is no 'coming back.' Continue working now."
+  "continue in a follow-up|permission-seeking|There is no 'follow-up.' Continue now."
+  "pause here|permission-seeking|Do not pause. The task is not done. Continue."
+  "stop here for now|permission-seeking|Do not stop. The task is not done. Continue."
+  "wrap up for now|permission-seeking|Do not wrap up. The task is not done. Continue."
+  "call it here|permission-seeking|Do not stop. Continue working."
 
   # §14.6 semantic-equivalent expansions — empirically justified by S4 corpus
   # (40-output Opus 4.6 vs 4.7 fire rate validation showed cluster-D coverage
   # gap: models use these phrasings instead of literal "shall I proceed").
-  "let me know how you'd like|Do not ask. Pick the most reasonable option and proceed. The user will redirect if needed."
-  "let me know if you|Do not ask. Pick the most reasonable interpretation and proceed."
-  "before I proceed|Do not ask. Proceed with the most reasonable interpretation."
-  "before continuing|Do not ask. Continue."
-  "awaiting your|Do not wait. Pick the most reasonable option and proceed."
-  "would appreciate your input|Do not ask. Pick the most reasonable option and proceed."
-  "if you'd like, I can|Do not offer — do. If the work is needed, do it."
-  "pause for your input|Do not pause. Continue with the most reasonable interpretation."
-  "won't touch anything until|Do not stop. The task is not done. Pick a reasonable approach and proceed."
+  "let me know how you'd like|permission-seeking|Do not ask. Pick the most reasonable option and proceed. The user will redirect if needed."
+  "let me know if you|permission-seeking|Do not ask. Pick the most reasonable interpretation and proceed."
+  "before I proceed|permission-seeking|Do not ask. Proceed with the most reasonable interpretation."
+  "before continuing|permission-seeking|Do not ask. Continue."
+  "awaiting your|permission-seeking|Do not wait. Pick the most reasonable option and proceed."
+  "would appreciate your input|permission-seeking|Do not ask. Pick the most reasonable option and proceed."
+  "if you'd like, I can|permission-seeking|Do not offer — do. If the work is needed, do it."
+  "pause for your input|permission-seeking|Do not pause. Continue with the most reasonable interpretation."
+  "won't touch anything until|permission-seeking|Do not stop. The task is not done. Pick a reasonable approach and proceed."
 )
 
 # ── Stage 3: HIGH-risk pattern table for meta-keyword suppression ──
@@ -368,6 +374,7 @@ if [[ "${VIBE_RG_SKIM_PATTERNS_ENABLED:-0}" == "1" ]]; then
 
     for pat in "${SKIM_TELL_PATTERNS[@]}"; do
         if echo "$MESSAGE_FILTERED" | grep -qiE "$pat"; then
+            log_event "block" "$pat" "skim-tells" "$FIRE_COUNT"
             python3 -c "
 import json, sys
 sys.stderr.write(json.dumps({'reason': 'rhetoric-guard: skim-tell detected (\"${pat}\"). Read the file fully before making claims from filename or naming alone. Set VIBE_RG_SKIM_PATTERNS_ENABLED=0 to disable this category.', 'continue': False}) + '\n')
@@ -379,8 +386,7 @@ fi
 
 # ── Match loop ────────────────────────────────────────────────────
 for entry in "${VIOLATIONS[@]}"; do
-  pattern="${entry%%|*}"
-  correction="${entry#*|}"
+  IFS='|' read -r pattern category correction <<<"$entry"
   if echo "$MESSAGE_FILTERED" | grep -iq "$pattern"; then
     # Stage 3: meta-keyword suppression for HIGH-risk patterns only.
     # If the matching PARAGRAPH (RS = "" splits on blank lines) contains
@@ -391,7 +397,7 @@ for entry in "${VIOLATIONS[@]}"; do
         $0 ~ pat { print $0; print "" }
       ')
       if echo "$matching_paragraphs" | grep -iqE "$META_KEYWORDS_RE"; then
-        log_event "suppress_meta_context" "$pattern" "$FIRE_COUNT"
+        log_event "suppress_meta_context" "$pattern" "$category" "$FIRE_COUNT"
         continue
       fi
     fi
@@ -400,7 +406,7 @@ for entry in "${VIOLATIONS[@]}"; do
     FIRE_COUNT=$((FIRE_COUNT + 1))
     echo "$FIRE_COUNT" > "$FIRE_COUNT_FILE" 2>/dev/null || true
 
-    log_event "block" "$pattern" "$((FIRE_COUNT - 1))"
+    log_event "block" "$pattern" "$category" "$((FIRE_COUNT - 1))"
 
     # Emit the block decision. Format confirmed on CC 2.1.108 via R6 E2E.
     jq -n --arg reason "RHETORIC GUARD: $correction" '{
@@ -412,5 +418,5 @@ for entry in "${VIOLATIONS[@]}"; do
 done
 
 # No pattern matched — allow the stop.
-log_event "pass_no_match" "-" "$FIRE_COUNT"
+log_event "pass_no_match" "-" "meta" "$FIRE_COUNT"
 exit 0
