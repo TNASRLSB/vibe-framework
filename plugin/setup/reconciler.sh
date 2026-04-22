@@ -15,6 +15,10 @@
 #                                LEGACY_WITH_VIBE_TOKENS, LEGACY_NO_VIBE_TOKENS
 #   apply-claude-md <path> ...   Apply CLAUDE.md change per --mode flag
 #   present-diff                 Render combined diff (JSON on stdin) as text
+#   apply-pragmatic-alias <shell>
+#                                Extend the VIBE-block `alias claude=...`
+#                                with --append-system-prompt for priming.
+#                                Idempotent; backs up rc file.
 #
 # Exit codes:
 #   0  success (or check-version match)
@@ -789,6 +793,86 @@ print(json.dumps({"status": "installed", "settings_path": settings_path,
 PYEOF
 }
 
+# --- pragmatic alias extension (5.5.3) -----------------------------------
+cmd_apply_pragmatic_alias() {
+    local shell_name="${1:-}"
+    [[ -n "$shell_name" ]] || die "apply-pragmatic-alias: shell name required (bash|zsh)"
+
+    SCHEMA_FILE="$SCHEMA_FILE" RC_SHELL="$shell_name" python3 <<'PYEOF'
+import json, os, sys, re, datetime
+
+schema = json.load(open(os.environ["SCHEMA_FILE"]))
+fix = schema.get("thinkingFix", {})
+marker_start = fix.get("shellMarkerStart", "")
+marker_end = fix.get("shellMarkerEnd", "")
+if not marker_start or not marker_end:
+    print("reconciler: thinkingFix markers missing in schema", file=sys.stderr)
+    sys.exit(3)
+
+shell = os.environ["RC_SHELL"]
+home = os.path.expanduser("~")
+if shell == "bash":
+    rc_path = os.path.join(home, ".bashrc")
+elif shell == "zsh":
+    zdotdir = os.environ.get("ZDOTDIR", home)
+    rc_path = os.path.join(zdotdir, ".zshrc")
+else:
+    print(f"reconciler: unsupported shell '{shell}' (only bash/zsh)", file=sys.stderr)
+    sys.exit(2)
+
+if not os.path.isfile(rc_path):
+    print(json.dumps({"status": "no_rc_file", "rc_path": rc_path}))
+    sys.exit(0)
+
+content = open(rc_path).read()
+
+# Locate the VIBE marker block (same as apply-thinking-fix-shell).
+block_re = re.compile(re.escape(marker_start) + r"(.*?)" + re.escape(marker_end), re.DOTALL)
+m = block_re.search(content)
+if not m:
+    print(json.dumps({"status": "no_marker_block", "rc_path": rc_path}))
+    sys.exit(0)
+
+block_full = m.group(0)
+inner = m.group(1)
+
+# Find the alias line inside the block. Single-quoted RHS per apply-thinking-fix-shell.
+alias_re = re.compile(r"^(?P<prefix>\s*alias\s+claude\s*=\s*)'(?P<rhs>[^']*)'", re.MULTILINE)
+am = alias_re.search(inner)
+if not am:
+    print(json.dumps({"status": "no_alias_in_block", "rc_path": rc_path}))
+    sys.exit(0)
+
+current_rhs = am.group("rhs")
+
+# Idempotent: if the append-system-prompt flag already points at our file, no-op.
+if "--append-system-prompt" in current_rhs and "vibe-pragmatic-prompt.txt" in current_rhs:
+    print(json.dumps({"status": "already_extended", "rc_path": rc_path}))
+    sys.exit(0)
+
+# Extension: preserve the existing RHS and append our flag. We keep the outer
+# single-quote on the alias and embed the double-quoted $(cat ...) unchanged —
+# the alias RHS is a single-quoted literal, so $(...) expands at alias-use time.
+extension = ' --append-system-prompt "$(cat ~/.claude/vibe-pragmatic-prompt.txt)"'
+new_rhs = current_rhs.rstrip() + extension
+new_alias_line = am.group("prefix") + "'" + new_rhs + "'"
+
+# Rebuild inner, then rebuild block, then rebuild content.
+new_inner = inner[:am.start()] + new_alias_line + inner[am.end():]
+new_block = marker_start + new_inner + marker_end
+
+ts = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d-%H%M%S")
+with open(f"{rc_path}.bak-{ts}", "w") as f:
+    f.write(content)
+
+new_content = content[:m.start()] + new_block + content[m.end():]
+with open(rc_path, "w") as f:
+    f.write(new_content)
+
+print(json.dumps({"status": "extended", "rc_path": rc_path}))
+PYEOF
+}
+
 # --- dispatch -------------------------------------------------------------
 main() {
     require_schema
@@ -811,6 +895,7 @@ main() {
         apply-thinking-fix-shell)   cmd_apply_thinking_fix_shell "$@" ;;
         remove-thinking-fix-shell)  cmd_remove_thinking_fix_shell "$@" ;;
         apply-thinking-fix-vscode)  cmd_apply_thinking_fix_vscode "$@" ;;
+        apply-pragmatic-alias)      cmd_apply_pragmatic_alias "$@" ;;
         generate-managed-content)   cmd_generate_managed_content "$@" ;;
         "" )                        die "no subcommand" ;;
         *)                          die "unknown subcommand: $sub" ;;

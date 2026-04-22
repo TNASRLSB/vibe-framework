@@ -434,41 +434,47 @@ If `SHELL_SUPPORTED=""` (unsupported shell like fish/ksh) AND `VSCODE_NEEDS=""` 
 
 Each apply command returns JSON with a `status` field: `installed` (tell the user to `source ~/.bashrc` or restart the terminal), `already_installed` (silent no-op), `alien_wrapper_present` (skipped — surface the existing wrapper path for manual review, do not clobber).
 
-### 5.7 Pragmatic Priming (Optional, 5.5.0 §2.6 Tier A)
+### 5.7 Pragmatic Priming (Optional, 5.5.0 §2.6 Tier A shell wrapper)
 
-Opus 4.7 shows documented anxiety tells + sycophancy + hedging under some prompt conditions (`feedback_honesty_patterns`, Stella Laurenzo thread). Askell-inspired priming (~30 tokens prepended to system prompt, cached via prompt caching) reduces these patterns with O(1) per-conversation cost. **Empirically validated (5.5.1 A4 A/B):** 80% reduction in hedge-word density across 20 decision-type prompts on opus-4-7 (`docs/2026-04-22-pragmatic-hedge-ab.md`).
+Opus 4.7 shows documented hedging + sycophancy patterns (`feedback_honesty_patterns`, Stella Laurenzo thread). Askell-inspired priming (~30 tokens prepended to system prompt, cached via prompt caching) reduces these patterns with O(1) per-conversation cost. **Empirically validated (5.5.1 A4 A/B):** 80% reduction in hedge-word density across 20 decision-type prompts on opus-4-7 (`docs/2026-04-22-pragmatic-hedge-ab.md`).
 
-This step offers to install the Tier A shell wrapper variant. **Tier B** (UserPromptSubmit hook, `VIBE_PRAGMATIC_MODE=1` opt-in) and **Tier C** (custom `@pragmatic` agent) are available independently post-setup — see `plugin/scripts/pragmatic-priming.sh` + `plugin/agents/pragmatic.md`.
+This step installs the Tier A shell-wrapper variant. Tier A = the simplest install: copy the prompt template and extend the `alias claude=...` from §5.6 with `--append-system-prompt`. Tier B (per-turn hook, `VIBE_PRAGMATIC_MODE=1` opt-in) and Tier C (custom `@pragmatic` agent) are available independently post-setup — see `plugin/scripts/pragmatic-priming.sh` and `plugin/agents/pragmatic.md`.
+
+This step requires §5.6 to have installed the shell alias first (it extends that alias in place). If §5.6 was skipped, this step falls back to a manual instruction.
 
 Ask the user:
 
-> Opus 4.7 hedging/sycophancy mitigation via Askell-style priming (~30 token preamble, cached via prompt caching, O(1) per conversation). Install Tier A shell wrapper? `[y]` yes / `[n]` skip.
+> Opus 4.7 hedging/sycophancy mitigation via Askell-style priming (~30 token preamble, cached via prompt caching). Install? `[y]` yes (default) / `[n]` skip.
 
-If yes:
+If `[y]` (or blank): copy the template then extend the alias.
 
 ```bash
 PROMPT_SRC="${CLAUDE_PLUGIN_ROOT}/skills/setup/references/pragmatic-prompt.txt"
 PROMPT_DST="$HOME/.claude/vibe-pragmatic-prompt.txt"
 
-if [[ -f "$PROMPT_SRC" ]]; then
-    cp "$PROMPT_SRC" "$PROMPT_DST"
-    echo "Written: $PROMPT_DST"
-else
+if [[ ! -f "$PROMPT_SRC" ]]; then
     echo "ERROR: pragmatic-prompt.txt template not found in plugin. Skipping."
+    # skip the rest of §5.7
 fi
+
+cp "$PROMPT_SRC" "$PROMPT_DST"
+echo "Wrote pragmatic priming template: $PROMPT_DST"
+
+SHELL_NAME=$(basename "$SHELL")
+EXTEND_RESULT=$("$RECONCILER" apply-pragmatic-alias "$SHELL_NAME" 2>/dev/null)
+STATUS=$(echo "$EXTEND_RESULT" | python3 -c "import json,sys; print(json.load(sys.stdin).get('status',''))")
 ```
 
-Then present to user (does NOT auto-modify shell rc — user choice per Arc Reactor Agnostic):
+Branch on `$STATUS`:
 
-> Installed `~/.claude/vibe-pragmatic-prompt.txt`. To activate, extend your existing `alias claude='...'` line in your shell rc with the `--append-system-prompt` flag:
->
-> ```
-> alias claude='command claude --thinking-display summarized --append-system-prompt "$(cat ~/.claude/vibe-pragmatic-prompt.txt)"'
-> ```
->
-> After editing, run `source ~/.bashrc` (or your rc) to reload. Opt-out: delete the `vibe-pragmatic-prompt.txt` file or revert the alias.
+- `extended`: Print `Extended 'alias claude' in ~/.bashrc with pragmatic priming. To activate: source ~/.bashrc or open a new terminal.`
+- `already_extended`: Print `Alias already includes pragmatic priming — no change needed.`
+- `no_marker_block`: Print `§5.6 shell fix was not installed, so I cannot extend the alias here. To enable pragmatic priming, either re-run /vibe:setup and install the §5.6 shell fix, or try Tier B (per-turn hook) — see plugin/agents/pragmatic.md.`
+- `no_rc_file` or `no_alias_in_block`: Same fallback message as `no_marker_block` with the specific reason appended.
 
-If no: skip silently.
+Opt-out for the installed case: delete `~/.claude/vibe-pragmatic-prompt.txt` (the alias's `$(cat ...)` expansion silently returns an empty string, so no priming is applied).
+
+If `[n]`: skip silently — do not copy the template, do not call the subcommand.
 
 ---
 
