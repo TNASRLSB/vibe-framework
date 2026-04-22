@@ -472,25 +472,27 @@ If no: skip silently.
 
 ---
 
-## Step 6: Codebase Mapping (Optional)
+## Step 6: Codebase Mapping (autonomous background task)
 
-### 6.1 Offer Exploration
+Default-on. The wizard dispatches the researcher agent to map project structure, entry points, key modules, data flow, and external dependencies into auto-memory, so future sessions start with full context. Opt-out: export `VIBE_NO_CODEBASE_MAP=1` before running `/vibe:setup`. No user prompt — detection already has the answer.
 
-**Always present this offer, including for empty or minimal projects.** Even a nearly-empty project may have config files, a README, or a git history worth mapping.
+Do not quote a duration estimate. Mapping time scales with codebase size (observed: 35 minutes on a mid-size project); a fixed estimate misleads.
 
-> **Optional:** I can run an initial codebase exploration using the researcher agent.
-> This will map the project structure, key files, and architecture into auto-memory
-> so future sessions start with full context.
->
-> This may take a minute. **Run codebase mapping?** (yes/no)
+```bash
+if [[ -n "${VIBE_NO_CODEBASE_MAP:-}" ]]; then
+    echo "Codebase mapping: skipped (VIBE_NO_CODEBASE_MAP set). To run it later: invoke the vibe:researcher agent directly."
+    # proceed to Step 6.5
+fi
+```
 
-### 6.2 Execute If Approved
+If the opt-out is not set, dispatch the researcher as a background task so Step 7 can show before mapping completes. Use the Agent tool with:
+- `subagent_type`: `vibe-researcher` (or the plugin-namespaced name available in the current harness — commonly `vibe:researcher`)
+- `run_in_background`: `true` (if the harness supports background agents; fall back to synchronous dispatch otherwise)
+- `prompt`: *"Map this codebase. Identify: project structure, entry points, key modules, data flow, external dependencies, and configuration files. If a CLAUDE.md exists in the project root, verify every filesystem path it references against the actual filesystem. For each path that doesn't exist as-written but resolves uniquely on disk via a case-insensitive match, record the correction in `.claude/agent-memory/vibe-researcher/path_corrections.md` as a JSON array (see researcher agent §6 for format). For ambiguous or unresolvable mismatches, record them with `confidence: "low"` so they surface as warnings. Save all other findings to agent memory. Research-only; no code modifications."*
 
-If the user says yes, invoke the researcher agent:
+Tell the user in a single print line: `Codebase mapping: running in background — notification when complete.` (If the harness dispatched synchronously, print instead: `Mapping codebase with researcher agent (runs inline; progress visible above).`)
 
-> @vibe:researcher Map this codebase. Identify: project structure, entry points, key modules, data flow, external dependencies, and configuration files. Save findings to auto-memory.
-
-If the user declines, skip without comment.
+Proceed immediately to Step 6.5 and Step 7. The backgrounded researcher will deliver its completion notification to the session asynchronously. Step 6.5 depends on researcher findings — if the researcher is still running when Step 6.5 is reached, Step 6.5 skips gracefully (the corrections are applied the next time setup is re-run or when the user reviews them manually).
 
 ---
 
