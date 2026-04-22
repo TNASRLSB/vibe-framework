@@ -52,6 +52,14 @@ Claude Code out-of-the-box optimizes for speed and token savings. VIBE inverts t
 
 **Migration from 5.5.2.** Automatic. Re-run `/vibe:setup` to pick up the new flow. Existing settings are preserved; the wizard detects what's already configured and only fills gaps. **Privacy note on the researcher:** the §6 agent reads your project files to build a codebase map. Findings are written to `.claude/agent-memory/vibe-researcher/` (project-local) and your auto-memory (`~/.claude/projects/<slug>/memory/`). Nothing is uploaded. To opt out of mapping entirely, export `VIBE_NO_CODEBASE_MAP=1` before running `/vibe:setup`.
 
+### 5.5.4 Hybrid execution hint (2026-04-22)
+
+**The hybrid execution mode now reaches every VIBE user via a PreToolUse hook.** Until now, the decision logic — Opus inline for creative/small tasks, Sonnet subagents for mechanical bulk, recommended when ≥30% of tasks are each kind AND mechanical tasks are idiot-proof — lived only in the maintainer's auto-memory. Auto-memory does not travel with the marketplace install, so marketplace users never saw the third option. This release ships that logic as a plugin hook: automatic activation on install/upgrade, no `/vibe:setup` re-run.
+
+The hook has two modes. **Proposer** fires when `superpowers:writing-plans` is invoked and tells Claude to write every task idiot-proof (exact paths, complete code, concrete verify commands — no "TBD" or "fill in") and to offer a three-option execution handoff at the end. **Guard** fires when `superpowers:subagent-driven-development` is invoked and tells Claude to audit the plan before dispatching subagents; if any task is vague, abort and recommend inline. Belt-and-suspenders: proposer introduces the option and shapes the plan; guard catches bad dispatches that slip through.
+
+Empirically validated on the VIBE 5.1 self-healing wizard (13 tasks, 5h, 204 tests green — one plan bug caught by a subagent that pure-inline would have missed). Opt-out: `export VIBE_NO_HYBRID_HINT=1`.
+
 ## What's New in 5.3
 
 **Side-effect verification Stop hook.** A new `plugin/scripts/side-effect-verify.sh` runs on every Stop event and detects when the assistant commits to a write/save/persist operation in prose — *"I'll save the config now"*, *"let me create the file"*, *"I'm going to update X"* — without actually invoking a `Write`/`Edit`/`NotebookEdit` tool in the same turn. On detection, the hook blocks the stop and feeds back the matched commitment as context — the assistant sees *"you said you'd save X but no Write happened"* on its next turn and reconciles, either by performing the write or correcting the prior message. Reuses the rhetoric-guard Strategy E preprocessing pipeline (fenced blocks, inline backticks, double-quoted strings, markdown link labels stripped) to avoid self-citation false positives. Capped at 1 fire per session. Closes `claude-code#49764`.

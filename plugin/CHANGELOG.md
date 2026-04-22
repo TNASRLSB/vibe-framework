@@ -1,5 +1,24 @@
 # Changelog
 
+## 5.5.4 — 2026-04-22
+
+Ships a dual-mode PreToolUse hook that reaches every VIBE user with the hybrid execution option (proposer + guard) — the behavior until now lived only in the maintainer's auto-memory and never traveled via the plugin marketplace. Zero new skills, zero new agents; one script, one hooks.json entry.
+
+### Added
+
+- **`plugin/scripts/hybrid-execution-hint.sh` (PreToolUse hook, matcher `Skill`).** Dual-mode dispatch on `tool_input.skill`:
+  - **Proposer mode** fires on `superpowers:writing-plans`. Injects context telling Claude (a) to write the plan idiot-proof for Sonnet subagents (exact paths, complete code, concrete verify commands, zero "TBD"/"fill in"/"similar to Task N") and (b) at the execution-handoff step to offer three options instead of the default two: subagent-driven, inline, or HYBRID (≥30% tasks mechanical AND ≥30% creative, AND mechanical tasks idiot-proof — Opus inline for creative/small, Sonnet subagents for mechanical bulk).
+  - **Guard mode** fires on `superpowers:subagent-driven-development`. Injects context telling Claude to audit the plan for idiot-proofness before dispatching subagents; abort + recommend inline if any task is vague. Prevents silent subagent failures on under-specified plans.
+- **Activation:** automatic on plugin install/upgrade via `plugin/hooks/hooks.json`. No `/vibe:setup` re-run required.
+- **Opt-out:** `export VIBE_NO_HYBRID_HINT=1` in your shell rc or CC settings env block.
+
+### Rationale
+
+The hybrid execution mode (inline Opus for judgment, Sonnet subagents for mechanical bulk) was empirically validated on the VIBE 5.1 self-healing wizard plan — 13 tasks, 5h total, 204 tests green, and one plan bug caught by a subagent that pure-inline review would have missed. The decision logic (`>=30% mechanical AND >=30% creative → hybrid recommended; all mechanical tasks must be idiot-proof for Sonnet`) lived only in the maintainer's auto-memory (`feedback_execution_method_hybrid.md`), which does not travel with the marketplace install. This hook ships the same logic to every VIBE user.
+
+### Migration from 5.5.3
+
+Automatic. On plugin upgrade, Claude Code reads the new `hooks.json` entry and registers the hook. Next `superpowers:writing-plans` invocation surfaces the three-option handoff. Existing `/vibe:setup` state untouched; no re-run needed.
 ## 5.5.3 — 2026-04-22
 
 Field-report driven reduction-of-surface: seven fixes to `/vibe:setup` that turn the first-contact experience into zero-chore autonomy, plus one schema fix to the pragmatic agent caught during release test triage. No new features, no surface expansion — just removal of friction the wizard was causing for marketplace users, plus one outlier frontmatter normalized.
