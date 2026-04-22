@@ -47,7 +47,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/hybrid-execution-hint.sh"
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/hybrid-execution-hint.sh\""
           }
         ]
       }
