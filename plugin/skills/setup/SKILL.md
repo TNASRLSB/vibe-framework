@@ -316,7 +316,7 @@ Adaptive thinking              [current]            disabled
 
 **Only execute this step after the user approves in Step 4.**
 
-The wizard delegates state mutation to `reconciler.sh`. Do **not** write to `~/.claude/settings.json` or `CLAUDE.md` directly from this skill — the reconciler is the only component that mutates user config.
+The wizard delegates state mutation to `reconciler.sh` (the component that reads and writes your settings files). Do **not** write to `~/.claude/settings.json` or `CLAUDE.md` directly from this skill — the reconciler is the only component that mutates user config.
 
 ### 5.1 Compute the Combined Diff
 
@@ -393,7 +393,7 @@ echo "$DATA_DIFF" | "$RECONCILER" apply-data "$DATA_DIR"
 # CLAUDE.md
 APPROVE_REGEN=""
 if [[ "$CLAUDE_MODE" == "LEGACY_WITH_VIBE_TOKENS" ]]; then
-  # Ask user: "Your CLAUDE.md contains 4.x-era VIBE markers (reflect skill, VIBE_GATE, etc.).
+  # Ask user: "Your CLAUDE.md contains markers from an older VIBE version (4.x — the old reflect skill, VIBE_GATE, etc.).
   # I will back it up and regenerate it. Proceed? (yes/no)"
   # If yes:
   APPROVE_REGEN="--approve-regenerate"
@@ -408,11 +408,11 @@ fi
     $APPROVE_REGEN
 ```
 
-### 5.5 Warn on LEGACY_NO_VIBE_TOKENS
+### 5.5 When CLAUDE.md Looks User-Authored
 
-If the mode was `LEGACY_NO_VIBE_TOKENS`, inform the user:
+If the mode was `LEGACY_NO_VIBE_TOKENS` (CLAUDE.md exists but has no VIBE markers from this or any earlier version), inform the user:
 
-> Your CLAUDE.md has no VIBE region markers and no 4.x-era markers, so I assume it is user-authored and I will not touch it. If you want a VIBE-managed CLAUDE.md, delete this file and re-run `/vibe:setup`.
+> Your CLAUDE.md looks like plain user content (no VIBE markers from this or earlier versions). I won't modify it. If you want a VIBE-managed CLAUDE.md, delete this file and re-run `/vibe:setup`.
 
 ### 5.6 Opus 4.7 thinking-display fix (#49268)
 

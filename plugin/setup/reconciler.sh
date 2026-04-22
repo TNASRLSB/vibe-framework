@@ -518,11 +518,15 @@ if data.get("to_remove"):
     for name in data["to_remove"]:
         print(f"  - {name}")
 
-print(f"\nCLAUDE.md — classification: {cmd.get('mode', 'UNKNOWN')}")
-if cmd.get("will_touch"):
-    print("  (this file will be modified)")
-else:
-    print("  (no changes to this file)")
+MODE_DESCRIPTIONS = {
+    'MISSING':                 "not present (will create one)",
+    'MANAGED_REGION_PRESENT':  "has a VIBE-managed section (will update in place)",
+    'LEGACY_WITH_VIBE_TOKENS': "has markers from an older VIBE version (will back up and regenerate)",
+    'LEGACY_NO_VIBE_TOKENS':   "looks user-authored (will not touch)",
+}
+mode = cmd.get('mode', 'UNKNOWN')
+description = MODE_DESCRIPTIONS.get(mode, f"unknown classification ({mode})")
+print(f"\nCLAUDE.md — {description}")
 PYEOF
 }
 
