@@ -1,5 +1,28 @@
 # Changelog
 
+## 5.5.3 — 2026-04-22
+
+Field-report driven reduction-of-surface: seven fixes to `/vibe:setup` that turn the first-contact experience into zero-chore autonomy, plus one schema fix to the pragmatic agent caught during release test triage. No new features, no surface expansion — just removal of friction the wizard was causing for marketplace users, plus one outlier frontmatter normalized.
+
+### Fixed
+
+- **Reconciler JSON composition (Fix 4).** The `COMBINED` payload in `§5.1` now passes booleans as JSON-parseable strings through environment variables, eliminating the `NameError: name 'false' is not defined` that triggered on the first classification of a user-authored CLAUDE.md.
+- **Adaptive thinking-display menu (Fix 3).** `§5.6` branches on the detector output — shell-only, VS Code-only, and neither-needed cases now auto-apply or skip without prompting. Only the both-candidates case asks, and it's a single 2-way prompt instead of the old 4-way menu.
+- **Autonomous codebase mapping (Fix 1).** `§6` is now default-on, dispatched as a background task, with no misleading duration estimate. Opt-out via `VIBE_NO_CODEBASE_MAP=1`. The agent reads project files via Read/Grep/Glob and writes findings to `.claude/agent-memory/` and user auto-memory — set the opt-out if your project is privacy-sensitive.
+- **Pragmatic priming auto-apply (Fix 2).** `§5.7` no longer asks you to hand-edit `~/.bashrc`. A new reconciler subcommand `apply-pragmatic-alias` extends the alias from `§5.6` in place, idempotently, with backup.
+- **CLAUDE.md path auto-fix (Fix 5).** The researcher verifies filesystem path references in CLAUDE.md and writes corrections to its memory namespace. A new setup step `§6.5` auto-applies high-confidence case-only mismatches via Edit, surfaces low-confidence ones as warnings in the final summary.
+- **LSP auto-install (Fix 6).** `§2.4` runs `claude plugin install <lsp>` for each detected primary language whose LSP plugin is missing, falling back to the existing recommendation text on failure. The Python field-report case (pyright-lsp as a manual post-setup chore) is now fully automatic.
+- **Internal lexicon pass (Fix 7).** User-facing output no longer leaks internal tokens (`LEGACY_NO_VIBE_TOKENS`, `MANAGED_REGION_PRESENT`, `Arc Reactor Agnostic`). `cmd_present_diff` translates classification modes to human descriptions. Internal flag values passed to reconciler are unchanged.
+- **Pragmatic agent frontmatter schema (Fix 8).** `plugin/agents/pragmatic.md` shipped in 5.5.0 with a nested `model:\n  primary: opus-4-7\n  effort: xhigh` block — an outlier against the flat `model: <tier>` schema every other VIBE agent uses. The agent frontmatter-validation test caught the drift; it was dismissed as pre-existing for three release cycles. Flattened to `model: opus` + top-level `effort: xhigh` (same effort value as the removed nested copy). No behavioral change in the common case (CC's latest opus = 4-7 today); the agent frontmatter now loads uniformly across the whole `plugin/agents/` tree.
+
+### Migration from 5.5.2
+
+Automatic — no action required. Re-run `/vibe:setup` to pick up the new flow. Your existing settings are preserved; the wizard detects what's already configured and only applies gaps.
+
+### Privacy note
+
+The `§6` researcher agent reads your project files to build a codebase map. Findings are written to `.claude/agent-memory/vibe-researcher/` (project-local) and your user auto-memory (`~/.claude/projects/<slug>/memory/`). Nothing is uploaded. To opt out of mapping entirely, export `VIBE_NO_CODEBASE_MAP=1` before running `/vibe:setup`.
+
 ## 5.5.2 — 2026-04-22
 
 "A/B consolidation tail + audit grader v2" — resolves the 3 pairwise-judge A/B items deferred from 5.5.1 §11.4 (baptist / ghostwriter / orson) and promotes `grade-v2.py` to the default audit grader. All 3 A/B outcomes confirm the 5.5.0 incumbent — **zero default switches**, same pattern as 5.5.1's 6-item consolidation. **No plugin surface change** (all work is maintainer-side decision docs + test-infrastructure changes; `plugin/` is byte-identical to 5.5.1 except for version string + this CHANGELOG + README subsection).
