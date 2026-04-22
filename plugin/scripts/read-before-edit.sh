@@ -91,11 +91,19 @@ try:
             for block in content:
                 if not isinstance(block, dict):
                     continue
-                if block.get("type") != "tool_use" or block.get("name") != "Read":
+                if block.get("type") != "tool_use":
+                    continue
+                name = block.get("name")
+                if name not in ("Read", "Write"):
                     continue
                 inp = block.get("input", {}) or {}
                 if norm(inp.get("file_path")) != target:
                     continue
+                if name == "Write":
+                    # Write implies the assistant has just authored the exact
+                    # content; Edit on the same file is safe without a prior Read.
+                    print("yes")
+                    raise SystemExit
                 limit = inp.get("limit")
                 offset = inp.get("offset")
                 if not limit and not offset:

@@ -481,13 +481,15 @@ env = diff.get("env", {})
 top = diff.get("top_level", {})
 data = diff.get("data", {})
 cmd = diff.get("claude_md", {})
+stale = diff.get("stale_hooks", []) or []
 
 env_empty = not env.get("to_add") and not env.get("to_update") and not env.get("to_remove")
 top_empty = not top.get("to_set")
 data_empty = not data.get("to_remove")
 claude_untouched = not cmd.get("will_touch", False)
+stale_empty = not any((f or {}).get("matches") for f in stale)
 
-if env_empty and top_empty and data_empty and claude_untouched:
+if env_empty and top_empty and data_empty and claude_untouched and stale_empty:
     print("VIBE Reconciler — Already in sync with current version.")
     print("No changes needed.")
     sys.exit(0)
@@ -527,6 +529,17 @@ MODE_DESCRIPTIONS = {
 mode = cmd.get('mode', 'UNKNOWN')
 description = MODE_DESCRIPTIONS.get(mode, f"unknown classification ({mode})")
 print(f"\nCLAUDE.md — {description}")
+
+if not stale_empty:
+    print("\nSTALE HOOKS — to remove (deprecated/broken, timestamped backup first):")
+    for f in stale:
+        matches = (f or {}).get("matches") or []
+        if not matches:
+            continue
+        print(f"  {f.get('file', '?')}")
+        for m in matches:
+            desc = m.get("pattern_description") or m.get("pattern_id", "?")
+            print(f"    - {m.get('location', '?')}: {desc}")
 PYEOF
 }
 
@@ -797,6 +810,192 @@ print(json.dumps({"status": "installed", "settings_path": settings_path,
 PYEOF
 }
 
+# --- stale-hook detection and cleanup (5.5.7) ----------------------------
+# Scans a settings.json (user or project) for hook entries + statusLine whose
+# command matches any denyPattern in the schema. Hooks that survived from VIBE
+# v1 (morpheus) or that share the same anti-pattern ($CLAUDE_PROJECT_DIR in an
+# unquoted command, see 5.5.7 CHANGELOG) are identified here so the reconciler
+# can surface them in the diff and remove them on apply, with a timestamped
+# backup. The project-scope scanner `vibe-v1-cleanup.sh` covers the filesystem
+# side (morpheus/ dir, .forge/, etc.) — this sub-command covers the user/
+# project settings.json hook entries that the filesystem scanner does not.
+cmd_detect_stale_hooks() {
+    local settings_path="${1:-}"
+    [[ -n "$settings_path" ]] || die "detect-stale-hooks: settings path required"
+
+    SCHEMA_FILE="$SCHEMA_FILE" SETTINGS_PATH="$settings_path" python3 <<'PYEOF'
+import json, os, sys
+
+schema = json.load(open(os.environ["SCHEMA_FILE"]))
+patterns = schema.get("settingsHooksDenyPatterns", []) or []
+settings_path = os.environ["SETTINGS_PATH"]
+
+empty = {"file": settings_path, "exists": False, "matches": []}
+
+if not os.path.isfile(settings_path):
+    print(json.dumps(empty))
+    sys.exit(0)
+
+try:
+    with open(settings_path) as f:
+        settings = json.load(f)
+except json.JSONDecodeError:
+    # Don't propagate JSONDecodeError — report as "can't scan" so the
+    # setup flow continues without claiming a clean scan we didn't do.
+    print(json.dumps({"file": settings_path, "exists": True, "matches": [],
+                      "unreadable": True}))
+    sys.exit(0)
+
+matches = []
+
+def _check_command(cmd, location):
+    if not isinstance(cmd, str):
+        return
+    for p in patterns:
+        needle = p.get("commandContains", "")
+        if needle and needle in cmd:
+            matches.append({
+                "location": location,
+                "command": cmd,
+                "pattern_id": p.get("id", "unknown"),
+                "pattern_description": p.get("description", ""),
+            })
+
+# Top-level legacy shape: settings["PreToolUse"] = [...]
+for top_event in ("PreToolUse", "PostToolUse", "SessionStart", "Stop",
+                  "SubagentStop", "PreCompact", "UserPromptSubmit",
+                  "PostToolUseFailure", "SessionEnd"):
+    val = settings.get(top_event)
+    if isinstance(val, list):
+        for i, matcher in enumerate(val):
+            if isinstance(matcher, dict):
+                for j, h in enumerate(matcher.get("hooks", []) or []):
+                    if isinstance(h, dict):
+                        _check_command(h.get("command", ""),
+                                       f"{top_event}[{i}].hooks[{j}]")
+
+# Nested canonical shape: settings["hooks"]["PreToolUse"] = [...]
+hooks = settings.get("hooks")
+if isinstance(hooks, dict):
+    for event, matchers in hooks.items():
+        if isinstance(matchers, list):
+            for i, matcher in enumerate(matchers):
+                if isinstance(matcher, dict):
+                    for j, h in enumerate(matcher.get("hooks", []) or []):
+                        if isinstance(h, dict):
+                            _check_command(h.get("command", ""),
+                                           f"hooks.{event}[{i}].hooks[{j}]")
+
+# statusLine (top-level dict with .command)
+sl = settings.get("statusLine")
+if isinstance(sl, dict):
+    _check_command(sl.get("command", ""), "statusLine")
+
+print(json.dumps({"file": settings_path, "exists": True, "matches": matches}))
+PYEOF
+}
+
+cmd_apply_clean_stale_hooks() {
+    local settings_path="${1:-}"
+    [[ -n "$settings_path" ]] || die "apply-clean-stale-hooks: settings path required"
+
+    local matches_json
+    matches_json=$(cat)
+
+    local has_work
+    has_work=$(echo "$matches_json" | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+print('yes' if d.get('matches') else 'no')
+")
+    if [[ "$has_work" == "no" ]]; then
+        return 0
+    fi
+
+    [[ -f "$settings_path" ]] || return 0
+
+    local ts
+    ts=$(date -u +%Y%m%d-%H%M%S)
+    cp "$settings_path" "$settings_path.bak-stale-hooks-$ts"
+
+    SCHEMA_FILE="$SCHEMA_FILE" SETTINGS_PATH="$settings_path" python3 <<'PYEOF'
+import json, os
+
+schema = json.load(open(os.environ["SCHEMA_FILE"]))
+patterns = schema.get("settingsHooksDenyPatterns", []) or []
+needles = [p.get("commandContains", "") for p in patterns if p.get("commandContains")]
+
+settings_path = os.environ["SETTINGS_PATH"]
+with open(settings_path) as f:
+    settings = json.load(f)
+
+def _contains_any(cmd):
+    return isinstance(cmd, str) and any(n in cmd for n in needles)
+
+def _filter_matchers(matchers):
+    if not isinstance(matchers, list):
+        return matchers, False
+    out = []
+    changed = False
+    for m in matchers:
+        if not isinstance(m, dict):
+            out.append(m); continue
+        hooks = m.get("hooks", [])
+        if isinstance(hooks, list):
+            clean_hooks = [h for h in hooks
+                           if not (isinstance(h, dict) and _contains_any(h.get("command", "")))]
+            if len(clean_hooks) != len(hooks):
+                changed = True
+                if clean_hooks:
+                    m2 = dict(m); m2["hooks"] = clean_hooks
+                    out.append(m2)
+                # else drop the whole matcher
+            else:
+                out.append(m)
+        else:
+            out.append(m)
+    return out, changed
+
+# Nested canonical shape
+hooks = settings.get("hooks")
+if isinstance(hooks, dict):
+    new_hooks = {}
+    any_changed = False
+    for event, matchers in hooks.items():
+        filtered, changed = _filter_matchers(matchers)
+        any_changed = any_changed or changed
+        if filtered:
+            new_hooks[event] = filtered
+    if any_changed:
+        if new_hooks:
+            settings["hooks"] = new_hooks
+        else:
+            settings.pop("hooks", None)
+
+# Top-level legacy shape
+for top_event in ("PreToolUse", "PostToolUse", "SessionStart", "Stop",
+                  "SubagentStop", "PreCompact", "UserPromptSubmit",
+                  "PostToolUseFailure", "SessionEnd"):
+    val = settings.get(top_event)
+    if isinstance(val, list):
+        filtered, changed = _filter_matchers(val)
+        if changed:
+            if filtered:
+                settings[top_event] = filtered
+            else:
+                settings.pop(top_event, None)
+
+# statusLine
+sl = settings.get("statusLine")
+if isinstance(sl, dict) and _contains_any(sl.get("command", "")):
+    settings.pop("statusLine", None)
+
+with open(settings_path, "w") as f:
+    json.dump(settings, f, indent=2)
+    f.write("\n")
+PYEOF
+}
+
 # --- pragmatic alias extension (5.5.3) -----------------------------------
 cmd_apply_pragmatic_alias() {
     local shell_name="${1:-}"
@@ -900,6 +1099,8 @@ main() {
         remove-thinking-fix-shell)  cmd_remove_thinking_fix_shell "$@" ;;
         apply-thinking-fix-vscode)  cmd_apply_thinking_fix_vscode "$@" ;;
         apply-pragmatic-alias)      cmd_apply_pragmatic_alias "$@" ;;
+        detect-stale-hooks)         cmd_detect_stale_hooks "$@" ;;
+        apply-clean-stale-hooks)    cmd_apply_clean_stale_hooks "$@" ;;
         generate-managed-content)   cmd_generate_managed_content "$@" ;;
         "" )                        die "no subcommand" ;;
         *)                          die "unknown subcommand: $sub" ;;

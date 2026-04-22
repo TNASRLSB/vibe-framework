@@ -341,8 +341,29 @@ else
     WILL_TOUCH_JSON="true"
 fi
 
+# 5.5.7: detect stale hooks (v1 morpheus residui) in user + project settings.
+# Each target file is scanned independently; missing files produce an empty
+# match array, so the three probes are always safe.
+STALE_TARGETS=(
+    "$HOME/.claude/settings.json"
+    "$CLAUDE_PROJECT_DIR/.claude/settings.json"
+    "$CLAUDE_PROJECT_DIR/.claude/settings.local.json"
+)
+STALE_ACCUM="["
+for s in "${STALE_TARGETS[@]}"; do
+    SCAN=$("$RECONCILER" detect-stale-hooks "$s" 2>/dev/null)
+    [[ -z "$SCAN" ]] && continue
+    if [[ "$STALE_ACCUM" != "[" ]]; then
+        STALE_ACCUM+=","
+    fi
+    STALE_ACCUM+="$SCAN"
+done
+STALE_ACCUM+="]"
+STALE_HOOKS_JSON="$STALE_ACCUM"
+
 COMBINED=$(CLAUDE_MODE="$CLAUDE_MODE" WILL_TOUCH_JSON="$WILL_TOUCH_JSON" \
     ENV_DIFF="$ENV_DIFF" TOP_DIFF="$TOP_DIFF" DATA_DIFF="$DATA_DIFF" \
+    STALE_HOOKS_JSON="$STALE_HOOKS_JSON" \
     python3 <<'PYEOF'
 import json, os
 print(json.dumps({
@@ -353,6 +374,7 @@ print(json.dumps({
         'mode': os.environ['CLAUDE_MODE'],
         'will_touch': json.loads(os.environ['WILL_TOUCH_JSON']),
     },
+    'stale_hooks': json.loads(os.environ['STALE_HOOKS_JSON']),
 }))
 PYEOF
 )
@@ -406,6 +428,16 @@ fi
     --lint "$LINT_CMD" \
     --mode "$CLAUDE_MODE" \
     $APPROVE_REGEN
+
+# 5.5.7: clean stale hooks (v1 morpheus residui). Re-scan each target and
+# pipe the scan result into apply-clean-stale-hooks. Each apply creates a
+# timestamped backup `<settings>.bak-stale-hooks-YYYYMMDD-HHMMSS` before
+# rewriting the file. Files with zero matches are no-ops.
+for s in "${STALE_TARGETS[@]}"; do
+    SCAN=$("$RECONCILER" detect-stale-hooks "$s" 2>/dev/null)
+    [[ -z "$SCAN" ]] && continue
+    echo "$SCAN" | "$RECONCILER" apply-clean-stale-hooks "$s" 2>/dev/null
+done
 ```
 
 ### 5.5 When CLAUDE.md Looks User-Authored

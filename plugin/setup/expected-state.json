@@ -39,5 +39,12 @@
     "name": "VIBE_RG_SKIM_PATTERNS_ENABLED",
     "default": "0",
     "description": "Enables rhetoric-guard skim-tell patterns. Promote to default=1 in 5.4.1 only if field fire-rate <5%."
-  }
+  },
+  "settingsHooksDenyPatterns": [
+    {
+      "id": "morpheus-v1",
+      "description": "VIBE v1 morpheus framework residui (hook/statusLine)",
+      "commandContains": ".claude/morpheus/"
+    }
+  ]
 }

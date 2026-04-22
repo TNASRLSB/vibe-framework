@@ -1,5 +1,48 @@
 # Changelog
 
+## 5.5.7 — 2026-04-22
+
+"V1 hook auto-cleanup + Write-then-Edit false positive" — due fix report-driven raggruppati. **Fix A:** `plugin/scripts/read-before-edit.sh` riconosce `Write` come equivalente a full read (l'assistant ha appena scritto il contenuto del file → conosce esattamente cosa c'è dentro → un `Edit` successivo è sicuro). **Fix B:** `/vibe:setup` ora rileva e rimuove automaticamente hook residui da VIBE v1 (morpheus) nel settings utente e di progetto — nessuna azione manuale richiesta, solo re-run di `/vibe:setup` dopo upgrade a 5.5.7. Cura il caso report-driven di utenti con progetto in path contenente spazi che vedevano `/bin/sh: riga 1: /path/prefix: File o directory non esistente` ad ogni PreToolUse.
+
+### Changes
+
+#### Fix A — Write-then-Edit false positive (`plugin/scripts/read-before-edit.sh`)
+
+- La scansione del transcript filtrava solo `tool_use` con `name == "Read"`, ignorando `Write`. Risultato: dopo un `Write` del file X, un `Edit` su X veniva bloccato con "Run Read with no limit/offset first" — pur essendo safe (l'assistant ha appena autorato il contenuto esatto).
+- Extension: il check ora accetta `name in ("Read", "Write")`. Per `Write`, qualsiasi match su path è sufficiente — `Write` implica conoscenza completa del contenuto. La logica Read (no-limit/offset, coverage-equals-file) resta invariata.
+- Dimostrazione del bug incorsa durante l'authoring di 5.5.7 stessa: la memory `feedback_user_burden_zero.md` era stata creata via Write poi tentativamente estesa via Edit → hook bloccava. Caso evidente che il hook era più strict del necessario.
+- Test: `tests/read-discipline/test-write-then-edit.sh` — 4 scenari (Write+Edit stesso file → allow, Write+Edit file diverso → block, Read+Edit regression guard, path normalization attraverso Write).
+
+#### Fix B — V1 hook auto-cleanup nel reconciler (`plugin/setup/`, `plugin/skills/setup/SKILL.md`)
+
+- **Root cause del report utente:** un hook in `~/.claude/settings.json` o `$PROJECT/.claude/settings[.local].json` con command `$CLAUDE_PROJECT_DIR/.claude/morpheus/injector.sh` (pattern VIBE v1, shippato pre-5.0). Se `$CLAUDE_PROJECT_DIR` contiene spazi, la shell del hook dispatcher splitta al primo blank e fallisce con "File o directory non esistente" per il prefisso. Fino a 5.5.6 l'utente doveva scoprire lo script esistente `plugin/scripts/vibe-v1-cleanup.sh` ed eseguirlo manualmente — violazione di `feedback_user_burden_zero`: onere diagnostico/operativo scaricato sull'utente.
+- **Schema extension** — `plugin/setup/expected-state.json` guadagna la chiave `settingsHooksDenyPatterns[]` (array di `{id, description, commandContains}`). La prima entry è `morpheus-v1` con needle `.claude/morpheus/`. Schema dichiarativo: aggiungere futuri pattern deprecati è 1 diff in JSON, no code change.
+- **Reconciler subcommands** — `plugin/setup/reconciler.sh` guadagna `detect-stale-hooks <settings-path>` e `apply-clean-stale-hooks <settings-path>`. Detect scansiona sia la shape canonica nested (`settings.hooks.PreToolUse[].hooks[].command`) sia la shape legacy top-level (`settings.PreToolUse[].hooks[].command`) sia `settings.statusLine.command`. Apply crea backup timestamped `settings.json.bak-stale-hooks-YYYYMMDD-HHMMSS` prima di filtrare le entry che matchano qualunque denyPattern. Preserva tutto il resto della config (env, permissions, mcpServers, ecc.).
+- **Present-diff extension** — `cmd_present_diff` accetta ora la chiave `stale_hooks` nell'input JSON e rende una nuova sezione "STALE HOOKS — to remove (deprecated/broken, timestamped backup first)" che mostra path e location di ogni entry che verrà rimossa, permettendo all'utente di approvare con conoscenza.
+- **SKILL.md integration** — `plugin/skills/setup/SKILL.md` §5.1 ora esegue `detect-stale-hooks` su 3 target (`~/.claude/settings.json`, `$PROJECT/.claude/settings.json`, `$PROJECT/.claude/settings.local.json`) e aggrega il risultato nella COMBINED diff mostrata all'utente. §5.4 invoca `apply-clean-stale-hooks` per ciascun target dopo approvazione.
+- **Flusso utente dopo upgrade a 5.5.7:**
+  1. `setup-check.sh` su SessionStart rileva version mismatch via marker (già esistente) → emit anomaly "VIBE 5.5.7 detected — run /vibe:setup to reconcile"
+  2. Utente invoca `/vibe:setup`
+  3. §5.1 compone il diff includendo anche le entry stale
+  4. §5.2 mostra all'utente esattamente cosa verrà rimosso (path + location + motivo)
+  5. §5.3 chiede approvazione esplicita
+  6. §5.4 applica — backup timestamped + rewrite del settings senza le entry morpheus
+  7. Alla prossima sessione CC, zero `PreToolUse hook error` da quei hook
+- **Copertura rispetto a `vibe-v1-cleanup.sh`:** lo script esistente scansiona e pulisce filesystem (morpheus dir, .forge, CLAUDE.md v1, backup zip), settings.json e settings.local.json *a livello progetto*. Il nuovo reconciler step copre anche `~/.claude/settings.json` (user-level, non toccato dal cleanup script) e lo fa come parte del flow setup standard — non come comando separato che l'utente deve ricordarsi di invocare. I due layer sono complementari.
+- Test: `tests/reconciler/test-stale-hooks.sh` — 13 asserzioni coprono detect/apply su shape nested, shape top-level legacy, statusLine, path con spazi (mktemp dir nominato `/tmp/vibe-stale hooks test-XXXX`), backup creation, idempotenza re-run, preservazione config non-morpheus, no-op su file inesistente, no-op su file clean (niente backup spurious), rendering present-diff.
+
+### Principio applicato: `User Burden Zero`
+
+`feedback_user_burden_zero.md` (salvato 2026-04-22): VIBE pubblicato deve essere bug-free auto; legacy v1, stale hooks, broken config sono responsabilità VIBE, non del user. Discriminante: un singolo comando automated apply (`/vibe:setup`) è convention standard accettabile, ≠ "capire output jq e fixare a mano" (antipattern). Questa release è la prima applicazione esplicita del principio: il cleanup v1 era già fattibile in 5.5.6 via `vibe-v1-cleanup.sh --scan ~ --deep --yes` ma richiedeva all'utente di sapere dello script e invocarlo — ora è gestito dentro `/vibe:setup` come step del reconciler con UX `detect → diff → present → apply`.
+
+### Migration from 5.5.6
+
+- **Automatica con un singolo comando.** Dopo l'upgrade a 5.5.7, `setup-check.sh` su SessionStart emette già la notifica esistente "VIBE 5.5.7 detected — run /vibe:setup to reconcile". Invocando `/vibe:setup`, lo step §5 presenta un diff che include eventuali hook v1 stale e applica la rimozione dopo approvazione. Se il settings utente è pulito, lo step è silent no-op (idempotente).
+- **Backup sempre creato** prima di ogni mutation (`settings.json.bak-stale-hooks-YYYYMMDD-HHMMSS`). Rollback: `mv settings.json.bak-stale-hooks-* settings.json`.
+- **Fix A è self-applicante:** il nuovo `read-before-edit.sh` attivo dalla prossima sessione CC dopo l'upgrade. Nessuna azione utente.
+- **Copertura rispetto a progetti esistenti:** `/vibe:setup` cleana il settings del progetto corrente + settings utente globale. Per un utente con molti progetti contenenti v1 residui: eseguire `/vibe:setup` una volta globale (cleana `~/.claude/settings.json`), poi in ogni progetto interessato (cleana il settings locale). Lo script pre-esistente `plugin/scripts/vibe-v1-cleanup.sh --scan ~ --deep` resta disponibile per il filesystem-side cleanup (morpheus directory, .forge, CLAUDE.md v1), complementare a questo step.
+- **Verified:** 244/244 test suite pass (242 pre-esistenti + 2 nuovi maintainer-side).
+
 ## 5.5.6 — 2026-04-22
 
 "Hybrid-hint manifest quoting + path-with-spaces audit" — fix chirurgico a un unico mancato quoting in `plugin/hooks/hooks.json` e audit di tutti gli script hook VIBE contro file path con spazi. Patch report-driven: utente segnala errori `/bin/sh: riga 1: /path/prefix: File o directory non esistente` con CWD `/home/uh1/VIBEPROJECTS/TORA NO AI SRL SB/...`. Diagnosi: VIBE non è la root cause degli errori utente (VIBE non registra hook su `TaskCreate`/`TaskUpdate`/`ToolSearch` — tool per cui l'utente riceveva errori). Root cause: un hook nel `settings.json` utente usa `$CLAUDE_PROJECT_DIR` non quotato. Tuttavia l'audit ha rivelato che `hybrid-execution-hint.sh` (shipped 5.5.4) era l'unico hook VIBE su 16 registrato senza quote doppie attorno al path — latent fragility se `CLAUDE_PLUGIN_ROOT` contenesse spazi (es. home Windows con spazio nel username).
