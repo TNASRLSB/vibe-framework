@@ -502,6 +502,54 @@ Proceed immediately to Step 6.5 and Step 7. The backgrounded researcher will del
 
 ---
 
+## Step 6.5: Apply Researcher Path Corrections (new in 5.5.3)
+
+If the researcher agent ran AND produced a `path_corrections.md` in its memory namespace, apply high-confidence corrections to CLAUDE.md automatically; surface low-confidence ones as warnings in the Step 7 summary.
+
+```bash
+PATH_CORR_FILE="$CLAUDE_PROJECT_DIR/.claude/agent-memory/vibe-researcher/path_corrections.md"
+HIGH_CORR_JSON="[]"
+LOW_CORR_JSON="[]"
+
+if [[ -f "$PATH_CORR_FILE" ]]; then
+    # Extract the JSON array inside the fenced ```json ... ``` block.
+    CORR_ALL_JSON=$(PATH_CORR_FILE="$PATH_CORR_FILE" python3 <<'PYEOF'
+import os, re, json, sys
+content = open(os.environ["PATH_CORR_FILE"]).read()
+m = re.search(r"```json\s*(\[.*?\])\s*```", content, re.DOTALL)
+if not m:
+    print("[]")
+    sys.exit(0)
+try:
+    arr = json.loads(m.group(1))
+    print(json.dumps(arr))
+except Exception:
+    print("[]")
+PYEOF
+)
+    HIGH_CORR_JSON=$(echo "$CORR_ALL_JSON" | python3 -c "import json,sys; arr=json.load(sys.stdin); print(json.dumps([c for c in arr if c.get('confidence')=='high']))")
+    LOW_CORR_JSON=$(echo "$CORR_ALL_JSON" | python3 -c "import json,sys; arr=json.load(sys.stdin); print(json.dumps([c for c in arr if c.get('confidence')=='low']))")
+fi
+
+HIGH_COUNT=$(echo "$HIGH_CORR_JSON" | python3 -c "import json,sys; print(len(json.load(sys.stdin)))")
+LOW_COUNT=$(echo "$LOW_CORR_JSON" | python3 -c "import json,sys; print(len(json.load(sys.stdin)))")
+```
+
+If `$HIGH_COUNT > 0`, apply each correction via the **Edit** tool (NOT via Bash `sed` — Edit shows a diff and validates the target file hasn't drifted since Read):
+
+1. Print to the user: `Researcher found $HIGH_COUNT path reference(s) in CLAUDE.md that don't exist as written but match case-insensitively on disk. Auto-correcting:`
+2. For each entry in `$HIGH_CORR_JSON`, print `  - <current> → <suggested>` (don't apply yet; just list).
+3. Then for each entry, invoke the Edit tool on `$CLAUDE_PROJECT_DIR/CLAUDE.md` with `old_string=<current>`, `new_string=<suggested>`. Do this **sequentially** (not in parallel) because multiple Edits on the same file must serialize.
+4. After all edits, print: `Applied $HIGH_COUNT correction(s) to CLAUDE.md.`
+
+If `$LOW_COUNT > 0`, preserve the `$LOW_CORR_JSON` list — Step 7.2 surfaces these as warnings. Do NOT auto-apply.
+
+If `$HIGH_COUNT == 0 && $LOW_COUNT == 0`: skip silently.
+
+If the researcher is still running in the background when this step is reached (the corrections file doesn't yet exist), skip this step silently — the corrections remain on disk for the user to review, and re-running `/vibe:setup` will pick them up on the next run.
+
+---
+
 ## Step 7: Verification
 
 ### 7.1 Confirm Changes
@@ -525,11 +573,27 @@ VIBE Setup — Complete
 [x] Model set to opus
 [x] Effort set to max
 [x] CLAUDE.md: [generated/already existed]
-[x] Codebase mapping: [done/skipped]
+[x] Codebase mapping: [done/skipped/running in background]
 [x] Adaptive thinking: disabled (full depth)
 
 Restart Claude Code to apply all changes.
 ```
+
+If `$HIGH_COUNT > 0` (from Step 6.5), append after the checklist:
+
+```
+CLAUDE.md path corrections applied ($HIGH_COUNT):
+  - <current> → <suggested>
+```
+(one line per entry in `$HIGH_CORR_JSON`).
+
+If `$LOW_COUNT > 0`, append:
+
+```
+CLAUDE.md path warnings (low-confidence — not auto-applied):
+  - <current> (<note>)
+```
+(one line per entry in `$LOW_CORR_JSON`). These need user judgment — leave them for the user to inspect.
 
 ### 7.3 Record Version Marker
 
