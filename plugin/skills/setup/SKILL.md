@@ -389,35 +389,50 @@ If the mode was `LEGACY_NO_VIBE_TOKENS`, inform the user:
 
 ### 5.6 Opus 4.7 thinking-display fix (#49268)
 
-Opus 4.7 ships with thinking content `display: "omitted"` as the new default. The documented `showThinkingSummaries` CC setting is unwired in the harness (binary-RE confirmed). The real fix is the hidden CLI flag `--thinking-display summarized`. This step opt-in installs it in two places: shell rc alias (terminal) and VS Code `claudeCode.claudeProcessWrapper` (IDE). Opt-out: `VIBE_NO_THINKING_FIX=1`.
+Opus 4.7 ships with thinking content `display: "omitted"` as the new default. The documented `showThinkingSummaries` CC setting is unwired in the harness (binary-RE confirmed). The real fix is the hidden CLI flag `--thinking-display summarized`. Two install vectors: shell rc alias (terminal) and VS Code `claudeCode.claudeProcessWrapper` (IDE). This step is **adaptive**: if detection resolves the choice unambiguously, it applies without asking. A user prompt appears only when both vectors are installable. Opt-out: `VIBE_NO_THINKING_FIX=1`.
 
 ```bash
-SHELL_NAME=$(basename "$SHELL")  # bash | zsh | fish | …
+SHELL_NAME=$(basename "$SHELL")
 TF_STATE=$("$RECONCILER" detect-thinking-fix "$SHELL_NAME" 2>/dev/null)
+
+# Parse the four flags we branch on.
+SHELL_NEEDS=$(echo "$TF_STATE" | python3 -c "import json,sys; d=json.load(sys.stdin); print('1' if d['shell'].get('needs_install') else '')")
+VSCODE_NEEDS=$(echo "$TF_STATE" | python3 -c "import json,sys; d=json.load(sys.stdin); print('1' if d['vscode'].get('needs_install') else '')")
+SHELL_SUPPORTED=$(echo "$TF_STATE" | python3 -c "import json,sys; d=json.load(sys.stdin); print('1' if d['shell'].get('supported') else '')")
+VSCODE_SETTINGS_PATH=$(echo "$TF_STATE" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['vscode'].get('settings_path',''))")
 ```
 
-The detect call returns `{shell:{...}, vscode:{...}}` with per-vector flags: `marker_present`, `needs_install`, `alien_alias_present` / `alien_wrapper_set`. Skip vectors where `marker_present` or alien flags are true (already configured or user owns it). For `supported: false` shells (fish/ksh/...), surface a manual instruction instead of auto-applying.
+Four cases:
 
-Ask the user one prompt:
-
-> Opus 4.7 hides reasoning summaries by default (#49268). Install fix?
-> `[a]` both (shell + VS Code)  `[s]` shell only  `[v]` VS Code only  `[n]` skip
-
-Apply per choice:
+**Case A — shell candidate only (`SHELL_NEEDS=1`, `VSCODE_NEEDS=""`).** Auto-apply shell. No user prompt.
 
 ```bash
-# Shell
 "$RECONCILER" apply-thinking-fix-shell "$SHELL_NAME"
-
-# VS Code — use the absolute wrapper path from the cached plugin install
-WRAPPER_ABS="${CLAUDE_PLUGIN_ROOT}/scripts/cc-thinking-wrapper.sh"
-VSCODE_SETTINGS=$(echo "$TF_STATE" | jq -r '.vscode.settings_path')
-"$RECONCILER" apply-thinking-fix-vscode "$VSCODE_SETTINGS" "$WRAPPER_ABS"
 ```
+Print: `Installed shell fix in ~/.bashrc. VS Code not detected — skipped. To activate: source ~/.bashrc or open a new terminal.`
 
-Each apply returns JSON with a `status` field: `installed` (tell user to `source ~/.bashrc` or restart terminal), `already_installed` (no-op), `alien_wrapper_present` (skipped — user has custom wrapper, surface for manual review). Removed via `apply-thinking-fix-shell` → `remove-thinking-fix-shell` (future `--reset` mode). For unsupported shells, fall back to a manual instruction:
+**Case B — VS Code candidate only (`SHELL_NEEDS=""`, `VSCODE_NEEDS=1`).** Auto-apply VS Code. No user prompt.
 
-> Your shell isn't auto-installable. Add: `alias claude='command claude --thinking-display summarized'` to your rc. Or set `VIBE_NO_THINKING_FIX=1`.
+```bash
+WRAPPER_ABS="${CLAUDE_PLUGIN_ROOT}/scripts/cc-thinking-wrapper.sh"
+"$RECONCILER" apply-thinking-fix-vscode "$VSCODE_SETTINGS_PATH" "$WRAPPER_ABS"
+```
+Print: `Installed VS Code wrapper. Shell already configured or unsupported — skipped.`
+
+**Case C — both candidates (`SHELL_NEEDS=1`, `VSCODE_NEEDS=1`).** Ask once, 2-way. Default `y`.
+
+> Install Opus 4.7 thinking-display fix (#49268) for both shell and VS Code? This wraps the `claude` command so reasoning summaries show instead of being omitted. `[y]` install both (default) / `[n]` skip.
+
+If `y` (or blank): apply both (run the commands from Case A then Case B).
+If `n`: skip silently.
+
+**Case D — neither candidate (`SHELL_NEEDS=""`, `VSCODE_NEEDS=""`).** Skip silently. Both vectors are already configured, or both carry user-owned custom wrappers (which the detector flags and the apply commands also refuse to clobber).
+
+If `SHELL_SUPPORTED=""` (unsupported shell like fish/ksh) AND `VSCODE_NEEDS=""` AND there is no other shell install path, print the manual fallback once:
+
+> Your shell isn't auto-installable. Add this line to your shell rc: `alias claude='command claude --thinking-display summarized'`. Or set `VIBE_NO_THINKING_FIX=1` to silence this step.
+
+Each apply command returns JSON with a `status` field: `installed` (tell the user to `source ~/.bashrc` or restart the terminal), `already_installed` (silent no-op), `alien_wrapper_present` (skipped — surface the existing wrapper path for manual review, do not clobber).
 
 ### 5.7 Pragmatic Priming (Optional, 5.5.0 §2.6 Tier A)
 
