@@ -1,5 +1,38 @@
 # Changelog
 
+## 5.5.6 — 2026-04-22
+
+"Hybrid-hint manifest quoting + path-with-spaces audit" — fix chirurgico a un unico mancato quoting in `plugin/hooks/hooks.json` e audit di tutti gli script hook VIBE contro file path con spazi. Patch report-driven: utente segnala errori `/bin/sh: riga 1: /path/prefix: File o directory non esistente` con CWD `/home/uh1/VIBEPROJECTS/TORA NO AI SRL SB/...`. Diagnosi: VIBE non è la root cause degli errori utente (VIBE non registra hook su `TaskCreate`/`TaskUpdate`/`ToolSearch` — tool per cui l'utente riceveva errori). Root cause: un hook nel `settings.json` utente usa `$CLAUDE_PROJECT_DIR` non quotato. Tuttavia l'audit ha rivelato che `hybrid-execution-hint.sh` (shipped 5.5.4) era l'unico hook VIBE su 16 registrato senza quote doppie attorno al path — latent fragility se `CLAUDE_PLUGIN_ROOT` contenesse spazi (es. home Windows con spazio nel username).
+
+### Changes
+
+- **`plugin/hooks/hooks.json:50`** — aggiunto quoting al command dell'hook `hybrid-execution-hint`. Prima: `"command": "${CLAUDE_PLUGIN_ROOT}/scripts/hybrid-execution-hint.sh"`. Dopo: `"command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/hybrid-execution-hint.sh\""` — coerente con gli altri 15 hook VIBE, tutti già quotati. Latent da 5.5.4; nessun utente impatto noto fintanto che `CLAUDE_PLUGIN_ROOT` risiede in path senza spazi (tipicamente `~/.claude/plugins/cache/...`), ma è il classico quoting mancante che esplode in edge case Windows/NTFS o su install fuori dalla cache canonica.
+- **`plugin/.claude-plugin/plugin.json`** — version `5.5.5` → `5.5.6`.
+
+### Audit: spazi nei path (ipotesi utente verificata)
+
+Test live su tutti e 5 i PreToolUse hook VIBE (`read-before-edit`, `read-discipline`, `post-edit-lint`, `security-quickscan`, `pre-tool-security`) con `file_path` contenente spazi (es. `/tmp/dir with spaces/file.txt`). **Tutti passano.** Quoting corretto su `$FILE`, `$FILE_PATH`, `$CWD` nei body script (`"$VAR"` ovunque serva, mai `$VAR` bare).
+
+### Non fixato (out-of-scope per 5.5.6)
+
+- **Errori `/bin/sh: riga 1: /path/prefix` su `TaskCreate`/`ToolSearch`/`TaskUpdate` nel setup utente.** Non fire'abili da hook VIBE (matcher inesistenti). Root cause è un hook user-settings con `$CLAUDE_PROJECT_DIR` non quotato, o plugin terzo mal configurato. Diagnostica lato utente:
+  ```bash
+  for f in ~/.claude/settings.json ~/.claude/settings.local.json \
+           ./.claude/settings.json ./.claude/settings.local.json; do
+    [ -f "$f" ] && echo "=== $f ===" && jq -r '
+      .hooks // {} | to_entries[] |
+      .key as $event | .value[]? | .hooks[]? |
+      "\($event): \(.command)"
+    ' "$f"
+  done
+  ```
+  Uno strumento diagnostico automatico in `/vibe:setup` è candidato per un futuro patch cycle (capability-boost, non verification — coerente con `feedback_capability_vs_verification`).
+
+### Migration from 5.5.5
+
+- **Automatica.** Il fix è una riga nel manifest hook. Nessuna re-esecuzione di `/vibe:setup`. Nessuna azione utente richiesta. Si attiva dalla prossima sessione CC dopo l'upgrade.
+- **Nessuna regressione:** 242/242 test pass dopo l'aggiunta dell'entry CHANGELOG.
+
 ## 5.5.5 — 2026-04-22
 
 "Read-before-edit false positive fix" — due patch chirurgiche a `plugin/scripts/read-before-edit.sh` che risolvono spurious blocks segnalati da utenti in produzione e onorano una promessa del commento header (5.4.0) mai implementata. Fix A: path normalization via `realpath+expanduser` per gestire mismatch di forma path (tilde vs assoluto, symlink vs target, double-slash). Fix B: coverage-equals-file — un `Read` con `offset in (None,0)` e `limit >= line_count(file)` ora conta come full read. Zero scope-creep: nessun altro script toccato, nessuna modifica al manifest hook, nessuna variazione di skill/agent/command.
