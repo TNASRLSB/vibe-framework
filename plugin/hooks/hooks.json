@@ -41,6 +41,15 @@
             "statusMessage": "VIBE: read-before-edit check..."
           }
         ]
+      },
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/hybrid-execution-hint.sh"
+          }
+        ]
       }
     ],
     "PostToolUse": [
