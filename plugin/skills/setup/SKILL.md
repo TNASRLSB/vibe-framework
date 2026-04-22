@@ -305,21 +305,30 @@ DATA_DIR="$HOME/.claude/plugins/data/vibe-vibe-framework"
 DATA_DIFF=$("$RECONCILER" detect-data "$DATA_DIR" 2>/dev/null || echo '{"to_remove":[]}')
 CLAUDE_MODE=$("$RECONCILER" classify-claude-md "$CLAUDE_PROJECT_DIR/CLAUDE.md")
 
-# "will_touch" is true unless mode is LEGACY_NO_VIBE_TOKENS (user-owned file)
-case "$CLAUDE_MODE" in
-  LEGACY_NO_VIBE_TOKENS) WILL_TOUCH=false ;;
-  *) WILL_TOUCH=true ;;
-esac
+# "will_touch" is false iff mode is LEGACY_NO_VIBE_TOKENS (user-owned file).
+# We pass booleans as JSON-parseable strings and let json.loads() convert —
+# interpolating bash `true`/`false` into Python directly yields NameError.
+if [[ "$CLAUDE_MODE" == "LEGACY_NO_VIBE_TOKENS" ]]; then
+    WILL_TOUCH_JSON="false"
+else
+    WILL_TOUCH_JSON="true"
+fi
 
-COMBINED=$(python3 -c "
-import json, sys
+COMBINED=$(CLAUDE_MODE="$CLAUDE_MODE" WILL_TOUCH_JSON="$WILL_TOUCH_JSON" \
+    ENV_DIFF="$ENV_DIFF" TOP_DIFF="$TOP_DIFF" DATA_DIFF="$DATA_DIFF" \
+    python3 <<'PYEOF'
+import json, os
 print(json.dumps({
-    'env': json.loads('''$ENV_DIFF'''),
-    'top_level': json.loads('''$TOP_DIFF'''),
-    'data': json.loads('''$DATA_DIFF'''),
-    'claude_md': {'mode': '$CLAUDE_MODE', 'will_touch': $WILL_TOUCH}
+    'env': json.loads(os.environ['ENV_DIFF']),
+    'top_level': json.loads(os.environ['TOP_DIFF']),
+    'data': json.loads(os.environ['DATA_DIFF']),
+    'claude_md': {
+        'mode': os.environ['CLAUDE_MODE'],
+        'will_touch': json.loads(os.environ['WILL_TOUCH_JSON']),
+    },
 }))
-")
+PYEOF
+)
 ```
 
 ### 5.2 Present the Diff to the User
