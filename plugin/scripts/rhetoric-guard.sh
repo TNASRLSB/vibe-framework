@@ -90,6 +90,9 @@
 #                            matching — no fenced-block or backtick strip)
 #   VIBE_RG_BYPASS_VERBOSE   If set to "1", log original + filtered message
 #                            to ${LOG_DIR}/rhetoric-guard-bypass-${SESSION}.log
+#   VIBE_RG_CAPITULATION_DISABLED  If set to "1", skip the §15.0 sycophantic-
+#                                  capitulation category. Other categories
+#                                  (ownership-dodging, etc.) still fire.
 #
 # ── EXIT CODES ────────────────────────────────────────────────────
 # Always exits 0. Blocks via the `{"decision":"block","reason":"..."}`
@@ -335,6 +338,40 @@ VIOLATIONS=(
   "if you'd like, I can|permission-seeking|Do not offer — do. If the work is needed, do it."
   "pause for your input|permission-seeking|Do not pause. Continue with the most reasonable interpretation."
   "won't touch anything until|permission-seeking|Do not stop. The task is not done. Pick a reasonable approach and proceed."
+
+  # §15.0 sycophantic-capitulation (5.6.1) — retroactive capitulation about
+  # a CLAIM already made. Triggered by user pushback; the model immediately
+  # agrees + apologizes + reverses WITHOUT verifying with Read/Grep/tool
+  # output. Distinct from ownership-dodging (forward-looking responsibility
+  # evasion); this category catches backward-looking sycophantic agreement.
+  # The injected correction directs the model to cite specific evidence
+  # before reversing, or to restate its prior position.
+  #
+  # Default-ON. Disable just this category via VIBE_RG_CAPITULATION_DISABLED=1
+  # (does not disable other categories). Broader high-FP patterns
+  # ("you're right", "I apologize", "my mistake" alone) gated separately by
+  # VIBE_RG_CAPITULATION_BROAD=1 — see CAPITULATION_BROAD_PATTERNS below.
+  "i was wrong|sycophantic-capitulation|VERIFY BEFORE AGREEING. Cite the specific evidence (file:line, tool output, fact) that justifies the reversal. If no evidence, do not capitulate — restate your prior position with reasoning."
+  "i had it wrong|sycophantic-capitulation|VERIFY BEFORE AGREEING. Cite the file:line or tool output that justifies the reversal. No evidence = no reversal."
+  "i had it backwards|sycophantic-capitulation|VERIFY BEFORE AGREEING. Cite specific evidence — not just user disagreement. State what changed and why."
+  "you're absolutely right|sycophantic-capitulation|VERIFY BEFORE AGREEING. 'Absolutely right' without cited evidence is sycophancy. State the fact (file:line, tool result) that supports the agreement."
+  "you are absolutely right|sycophantic-capitulation|VERIFY BEFORE AGREEING. 'Absolutely right' without cited evidence is sycophancy. State the fact that supports the agreement."
+  "you're completely right|sycophantic-capitulation|VERIFY BEFORE AGREEING. 'Completely right' without cited evidence is sycophancy."
+  "you are completely right|sycophantic-capitulation|VERIFY BEFORE AGREEING. 'Completely right' without cited evidence is sycophancy."
+  "actually you're right|sycophantic-capitulation|VERIFY BEFORE AGREEING. The user disagreeing is not evidence the user is right. Cite the specific fact that supports the reversal."
+  "actually, you're right|sycophantic-capitulation|VERIFY BEFORE AGREEING. The user disagreeing is not evidence the user is right. Cite the specific fact that supports the reversal."
+  "actually you are right|sycophantic-capitulation|VERIFY BEFORE AGREEING. The user disagreeing is not evidence the user is right. Cite the specific fact that supports the reversal."
+  "actually, you are right|sycophantic-capitulation|VERIFY BEFORE AGREEING. The user disagreeing is not evidence the user is right. Cite the specific fact that supports the reversal."
+  "let me correct myself|sycophantic-capitulation|Before correcting, cite the evidence (file:line, tool output) that proves the original was wrong. No evidence = restate, do not retract."
+  "i apologize for the confusion|sycophantic-capitulation|Do not apologize as a substitute for analysis. State the specific error, the evidence that proves it, and the corrected claim."
+  "i apologize for the error|sycophantic-capitulation|Do not apologize as a substitute for analysis. State the specific error, the evidence that proves it, and the corrected claim."
+  "i apologize for the incorrect|sycophantic-capitulation|Do not apologize as a substitute for analysis. State the specific error, the evidence that proves it, and the corrected claim."
+  "my apologies for the confusion|sycophantic-capitulation|Do not apologize as a substitute for analysis. State the specific error, the evidence, and the corrected claim."
+  "my apologies for the error|sycophantic-capitulation|Do not apologize as a substitute for analysis. State the specific error, the evidence, and the corrected claim."
+  "avevo torto|sycophantic-capitulation|VERIFICA PRIMA DI CONCEDERE. Cita evidenza concreta (file:linea, output di tool) che giustifichi la marcia indietro. Senza evidenza, riformula — non concedere."
+  "mi correggo|sycophantic-capitulation|Prima di correggere, cita l'evidenza (file:linea, output di tool) che dimostra che l'originale era sbagliato. Senza evidenza, riformula — non ritrattare."
+  "hai ragione|sycophantic-capitulation|VERIFICA PRIMA DI CONCEDERE. Il disaccordo dell'utente non è prova che l'utente abbia ragione. Cita evidenza specifica."
+  "in realtà hai ragione|sycophantic-capitulation|VERIFICA PRIMA DI CONCEDERE. Cita l'evidenza che ha cambiato la tua posizione, non solo il pushback dell'utente."
 )
 
 # ── Stage 3: HIGH-risk pattern table for meta-keyword suppression ──
@@ -352,9 +389,9 @@ VIOLATIONS=(
 # Portable set membership (bash 3.2 compat — macOS ships /bin/bash 3.2,
 # no declare -A). Border pipes so "|pat|" glob matches exactly; no
 # pattern contains "|" so the delimiter is safe.
-HIGH_RISK_PATTERNS="|pre-existing|not from my changes|not my change|not caused by my|not introduced by my|already existed before|before my changes|prior to my changes|unrelated to my changes|an existing issue|existing bug|known limitation|known issue|future work|left as an exercise|"
+HIGH_RISK_PATTERNS="|pre-existing|not from my changes|not my change|not caused by my|not introduced by my|already existed before|before my changes|prior to my changes|unrelated to my changes|an existing issue|existing bug|known limitation|known issue|future work|left as an exercise|i was wrong|i had it wrong|i had it backwards|you're absolutely right|you are absolutely right|you're completely right|you are completely right|actually you're right|actually, you're right|actually you are right|actually, you are right|let me correct myself|i apologize for the confusion|i apologize for the error|i apologize for the incorrect|my apologies for the confusion|my apologies for the error|avevo torto|mi correggo|hai ragione|in realtà hai ragione|"
 
-META_KEYWORDS_RE='rhetoric.guard|pattern set|pattern list|categor(y|ies)|regex|false positive|trigger phrase|dodging cluster|audit doc|post.mortem|violations array|rhetoric_guard|rhetoric guard'
+META_KEYWORDS_RE='rhetoric.guard|pattern set|pattern list|categor(y|ies)|regex|false positive|trigger phrase|dodging cluster|audit doc|post.mortem|violations array|rhetoric_guard|rhetoric guard|capitulation|sycophancy|sycophantic'
 
 # --- Category: skim-tells (5.4.0, flag-gated) ----------------------------
 # Fires only when VIBE_RG_SKIM_PATTERNS_ENABLED=1.
@@ -388,6 +425,13 @@ fi
 for entry in "${VIOLATIONS[@]}"; do
   IFS='|' read -r pattern category correction <<<"$entry"
   if echo "$MESSAGE_FILTERED" | grep -iq "$pattern"; then
+    # §15.0 per-category disable: sycophantic-capitulation only.
+    # Honor user opt-out without affecting other categories.
+    if [[ "$category" == "sycophantic-capitulation" ]] && [[ "${VIBE_RG_CAPITULATION_DISABLED:-0}" == "1" ]]; then
+      log_event "skip_capitulation_disabled" "$pattern" "$category" "$FIRE_COUNT"
+      continue
+    fi
+
     # Stage 3: meta-keyword suppression for HIGH-risk patterns only.
     # If the matching PARAGRAPH (RS = "" splits on blank lines) contains
     # a meta-keyword indicating discussion of the guard itself, suppress.

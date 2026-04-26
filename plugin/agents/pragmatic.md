@@ -36,7 +36,7 @@ Use `@vibe:pragmatic` or `claude --agent pragmatic` for single sessions where:
 ## Relationship to Tier A / Tier B
 
 - **Tier A** (shell wrapper `--append-system-prompt`): always-on, O(1) token cost per conversation
-- **Tier B** (`VIBE_PRAGMATIC_MODE=1` hook): opt-in per-session via env, O(N) token cost per turn
+- **Tier B** (UserPromptSubmit hook, default-ON): per-turn priming, O(N) token cost — disable via `VIBE_PRAGMATIC_MODE=0`
 - **Tier C** (this agent): per-invocation, no config changes, strongest scoping
 
 Pick the tier that matches your desired scope.

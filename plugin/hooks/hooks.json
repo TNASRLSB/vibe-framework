@@ -118,6 +118,11 @@
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/atomic-enforcement.sh\"",
             "statusMessage": "VIBE: atomic verification..."
+          },
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/verify-before-assert.sh\"",
+            "statusMessage": "VIBE: verify-before-assert..."
           }
         ]
       }

@@ -75,6 +75,16 @@ Agent names are specified in `$ARGUMENTS`. Skip scanning and proposal.
 
 Extract agent names from arguments. Valid names: seurat, ghostwriter, baptist, emmet, heimdall, orson, scribe.
 
+### Step 1.5: Competitor research prelude (conditional)
+
+If the parsed agent list includes any of `seurat`, `ghostwriter`, or `baptist`, those agents need competitor benchmarks for evidence-rich findings. Run the shared protocol ONCE before dispatching, so all relevant agents consume the same cached data and don't race each other.
+
+1. Check whether `.vibe/competitor-research/metadata.json` exists at the project root and the `date` field is within 30 days.
+2. **If fresh:** proceed to Step 2. Each agent will read the cache during its run.
+3. **If stale or missing:** ask the user for service/product type, then `Read` and execute `${CLAUDE_PLUGIN_ROOT}/skills/_shared/competitor-research.md` with that input. Cache results per Phase 5 of the protocol. Then proceed to Step 2.
+
+Skip this step entirely if the dispatch list contains only non-research agents (`emmet`, `heimdall`, `orson`, `scribe`).
+
 ### Step 2: Launch agents
 
 For each specified agent, launch using the Agent tool:
@@ -141,6 +151,16 @@ Proceed? (confirm, or adjust: "add orson", "remove baptist", etc.)
 ```
 
 If `--all` flag is set, skip confirmation and launch all relevant agents.
+
+### Step 3.5: Competitor research prelude (conditional)
+
+After user confirms the agent list (or `--all` skips confirmation), check if any of `seurat`, `ghostwriter`, `baptist` are in it. If yes, run the shared competitor-research protocol once before dispatching:
+
+1. Check whether `.vibe/competitor-research/metadata.json` exists at the project root and the `date` field is within 30 days.
+2. **If fresh:** proceed to Step 4. Each agent will read the cache during its run.
+3. **If stale or missing:** ask the user for service/product type, then `Read` and execute `${CLAUDE_PLUGIN_ROOT}/skills/_shared/competitor-research.md` with that input. Cache results per Phase 5 of the protocol. Then proceed to Step 4.
+
+Skip if no research-consuming agents are in the dispatch list. The Status Mode (read-only) bypasses this entirely. The synchronization here is critical — without it, 3 agents launched in parallel that all see stale cache will race on the same protocol.
 
 ### Step 4: Launch agents
 

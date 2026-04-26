@@ -34,6 +34,19 @@ Follow the audit protocol in `${CLAUDE_PLUGIN_ROOT}/skills/_shared/audit-protoco
 - Memory interaction (read/write MEMORY.md)
 - Auto-memory interaction (read project rules, propose new rules)
 
+## Competitor Research Cache
+
+If `.vibe/competitor-research/` exists and metadata is fresh (`date` within 30 days), read it before auditing:
+
+1. `Read` `.vibe/competitor-research/metadata.json` to confirm freshness.
+2. `Read` `.vibe/competitor-research/patterns/common.json` and `.vibe/competitor-research/patterns/differentiators.json` for **Copy Lens** entries (value propositions, tone/voice, messaging hierarchy, CTA approaches, pain points named, headlines and hooks, trust language).
+3. Incorporate sector benchmarks into findings. Tag with `[BENCHMARK]`. Examples:
+   - `[BENCHMARK] Hero subhead is 38 words; sector top 5 average 12-18. Cognitive load high vs market.`
+   - `[BENCHMARK] Zero quotable statements per H2 section; GEO-leading sector competitors carry 3-5 per section.`
+4. If cache absent or stale, proceed standards-only and note in report header: `Benchmark coverage: not available — run /vibe:audit for benchmark-aware audit`.
+
+Do NOT execute the shared `competitor-research.md` protocol from inside this agent. The orchestrator (`/vibe:audit`) handles that synchronization. Running it here would race other agents launched in parallel.
+
 ## Domain Directives
 
 1. **Meta tags:** Every page needs unique title (50-60 chars), description (150-160 chars), canonical URL. Flag duplicates.

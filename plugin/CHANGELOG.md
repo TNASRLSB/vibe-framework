@@ -1,5 +1,53 @@
 # Changelog
 
+## 5.6.0 — 2026-04-26
+
+"Sycophantic-capitulation mitigation + verification discipline" — five integrated fixes targeting the model-level pattern where Claude makes confident-wrong assertions about repo state, then capitulates ("avevo torto, hai ragione") under user pushback without verifying. Distinct from rhetoric-guard 5.2's coverage (giving up, ownership-dodging, permission-seeking); this release closes the EPISTEMIC gap.
+
+### Changes
+
+#### A — Strengthened competitor-research chain language (3 SKILLs)
+
+The shared `competitor-research.md` protocol was referenced by Seurat (Setup + Brand modes), Ghostwriter (Write/Phase 2), and Baptist (Audit Step 1) via `> **Read** ... for the full research protocol` blockquote. Format-wise this read as an aside, not a directive — a model in skim mode passes through it. Replaced with **MANDATORY PRELUDE** numbered steps: explicit "STOP. Do not proceed without protocol output", imperative `Use the Read tool now on PATH`, freshness check on `.vibe/competitor-research/metadata.json`, and "Do NOT continue to Step N until storage is complete". Same chain, unmissable language. Affects: `plugin/skills/seurat/SKILL.md`, `plugin/skills/ghostwriter/SKILL.md`, `plugin/skills/baptist/SKILL.md`.
+
+#### B — Pragmatic priming Tier B promoted to default-ON
+
+`plugin/scripts/pragmatic-priming.sh` was gated default-OFF behind `VIBE_PRAGMATIC_MODE=1` (5.5.0–5.5.7). The 5.5.1 A/B measured 90% reduction in hedge-word density on Opus 4.7 — empirically validated, but never default-active. Per Iron Man Mandate + User Burden Zero, the validated mitigation now ships ON. Disable via `VIBE_PRAGMATIC_MODE=0`. Documentation updated: `plugin/README.md` (Tier B description), `plugin/agents/pragmatic.md` (Tier comparison), `plugin/skills/setup/SKILL.md` §5.7 (Tier description).
+
+#### C — rhetoric-guard.sh: new category `sycophantic-capitulation` (21 patterns)
+
+Adds §15.0 to `plugin/scripts/rhetoric-guard.sh`, catching retroactive capitulation about a CLAIM already made — distinct from existing ownership-dodging (forward-looking responsibility evasion); this targets backward-looking sycophantic agreement under user pushback. Patterns: `i was wrong`, `i had it (wrong|backwards)`, `you're absolutely right`, `you're completely right`, `actually(,) you're right`, `let me correct myself`, `i apologize for the (confusion|error|incorrect)`, `my apologies for the (confusion|error)`, plus Italian variants `avevo torto`, `mi correggo`, `hai ragione`, `in realtà hai ragione`. Correction injected: "VERIFY BEFORE AGREEING. Cite the specific evidence (file:line, tool output, fact) that justifies the reversal. If no evidence, do not capitulate — restate your prior position with reasoning." All patterns added to `HIGH_RISK_PATTERNS` for Stage-3 meta-keyword suppression (don't fire when discussed in audit/post-mortem context). `META_KEYWORDS_RE` extended with `capitulation|sycophancy|sycophantic`. Per-category disable: `VIBE_RG_CAPITULATION_DISABLED=1`.
+
+#### D — `Verification Discipline` section in CLAUDE.md template
+
+`plugin/setup/claude-md-template.md` gains a new managed section between Capability Audit and VIBE Limits. Imperative bullets: file existence → use Read/Glob, function/symbol presence → use Grep, architecture claims → cite line numbers, cross-references → check both ends of the link. Plus pushback discipline: "User disagreement is not evidence the user is right. Cite the specific fact (file:line, tool output) that supports the reversal — or restate your prior position with reasoning." Patterns-to-avoid section names sycophantic capitulation explicitly. Propagates to all VIBE-managed CLAUDE.md files on next `/vibe:setup` run.
+
+#### E — New Stop hook: `verify-before-assert.sh`
+
+`plugin/scripts/verify-before-assert.sh` (new file, registered in hooks.json Stop array after atomic-enforcement). Detects assertion patterns in the final assistant message — backtick-quoted file paths claiming existence/contents, function-behavior claims, variable claims, line-number citations — without preceding Read/Grep/Glob/LS in recent transcript turns (window: last 20 entries). Default mode: **log-only**, writes events to `${CLAUDE_PLUGIN_DATA}/verify-before-assert/vba-events-${SESSION_ID}.jsonl` for maintainer field-data review. Block mode opt-in via `VIBE_VBA_BLOCK=1`. Disable: `VIBE_VBA_DISABLED=1`. Conservative pattern set (each requires backtick-quoted target) keeps FP low at cost of missing assertions in plain prose; acceptable tradeoff for log-only. Distinct from rhetoric-guard.sh — that targets RHETORICAL patterns; this targets EPISTEMIC patterns (claims about repo state without verification). Hook count: 16 → 17.
+
+#### F — Chain to 4 additional modes that lacked it
+
+After deeper read of the 3-skill philosophy ("market is the baseline, user is the differentiator"), 4 modes that lacked the competitor-research chain now have it: `seurat generate` (component generation), `ghostwriter optimize` (rewrites of existing content), `baptist test` (A/B hypothesis design), `baptist funnel` (drop-off diagnosis). Each gets a "MANDATORY PRELUDE" or "Prelude" block matching Task A's pattern. Modes that do pure introspection on existing artifacts (`seurat extract/preview/map`, `ghostwriter validate`, `baptist analyze`) intentionally skip the chain — they don't produce sector-baseline-dependent output.
+
+#### G — Audit orchestrator + 3 agents share research cache
+
+`/vibe:audit` orchestrator (`plugin/skills/audit/SKILL.md`) gains a research prelude in both Direct Launch (Step 1.5) and Interactive (Step 3.5) modes: when the dispatch list includes any of seurat/ghostwriter/baptist, the orchestrator runs the shared competitor-research protocol ONCE (or confirms fresh cache) before dispatching. Synchronization point — prevents the 3 agents from racing on the same protocol when launched in parallel. Skipped when only non-research agents (emmet/heimdall/orson/scribe) are in dispatch list.
+
+The 3 agents (`plugin/agents/{seurat,ghostwriter,baptist}.md`) gain a `## Competitor Research Cache` section: read `.vibe/competitor-research/metadata.json` for freshness, consume the relevant lens (Design / Copy / Conversion), incorporate sector benchmarks into findings tagged `[BENCHMARK]`. Audits without benchmarks are visibly tagged as such (`Benchmark coverage: not available — run /vibe:audit for benchmark-aware audit`) so the user knows half the value is missing. Agents do NOT execute the protocol themselves — orchestrator handles synchronization.
+
+Effect: `/vibe:audit` produces benchmark-aware findings (e.g., "form has 6 fields, sector top 5 have 3" instead of just "form has 6 fields"). Standalone agent invocation degrades gracefully to standards-only with visible header note.
+
+### Migration from 5.5.7
+
+- **Tier B activation:** users who previously ignored `VIBE_PRAGMATIC_MODE` now get the priming injected per turn by default. Token cost ~30 per user prompt, cached via prompt caching. To revert to raw model behavior: `export VIBE_PRAGMATIC_MODE=0`.
+- **rhetoric-guard new patterns:** 21 new patterns may fire on legitimate self-correction in messages without verification context. Per-category disable available via `VIBE_RG_CAPITULATION_DISABLED=1` if false positives become disruptive. Field calibration expected over the 5.6.x cycle.
+- **verify-before-assert hook:** log-only by default, no behavioral change. Block mode opt-in only after maintainer reviews `vba-events-*.jsonl` for FP rate.
+- **CLAUDE.md template:** new Verification Discipline section appears in next `/vibe:setup` reconciliation. Existing user-authored content outside `<!-- VIBE:managed-* -->` markers is preserved.
+- **F (additional mode chains):** First invocation of `/vibe:seurat generate`, `/vibe:ghostwriter optimize`, `/vibe:baptist test`, `/vibe:baptist funnel` after upgrade pauses for service/product type if no cached research exists in `.vibe/competitor-research/`. Subsequent invocations within 30 days reuse cache.
+- **G (audit orchestrator + agents):** First `/vibe:audit` after upgrade (with seurat/ghostwriter/baptist in dispatch list) pauses for research input if no cache. Standalone agent invocations now produce findings tagged `Benchmark coverage: not available` when cache is missing.
+- **Re-run `/vibe:setup`** to pick up the template change and stale-hook cleanup if not already applied from 5.5.7.
+
 ## 5.5.7 — 2026-04-22
 
 "V1 hook auto-cleanup + Write-then-Edit false positive" — due fix report-driven raggruppati. **Fix A:** `plugin/scripts/read-before-edit.sh` riconosce `Write` come equivalente a full read (l'assistant ha appena scritto il contenuto del file → conosce esattamente cosa c'è dentro → un `Edit` successivo è sicuro). **Fix B:** `/vibe:setup` ora rileva e rimuove automaticamente hook residui da VIBE v1 (morpheus) nel settings utente e di progetto — nessuna azione manuale richiesta, solo re-run di `/vibe:setup` dopo upgrade a 5.5.7. Cura il caso report-driven di utenti con progetto in path contenente spazi che vedevano `/bin/sh: riga 1: /path/prefix: File o directory non esistente` ad ogni PreToolUse.
