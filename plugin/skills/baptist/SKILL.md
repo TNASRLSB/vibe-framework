@@ -41,11 +41,16 @@ Every conversion failure traces back to one of these. Baptist identifies WHICH f
 
 **Trigger:** `/vibe:baptist audit [url/screenshot]`
 
-### Step 1: Competitor Research (Conversion Lens)
+### Step 1: Competitor Research (Conversion Lens) — MANDATORY PRELUDE
 
-> **Read** `${CLAUDE_SKILL_DIR}/../_shared/competitor-research.md` for the full research protocol.
+**STOP. Do not skip this step. Do not proceed to Step 2 without the protocol output.**
 
-Check if competitor research exists for this project. If not, ask the user for their service/product type and execute the shared protocol.
+CRO recommendations without market benchmarks produce subjective opinion instead of evidence-based prioritization.
+
+1. Use the `Read` tool now on `${CLAUDE_SKILL_DIR}/../_shared/competitor-research.md` to load the full protocol.
+2. Check whether `.vibe/competitor-research/metadata.json` exists at the project root and the `date` field is within 30 days.
+3. **If fresh:** read the cached results from `.vibe/competitor-research/` and consume the Conversion Lens.
+4. **If stale or missing:** ask the user for service/product type, then execute the protocol you just loaded. Save results per Phase 5. Do NOT continue to Step 2 until storage is complete.
 
 Baptist consumes the **Conversion Lens**: conversion flows, CTA placement, trust signals, friction reducers, form design, social proof, objection handling.
 
@@ -166,6 +171,17 @@ Key calibration points:
 
 > **Read** `${CLAUDE_SKILL_DIR}/references/experiments.md` for the complete methodology.
 
+### Prelude: Competitor Research (Conversion Lens) — MANDATORY
+
+**STOP. Do not draft hypotheses without sector benchmarks.**
+
+A/B hypotheses without competitor evidence are guesswork — "I think X might convert better" instead of "Top 5 competitors do Y, our Z is the deviation, hypothesis is to converge or deviate intentionally". The Step 1 hypothesis format below explicitly cites competitor evidence; that evidence comes from this protocol.
+
+1. Use the `Read` tool now on `${CLAUDE_SKILL_DIR}/../_shared/competitor-research.md` to load the full protocol.
+2. Check whether `.vibe/competitor-research/metadata.json` exists at the project root and the `date` field is within 30 days.
+3. **If fresh:** read the cached results from `.vibe/competitor-research/` and consume the Conversion Lens.
+4. **If stale or missing:** ask the user for service/product type, then execute the protocol you just loaded. Save results per Phase 5. Do NOT continue to Step 1 until storage is complete.
+
 ### Step 1: Hypothesis
 
 **Format:**
@@ -235,6 +251,17 @@ Output: hypothesis restated, result (confirmed/rejected/inconclusive), key numbe
 **Trigger:** `/vibe:baptist funnel`
 
 > **Read** `${CLAUDE_SKILL_DIR}/references/analytics.md` → "Funnel Analysis"
+
+### Prelude: Competitor Research (Conversion Lens) — MANDATORY
+
+**STOP. Do not diagnose drop-offs without sector benchmarks.**
+
+Drop-off severity is relative. "60% drop on pricing page" might be normal for the sector or catastrophic — without benchmark the diagnosis is blind. Funnel analysis without market context produces severity inflation (everything looks bad) or deflation (nothing looks actionable).
+
+1. Use the `Read` tool now on `${CLAUDE_SKILL_DIR}/../_shared/competitor-research.md` to load the full protocol.
+2. Check whether `.vibe/competitor-research/metadata.json` exists at the project root and the `date` field is within 30 days.
+3. **If fresh:** read the cached results from `.vibe/competitor-research/` and consume the Conversion Lens.
+4. **If stale or missing:** ask the user for service/product type, then execute the protocol you just loaded. Save results per Phase 5. Do NOT continue to Step 1 until storage is complete.
 
 ### Step 1: Define the Funnel
 

@@ -6,9 +6,15 @@
 # every user prompt submission. Mitigates documented Opus 4.7 hedging /
 # sycophancy tells.
 #
-# Env enable semantics (strict equality per decision M2):
-#   VIBE_PRAGMATIC_MODE=1    → enabled (exact string "1" only)
-#   Any other value / unset  → OFF (no output, exit 0)
+# Env enable semantics (default-ON, opt-out via "=0"):
+#   VIBE_PRAGMATIC_MODE=0    → DISABLED (exit 0, no priming)
+#   Any other value / unset  → ENABLED (priming injected per turn)
+#
+# Why default-ON: A/B in 5.5.1 measured 90% reduction in hedge-word
+# density on Opus 4.7. Per Iron Man Mandate + User Burden Zero, the
+# validated mitigation ships ON; users who want raw model behavior
+# set =0 explicitly. History: 5.5–5.6 shipped default-OFF behind an
+# explicit `=1` gate.
 #
 # Tier A/B coexistence: if user also has shell wrapper (Tier A) via
 # --append-system-prompt, this hook ADDITIONALLY injects per-turn — user
@@ -18,8 +24,8 @@
 
 set -uo pipefail
 
-# Strict enable check
-if [[ "${VIBE_PRAGMATIC_MODE:-}" != "1" ]]; then
+# Default-ON gate. Disable explicitly via VIBE_PRAGMATIC_MODE=0.
+if [[ "${VIBE_PRAGMATIC_MODE:-1}" == "0" ]]; then
     exit 0
 fi
 

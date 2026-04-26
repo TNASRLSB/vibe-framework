@@ -94,11 +94,16 @@ Scan for existing CSS/component files. Look for existing tokens in:
 - Theme files (`theme.ts`, `tokens.ts`, `variables.css`)
 - Design system packages in dependencies
 
-### Step 3: Competitor Research (Design Lens)
+### Step 3: Competitor Research (Design Lens) — MANDATORY PRELUDE
 
-> **Read** `${CLAUDE_SKILL_DIR}/../_shared/competitor-research.md` for the full research protocol.
+**STOP. Do not skip this step. Do not proceed to Step 4 without the protocol output.**
 
-Check if competitor research exists for this project. If not, ask the user for their service/product type and execute the shared protocol.
+The shared competitor research protocol provides the visual baseline. Skipping it produces generic design untethered from the user's market.
+
+1. Use the `Read` tool now on `${CLAUDE_SKILL_DIR}/../_shared/competitor-research.md` to load the full protocol.
+2. Check whether `.vibe/competitor-research/metadata.json` exists at the project root and the `date` field is within 30 days.
+3. **If fresh:** read the cached results from `.vibe/competitor-research/` and consume the Design Lens.
+4. **If stale or missing:** ask the user for service/product type, then execute the protocol you just loaded. Save results per Phase 5 of the protocol. Do NOT continue to Step 4 of this workflow until storage is complete.
 
 Seurat consumes the **Design Lens**: visual styles, color palettes, typography, layout patterns, component patterns, imagery approach, responsive behavior.
 
@@ -143,6 +148,19 @@ Summarize: stack detected, visual style selected (with rationale from competitor
 ### Phase 1: Understand Requirements
 
 Parse the request: what (component/page/interface), archetype, data, interactions, context.
+
+### Phase 1.5: Competitor Research (Design Lens) — MANDATORY PRELUDE
+
+**STOP. Do not generate components without market context.**
+
+Components designed against generic training data look generic — centered hero + gradient + uniform card grid, the AI tells. The market baseline is what differentiates intentional design from default output.
+
+1. Use the `Read` tool now on `${CLAUDE_SKILL_DIR}/../_shared/competitor-research.md` to load the full protocol.
+2. Check whether `.vibe/competitor-research/metadata.json` exists at the project root and the `date` field is within 30 days.
+3. **If fresh:** read the cached results from `.vibe/competitor-research/` and consume the Design Lens.
+4. **If stale or missing:** ask the user for service/product type, then execute the protocol you just loaded. Save results per Phase 5. Do NOT continue to Phase 2 until storage is complete.
+
+Use the Design Lens to inform Phase 3 process constraints: "How did the top competitors structure this archetype?" — answer from research, not training data.
 
 ### Phase 2: Select Page Archetype
 
@@ -260,9 +278,16 @@ Generate the correct file set based on project type:
 
 **Trigger:** `/vibe:seurat brand`
 
-### Step 1: Competitor Visual Research
+### Step 1: Competitor Visual Research — MANDATORY PRELUDE
 
-> **Read** `${CLAUDE_SKILL_DIR}/../_shared/competitor-research.md` for the research protocol.
+**STOP. Do not skip this step. Do not proceed to Step 2 without the protocol output.**
+
+Defining brand elements without market context produces decorative branding instead of strategic positioning.
+
+1. Use the `Read` tool now on `${CLAUDE_SKILL_DIR}/../_shared/competitor-research.md` to load the full protocol.
+2. Check whether `.vibe/competitor-research/metadata.json` exists at the project root and the `date` field is within 30 days.
+3. **If fresh:** read the cached results from `.vibe/competitor-research/` and consume the Design Lens.
+4. **If stale or missing:** ask the user for service/product type, then execute the protocol you just loaded. Save results per Phase 5. Do NOT continue to Step 2 until storage is complete.
 
 Before defining any brand element, understand the visual landscape of the sector. From the Design Lens results:
 - What visual language does the market speak?

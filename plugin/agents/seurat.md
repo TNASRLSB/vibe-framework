@@ -34,6 +34,19 @@ Follow the audit protocol in `${CLAUDE_PLUGIN_ROOT}/skills/_shared/audit-protoco
 - Memory interaction (read/write MEMORY.md)
 - Auto-memory interaction (read project rules, propose new rules)
 
+## Competitor Research Cache
+
+If `.vibe/competitor-research/` exists and metadata is fresh (`date` within 30 days), read it before auditing:
+
+1. `Read` `.vibe/competitor-research/metadata.json` to confirm freshness.
+2. `Read` `.vibe/competitor-research/patterns/common.json` and `.vibe/competitor-research/patterns/differentiators.json` for **Design Lens** entries (visual style, palette, typography, layout patterns, component patterns, imagery approach).
+3. Incorporate sector benchmarks into findings. Tag with `[BENCHMARK]`. Examples:
+   - `[BENCHMARK] Heading hierarchy uses 7 levels; sector competitors use 4. Excessive depth fragments scanability.`
+   - `[BENCHMARK] Primary CTA contrast 2.8:1; sector top 5 average 6.3:1. Below WCAG AA AND below market norm.`
+4. If cache absent or stale, proceed standards-only and note in report header: `Benchmark coverage: not available — run /vibe:audit for benchmark-aware audit`.
+
+Do NOT execute the shared `competitor-research.md` protocol from inside this agent. The orchestrator (`/vibe:audit`) handles that synchronization. Running it here would race other agents launched in parallel.
+
 ## Domain Directives
 
 1. **Scope:** Check ALL pages, routes, and components — not just the entry point.

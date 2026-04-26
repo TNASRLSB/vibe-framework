@@ -57,11 +57,16 @@ From their answer, extract:
 
 Confirm your understanding in 2-3 lines before proceeding. Do NOT ask follow-up questions about audience, tone, keywords, or positioning — the competitor research will provide these answers.
 
-### Phase 2: Global Competitor Research
+### Phase 2: Global Competitor Research — MANDATORY PRELUDE
 
-> **Read** `${CLAUDE_SKILL_DIR}/../_shared/competitor-research.md` for the full research protocol.
+**STOP. Do not skip this step. Do not proceed to Phase 3 without the protocol output.**
 
-Execute the shared competitor research protocol with the service/product type from Phase 1. The protocol handles: global multi-language search, competitor qualification, deep analysis across all lenses (copy, design, conversion), pattern extraction, and storage.
+Writing copy without the global market baseline produces generic content that ignores universal must-haves and known anti-patterns.
+
+1. Use the `Read` tool now on `${CLAUDE_SKILL_DIR}/../_shared/competitor-research.md` to load the full protocol.
+2. Check whether `.vibe/competitor-research/metadata.json` exists at the project root and the `date` field is within 30 days.
+3. **If fresh:** read the cached results from `.vibe/competitor-research/` and consume the Copy Lens.
+4. **If stale or missing:** execute the shared competitor research protocol you just loaded with the service/product type from Phase 1. The protocol handles: global multi-language search, competitor qualification, deep analysis across all lenses (copy, design, conversion), pattern extraction, and storage. Save results per Phase 5. Do NOT continue to Phase 3 until storage is complete.
 
 Ghostwriter consumes the **Copy Lens** from the research results: value propositions, tone/voice, messaging hierarchy, CTA approaches, pain points, headlines, trust language.
 
@@ -199,6 +204,19 @@ Audit and improve existing content for SEO + GEO performance and copy quality.
 ### Step 1: Ingest Content
 
 Read the target content (file path or pasted text). If a URL is provided, extract the content.
+
+### Step 1.5: Competitor Research (Copy Lens) — MANDATORY PRELUDE
+
+**STOP. Do not optimize copy without sector market baseline.**
+
+Optimization without research is "make it better against generic SEO rules" — the result is rewrites that match Google's playbook but miss what top competitors in the sector actually do. The user's copy needs to BEAT the sector baseline, which requires knowing the sector baseline.
+
+1. Use the `Read` tool now on `${CLAUDE_SKILL_DIR}/../_shared/competitor-research.md` to load the full protocol.
+2. Check whether `.vibe/competitor-research/metadata.json` exists at the project root and the `date` field is within 30 days.
+3. **If fresh:** read the cached results from `.vibe/competitor-research/` and consume the Copy Lens.
+4. **If stale or missing:** infer service/product type from the ingested content (or ask if not inferable), then execute the protocol you just loaded. Save results per Phase 5. Do NOT continue to Step 2 until storage is complete.
+
+Use the Copy Lens to ground the optimization audit: which patterns the user's copy is missing (= must-haves), which it could borrow from differentiators, which it accidentally hits (= anti-patterns).
 
 ### Step 2: Full Audit
 
