@@ -38,7 +38,8 @@
         "self-learning",
         "visual-testing",
         "code-review"
-      ]
+      ],
+      "version": "5.6.1"
     }
   ]
 }
