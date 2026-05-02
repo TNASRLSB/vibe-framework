@@ -70,6 +70,16 @@
             "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/hybrid-execution-hint.sh\""
           }
         ]
+      },
+      {
+        "matcher": "Grep|Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/grep-glob-enrich.sh\"",
+            "statusMessage": "VIBE: enriching search..."
+          }
+        ]
       }
     ],
     "PostToolUse": [
