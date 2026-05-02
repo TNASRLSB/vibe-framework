@@ -39,6 +39,11 @@
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/scope-guard.sh\"",
             "statusMessage": "VIBE: project-scope check..."
+          },
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/adr-surface.sh\"",
+            "statusMessage": "VIBE: ADR surface..."
           }
         ]
       },
@@ -49,6 +54,11 @@
             "type": "command",
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/read-before-edit.sh\"",
             "statusMessage": "VIBE: read-before-edit check..."
+          },
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/adr-surface.sh\"",
+            "statusMessage": "VIBE: ADR surface..."
           }
         ]
       },
