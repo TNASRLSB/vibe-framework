@@ -266,8 +266,9 @@ fi
 # Checked case-insensitively. First match wins. Ordered by severity.
 # Entry format: "pattern|category|correction"
 # Parsed via: IFS='|' read -r pattern category correction <<<"$entry"
-# Categories (5 total): ownership-dodging, known-limitation, session-length,
-# permission-seeking, skim-tells (latter lives in SKIM_TELL_PATTERNS below).
+# Categories (7 total): ownership-dodging, known-limitation, session-length,
+# permission-seeking, scope-creep (5.7.0), sycophantic-capitulation (5.6.1),
+# skim-tells (latter lives in SKIM_TELL_PATTERNS below, flag-gated).
 VIOLATIONS=(
   # Ownership dodging (the #1 problem)
   "pre-existing|ownership-dodging|NOTHING IS PRE-EXISTING. All builds and tests are green upstream. If something fails, YOUR work caused it. Investigate and fix it. Never dismiss a failure as pre-existing."
@@ -338,6 +339,22 @@ VIOLATIONS=(
   "if you'd like, I can|permission-seeking|Do not offer — do. If the work is needed, do it."
   "pause for your input|permission-seeking|Do not pause. Continue with the most reasonable interpretation."
   "won't touch anything until|permission-seeking|Do not stop. The task is not done. Pick a reasonable approach and proceed."
+
+  # §15.5 scope-creep — added 5.7.0 (moved from oracle MVP).
+  # Verb phrases announcing unrequested side-work. Distinct from
+  # permission-seeking (asks before acting); scope-creep silently expands
+  # the change and announces it after. Caught at Stop time, after the
+  # side-work has already happened. Patterns intentionally excluded from
+  # HIGH_RISK_PATTERNS — they are verb phrases, not category labels, so
+  # meta-discussion FP risk is low.
+  "while i was at it|scope-creep|SCOPE CREEP. Did the user ask for this? If not, revert. State only what was requested. If you saw something worth fixing, name it and ask — do not fix it inline."
+  "i took the liberty of|scope-creep|SCOPE CREEP. Did the user ask for this? If not, revert. State only what was requested. If you saw something worth fixing, name it and ask — do not fix it inline."
+  "took the opportunity to|scope-creep|SCOPE CREEP. Did the user ask for this? If not, revert. State only what was requested. If you saw something worth fixing, name it and ask — do not fix it inline."
+  "i went ahead and|scope-creep|SCOPE CREEP. Did the user ask for this? If not, revert. State only what was requested. If you saw something worth fixing, name it and ask — do not fix it inline."
+  "for good measure|scope-creep|SCOPE CREEP. Did the user ask for this? If not, revert. State only what was requested. If you saw something worth fixing, name it and ask — do not fix it inline."
+  "ho colto l'occasione|scope-creep|SCOPE CREEP. L'utente l'aveva chiesto? Se no, ripristina. Riporta solo ciò che era stato richiesto. Se hai notato altro da sistemare, segnalalo e chiedi — non risolverlo inline."
+  "già che c'ero|scope-creep|SCOPE CREEP. L'utente l'aveva chiesto? Se no, ripristina. Riporta solo ciò che era stato richiesto. Se hai notato altro da sistemare, segnalalo e chiedi — non risolverlo inline."
+  "tanto che c'ero|scope-creep|SCOPE CREEP. L'utente l'aveva chiesto? Se no, ripristina. Riporta solo ciò che era stato richiesto. Se hai notato altro da sistemare, segnalalo e chiedi — non risolverlo inline."
 
   # §15.0 sycophantic-capitulation (5.6.1) — retroactive capitulation about
   # a CLAIM already made. Triggered by user pushback; the model immediately

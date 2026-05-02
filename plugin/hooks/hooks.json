@@ -141,6 +141,11 @@
           },
           {
             "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/oracle-gate.sh\"",
+            "statusMessage": "VIBE: oracle gate..."
+          },
+          {
+            "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/atomic-enforcement.sh\"",
             "statusMessage": "VIBE: atomic verification..."
           },
