@@ -1,6 +1,6 @@
 # VIBE Framework
 
-Quality-first plugin for Claude Code. Specialized skills, mechanical quality gates, and intelligent per-skill model selection. **v5.6.1**.
+Quality-first plugin for Claude Code. Specialized skills, mechanical quality gates, and intelligent per-skill model selection. **v5.7.0**.
 
 Claude Code out-of-the-box optimizes for speed and token savings. VIBE inverts the trade-off: **quality above all**, with each skill running on the smallest model that empirically preserves ≥95% of Opus 4.7's output quality on representative tasks. Built for developers on Max plans who want the best Claude can produce without burning quota on tasks that don't need it.
 
@@ -14,13 +14,13 @@ Claude Code out-of-the-box optimizes for speed and token savings. VIBE inverts t
 
 For the full capability documentation, see **[plugin/README.md](plugin/README.md)** and **[plugin/CHANGELOG.md](plugin/CHANGELOG.md)**.
 
-## What ships in 5.6.1
+## What ships in 5.7.0
 
 | Component | Count | Notes |
 |-----------|------:|-------|
 | Skills | 14 | 8 domain + 1 audit orchestrator + 5 utility |
 | Agents | 11 | 7 domain audit + reviewer, researcher, decomposer, pragmatic |
-| Hook handlers | 17 | across 9 Claude Code lifecycle events |
+| Hook handlers | 22 | across 9 Claude Code lifecycle events |
 
 ### Skills (`/vibe:<name>`)
 
@@ -58,15 +58,20 @@ For the full capability documentation, see **[plugin/README.md](plugin/README.md
 
 All audit agents run in isolated worktrees, persist memory across sessions in `.claude/agent-memory/vibe-*/`, and produce machine-parseable metrics for trending.
 
-### Hooks (17 across 9 lifecycle events)
+### Hooks (22 across 9 lifecycle events)
 
 Mechanical process constraints — regex/exit-code gates, no semantic judgement.
 
-- **Rhetoric guard** (Stop) — 79 patterns matching ownership-dodging, session-length quitting, permission-seeking mid-task, and (since 5.6.0) sycophantic capitulation. On match, emits `{"decision":"block","reason":"..."}` with a targeted correction. Rate-capped at 3 fires per session.
+- **Rhetoric guard** (Stop) — 87 patterns: ownership-dodging, session-length quitting, permission-seeking mid-task, sycophantic capitulation (5.6.0), scope-creep (5.7.0). On match, emits `{"decision":"block","reason":"..."}` with a targeted correction. Rate-capped at 3 fires per session.
+- **Oracle gate** (Stop, 5.7.0) — multi-layer analyzer covering what rhetoric-guard's substring matching cannot. HARD-fails on file:line claims with no corresponding prior tool call in the transcript window; SOFT-fails on structural-verb-without-receipt, theater sections (version-tagged + bloat + zero file:line + hype), bare hype, ≥3 options without a recommendation. HARD emits `{"decision":"block","reason":"ORACLE: ..."}`; SOFT logs only.
 - **Side-effect verify** (Stop) — catches *"I'll save the config"* prose without an actual `Write`/`Edit` tool call in the same turn.
 - **Verify-before-assert** (Stop, log-only by default since 5.6.0) — flags backtick-quoted file/symbol assertions made without preceding `Read`/`Grep`/`Glob`/`LS`. Block mode opt-in via `VIBE_VBA_BLOCK=1`.
 - **Atomic enforcement** (Stop) — every manifest item must produce output before completion can be claimed.
 - **Read-discipline + read-before-edit** (PreToolUse) — partial read blocked, no `Edit`/`Write` without prior `Read`/`Write` of the target file (full coverage).
+- **Scope-guard** (PreToolUse Bash + Read, 5.6.2) — denies cross-project file access. When the session was scoped to project A, blocks reads of `.env`/secrets in unrelated sibling projects.
+- **ADR surface** (PreToolUse Read + Edit/Write, 5.7.0) — surfaces `WHY:` / `DECISION:` / `TRADEOFF:` / `RATIONALE:` / `ADR:` / `REJECTED:` markers from the touched file as `additionalContext`. Convention: add `# WHY: chose X over Y because <reason>` above non-obvious decisions and VIBE re-surfaces it whenever CC reads or edits the file. Supports `#`, `//`, `--`, `/*`, `*` styles.
+- **Grep/Glob enrichment** (PreToolUse Grep|Glob, 5.7.0) — on every Grep/Glob, emits the top-3 files in the project ranked by combined score: path match + content match + 90-day git churn. Stops the agent from Grep'ing the same area three times in a row.
+- **Complexity watch** (PostToolUse Edit|Write, 5.7.0) — after every edit, runs `lizard` (optional dep: `pip install lizard`) and emits a non-blocking warning when max(CCN) > 10 OR delta vs cached baseline > +3. Rationale: high-CCN code accumulates more re-Read/re-Grep iterations on follow-up turns; tool results land post-cache-boundary so they get billed full input price each turn (~30% input-token reduction reported with low CCN).
 - **Pragmatic priming** (UserPromptSubmit, default-ON since 5.6.0) — Askell-style ~30-token preamble. Empirically validated 90% hedge-word reduction on Opus 4.7. Disable via `VIBE_PRAGMATIC_MODE=0`.
 - **Hybrid execution hint** (PreToolUse:Skill) — proposes inline / subagent / hybrid handoff for plans, then audits idiot-proofness before subagent dispatch.
 - **Pre-tool security** (PreToolUse:Bash) — blocks `rm -rf /`, force-push to main, `curl|bash`, fork bombs, network listeners, etc.
@@ -104,6 +109,9 @@ VIBE extracts the maximum from the surface Anthropic exposes. Regressions inside
 
 ## Recent releases
 
+- **5.7.0** (2026-05-02) — first capability-boost release after the 5.6.x stability cycle. Four new hooks: oracle gate (multi-layer Stop analyzer), ADR surface, Grep/Glob enrichment (NEW matcher slot), complexity watch. Plus rhetoric-guard §15.5 scope-creep category. Hook count 18 → 22.
+- **5.6.3** (2026-05-02) — auto-recovery for inherited v1 morpheus residues in `settings.local.json` (partial-cleanup case). Wires reconciler `apply-clean-stale-hooks` into `setup-check.sh` SessionStart; bypass `VIBE_NO_AUTO_RECOVERY=1`.
+- **5.6.2** (2026-05-02) — `pre-tool-security.sh` multi-line + path-with-spaces FP fix; new `scope-guard.sh` PreToolUse hook prevents cross-project `.env` reads. Hook count 17 → 18.
 - **5.6.1** (2026-04-30) — `seurat` and `baptist` switch to Sonnet 4.6 by default after benchmark. Per-skill empirical model selection (model-routing benchmark Phase 1).
 - **5.6.0** — sycophantic-capitulation mitigation: 21 new rhetoric-guard patterns + new `verify-before-assert` Stop hook (log-only) + pragmatic priming Tier B promoted default-ON + competitor-research chain hardened to MANDATORY PRELUDE in 7 modes.
 - **5.5.x** — `/vibe:spec` intelligent spec routing, hybrid execution hint hook, A/B consolidation (validated incumbents on audit/seurat/forge/baptist/ghostwriter/orson with zero default switches), self-healing setup wizard for v1 hook cleanup and stale config.
@@ -139,7 +147,7 @@ The plugin loader uses `${CLAUDE_PLUGIN_ROOT}` and `${CLAUDE_SKILL_DIR}` env var
 plugin/
 ├── .claude-plugin/plugin.json    Plugin manifest (name, version, metadata)
 ├── agents/                       11 subagents (7 domain audits + reviewer, researcher, decomposer, pragmatic)
-├── hooks/hooks.json              Hook registrations (9 lifecycle events, 17 handlers)
+├── hooks/hooks.json              Hook registrations (9 lifecycle events, 22 handlers)
 ├── scripts/                      Hook handlers and standalone scripts
 ├── skills/                       14 skills + _shared/ resources
 ├── CHANGELOG.md                  Plugin release history

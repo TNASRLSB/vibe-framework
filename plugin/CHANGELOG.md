@@ -1,5 +1,48 @@
 # Changelog
 
+## 5.7.0 — 2026-05-02
+
+"First capability-boost release after the two-patch stability cycle (5.6.2 + 5.6.3)." Four new hooks shipped: three ported from external Claude Code projects, one from a measured field observation on token efficiency. All four pass Iron Man Mandate, Audience Test, User Burden Zero, and Capability Boost > Verification filters. Hook count: 18 → 22. See `docs/spec/2026-05-02-vibe-5.7.0-tier-s.md` for the full spec.
+
+### Changes
+
+- **Feature 1 — Oracle gate (Stop hook) + rhetoric-guard §15.5 scope-creep.** New `plugin/scripts/oracle-gate.{py,sh}` registered on Stop after `rhetoric-guard.sh` and `side-effect-verify.sh`, before `atomic-enforcement.sh`. Multi-layer analyzer that rhetoric-guard's pure-substring matching cannot do: (1) HARD — file:line claim cross-referenced against the transcript's prior tool-call window (Read/Grep/Glob/LS/Bash-cat, last 50 entries); (2) SOFT (rubric) — structural verb (added/fixed/refactored/...) without a co-located file:line receipt; (3) SOFT (theater) — version-tagged `## v…` headers with >500 char body, zero file:line refs, hype phrasing — when ratio > 0.3 of all sections; (4) SOFT (hype) — hype phrasing without co-located file:line; (5) SOFT (≥3 options) — numbered alternatives without a recommendation. HARD fails emit `{"decision":"block","reason":"ORACLE: ..."}`; SOFT fails log to `${CLAUDE_PLUGIN_DATA}/oracle/oracle-events.jsonl` and pass through. Bypass: `VIBE_NO_ORACLE=1`, pause flag, per-rule `VIBE_ORACLE_RULE_<id>_DISABLED=1` (id ∈ {1, 2, 3, RUBRIC, THEATER}). Companion change: `plugin/scripts/rhetoric-guard.sh` gains a new `scope-creep` category (§15.5) with 8 verb-phrase patterns (5 EN + 3 IT) — `while I was at it`, `I took the liberty of`, `took the opportunity to`, `I went ahead and`, `for good measure`, `ho colto l'occasione`, `già che c'ero`, `tanto che c'ero` — caught at Stop time after the unrequested side-work has already shipped. Source: Godspeed/toke `oracle.py` (pattern reference; rule set is VIBE-specific). Iron Man fit: oracle catches structural violations rhetoric-guard cannot match; scope-creep catches the side-work-after-the-fact failure mode previous categories missed. Tests: 11 oracle cases + 5 scope-creep cases.
+
+- **Feature 2 — ADR surface hook (PreToolUse Read + Edit/Write).** New `plugin/scripts/adr-surface.sh` extracts `WHY:`/`DECISION:`/`TRADEOFF:`/`RATIONALE:`/`ADR:`/`REJECTED:` markers from the file targeted by Read or Edit/Write and emits them as `additionalContext` so the agent enters the operation already aware of prior decisions. ~50 lines bash, no new dependencies. Cap 10 markers per file, 120-char truncation per line. Bypass: `VIBE_NO_ADR_SURFACE=1`, pause flag. Source: repowise `decision_extractor.py` (idea only — AGPL, not copied; reimplemented in pure bash). Iron Man fit: compensates Claude Code re-deriving rationale already captured in source code. Tests: 10 cases (single marker, no markers, multiple markers, missing file, env-var bypass, pause flag, Lua/C-block/JSDoc styles, 10-marker cap).
+
+- **Feature 3 — Grep/Glob enrichment hook (NEW PreToolUse Grep|Glob matcher).** New `plugin/scripts/grep-glob-enrich.sh` registered under a new `Grep|Glob` matcher (the underused-primitive exploit — no existing matcher targets these tools). Computes three signals in parallel and emits the top-3 files in the project as `additionalContext`: (A) path match via `git ls-files | grep -iF <simplified pattern>` (+10), (B) content match via `rg --files-with-matches -i <pattern>` (+5), (C) churn via `git log --since=90.days -- <file> | wc -l` (+N). Combined score → top-3 ranked, formatted as `<file> (<N> commits, 90d) — <signal type>`. Per-signal 500ms timeout cap; non-git falls back to B+0-churn; missing rg falls back to A. Bypass: `VIBE_NO_GREP_ENRICH=1`, pause flag. Source: repowise `augment_cmd.py` (idea only — AGPL, not copied; reimplemented in pure bash + git + rg). Iron Man fit: agents that Grep/Glob the same area three times in a row stop doing that once they see churn-ranked top-3 — repowise benchmarks reported 30–40% token reduction on search-heavy tasks. Tests: 7 cases (multi-file ranking by churn, no-match silent, non-git fallback, env-var/pause bypass, shell-metachar safety, top-3 cap).
+
+- **Feature 4 — Complexity watch hook (PostToolUse Edit|Write).** New `plugin/scripts/complexity-watch.sh` registered alongside `post-edit-lint.sh` and `security-quickscan.sh`. After every Edit/Write, runs `lizard` on the touched file, parses max(CCN), and emits an `additionalContext` warning when max(CCN) > 10 OR delta vs cached baseline > +3 (delta gate gated on a baseline existing — first edit is silent unless absolute threshold trips). Per-file baseline cache at `${CLAUDE_PLUGIN_DATA}/complexity-baselines/<sha1(path)>.json` so deltas survive across sessions. Graceful skip if `lizard` is missing on PATH or extension is non-source. Bypass: `VIBE_NO_CC_WATCH=1`, pause flag. Source: external user observation (2026-05-02) — *"keeping cyclomatic complexity low saves about 30% on input tokens, both with and without caching."* Mechanism: high-CCN code accumulates more re-Read/re-Grep iterations on follow-up turns; tool results land post-cache-boundary so they get billed at full input price each turn. Iron Man fit: compensates a Claude Code generation tendency toward over-branchy code that drives subsequent token bloat. Tests: 10 cases (CCN 3 silent, CCN 11 warns, baseline write+read, delta gate gated on baseline existence, +2 delta silent, lizard-missing silent, .md/.json silent, env-var bypass).
+
+### Optional dependency
+
+- `pip install lizard` — required for Feature 4 (complexity-watch) to actually emit warnings. Soft-fail-on-missing per User Burden Zero: if `lizard` is not on PATH the hook exits 0 silently, the rest of VIBE keeps working. Single MIT-licensed dep, no transitive deps beyond Python stdlib, supports Python/JS/TS/Go/Java/Rust/C/C++/Ruby/PHP/Swift/Kotlin/Lua/Scala/Objective-C.
+
+### Hook count
+
+18 → 22. Same nine lifecycle events; no new events. New registrations:
+- PreToolUse `Read`: + adr-surface.sh
+- PreToolUse `Edit|Write`: + adr-surface.sh
+- PreToolUse `Grep|Glob`: + grep-glob-enrich.sh (NEW matcher entry)
+- PostToolUse `Edit|Write`: + complexity-watch.sh
+- Stop: + oracle-gate.sh (after rhetoric-guard + side-effect-verify, before atomic-enforcement)
+
+### Test counts
+
+Local suite: 262 (5.6.3) → 309 (5.7.0). Per spec §6 acceptance, ≥262 + N (Feature 1) + 5 (Feature 2) + 5 (Feature 3) + 7 (Feature 4) = ≥284 required; actual 309.
+
+### Out of scope
+
+ACE observer / `vibe:evolve`, Git-signals managed block in CLAUDE.md (deferred to 5.8.0). Mnemos FTS5 recall index, Brain classifier S0–S5 generalization (deferred to 5.9.0). GEPA Pareto loop, repowise full init pipeline, Godspeed Brain UserPromptSubmit hook, TextGrad — explicitly rejected (User Burden Zero violations or one-UserPromptSubmit policy). See spec §7.
+
+### Field-signal handling (from `references/converazione_utente.txt`)
+
+- F1 (`pre-tool-security.sh` blocks `cd "/path with spaces (and parens)"`): bug, deferred to 5.7.1 patch.
+- F2 (cross-project `.env` reads): already covered by 5.6.2 `scope-guard.sh`; smoke-tested against the F2 command in this release's acceptance.
+- F3 (orphaned `Booost-app` v1 hook): partially covered by 5.6.3 auto-recover; generalization to "any orphaned hook in any plugin" deferred to 5.8.0.
+- F4 (`/vibe:spec --effort xhigh` 25-min hang): out of VIBE's surface; noted for spec-routing v2.
+
+
 ## 5.6.3 — 2026-05-02
 
 "Auto-recovery for inherited v1 morpheus residues + tech-debt sweep." Field-reported pattern: the `setup-check.sh` SessionStart hook detected v1 filesystem markers (`.claude/morpheus/`, `vibe-framework.sh`) but missed the partial-cleanup case where the filesystem was already cleaned by hand and only `settings.local.json` still pointed at non-existent morpheus scripts. Such projects emitted "PreToolUse hook error: File o directory non esistente" on every Bash/Read/Write — non-blocking but persistent noise. Reconciler had `apply-clean-stale-hooks` since 5.5.7; it was just not wired to SessionStart. This release wires it.
