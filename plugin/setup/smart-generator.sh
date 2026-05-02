@@ -198,6 +198,104 @@ header = "All VIBE failure-mode defenses armed." if not missing else f"{len(miss
 print(header + "\n\n" + "\n".join(lines))
 PYEOF
 )
+# --- Git signals (§5.8.0 Feature 2) --------------------------------------
+# Surfaces a snapshot of volatile repo state into CLAUDE.md so the agent
+# enters each session calibrated against the actual branch/commits/dirty
+# count instead of the long-stale state from session-start CLAUDE.md read.
+# Skipped silently when (a) `git` not on PATH, (b) project root is not a
+# git repo, (c) VIBE_NO_GIT_SIGNALS=1 is set. The block is regenerated on
+# every `vibe:setup` and `setup-check` re-render of the managed envelope.
+GIT_SIGNALS=$(PROJECT_ARG="$PROJECT_ROOT" python3 <<'PYEOF'
+import os, shutil, subprocess
+
+if os.environ.get("VIBE_NO_GIT_SIGNALS") == "1":
+    print("")
+    raise SystemExit(0)
+
+if not shutil.which("git"):
+    print("")
+    raise SystemExit(0)
+
+root = os.environ["PROJECT_ARG"]
+
+def run(args, default=""):
+    try:
+        out = subprocess.run(["git", "-C", root] + args, capture_output=True,
+                             text=True, timeout=3, check=False)
+        if out.returncode != 0:
+            return default
+        return out.stdout.rstrip("\n")
+    except Exception:
+        return default
+
+# Confirm we're inside a git tree
+inside = run(["rev-parse", "--is-inside-work-tree"])
+if inside.strip() != "true":
+    print("")
+    raise SystemExit(0)
+
+# Branch
+branch = run(["rev-parse", "--abbrev-ref", "HEAD"], "?")
+if branch == "HEAD":
+    sha = run(["rev-parse", "--short", "HEAD"], "?")
+    branch_label = f"detached at `{sha}`"
+else:
+    branch_label = f"`{branch}`"
+
+# Base + divergence
+base = run(["symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD"])
+if base.startswith("origin/"):
+    base = base[len("origin/"):]
+elif not base:
+    # Fallback to main/master detection
+    for cand in ("main", "master"):
+        if run(["rev-parse", "--quiet", "--verify", f"refs/remotes/origin/{cand}"]):
+            base = cand
+            break
+
+div_line = ""
+if base and branch != "HEAD":
+    counts = run(["rev-list", "--left-right", "--count",
+                  f"origin/{base}...HEAD"])
+    parts = counts.split()
+    if len(parts) == 2 and all(p.isdigit() for p in parts):
+        behind, ahead = parts
+        div_line = f" (base: `{base}`, ahead {ahead}, behind {behind})"
+
+# Last commit
+last = run(["log", "-1", "--date=format:%Y-%m-%d %H:%M", "--pretty=format:%h %ad — %s"])
+if not last:
+    print("**Git signals**\n- No commits yet")
+    raise SystemExit(0)
+
+# Dirty count
+dirty_raw = run(["status", "--porcelain"])
+staged = unstaged = 0
+for line in dirty_raw.splitlines():
+    if not line:
+        continue
+    # First two chars: index status, worktree status (' ' = clean)
+    if line[0] not in (" ", "?"):
+        staged += 1
+    if line[1] not in (" ",):
+        unstaged += 1
+
+# Last 5 commit oneline
+recent = run(["log", "-5", "--pretty=format:%h %s"])
+
+lines = ["**Git signals** (snapshot — `vibe:setup` to refresh)"]
+lines.append(f"- Branch: {branch_label}{div_line}")
+lines.append(f"- Last commit: {last}")
+lines.append(f"- Dirty: {staged} staged, {unstaged} unstaged")
+if recent:
+    lines.append("- Recent commits:")
+    for r in recent.splitlines()[:5]:
+        lines.append(f"  - `{r.split(' ', 1)[0]}` {r.split(' ', 1)[1] if ' ' in r else ''}")
+
+print("\n".join(lines))
+PYEOF
+)
+
 # --- Harness limits (§2.2.4) ---------------------------------------------
 HARNESS_LIMITS=$(cat <<'EOF'
 VIBE is armor on top of Claude Code, itself a harness on top of the Claude model.
@@ -214,6 +312,7 @@ PROJECT_CONTEXT="$PROJECT_CONTEXT" \
 MODEL_PATTERN="$MODEL_PATTERN" \
 CAPABILITY_AUDIT="$CAPABILITY_AUDIT" \
 HARNESS_LIMITS="$HARNESS_LIMITS" \
+GIT_SIGNALS="$GIT_SIGNALS" \
 FORCE_BLOAT="${SMART_GEN_FORCE_BLOAT:-0}" \
 python3 <<'PYEOF'
 import json, os, sys
@@ -223,6 +322,7 @@ blocks = {
     "model_pattern":    os.environ.get("MODEL_PATTERN", ""),
     "capability_audit": os.environ.get("CAPABILITY_AUDIT", ""),
     "harness_limits":   os.environ.get("HARNESS_LIMITS", ""),
+    "git_signals":      os.environ.get("GIT_SIGNALS", ""),
 }
 
 # Apply artificial bloat for tests
@@ -235,8 +335,9 @@ CAPS = {
     "model_pattern":    1000,   # 250 tokens
     "capability_audit": 800,    # 200 tokens
     "harness_limits":   600,    # 150 tokens
+    "git_signals":      800,    # 200 tokens
 }
-TOTAL_CAP = 4800                # 1200 tokens total
+TOTAL_CAP = 5600                # 1400 tokens total (4800 + 800 git_signals)
 
 truncated = False
 

@@ -410,6 +410,7 @@ for key, placeholder in [
     ("project_context",  "{{PROJECT_CONTEXT_BLOCK}}"),
     ("model_pattern",    "{{MODEL_PATTERN_BLOCK}}"),
     ("capability_audit", "{{CAPABILITY_AUDIT_BLOCK}}"),
+    ("git_signals",      "{{GIT_SIGNALS_BLOCK}}"),
     ("harness_limits",   "{{HARNESS_LIMITS_BLOCK}}"),
 ]:
     val = blocks.get(key, "")
@@ -996,6 +997,221 @@ with open(settings_path, "w") as f:
 PYEOF
 }
 
+# --- orphan-hook detection and cleanup (5.8.0) ---------------------------
+# Generalization of stale-hook recovery: instead of matching commands against
+# a hard-coded denylist (settingsHooksDenyPatterns), this pass extracts every
+# literal absolute path argument from each hook command and flags the hook
+# when ANY such path is missing on disk. This catches stale hooks from
+# foreign frameworks (Booost-app/morpheus injector, custom user hooks,
+# third-party plugins) that the denylist scope cannot cover.
+#
+# Token-based extraction (not single regex with lookbehind): split command on
+# whitespace, skip tokens containing ${ or $( (templated), skip tokens not
+# starting with / (after stripping a single leading quote/backtick char),
+# then check os.path.isfile on the stripped path. Conservative — false
+# negative on dynamic paths is fine; denylist scanner already covers known
+# patterns regardless of file existence.
+cmd_detect_orphan_hooks() {
+    local settings_path="${1:-}"
+    [[ -n "$settings_path" ]] || die "detect-orphan-hooks: settings path required"
+
+    SETTINGS_PATH="$settings_path" python3 <<'PYEOF'
+import json, os, re, sys
+
+settings_path = os.environ["SETTINGS_PATH"]
+empty = {"file": settings_path, "exists": False, "matches": []}
+
+if not os.path.isfile(settings_path):
+    print(json.dumps(empty))
+    sys.exit(0)
+
+try:
+    with open(settings_path) as f:
+        settings = json.load(f)
+except json.JSONDecodeError:
+    print(json.dumps({"file": settings_path, "exists": True, "matches": [],
+                      "unreadable": True}))
+    sys.exit(0)
+
+def _missing_path_in(cmd):
+    """Return the first absolute-path token in cmd that does not exist on disk,
+    or None if every absolute-path token is present (or there are none)."""
+    if not isinstance(cmd, str) or not cmd:
+        return None
+    for raw in re.split(r'\s+', cmd.strip()):
+        if not raw:
+            continue
+        if "${" in raw or "$(" in raw:
+            continue  # templated — defer to runtime, do not flag
+        # Strip a single leading/trailing quote or backtick if any
+        tok = raw
+        for q in ("'", '"', "`"):
+            if tok.startswith(q):
+                tok = tok[1:]
+            if tok.endswith(q):
+                tok = tok[:-1]
+        # Strip trailing shell separators glued to the token
+        tok = re.sub(r'[;|&<>].*$', '', tok)
+        if not tok.startswith("/"):
+            continue
+        # Cut off any embedded shell-special chars that survived the split
+        tok = re.split(r'[\s"\'`|&;<>]', tok, maxsplit=1)[0]
+        if not tok:
+            continue
+        if not os.path.isfile(tok):
+            return tok
+    return None
+
+matches = []
+
+def _scan_command(cmd, location):
+    miss = _missing_path_in(cmd)
+    if miss is not None:
+        matches.append({"location": location, "command": cmd, "missing_path": miss})
+
+# Top-level legacy shape
+for top_event in ("PreToolUse", "PostToolUse", "SessionStart", "Stop",
+                  "SubagentStop", "PreCompact", "UserPromptSubmit",
+                  "PostToolUseFailure", "SessionEnd"):
+    val = settings.get(top_event)
+    if isinstance(val, list):
+        for i, matcher in enumerate(val):
+            if isinstance(matcher, dict):
+                for j, h in enumerate(matcher.get("hooks", []) or []):
+                    if isinstance(h, dict):
+                        _scan_command(h.get("command", ""),
+                                      f"{top_event}[{i}].hooks[{j}]")
+
+# Nested canonical shape
+hooks = settings.get("hooks")
+if isinstance(hooks, dict):
+    for event, matchers in hooks.items():
+        if isinstance(matchers, list):
+            for i, matcher in enumerate(matchers):
+                if isinstance(matcher, dict):
+                    for j, h in enumerate(matcher.get("hooks", []) or []):
+                        if isinstance(h, dict):
+                            _scan_command(h.get("command", ""),
+                                          f"hooks.{event}[{i}].hooks[{j}]")
+
+# statusLine
+sl = settings.get("statusLine")
+if isinstance(sl, dict):
+    _scan_command(sl.get("command", ""), "statusLine")
+
+print(json.dumps({"file": settings_path, "exists": True, "matches": matches}))
+PYEOF
+}
+
+cmd_apply_clean_orphan_hooks() {
+    local settings_path="${1:-}"
+    [[ -n "$settings_path" ]] || die "apply-clean-orphan-hooks: settings path required"
+
+    local matches_json
+    matches_json=$(cat)
+
+    local has_work
+    has_work=$(echo "$matches_json" | python3 -c "
+import json, sys
+d = json.load(sys.stdin)
+print('yes' if d.get('matches') else 'no')
+")
+    if [[ "$has_work" == "no" ]]; then
+        return 0
+    fi
+
+    [[ -f "$settings_path" ]] || return 0
+
+    local ts
+    ts=$(date -u +%Y%m%d-%H%M%S)
+    cp "$settings_path" "$settings_path.bak-orphan-hooks-$ts"
+
+    SETTINGS_PATH="$settings_path" MATCHES_JSON="$matches_json" python3 <<'PYEOF'
+import json, os
+
+settings_path = os.environ["SETTINGS_PATH"]
+matches = json.loads(os.environ["MATCHES_JSON"]).get("matches", [])
+
+# Build a set of (location, command) tuples to drop. Location is the canonical
+# JSON path the detector emitted.
+drop_set = {(m.get("location", ""), m.get("command", "")) for m in matches}
+
+with open(settings_path) as f:
+    settings = json.load(f)
+
+def _filter_matchers(matchers, location_prefix):
+    if not isinstance(matchers, list):
+        return matchers, False
+    out = []
+    changed = False
+    for i, m in enumerate(matchers):
+        if not isinstance(m, dict):
+            out.append(m); continue
+        hooks = m.get("hooks", [])
+        if isinstance(hooks, list):
+            clean_hooks = []
+            for j, h in enumerate(hooks):
+                if isinstance(h, dict):
+                    loc = f"{location_prefix}[{i}].hooks[{j}]"
+                    cmd = h.get("command", "")
+                    if (loc, cmd) in drop_set:
+                        changed = True
+                        continue
+                clean_hooks.append(h)
+            if clean_hooks:
+                if len(clean_hooks) != len(hooks):
+                    m2 = dict(m); m2["hooks"] = clean_hooks
+                    out.append(m2)
+                else:
+                    out.append(m)
+            else:
+                changed = True  # whole matcher dropped
+        else:
+            out.append(m)
+    return out, changed
+
+# Nested canonical shape
+hooks = settings.get("hooks")
+if isinstance(hooks, dict):
+    new_hooks = {}
+    any_changed = False
+    for event, matchers in hooks.items():
+        filtered, changed = _filter_matchers(matchers, f"hooks.{event}")
+        any_changed = any_changed or changed
+        if filtered:
+            new_hooks[event] = filtered
+    if any_changed:
+        if new_hooks:
+            settings["hooks"] = new_hooks
+        else:
+            settings.pop("hooks", None)
+
+# Top-level legacy shape
+for top_event in ("PreToolUse", "PostToolUse", "SessionStart", "Stop",
+                  "SubagentStop", "PreCompact", "UserPromptSubmit",
+                  "PostToolUseFailure", "SessionEnd"):
+    val = settings.get(top_event)
+    if isinstance(val, list):
+        filtered, changed = _filter_matchers(val, top_event)
+        if changed:
+            if filtered:
+                settings[top_event] = filtered
+            else:
+                settings.pop(top_event, None)
+
+# statusLine — drop if it was flagged
+sl = settings.get("statusLine")
+if isinstance(sl, dict):
+    cmd = sl.get("command", "")
+    if ("statusLine", cmd) in drop_set:
+        settings.pop("statusLine", None)
+
+with open(settings_path, "w") as f:
+    json.dump(settings, f, indent=2)
+    f.write("\n")
+PYEOF
+}
+
 # --- pragmatic alias extension (5.5.3) -----------------------------------
 cmd_apply_pragmatic_alias() {
     local shell_name="${1:-}"
@@ -1101,6 +1317,8 @@ main() {
         apply-pragmatic-alias)      cmd_apply_pragmatic_alias "$@" ;;
         detect-stale-hooks)         cmd_detect_stale_hooks "$@" ;;
         apply-clean-stale-hooks)    cmd_apply_clean_stale_hooks "$@" ;;
+        detect-orphan-hooks)        cmd_detect_orphan_hooks "$@" ;;
+        apply-clean-orphan-hooks)   cmd_apply_clean_orphan_hooks "$@" ;;
         generate-managed-content)   cmd_generate_managed_content "$@" ;;
         "" )                        die "no subcommand" ;;
         *)                          die "unknown subcommand: $sub" ;;

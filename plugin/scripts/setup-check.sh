@@ -76,6 +76,41 @@ if [[ -x "$RECONCILER" ]] && [[ "${VIBE_NO_AUTO_RECOVERY:-0}" != "1" ]] && comma
   fi
 fi
 
+# --- Check 2c: orphan hook references in settings JSON (5.8.0 generalization) ---
+# Companion pass to 2b. detect-stale-hooks matches a hard-coded denylist
+# (currently only the morpheus-v1 substring). detect-orphan-hooks generalizes:
+# any hook command whose literal absolute path argument no longer exists on
+# disk gets flagged. This catches stale references from foreign frameworks
+# (e.g. Booost-app/morpheus injector — see 5.7.0 spec §0.5 row F3) that the
+# denylist scope cannot cover. Same trigger and bypass as Check 2b.
+if [[ -x "$RECONCILER" ]] && [[ "${VIBE_NO_AUTO_RECOVERY:-0}" != "1" ]] && command -v jq >/dev/null 2>&1; then
+  orphan_summary=()
+  for sfile in \
+    "$HOME/.claude/settings.json" \
+    "$PROJECT_DIR/.claude/settings.json" \
+    "$PROJECT_DIR/.claude/settings.local.json"
+  do
+    [[ -f "$sfile" ]] || continue
+    detect_out=$("$RECONCILER" detect-orphan-hooks "$sfile" 2>/dev/null)
+    [[ -z "$detect_out" ]] && continue
+    match_count=$(echo "$detect_out" | jq -r '.matches | length' 2>/dev/null || echo 0)
+    [[ "$match_count" =~ ^[0-9]+$ ]] || match_count=0
+    if (( match_count > 0 )); then
+      if echo "$detect_out" | "$RECONCILER" apply-clean-orphan-hooks "$sfile" >/dev/null 2>&1; then
+        case "$sfile" in
+          "$HOME/"*) label="~/${sfile#$HOME/}" ;;
+          *)         label="${sfile#$PROJECT_DIR/}" ;;
+        esac
+        orphan_summary+=("${label} (${match_count})")
+      fi
+    fi
+  done
+  if (( ${#orphan_summary[@]} > 0 )); then
+    files_str=$(IFS=', '; echo "${orphan_summary[*]}")
+    anomalies+=("VIBE auto-recovered hook references pointing at non-existent paths in: ${files_str}. Backups created (.bak-orphan-hooks-*). Restart this Claude Code session to apply.")
+  fi
+fi
+
 # --- Check 3: missing CLAUDE.md (only if not v1 — v1 check takes priority) ---
 if [[ "$has_v1" == "false" ]] && [[ ! -f "$PROJECT_DIR/CLAUDE.md" ]]; then
   anomalies+=("No CLAUDE.md found — run /vibe:setup to generate one")

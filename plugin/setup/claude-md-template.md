@@ -17,6 +17,10 @@
 
 {{CAPABILITY_AUDIT_BLOCK}}
 
+## Git Signals (snapshot)
+
+{{GIT_SIGNALS_BLOCK}}
+
 ## Verification Discipline
 
 Before asserting facts about this repository, verify with tools — do not infer from prior knowledge or filename:
@@ -43,3 +47,7 @@ VIBE Framework is active. Quality-first skills available via `/vibe:[skill-name]
 <!-- VIBE:managed-end -->
 
 <!-- Your custom project notes, architecture decisions, and instructions below this line will be preserved across /vibe:setup runs. -->
+
+<!-- VIBE:evolve-managed-start -->
+<!-- managed by /vibe:evolve — empty. -->
+<!-- VIBE:evolve-managed-end -->
