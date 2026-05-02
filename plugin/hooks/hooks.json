@@ -19,6 +19,11 @@
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/pre-tool-security.sh\"",
             "statusMessage": "VIBE: pre-execution security check..."
+          },
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/scope-guard.sh\"",
+            "statusMessage": "VIBE: project-scope check..."
           }
         ]
       },
@@ -29,6 +34,11 @@
             "type": "command",
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/read-discipline.sh\"",
             "statusMessage": "VIBE: read-discipline check..."
+          },
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/scope-guard.sh\"",
+            "statusMessage": "VIBE: project-scope check..."
           }
         ]
       },

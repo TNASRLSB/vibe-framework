@@ -32,31 +32,45 @@ ISSUES=()
 # path argument lives under a sanctioned ephemeral root before allowing.
 # If any path is outside the whitelist (or the command is malformed),
 # block and surface the issue.
+#
+# Scope discipline: the rm-context is reset on every newline AND on every
+# shell separator (&&, ||, ;). Without this, a multi-line command like
+#   rm -f /tmp/foo
+#   cd "/path/with spaces/proj"
+# would treat `cd`, `/path/with`, `spaces/proj` as path-arguments of the
+# preceding `rm` and false-positive-block on the unquoted-looking tokens.
+# This fixes a 5.6.x regression that surfaced on projects with spaces in
+# their absolute paths.
 if echo "$COMMAND" | grep -qP 'rm\s+(-[rfRF]+\s+)*(/|~|\$HOME|\.\./)' 2>/dev/null; then
-  rm_verdict=$(echo "$COMMAND" | awk '
-    BEGIN { found_rm = 0; saw_path = 0; all_safe = 1 }
+  # Pre-process: surround shell separators (&&, ||, ;) with whitespace so
+  # awk sees them as standalone tokens. Without this, "foo&&" is one token
+  # and the rm-context never resets.
+  rm_verdict=$(echo "$COMMAND" \
+    | sed -E -e 's/(\&\&|\|\|)/ \1 /g' -e 's/;/ ; /g' \
+    | awk '
+    BEGIN { has_unsafe_rm = 0 }
     {
+      in_rm = 0
       for (i = 1; i <= NF; i++) {
         tok = $i
-        # Strip trailing semicolon/operator chars that bash glues
+        # Shell separator → close current rm context
+        if (tok == "&&" || tok == "||" || tok == ";") { in_rm = 0; continue }
+        # Strip residual op chars glued to other tokens (rare after sed)
         sub(/[;&|<>].*$/, "", tok)
         if (tok == "") continue
-        if (tok == "rm") { found_rm = 1; continue }
-        if (!found_rm) continue
+        if (tok == "rm") { in_rm = 1; continue }
+        if (!in_rm) continue
         if (substr(tok, 1, 1) == "-") continue           # flag
-        # Stop scanning when shell separator hit (next command)
-        if (tok ~ /^(&&|\|\||;)$/) break
-        saw_path = 1
         # Whitelisted ephemeral roots
         if (tok ~ /^\/tmp\//      || tok == "/tmp")      continue
         if (tok ~ /^\/var\/tmp\// || tok == "/var/tmp")  continue
         if (tok ~ /^\/dev\/shm\// || tok == "/dev/shm")  continue
-        all_safe = 0; break
+        has_unsafe_rm = 1
       }
     }
     END {
-      if (found_rm && saw_path && all_safe) print "SAFE"
-      else print "UNSAFE"
+      if (has_unsafe_rm) print "UNSAFE"
+      else print "SAFE"
     }
   ')
   if [[ "$rm_verdict" != "SAFE" ]]; then

@@ -1,5 +1,27 @@
 # Changelog
 
+## 5.6.2 — 2026-05-02
+
+"Two field-reported bugs squashed before any new feature work." A multi-line + path-with-spaces false positive in `pre-tool-security.sh` and a missing cross-project access guard. Both surfaced in a single user session on a project whose absolute path contained spaces (`/home/uh1/VIBEPROJECTS/TORA NO AI SRL SB/...`) and whose agent then proceeded to read `.env` files in unrelated sibling projects. No new dependencies. Hook count: 17 → 18 (new `scope-guard.sh`).
+
+### Changes
+
+- **`plugin/scripts/pre-tool-security.sh`** — fix the Check 1 (dangerous-rm) awk verdict, which leaked `found_rm` state across newlines and shell separators. A multi-line command like `rm -f /tmp/foo` followed on a new line by `cd "/path with spaces/proj"` was treating `cd`, `/path`, `with`, `spaces/proj` as path-arguments of the preceding `rm`, falsely flagging the command as "Dangerous rm targeting root". Fix: pre-process the command with `sed` so that `&&`, `||`, `;` become standalone tokens, then reset the `in_rm` flag at every separator. Same-line and multi-line cases both validated. Real-world unsafe `rm` (e.g. `rm -f /tmp/foo; rm -rf /home/user`) still blocks correctly.
+
+- **`plugin/scripts/scope-guard.sh`** (new) — PreToolUse hook on `Read` and `Bash`. Blocks access to paths outside the session project root. Mitigates cross-project scope creep — the failure mode where an agent leaves the directory the user opened and starts touching files in unrelated projects (e.g. another client's `.env` in a sibling repo). Default whitelist: `SESSION_ROOT/*`, `/tmp/`, `/var/tmp/`, `/dev/shm/`, `~/.claude/`, `/usr/`, `/opt/`, `/etc/`, `/var/log/`, `$CLAUDE_PLUGIN_ROOT/`, plus per-project `<root>/.vibe/scope-allow` (one prefix per line). Bypass: `/vibe:pause` flag, or `VIBE_NO_SCOPE_GUARD=1`. Path extraction is best-effort — quoted paths handled, unquoted-with-spaces paths are not analyzed (false negatives preferred over false positives). For Bash commands, both quoted and bare absolute paths are extracted and validated; if any one path falls outside scope, the command is denied with a clear reason that names the offending path. Fail-open if the session root cannot be determined.
+
+- **`plugin/hooks/hooks.json`** — register `scope-guard.sh` on the existing `Bash` and `Read` matcher buckets, alongside `pre-tool-security.sh` (Bash) and `read-discipline.sh` (Read).
+
+- **`plugin/scripts/session-end-cleanup.sh`** — additionally cleans up `/tmp/vibe-session-root-${SESSION_ID}` on SessionEnd (the marker file `scope-guard.sh` writes on first PreToolUse to anchor the project root for the rest of the session).
+
+- **`tests/run-tests.sh`** — six new regression tests under "PreToolUse Security Hook — Multi-line + path-with-spaces regressions" cover: multi-line `rm /tmp/...` then `cd "/path with spaces"` allowed, multi-line `rm + grep` allowed, same-line `rm /tmp && cd /home` allowed, multi-line `safe rm + unsafe rm` still blocks, same-line `safe rm; unsafe rm` still blocks, `rm "/tmp/path with spaces"` allowed. `scope-guard.sh` added to the syntax-validation list.
+
+- **`tests/scope-guard/test-scope-guard.sh`** (new) — 16 cases covering same-project access (allow), cross-project access (deny), the standard whitelist (`/tmp`, `/etc`, `/usr`, `~/.claude/`), the three bypass mechanisms (pause flag, env var, project allow-file), and command-parsing edge cases (quoted spaces, mixed in-scope + out-of-scope, non-Read/Bash tools, no session root → fail-open).
+
+**User-facing impact:** projects with spaces in their absolute path no longer hit a false-positive block on multi-line shell commands that mix `/tmp` cleanups with `cd` into the project. Cross-project file reads — including grep/find/cat across `/home/<user>/<other-project>/.env` — are now denied by default, with a clear reason and three documented bypass mechanisms. No CLAUDE.md template changes; no slash-command API changes.
+
+**Test results:** 253/255 passing (the two pre-existing failures in `test-rhetoric-skim.sh` are unrelated and predate this release).
+
 ## 5.6.1 — 2026-04-30
 
 "Per-skill empirical model selection (model-routing benchmark Phase 1)." Two creative skills moved from Opus 4.7 to Sonnet 4.6 by default, after a benchmark confirmed each preserves ≥95% of Opus 4.7's output quality on representative tasks. Methodology adapts Tessl's 880-eval study for VIBE creative skills: outputs are scored on binary-axis adherence rubrics, with a dual-judge bias check (Opus 4.7 + Sonnet 4.6, plus Haiku 4.5 as third judge for the seurat tiebreaker).

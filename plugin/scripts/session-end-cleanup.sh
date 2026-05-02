@@ -35,6 +35,13 @@ if [[ -f "$COUNTER_FILE" ]]; then
   echo "$(timestamp) [session-end-cleanup] removed failure counter: $COUNTER_FILE" >> "$LOG_FILE"
 fi
 
+# Remove scope-guard session root marker
+SCOPE_ROOT_FILE="/tmp/vibe-session-root-${SESSION_ID}"
+if [[ -f "$SCOPE_ROOT_FILE" ]]; then
+  rm -f "$SCOPE_ROOT_FILE"
+  echo "$(timestamp) [session-end-cleanup] removed scope-guard root marker: $SCOPE_ROOT_FILE" >> "$LOG_FILE"
+fi
+
 echo "$(timestamp) [session-end-cleanup] session ${SESSION_ID} cleanup complete" >> "$LOG_FILE"
 
 exit 0
