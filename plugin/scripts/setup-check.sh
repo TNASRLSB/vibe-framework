@@ -33,7 +33,47 @@ fi
 [[ -f "$PROJECT_DIR/vibe-framework.sh" ]] && has_v1=true
 
 if [[ "$has_v1" == "true" ]]; then
-  anomalies+=("VIBE Framework v1 remnants detected — run scripts/vibe-v1-cleanup.sh to migrate")
+  anomalies+=("VIBE Framework v1 remnants detected (filesystem) — run /vibe:setup to migrate")
+fi
+
+# --- Check 2b: stale hook references in settings JSON (5.6.3 auto-recovery) ---
+# Catches the partial-cleanup case where filesystem residues are gone but
+# settings.local.json still references v1 morpheus scripts. setup-check Check 2
+# only inspects filesystem markers — projects whose .claude/morpheus/ has been
+# manually rm-rfed but whose settings JSON still points at injector.sh / sensor.sh
+# / reset.sh produce non-blocking hook errors on every Bash/Read/Write until
+# cleaned. Reconciler has had detect-stale-hooks + apply-clean-stale-hooks since
+# 5.5.7, but they were only triggered by user-invoked /vibe:setup. Now SessionStart
+# auto-runs them so users on inherited v1-residual projects see a single anomaly
+# message instead of an error storm. Bypass: export VIBE_NO_AUTO_RECOVERY=1.
+RECONCILER="${CLAUDE_PLUGIN_ROOT:-}/setup/reconciler.sh"
+if [[ -x "$RECONCILER" ]] && [[ "${VIBE_NO_AUTO_RECOVERY:-0}" != "1" ]] && command -v jq >/dev/null 2>&1; then
+  recovered_summary=()
+  for sfile in \
+    "$HOME/.claude/settings.json" \
+    "$PROJECT_DIR/.claude/settings.json" \
+    "$PROJECT_DIR/.claude/settings.local.json"
+  do
+    [[ -f "$sfile" ]] || continue
+    detect_out=$("$RECONCILER" detect-stale-hooks "$sfile" 2>/dev/null)
+    [[ -z "$detect_out" ]] && continue
+    match_count=$(echo "$detect_out" | jq -r '.matches | length' 2>/dev/null || echo 0)
+    [[ "$match_count" =~ ^[0-9]+$ ]] || match_count=0
+    if (( match_count > 0 )); then
+      if "$RECONCILER" apply-clean-stale-hooks "$sfile" >/dev/null 2>&1; then
+        # Use a stable display label (relative-style) for the anomaly text
+        case "$sfile" in
+          "$HOME/"*) label="~/${sfile#$HOME/}" ;;
+          *)         label="${sfile#$PROJECT_DIR/}" ;;
+        esac
+        recovered_summary+=("${label} (${match_count})")
+      fi
+    fi
+  done
+  if (( ${#recovered_summary[@]} > 0 )); then
+    files_str=$(IFS=', '; echo "${recovered_summary[*]}")
+    anomalies+=("VIBE auto-recovered broken hook references in: ${files_str}. Backups created (.bak-stale-hooks-*). Restart this Claude Code session to apply.")
+  fi
 fi
 
 # --- Check 3: missing CLAUDE.md (only if not v1 — v1 check takes priority) ---

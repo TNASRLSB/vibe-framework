@@ -1,5 +1,27 @@
 # Changelog
 
+## 5.6.3 — 2026-05-02
+
+"Auto-recovery for inherited v1 morpheus residues + tech-debt sweep." Field-reported pattern: the `setup-check.sh` SessionStart hook detected v1 filesystem markers (`.claude/morpheus/`, `vibe-framework.sh`) but missed the partial-cleanup case where the filesystem was already cleaned by hand and only `settings.local.json` still pointed at non-existent morpheus scripts. Such projects emitted "PreToolUse hook error: File o directory non esistente" on every Bash/Read/Write — non-blocking but persistent noise. Reconciler had `apply-clean-stale-hooks` since 5.5.7; it was just not wired to SessionStart. This release wires it.
+
+Bundled with three smaller tech-debt fixes uncovered during the audit pass that preceded the release.
+
+### Changes
+
+- **`plugin/scripts/setup-check.sh`** — new Check 2b: after the existing v1-filesystem check, the hook now invokes `reconciler.sh detect-stale-hooks` on `~/.claude/settings.json`, `${PROJECT_DIR}/.claude/settings.json`, and `${PROJECT_DIR}/.claude/settings.local.json`. If any returns matches against the `settingsHooksDenyPatterns[]` schema (5.5.7), the hook auto-runs `apply-clean-stale-hooks` on that file (timestamped backup `.bak-stale-hooks-<ts>` is created automatically by the reconciler). A single anomaly summarizes the action: `"VIBE auto-recovered broken hook references in: <files>. Backups created. Restart this Claude Code session to apply."` Bypass: `VIBE_NO_AUTO_RECOVERY=1`. Idempotent — second SessionStart is a no-op. Filed-reported case: `Booost-app` repo where `.claude/morpheus/` had been manually `rm -rf`ed but `settings.local.json` retained 3 hook entries (PreToolUse, SessionStart compact matcher, statusLine) referencing `injector.sh` / `reset.sh` / `sensor.sh`.
+
+- **`plugin/scripts/setup-check.sh`** — Check 2 anomaly text changed from `"run scripts/vibe-v1-cleanup.sh to migrate"` to `"run /vibe:setup to migrate"` for consistency with the rest of the user-facing anomaly messages, all of which point at the slash command.
+
+- **`plugin/skills/_shared/atomic-decomposition.md`** — the Pipeline Summary now includes a "Concrete script paths" section that names the actual shipped scripts (`atomic-validate-manifest.sh`, `atomic-orchestrator.sh`, `atomic-verify-output.sh`, `atomic-enforcement.sh`) with their `${CLAUDE_PLUGIN_ROOT}/scripts/` paths. Closes a gap surfaced by the tech-debt audit: SKILL.md authors knew to invoke "the decomposer agent" but the protocol document never declared where the mechanical orchestrator script lived, so SKILL.md instructions could not reference it directly.
+
+- **`tests/run-tests.sh`** — `validate-audit-system.sh` is now invoked from the test runner (new "Audit System Validation (functional)" header). Previously the script existed and was complete (145 lines, validates audit-protocol + 7 audit agents + audit skill + guardian removal) but was never executed by CI. `EXPECTED_SKILLS` extended to include `spec` (5.5.0+ skill, was missing from the list).
+
+- **`tests/setup-check/test-auto-recovery.sh`** (new) — 8 cases simulating the Booost-app scenario: detection on partial-cleanup project, backup creation, no-stale-references after apply, permissions preserved, idempotence on second run, no false positive on clean projects, `VIBE_NO_AUTO_RECOVERY=1` honored, settings untouched when bypassed.
+
+**User-facing impact:** projects inherited with v1 morpheus residues in `settings.local.json` (a common case for repos shared with collaborators who installed VIBE pre-v2) now self-heal on the first SessionStart, with a single explanatory anomaly message instead of an error storm. The cleanup is a strict subset of `/vibe:setup` — only stale hook references are touched, no other config is modified. Backup files are created so the action is fully reversible.
+
+**Test results:** 261/262 passing. The single pre-existing failure (`test-rhetoric-skim.sh`) is unrelated and predates this release.
+
 ## 5.6.2 — 2026-05-02
 
 "Two field-reported bugs squashed before any new feature work." A multi-line + path-with-spaces false positive in `pre-tool-security.sh` and a missing cross-project access guard. Both surfaced in a single user session on a project whose absolute path contained spaces (`/home/uh1/VIBEPROJECTS/TORA NO AI SRL SB/...`) and whose agent then proceeded to read `.env` files in unrelated sibling projects. No new dependencies. Hook count: 17 → 18 (new `scope-guard.sh`).

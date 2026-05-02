@@ -125,3 +125,21 @@ Mechanical verification (count markers vs total_items)
     ↓
 Deliver polished (if markers preserved) or raw assembly (if markers lost)
 ```
+
+### Concrete script paths
+
+The pipeline is implemented by these shipped scripts. Skills do NOT call the
+orchestrator directly — they invoke the decomposer agent, which produces the
+manifest; the orchestrator is then run from a follow-up shell step (typically
+captured in the skill's SKILL.md as a Bash invocation).
+
+- **Decomposer**: `plugin/agents/decomposer.md` — agent that produces `manifest.json`.
+- **Manifest validation**: `${CLAUDE_PLUGIN_ROOT}/scripts/atomic-validate-manifest.sh <manifest.json>` — exit 2 if `total_items` ≠ enumeration count.
+- **Mechanical orchestrator**: `${CLAUDE_PLUGIN_ROOT}/scripts/atomic-orchestrator.sh <manifest.json>` — reads the manifest, dispatches one CLI session per item, assembles outputs with `<!-- ITEM-N -->` markers, runs the polish step. Honors `worker_model` / `worker_effort` / `worker_fallback` from the manifest.
+- **Output verification**: `${CLAUDE_PLUGIN_ROOT}/scripts/atomic-verify-output.sh <final.md> <total_items>` — exit 2 if marker count ≠ expected.
+- **Stop-hook enforcement**: `${CLAUDE_PLUGIN_ROOT}/scripts/atomic-enforcement.sh` — registered on Stop, automatically calls validate + verify if a `manifest.json` is found in the standard locations.
+
+When invoking the orchestrator from a SKILL.md step, use the absolute plugin path
+(via the `CLAUDE_PLUGIN_ROOT` env var) rather than a relative reference, since
+SKILL.md instructions execute in the user project's `cwd`, not in the plugin's
+install directory.
