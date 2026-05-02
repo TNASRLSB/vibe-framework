@@ -1,6 +1,6 @@
 # VIBE Framework
 
-Quality-first plugin for Claude Code. Specialized skills, mechanical quality gates, and intelligent per-skill model selection. **v5.7.0**.
+Quality-first plugin for Claude Code. Specialized skills, mechanical quality gates, and intelligent per-skill model selection. **v5.8.0**.
 
 Claude Code out-of-the-box optimizes for speed and token savings. VIBE inverts the trade-off: **quality above all**, with each skill running on the smallest model that empirically preserves ≥95% of Opus 4.7's output quality on representative tasks. Built for developers on Max plans who want the best Claude can produce without burning quota on tasks that don't need it.
 
@@ -12,11 +12,11 @@ Claude Code out-of-the-box optimizes for speed and token savings. VIBE inverts t
 
 `/vibe:setup` configures your environment in one pass: detects your stack, recommends LSP plugins, sets `model = opus` and `effort = max`, configures a status line, optionally maps your codebase, and offers opt-in pragmatic priming. Re-runnable; converges to current plugin version's expected state on every run.
 
-## What ships in 5.7.0
+## What ships in 5.8.0
 
 | Component | Count | Notes |
 |-----------|------:|-------|
-| Skills | 14 | 8 domain + 1 audit orchestrator + 5 utility |
+| Skills | 15 | 8 domain + 1 audit orchestrator + 6 utility |
 | Agents | 11 | 7 domain audit + reviewer, researcher, decomposer, pragmatic |
 | Hook handlers | 22 | across 9 Claude Code lifecycle events |
 
@@ -81,6 +81,7 @@ The audit system uses **delta analysis**: on repeated audits it reads agent memo
 | **pause** | Disables all quality hooks for the current session. For rapid prototyping or exploratory coding where hooks get in the way. |
 | **resume** | Re-enables quality hooks after pause. |
 | **help** | Displays all VIBE Framework skills, agents, hooks, and commands in one clean reference. Use for onboarding or quick discovery (`/vibe:help`). |
+| **evolve** *(5.8.0)* | Persistent learning across sessions via the ACE pattern. `record <task_id> <score> <summary>` appends to `.vibe/evolve_log.jsonl`; `reflect` calls `claude -p` to propose ADD/MODIFY/REMOVE deltas, applies them deterministically (cap 30 entries), splices the result into a managed block in `CLAUDE.md` placed *outside* the outer envelope so future `vibe:setup` re-renders never wipe it; `revert` strips the block. Automatic rollback if rolling 5-entry score drops by ≥ 0.05. Bypass: `VIBE_NO_EVOLVE=1`. |
 
 ## Agents
 
@@ -190,6 +191,7 @@ VIBE extracts the maximum from the surface Anthropic exposes. Regressions inside
 
 ## Recent releases
 
+- **5.8.0** (2026-05-02) — first Tier A capability-boost release after the 5.7.0 Tier S bundle. New `vibe:evolve` skill (ACE pattern port: persistent learning across sessions via reflector + curator + rollback, persists managed block in `CLAUDE.md`). Git-signals managed block in `CLAUDE.md` (branch + last 5 commits + dirty count + divergence, refreshed every `vibe:setup`). Generalized auto-recover for orphaned hook paths in `settings.json` (any framework, not just morpheus-v1). Skill count 14 → 15.
 - **5.7.0** (2026-05-02) — first capability-boost release after the 5.6.x stability cycle. Four new hooks: oracle gate (multi-layer Stop analyzer), ADR surface, Grep/Glob enrichment (NEW matcher slot), complexity watch. Plus rhetoric-guard §15.5 scope-creep category. Hook count 18 → 22.
 - **5.6.3** (2026-05-02) — auto-recovery for inherited v1 morpheus residues in `settings.local.json` (partial-cleanup case). Wires reconciler `apply-clean-stale-hooks` into `setup-check.sh` SessionStart; bypass `VIBE_NO_AUTO_RECOVERY=1`.
 - **5.6.2** (2026-05-02) — `pre-tool-security.sh` multi-line + path-with-spaces FP fix; new `scope-guard.sh` PreToolUse hook prevents cross-project `.env` reads. Hook count 17 → 18.
@@ -244,7 +246,7 @@ This repository contains the VIBE plugin source plus development infrastructure 
 │   ├── agents/                       11 subagents
 │   ├── hooks/hooks.json              Hook registrations (9 lifecycle events, 22 handlers)
 │   ├── scripts/                      Hook handlers and standalone scripts
-│   ├── skills/                       14 skills + _shared/ resources
+│   ├── skills/                       15 skills + _shared/ resources
 │   ├── CHANGELOG.md                  Plugin release history
 │   ├── README.md                     Pointer to this file (long-form docs live here)
 │   ├── LICENSE                       MIT
@@ -281,7 +283,7 @@ To run the plugin self-tests:
 bash tests/run-tests.sh
 ```
 
-The suite (309 tests in 5.7.0) covers plugin structure, all skills, all agents, hook scripts (PreToolUse security, lint, scan, failure loop, pre-compact, setup check, ADR surface, complexity watch, oracle gate, Grep/Glob enrichment), 31 security patterns, frontmatter validation, scope-guard cross-project denial, and v1 migration cleanup.
+The suite (342 tests in 5.8.0) covers plugin structure, all skills, all agents, hook scripts (PreToolUse security, lint, scan, failure loop, pre-compact, setup check, ADR surface, complexity watch, oracle gate, Grep/Glob enrichment), 31 security patterns, frontmatter validation, scope-guard cross-project denial, orphan-hook auto-recover, git-signals managed block, vibe:evolve ACE observer, and v1 migration cleanup.
 
 ## Releases
 
