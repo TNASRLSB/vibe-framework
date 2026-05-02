@@ -1,0 +1,68 @@
+name: Publish release on tag push
+
+# Auto-publishes a GitHub release when a tag matching v* is pushed.
+# Closes the historical drift between local-tagged versions and GitHub
+# Releases (visible at v5.6.2 / v5.6.3 / v5.7.0 — three tags pushed
+# 2026-04-30 to 2026-05-02 with no corresponding GitHub release until
+# the maintainer-side release.sh was rerun manually).
+#
+# Reads the release notes from the matching CHANGELOG section
+# (`plugin/CHANGELOG.md`, format `## X.Y.Z — DATE`). Falls back to a
+# commit-log digest if no CHANGELOG entry is found.
+#
+# Distinct from .github/workflows/release.yml — that workflow is
+# manually dispatched and does its own version bump + tag + push;
+# this one assumes the tag is already pushed (typical maintainer flow:
+# bump locally → tag → push → this workflow publishes).
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract release notes from CHANGELOG
+        id: notes
+        run: |
+          # Strip the leading 'v' from refs/tags/vX.Y.Z
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "Tag: $GITHUB_REF_NAME, version: $VERSION"
+
+          # Match "## VERSION — ..." (em-dash separator) and grab through
+          # the next "## " heading. Awk because we want a contiguous block.
+          awk -v v="$VERSION" '
+            $0 ~ "^## " v "( |$)" { in_section = 1; print; next }
+            in_section && /^## [0-9]/ { in_section = 0 }
+            in_section { print }
+          ' plugin/CHANGELOG.md > release_notes.md
+
+          if [ ! -s release_notes.md ]; then
+            echo "::warning::No CHANGELOG entry for $VERSION — falling back to commit log"
+            LAST_TAG=$(git describe --tags --abbrev=0 "$GITHUB_REF_NAME^" 2>/dev/null || echo "")
+            if [ -z "$LAST_TAG" ]; then
+              git log --pretty=format:"- %s" "$GITHUB_REF_NAME" > release_notes.md
+            else
+              git log --pretty=format:"- %s" "$LAST_TAG..$GITHUB_REF_NAME" > release_notes.md
+            fi
+          fi
+
+          echo "--- Notes preview (first 20 lines) ---"
+          head -20 release_notes.md
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "$GITHUB_REF_NAME" \
+            --notes-file release_notes.md \
+            --verify-tag

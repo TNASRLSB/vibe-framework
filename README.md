@@ -285,12 +285,13 @@ The suite (309 tests in 5.7.0) covers plugin structure, all skills, all agents, 
 
 ## Releases
 
-Two release paths exist:
+Three release paths exist:
 
 - **`tests/maintainer-scripts/release.sh`** (gitignored, primary since 5.6.1) — single-shot automation. Propagates a version bump to `plugin/.claude-plugin/plugin.json` + `.claude-plugin/marketplace.json` `plugins[0].version`, creates the git tag, pushes, and creates the GitHub release from the CHANGELOG entry.
+- **`.github/workflows/publish-on-tag.yml`** (auto-publish since 5.7.0) — fires on every `git push origin v*`. Reads the matching `## X.Y.Z` section from `plugin/CHANGELOG.md` and creates the GitHub release. Closes the drift that left v5.6.2 / v5.6.3 / v5.7.0 tagged but unreleased on GitHub for two days. Falls back to commit log if the CHANGELOG entry is missing.
 - **`.github/workflows/release.yml`** (manual-dispatch fallback) — Actions tab → Run workflow. Reads `plugin.json` for current version, infers bump type from conventional commits since the last tag (`feat:` → minor, `fix:`/`perf:`/`refactor:` → patch, `BREAKING CHANGE:` → major), updates the version, commits, tags, creates the GitHub release.
 
-The previous auto-on-push trigger was removed in 5.0 after an auto-bump consumed a version slot unintentionally. Version bumps are now a deliberate human action — manual CHANGELOG writeup, then run the release script.
+The previous auto-on-push-to-main trigger was removed in 5.0 after an auto-bump consumed a version slot unintentionally. Version bumps are now a deliberate human action — manual CHANGELOG writeup, then push the tag (auto-publish handles the GitHub release).
 
 ## License
 
