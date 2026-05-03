@@ -111,6 +111,22 @@ if [[ -x "$RECONCILER" ]] && [[ "${VIBE_NO_AUTO_RECOVERY:-0}" != "1" ]] && comma
   fi
 fi
 
+# --- Check 2d: dispatch-guidance block missing in managed CLAUDE.md (5.9.0) ---
+# When CLAUDE.md has the VIBE managed region but is missing the dispatch tier
+# guidance section, the user is on a pre-5.9.0 CLAUDE.md and subagent dispatches
+# fall back to the per-skill static model without tier-aware routing. Soft
+# anomaly: surface a notice so /vibe:setup re-renders the managed region. Skip
+# silently when CLAUDE.md is absent (Check 3 covers that), when the file lacks
+# the managed region (LEGACY_NO_VIBE_TOKENS — user-authored, do not touch),
+# or when VIBE_NO_DISPATCH_GUIDANCE=1 (block intentionally suppressed).
+if [[ "$has_v1" == "false" ]] && [[ -f "$PROJECT_DIR/CLAUDE.md" ]] && [[ "${VIBE_NO_DISPATCH_GUIDANCE:-0}" != "1" ]]; then
+  if grep -q "<!-- VIBE:managed-start -->" "$PROJECT_DIR/CLAUDE.md" 2>/dev/null; then
+    if ! grep -q "Subagent Dispatch Tier Guidance" "$PROJECT_DIR/CLAUDE.md" 2>/dev/null; then
+      anomalies+=("VIBE 5.9.0 dispatch tier guidance missing from CLAUDE.md — run /vibe:setup to refresh the managed region.")
+    fi
+  fi
+fi
+
 # --- Check 3: missing CLAUDE.md (only if not v1 — v1 check takes priority) ---
 if [[ "$has_v1" == "false" ]] && [[ ! -f "$PROJECT_DIR/CLAUDE.md" ]]; then
   anomalies+=("No CLAUDE.md found — run /vibe:setup to generate one")

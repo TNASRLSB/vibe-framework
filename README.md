@@ -1,6 +1,6 @@
 # VIBE Framework
 
-Quality-first plugin for Claude Code. Specialized skills, mechanical quality gates, and intelligent per-skill model selection. **v5.8.0**.
+Quality-first plugin for Claude Code. Specialized skills, mechanical quality gates, and intelligent per-skill model selection. **v5.9.0**.
 
 Claude Code out-of-the-box optimizes for speed and token savings. VIBE inverts the trade-off: **quality above all**, with each skill running on the smallest model that empirically preserves ≥95% of Opus 4.7's output quality on representative tasks. Built for developers on Max plans who want the best Claude can produce without burning quota on tasks that don't need it.
 
@@ -12,13 +12,15 @@ Claude Code out-of-the-box optimizes for speed and token savings. VIBE inverts t
 
 `/vibe:setup` configures your environment in one pass: detects your stack, recommends LSP plugins, sets `model = opus` and `effort = max`, configures a status line, optionally maps your codebase, and offers opt-in pragmatic priming. Re-runnable; converges to current plugin version's expected state on every run.
 
-## What ships in 5.8.0
+## What ships in 5.9.0
 
 | Component | Count | Notes |
 |-----------|------:|-------|
 | Skills | 15 | 8 domain + 1 audit orchestrator + 6 utility |
 | Agents | 11 | 7 domain audit + reviewer, researcher, decomposer, pragmatic |
 | Hook handlers | 22 | across 9 Claude Code lifecycle events |
+
+5.9.0 adds two upgrades to existing surfaces (no new skills, no new hooks): **subagent role discipline** — the 7 audit-domain agents gain `## Tool Discipline / ## Output Format / ## Boundary Discipline / ## Failure Modes` sections so `vibe:audit` synthesis parses consistent shapes; **dispatch tier guidance** — a managed CLAUDE.md block telling the main agent how to score subtask complexity (10 signals, S0..S5 mapping, 4 floor + 2 ceiling guardrails) before setting the `model` parameter on `Agent` tool calls.
 
 ## Core Principles
 
@@ -191,6 +193,7 @@ VIBE extracts the maximum from the surface Anthropic exposes. Regressions inside
 
 ## Recent releases
 
+- **5.9.0** (2026-05-03) — subagent dispatch discipline release. Two upgrades to existing surfaces, no new skills/hooks. Each of the 7 audit-domain agents (`baptist`, `emmet`, `ghostwriter`, `heimdall`, `orson`, `scribe`, `seurat`) gains four standardized sections (`## Tool Discipline / ## Output Format / ## Boundary Discipline / ## Failure Modes`) so `vibe:audit` synthesis parses consistent shapes. New `## Subagent Dispatch Tier Guidance` managed block in `CLAUDE.md` (10 signals + S0..S5 mapping + 4 floors + 2 ceilings) tells the main agent how to size the `model` parameter on every `Agent` tool call. Original Tier B spec (Mnemos parallel memory + Brain CLI) deprecated 2026-05-02 — both failed an autonomous-trigger filter added as Filter 5.
 - **5.8.0** (2026-05-02) — first Tier A capability-boost release after the 5.7.0 Tier S bundle. New `vibe:evolve` skill (ACE pattern port: persistent learning across sessions via reflector + curator + rollback, persists managed block in `CLAUDE.md`). Git-signals managed block in `CLAUDE.md` (branch + last 5 commits + dirty count + divergence, refreshed every `vibe:setup`). Generalized auto-recover for orphaned hook paths in `settings.json` (any framework, not just morpheus-v1). Skill count 14 → 15.
 - **5.7.0** (2026-05-02) — first capability-boost release after the 5.6.x stability cycle. Four new hooks: oracle gate (multi-layer Stop analyzer), ADR surface, Grep/Glob enrichment (NEW matcher slot), complexity watch. Plus rhetoric-guard §15.5 scope-creep category. Hook count 18 → 22.
 - **5.6.3** (2026-05-02) — auto-recovery for inherited v1 morpheus residues in `settings.local.json` (partial-cleanup case). Wires reconciler `apply-clean-stale-hooks` into `setup-check.sh` SessionStart; bypass `VIBE_NO_AUTO_RECOVERY=1`.
@@ -283,7 +286,7 @@ To run the plugin self-tests:
 bash tests/run-tests.sh
 ```
 
-The suite (342 tests in 5.8.0) covers plugin structure, all skills, all agents, hook scripts (PreToolUse security, lint, scan, failure loop, pre-compact, setup check, ADR surface, complexity watch, oracle gate, Grep/Glob enrichment), 31 security patterns, frontmatter validation, scope-guard cross-project denial, orphan-hook auto-recover, git-signals managed block, vibe:evolve ACE observer, and v1 migration cleanup.
+The suite (391 tests in 5.9.0) covers plugin structure, all skills, all agents, hook scripts (PreToolUse security, lint, scan, failure loop, pre-compact, setup check, ADR surface, complexity watch, oracle gate, Grep/Glob enrichment), 31 security patterns, frontmatter validation, scope-guard cross-project denial, orphan-hook auto-recover, git-signals managed block, vibe:evolve ACE observer, agent role discipline (4 standard sections per audit-domain agent), dispatch tier guidance block in CLAUDE.md, and v1 migration cleanup.
 
 ## Releases
 

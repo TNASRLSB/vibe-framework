@@ -296,6 +296,48 @@ print("\n".join(lines))
 PYEOF
 )
 
+# --- Dispatch tier guidance (§5.9.0 Feature 2) ---------------------------
+# Reads plugin/skills/_shared/subagent-dispatch-guidance.md verbatim and
+# injects it into CLAUDE.md as a managed block. The agent reads it as
+# ambient context and applies the signal-scoring + tier-mapping + guardrails
+# before any Agent tool call to pick the subagent model. Failure-open: file
+# missing → empty block, dispatches fall back to skill's static model.
+# Bypass: VIBE_NO_DISPATCH_GUIDANCE=1.
+DISPATCH_GUIDANCE=$(GUIDANCE_DIR="$SCRIPT_DIR" python3 <<'PYEOF'
+import os
+
+if os.environ.get("VIBE_NO_DISPATCH_GUIDANCE") == "1":
+    print("")
+    raise SystemExit(0)
+
+# Resolve guidance file relative to plugin root: SCRIPT_DIR is plugin/setup/,
+# so plugin root is parent. The guidance lives at skills/_shared/.
+plugin_root = os.path.dirname(os.environ["GUIDANCE_DIR"])
+path = os.path.join(plugin_root, "skills", "_shared",
+                    "subagent-dispatch-guidance.md")
+
+if not os.path.isfile(path):
+    print("")
+    raise SystemExit(0)
+
+try:
+    with open(path) as f:
+        content = f.read()
+except Exception:
+    print("")
+    raise SystemExit(0)
+
+# Strip the file's H1 (we render under a managed-block H2 in the template).
+lines = content.splitlines()
+if lines and lines[0].startswith("# "):
+    lines = lines[1:]
+    while lines and not lines[0].strip():
+        lines = lines[1:]
+
+print("\n".join(lines).rstrip())
+PYEOF
+)
+
 # --- Harness limits (§2.2.4) ---------------------------------------------
 HARNESS_LIMITS=$(cat <<'EOF'
 VIBE is armor on top of Claude Code, itself a harness on top of the Claude model.
@@ -313,16 +355,18 @@ MODEL_PATTERN="$MODEL_PATTERN" \
 CAPABILITY_AUDIT="$CAPABILITY_AUDIT" \
 HARNESS_LIMITS="$HARNESS_LIMITS" \
 GIT_SIGNALS="$GIT_SIGNALS" \
+DISPATCH_GUIDANCE="$DISPATCH_GUIDANCE" \
 FORCE_BLOAT="${SMART_GEN_FORCE_BLOAT:-0}" \
 python3 <<'PYEOF'
 import json, os, sys
 
 blocks = {
-    "project_context":  os.environ.get("PROJECT_CONTEXT", ""),
-    "model_pattern":    os.environ.get("MODEL_PATTERN", ""),
-    "capability_audit": os.environ.get("CAPABILITY_AUDIT", ""),
-    "harness_limits":   os.environ.get("HARNESS_LIMITS", ""),
-    "git_signals":      os.environ.get("GIT_SIGNALS", ""),
+    "project_context":   os.environ.get("PROJECT_CONTEXT", ""),
+    "model_pattern":     os.environ.get("MODEL_PATTERN", ""),
+    "capability_audit":  os.environ.get("CAPABILITY_AUDIT", ""),
+    "harness_limits":    os.environ.get("HARNESS_LIMITS", ""),
+    "git_signals":       os.environ.get("GIT_SIGNALS", ""),
+    "dispatch_guidance": os.environ.get("DISPATCH_GUIDANCE", ""),
 }
 
 # Apply artificial bloat for tests
@@ -331,13 +375,14 @@ if os.environ.get("FORCE_BLOAT") == "1":
 
 # Per-block budgets in chars (≈ tokens * 4)
 CAPS = {
-    "project_context":  2400,   # 600 tokens
-    "model_pattern":    1000,   # 250 tokens
-    "capability_audit": 800,    # 200 tokens
-    "harness_limits":   600,    # 150 tokens
-    "git_signals":      800,    # 200 tokens
+    "project_context":   2400,   # 600 tokens
+    "model_pattern":     1000,   # 250 tokens
+    "capability_audit":  800,    # 200 tokens
+    "harness_limits":    600,    # 150 tokens
+    "git_signals":       800,    # 200 tokens
+    "dispatch_guidance": 4000,   # 1000 tokens (full signal table + tier map + guardrails)
 }
-TOTAL_CAP = 5600                # 1400 tokens total (4800 + 800 git_signals)
+TOTAL_CAP = 9600                # 2400 tokens total (5600 + 4000 dispatch_guidance)
 
 truncated = False
 

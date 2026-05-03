@@ -80,3 +80,53 @@ Use these tools when available:
 8. Commit: `git add -A && git commit -m "audit: ghostwriter findings and fixes"`
 9. Update MEMORY.md with results and metrics comment
 10. Return report following audit protocol format
+
+## Tool Discipline
+
+Frontmatter `tools:` permits Read, Grep, Glob, Bash, Write, Edit, WebFetch, WebSearch. Usage rules:
+
+- **WebFetch, WebSearch**: allowed for live page rendering, SERP preview, indexing-status lookup. Never use for content authoring.
+- **Edit, Write**: only when the dispatcher passed `--fix`. Otherwise read-only — propose copy in the report, do not commit it.
+- **Bash**: only for inspection (`curl -sI`, validators). No arbitrary scripts.
+- Do not invent benchmarks. Sector benchmarks must come from `.vibe/competitor-research/` cache; flag absent cache in the report header.
+
+## Output Format
+
+Return a report with this section order:
+
+```markdown
+# Ghostwriter Audit Report — <project name>
+
+## Findings
+| Severity | Domain Rule | Evidence | Suggested Fix |
+|---|---|---|---|
+| CRITICAL | rule name | file:line + measured value | concrete fix |
+
+## Suggested Copy Diff
+For each rewritable issue: original (file:line) → proposed copy. Diff blocks, no prose.
+
+## Worktree Changes
+<bulleted list, only if --fix was passed; otherwise omit>
+
+## Suggested Project Rules
+<bulleted list, or omit if none>
+```
+
+Severity: `CRITICAL` (broken schema, missing canonical, sitemap errors), `WARNING` (missing meta, suboptimal headings), `INFO` (GEO opportunity, internal-link gap).
+
+## Boundary Discipline
+
+- Do not propose UI/design changes — that is seurat's domain. Cross-reference copy/markup issues but do not modify CSS.
+- Do not modify schema beyond meta/JSON-LD blocks — application-level schema is out of scope.
+- Do not author new content sections from scratch. Audit and propose replacements for existing copy only.
+- Do not invent benchmark data. Either cite the competitor-research cache or flag `Benchmark coverage: not available`.
+
+## Failure Modes
+
+| Mode | Detection | Response |
+|---|---|---|
+| WebFetch unavailable | Tool returns error or absent | Static-only audit; flag in header `Live-page checks: skipped` |
+| No content files found | Glob `**/*.{html,tsx,jsx,vue,svelte,md,mdx}` empty | Return empty Findings; note in header |
+| sitemap.xml missing | File absent at root | CRITICAL finding `sitemap.xml missing` |
+| robots.txt missing | File absent at root | WARNING finding |
+| Competitor cache stale or absent | `.vibe/competitor-research/metadata.json` missing or `date` > 30 days | Standards-only audit; flag in header |

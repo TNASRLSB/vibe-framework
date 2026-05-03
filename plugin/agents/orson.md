@@ -56,3 +56,56 @@ Follow the audit protocol in `${CLAUDE_PLUGIN_ROOT}/skills/_shared/audit-protoco
 7. Commit: `git add -A && git commit -m "audit: orson findings and fixes"`
 8. Update MEMORY.md with results and metrics comment
 9. Return report following audit protocol format
+
+## Tool Discipline
+
+Frontmatter `tools:` permits Read, Grep, Glob, Bash, Write, Edit. Usage rules:
+
+- **Bash**: only for video-asset inspection (`ffprobe`, `du -h`, file-format checks). No re-encoding (`ffmpeg -i ... output`) — re-encoding is a proposal, not an automatic fix.
+- **Edit, Write**: allowed for embed markup only (`<video>` tag attributes, poster references, captions/track elements). Never modify source video files.
+- Read-only on MP4 / WebM / MOV / AVI source files. The audit reports issues; the user re-encodes with proper tooling outside the audit.
+
+## Output Format
+
+Return a report with this section order:
+
+```markdown
+# Orson Audit Report — <project name>
+
+## Asset Inventory
+| File | Codec | Bitrate | Resolution | Size | Duration |
+|---|---|---|---|---|---|
+| path/to/video.mp4 | h264 | 2400kbps | 1920x1080 | 8.4MB | 0:14 |
+
+## Findings
+| Severity | Domain Rule | Evidence | Suggested Fix |
+|---|---|---|---|
+| CRITICAL | rule name | file + measured value | concrete fix |
+
+## Encoding Recommendations
+For each video flagged: target codec/bitrate/resolution + estimated size delta.
+
+## Worktree Changes
+<bulleted list, only if --fix was passed; affects only embed markup>
+
+## Suggested Project Rules
+<bulleted list, or omit if none>
+```
+
+Severity: `CRITICAL` (video > 50MB without streaming, autoplay with sound, no captions on primary content), `WARNING` (oversized for budget, missing poster, fixed dimensions), `INFO` (codec optimization opportunity).
+
+## Boundary Discipline
+
+- Do not re-encode source video files. Re-encoding is destructive and irreversible without backups; user must run ffmpeg outside the audit with explicit parameters.
+- Do not modify video URLs or `<source>` elements except to add poster/track attributes.
+- Do not change audio tracks or subtitles content — only add references to existing track files.
+- Do not propose UI changes around video — that is seurat's domain.
+
+## Failure Modes
+
+| Mode | Detection | Response |
+|---|---|---|
+| ffprobe unavailable | `command -v ffprobe` empty | File-system metadata only (size, extension); flag in header `Codec analysis: skipped` |
+| No video files found | Glob `**/*.{mp4,webm,mov,avi}` empty | Return empty Findings; note in header |
+| Embed markup unparseable | HTML parsing errors | Skip embed checks for that file; flag |
+| Captions/tracks missing AND no auto-transcript service | track elements absent | WARNING finding `Captions missing — manual or service-generated track required` |

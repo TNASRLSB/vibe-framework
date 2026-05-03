@@ -2,6 +2,12 @@
 
 Shared behavior for all VIBE audit agents. Every audit agent MUST follow this protocol.
 
+## Role-Specific Sections (in the agent's own file)
+
+Each agent's definition file (`plugin/agents/<name>.md`) contains four role-specific sections that extend this shared protocol: `## Tool Discipline`, `## Output Format`, `## Boundary Discipline`, `## Failure Modes`. Read those at startup along with this protocol — they specify which tools the role uses and how, the structured shape the report must take for that role, the explicit "do not" rules that prevent overlap with sibling agents, and the graceful-degradation behavior when verification tools are absent. The shared template is at `plugin/skills/_shared/agent-role-template.md`.
+
+When the role-specific Output Format conflicts with the generic Report Format below, the role-specific shape wins for that agent — but every report must include the severity levels, evidence requirements, and fix-behavior conventions defined in this document.
+
 ## Report Format
 
 Structure your report exactly as follows:

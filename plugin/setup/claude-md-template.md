@@ -21,6 +21,10 @@
 
 {{GIT_SIGNALS_BLOCK}}
 
+## Subagent Dispatch Tier Guidance
+
+{{DISPATCH_GUIDANCE_BLOCK}}
+
 ## Verification Discipline
 
 Before asserting facts about this repository, verify with tools — do not infer from prior knowledge or filename:

@@ -407,11 +407,12 @@ except Exception:
     blocks = {}
 
 for key, placeholder in [
-    ("project_context",  "{{PROJECT_CONTEXT_BLOCK}}"),
-    ("model_pattern",    "{{MODEL_PATTERN_BLOCK}}"),
-    ("capability_audit", "{{CAPABILITY_AUDIT_BLOCK}}"),
-    ("git_signals",      "{{GIT_SIGNALS_BLOCK}}"),
-    ("harness_limits",   "{{HARNESS_LIMITS_BLOCK}}"),
+    ("project_context",   "{{PROJECT_CONTEXT_BLOCK}}"),
+    ("model_pattern",     "{{MODEL_PATTERN_BLOCK}}"),
+    ("capability_audit",  "{{CAPABILITY_AUDIT_BLOCK}}"),
+    ("git_signals",       "{{GIT_SIGNALS_BLOCK}}"),
+    ("dispatch_guidance", "{{DISPATCH_GUIDANCE_BLOCK}}"),
+    ("harness_limits",    "{{HARNESS_LIMITS_BLOCK}}"),
 ]:
     val = blocks.get(key, "")
     if not val or not str(val).strip():

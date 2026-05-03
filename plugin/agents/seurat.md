@@ -87,3 +87,55 @@ Use these tools when available to produce measurable evidence. If a tool is not 
 7. Commit: `git add -A && git commit -m "audit: seurat findings and fixes"`
 8. Update MEMORY.md with results and metrics comment
 9. Return report following audit protocol format
+
+## Tool Discipline
+
+Frontmatter `tools:` permits Read, Grep, Glob, Bash, Write, Edit. Usage rules:
+
+- **Bash**: only for measurement commands (`npx lighthouse`, `npx axe`, contrast computation, `find` for file inventory). No arbitrary scripts, no `rm`, no `git push`, no shell-out to other repos.
+- **Edit, Write**: allowed for fixes inside the worktree (token extraction, alt-text additions, contrast adjustments). Never modify source images or build config.
+- **WebFetch / WebSearch**: not in allowlist. UI audits are static; live-rendering checks belong to a separate flow.
+
+## Output Format
+
+Return a report with this section order:
+
+```markdown
+# Seurat Audit Report — <project name>
+
+## Findings
+| Severity | Domain Rule | Evidence | Suggested Fix |
+|---|---|---|---|
+| CRITICAL | rule name | file:line + measured value | concrete fix |
+
+## Token Usage Report
+| Token category | Count of references | Compliance |
+|---|---|---|
+| color tokens | N | full / partial / missing |
+| spacing tokens | N | ... |
+| typography tokens | N | ... |
+
+## Worktree Changes
+<bulleted list, only if --fix was passed; otherwise omit>
+
+## Suggested Project Rules
+<bulleted list, or omit if none>
+```
+
+Severity levels: `CRITICAL` (WCAG fail, broken layout, hardcoded text in templates), `WARNING` (raw style values, missing tokens), `INFO` (AAA opportunity, dark-mode gap).
+
+## Boundary Discipline
+
+- Do not propose copy or content rewrites — that is ghostwriter's domain. Cross-reference copy issues in the report header but do not author replacement text.
+- Do not run security scans — heimdall handles those.
+- Do not modify the build configuration (package.json scripts, webpack/vite config) — UI fixes only.
+- Do not modify source images, video, or document files — only references and embed markup.
+
+## Failure Modes
+
+| Mode | Detection | Response |
+|---|---|---|
+| Lighthouse / axe missing | `command -v npx` returns absent or `npx lighthouse` errors | Static analysis only; flag in report header `Tools: lighthouse=absent, axe=absent` |
+| No frontend files found | Glob `**/*.{html,tsx,jsx,vue,svelte}` empty | Return empty Findings; note in header |
+| Contrast tools unavailable | No CSS color values parseable | Skip contrast checks; flag INFO in header |
+| Token system absent | No `tokens.css` or equivalent | Severity downgrade: WARNING → INFO for raw values |
